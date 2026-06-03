@@ -11,6 +11,7 @@ import { Screen } from "../../src/components/layout/screen";
 import { toContentCardModel } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
+import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
@@ -18,6 +19,7 @@ import { useAppTheme } from "../../src/features/theme/theme-provider";
 export default function HomeFeedScreen() {
   const { t } = useTranslation("home");
   const { theme } = useAppTheme();
+  const { scaleFont } = useResponsive();
   const { state: networkState } = useNetworkStatus();
 
   const contents = useQuery(api.content.queries.listPublishedFeed, {
@@ -32,13 +34,22 @@ export default function HomeFeedScreen() {
     <Screen>
       <DegradedBanner state={networkState} />
       <View style={styles.header}>
-        <Text style={[styles.eyebrow, { color: theme.colors.accent }]}>
+        <Text
+          style={[styles.eyebrow, { color: theme.colors.accent, fontSize: 11 * scaleFont }]}
+        >
           {t("eyebrow")}
         </Text>
-        <Text style={[styles.title, { color: theme.colors.heading }]}>
+        <Text
+          style={[
+            styles.title,
+            { color: theme.colors.heading, fontSize: 30 * scaleFont, lineHeight: 35 * scaleFont },
+          ]}
+        >
           {t("feedTitle")}
         </Text>
-        <Text style={[styles.subtitle, { color: theme.colors.textMuted }]}>
+        <Text
+          style={[styles.subtitle, { color: theme.colors.textMuted, fontSize: 15 * scaleFont }]}
+        >
           {t("feedSubtitle")}
         </Text>
       </View>

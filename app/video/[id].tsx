@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
 import type { ContentDoc } from "../../src/features/content/types";
+import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
@@ -15,6 +16,7 @@ export default function VideoDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation("video");
   const { theme } = useAppTheme();
+  const { scaleSpace, scaleFont } = useResponsive();
 
   const content = useQuery(
     api.content.queries.getPublishedById,
@@ -55,21 +57,37 @@ export default function VideoDetailScreen() {
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
         >
-          <View style={[styles.cover, { backgroundColor: theme.colors.heading }]}>
-            <Text style={styles.playGlyph}>▶</Text>
+          <View
+            style={[
+              styles.cover,
+              { backgroundColor: theme.colors.accent, height: 180 * scaleSpace },
+            ]}
+          >
+            <Text
+              style={[styles.playGlyph, { color: theme.colors.accentContrast, fontSize: 40 * scaleFont }]}
+            >
+              ▶
+            </Text>
           </View>
-          <Text style={[styles.kicker, { color: theme.colors.accent }]}>
+          <Text style={[styles.kicker, { color: theme.colors.accent, fontSize: 11 * scaleFont }]}>
             {content.category || t("kicker")}
           </Text>
-          <Text style={[styles.title, { color: theme.colors.heading }]}>
+          <Text
+            style={[
+              styles.title,
+              { color: theme.colors.heading, fontSize: 28 * scaleFont, lineHeight: 34 * scaleFont },
+            ]}
+          >
             {content.title}
           </Text>
           {providerLabel ? (
-            <Text style={[styles.meta, { color: theme.colors.textMuted }]}>
+            <Text style={[styles.meta, { color: theme.colors.textMuted, fontSize: 11 * scaleFont }]}>
               {t("providerLabel", { provider: providerLabel })}
             </Text>
           ) : null}
-          <Text style={[styles.summary, { color: theme.colors.text }]}>
+          <Text
+            style={[styles.summary, { color: theme.colors.text, fontSize: 16 * scaleFont, lineHeight: 24 * scaleFont }]}
+          >
             {content.summary}
           </Text>
 
@@ -86,7 +104,9 @@ export default function VideoDetailScreen() {
                 pressed && styles.pressed,
               ]}
             >
-              <Text style={styles.buttonText}>{t("watchYoutube")}</Text>
+              <Text style={[styles.buttonText, { color: theme.colors.accentContrast }]}>
+                {t("watchYoutube")}
+              </Text>
             </Pressable>
           ) : (
             <Text style={[styles.unavailable, { color: theme.colors.textMuted }]}>

@@ -3,12 +3,14 @@ import { StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import type { NetworkState } from "../../features/network/use-network-status";
+import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 export function DegradedBanner({ state }: { state: NetworkState }) {
   const { t } = useTranslation("network");
   const { theme } = useAppTheme();
+  const { scaleFont } = useResponsive();
 
   if (state === "online") {
     return null;
@@ -33,7 +35,9 @@ export function DegradedBanner({ state }: { state: NetworkState }) {
       ]}
     >
       <View style={[styles.dot, { backgroundColor: theme.colors.accent }]} />
-      <Text style={[styles.text, { color: theme.colors.text }]}>{label}</Text>
+      <Text style={[styles.text, { color: theme.colors.text, fontSize: 12 * scaleFont }]}>
+        {label}
+      </Text>
     </View>
   );
 }

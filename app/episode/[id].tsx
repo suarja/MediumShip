@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
 import type { ContentDoc } from "../../src/features/content/types";
+import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
@@ -14,6 +15,7 @@ export default function EpisodeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation("episode");
   const { theme } = useAppTheme();
+  const { scaleSpace, scaleFont } = useResponsive();
 
   const content = useQuery(
     api.content.queries.getPublishedById,
@@ -40,30 +42,43 @@ export default function EpisodeDetailScreen() {
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
         >
-          <View style={[styles.cover, { backgroundColor: theme.colors.heading }]}>
-            <View
-              style={[styles.coverGlow, { backgroundColor: theme.colors.accent }]}
-            />
+          <View
+            style={[
+              styles.cover,
+              { backgroundColor: theme.colors.accent, height: 160 * scaleSpace },
+            ]}
+          >
+            <View style={styles.coverGlow} />
           </View>
           <Text
             style={[
               styles.kicker,
-              { color: content.isPremium ? theme.colors.premium : theme.colors.accent },
+              {
+                color: content.isPremium ? theme.colors.premium : theme.colors.accent,
+                fontSize: 11 * scaleFont,
+              },
             ]}
           >
             {content.category || t("kicker")}
           </Text>
-          <Text style={[styles.title, { color: theme.colors.heading }]}>
+          <Text
+            style={[
+              styles.title,
+              { color: theme.colors.heading, fontSize: 28 * scaleFont, lineHeight: 34 * scaleFont },
+            ]}
+          >
             {content.title}
           </Text>
           {content.durationSeconds ? (
-            <Text style={[styles.meta, { color: theme.colors.textMuted }]}>
+            <Text style={[styles.meta, { color: theme.colors.textMuted, fontSize: 11 * scaleFont }]}>
               {t("duration", {
                 minutes: Math.round(content.durationSeconds / 60),
               })}
             </Text>
           ) : null}
-          <Text style={[styles.summary, { color: theme.colors.text }]}>
+          <Text
+            style={[styles.summary, { color: theme.colors.text, fontSize: 16 * scaleFont, lineHeight: 24 * scaleFont }]}
+          >
             {content.summary}
           </Text>
 
@@ -111,7 +126,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  coverGlow: { width: 180, height: 180, borderRadius: 180, opacity: 0.4 },
+  coverGlow: {
+    width: 200,
+    height: 200,
+    borderRadius: 200,
+    backgroundColor: "rgba(0, 0, 0, 0.16)",
+  },
   kicker: {
     fontFamily: fontFamilies.mono,
     fontSize: 11,

@@ -2,17 +2,20 @@ import { Link } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { ContentCardModel } from "../../features/content/types";
+import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 /**
- * Full-bleed editorial hero for the lead feed item, echoing the dark
- * `hero-card` in the Civica mockup: ink background, cream serif headline, and a
- * gold/accent kicker.
+ * Full-bleed editorial hero for the lead feed item. Painted with the palette's
+ * brand `accent` + `accentContrast` pair so it stays bold and readable across
+ * every theme — including the dark `midnight` palette — instead of assuming a
+ * fixed light/dark surface.
  */
 export function FeaturedCard({ item }: { item: ContentCardModel }) {
   const { theme } = useAppTheme();
-  const accentTone = item.isPremium ? theme.colors.premium : theme.colors.accent;
+  const { scaleSpace, scaleFont } = useResponsive();
+  const ink = theme.colors.accentContrast;
 
   return (
     <Link href={item.href as never} asChild>
@@ -22,33 +25,33 @@ export function FeaturedCard({ item }: { item: ContentCardModel }) {
           styles.card,
           {
             borderRadius: theme.radii.lg,
-            backgroundColor: theme.colors.heading,
+            backgroundColor: theme.colors.accent,
           },
           pressed && styles.pressed,
         ]}
       >
-        <View style={[styles.media, { backgroundColor: theme.colors.canvasAccent }]}>
-          <View style={[styles.mediaGlow, { backgroundColor: accentTone }]} />
+        <View style={[styles.media, { height: 132 * scaleSpace }]}>
+          <View style={styles.mediaGlow} />
         </View>
 
-        <View style={styles.body}>
-          <Text style={[styles.kicker, { color: accentTone }]}>
+        <View style={[styles.body, { padding: 18 * scaleSpace }]}>
+          <Text style={[styles.kicker, { color: ink, fontSize: 10 * scaleFont }]}>
             {item.isPremium ? `${item.kindLabel} · Premium` : item.kindLabel}
           </Text>
           <Text
             numberOfLines={3}
-            style={[styles.title, { color: theme.colors.surface }]}
+            style={[styles.title, { color: ink, fontSize: 24 * scaleFont }]}
           >
             {item.title}
           </Text>
           <Text
             numberOfLines={2}
-            style={[styles.summary, { color: theme.colors.surfaceMuted }]}
+            style={[styles.summary, { color: ink, fontSize: 14 * scaleFont }]}
           >
             {item.summary}
           </Text>
           {item.metaLabel ? (
-            <Text style={[styles.meta, { color: theme.colors.textMuted }]}>
+            <Text style={[styles.meta, { color: ink, fontSize: 11 * scaleFont }]}>
               {item.metaLabel}
             </Text>
           ) : null}
@@ -61,28 +64,28 @@ export function FeaturedCard({ item }: { item: ContentCardModel }) {
 const styles = StyleSheet.create({
   card: { overflow: "hidden" },
   pressed: { opacity: 0.92 },
-  media: { height: 132, justifyContent: "center", alignItems: "flex-end" },
+  media: { justifyContent: "center", alignItems: "flex-end" },
   mediaGlow: {
-    width: 200,
-    height: 200,
-    borderRadius: 200,
-    opacity: 0.32,
+    width: 220,
+    height: 220,
+    borderRadius: 220,
+    backgroundColor: "rgba(0, 0, 0, 0.18)",
     marginRight: -70,
-    marginTop: -40,
+    marginTop: -50,
   },
-  body: { gap: 6, padding: 18 },
+  body: { gap: 6 },
   kicker: {
     fontFamily: fontFamilies.mono,
-    fontSize: 10,
     textTransform: "uppercase",
     letterSpacing: 1.6,
+    opacity: 0.9,
   },
-  title: { fontFamily: fontFamilies.display, fontSize: 24, lineHeight: 29 },
-  summary: { fontSize: 14, lineHeight: 20 },
+  title: { fontFamily: fontFamilies.display, lineHeight: 30 },
+  summary: { lineHeight: 20, opacity: 0.92 },
   meta: {
     fontFamily: fontFamilies.mono,
-    fontSize: 11,
     letterSpacing: 0.4,
+    opacity: 0.8,
     marginTop: 2,
   },
 });

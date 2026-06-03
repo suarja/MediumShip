@@ -1,8 +1,10 @@
 import { PropsWithChildren } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Link } from "expo-router";
 
+import { useResponsive } from "../../features/responsive/use-responsive";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 type ContentDetailState = "loading" | "notFound" | "ready";
@@ -29,12 +31,20 @@ export function ContentDetailShell({
   children,
 }: ContentDetailShellProps) {
   const { theme } = useAppTheme();
+  const { scaleSpace, scaleFont, contentMaxWidth } = useResponsive();
 
   return (
-    <View style={[styles.safe, { backgroundColor: theme.colors.canvas }]}>
-      <View style={[styles.content, { padding: theme.spacing.lg }]}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.canvas }]}>
+      <View
+        style={[
+          styles.content,
+          { padding: theme.spacing.lg * scaleSpace, maxWidth: contentMaxWidth },
+        ]}
+      >
         <Link href="/home" asChild>
-          <Text style={[styles.back, { color: theme.colors.accent }]}>
+          <Text
+            style={[styles.back, { color: theme.colors.accent, fontSize: 15 * scaleFont }]}
+          >
             {backLabel}
           </Text>
         </Link>
@@ -59,13 +69,13 @@ export function ContentDetailShell({
           children
         )}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  content: { flex: 1, gap: 16 },
+  safe: { flex: 1, alignItems: "center" },
+  content: { flex: 1, width: "100%", gap: 16 },
   back: { fontSize: 15, fontWeight: "600", paddingVertical: 4 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
   notFoundTitle: { fontSize: 20, fontWeight: "700", textAlign: "center" },

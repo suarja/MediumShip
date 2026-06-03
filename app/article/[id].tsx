@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
 import type { ContentDoc } from "../../src/features/content/types";
+import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
@@ -14,6 +15,7 @@ export default function ArticleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation("article");
   const { theme } = useAppTheme();
+  const { scaleSpace, scaleFont } = useResponsive();
 
   const content = useQuery(
     api.content.queries.getPublishedById,
@@ -40,28 +42,45 @@ export default function ArticleDetailScreen() {
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
         >
-          <View style={[styles.cover, { backgroundColor: theme.colors.accent }]} />
+          <View
+            style={[
+              styles.cover,
+              { backgroundColor: theme.colors.accent, height: 160 * scaleSpace },
+            ]}
+          />
           <Text
             style={[
               styles.kicker,
-              { color: content.isPremium ? theme.colors.premium : theme.colors.accent },
+              {
+                color: content.isPremium ? theme.colors.premium : theme.colors.accent,
+                fontSize: 11 * scaleFont,
+              },
             ]}
           >
             {content.category || t("kicker")}
           </Text>
-          <Text style={[styles.title, { color: theme.colors.heading }]}>
+          <Text
+            style={[
+              styles.title,
+              { color: theme.colors.heading, fontSize: 28 * scaleFont, lineHeight: 34 * scaleFont },
+            ]}
+          >
             {content.title}
           </Text>
           {content.readingTimeMinutes ? (
-            <Text style={[styles.meta, { color: theme.colors.textMuted }]}>
+            <Text style={[styles.meta, { color: theme.colors.textMuted, fontSize: 11 * scaleFont }]}>
               {t("readingTime", { minutes: content.readingTimeMinutes })}
             </Text>
           ) : null}
-          <Text style={[styles.summary, { color: theme.colors.text }]}>
+          <Text
+            style={[styles.summary, { color: theme.colors.text, fontSize: 16 * scaleFont, lineHeight: 24 * scaleFont }]}
+          >
             {content.summary}
           </Text>
           {content.articleBody ? (
-            <Text style={[styles.body, { color: theme.colors.text }]}>
+            <Text
+              style={[styles.body, { color: theme.colors.text, fontSize: 16 * scaleFont, lineHeight: 26 * scaleFont }]}
+            >
               {content.articleBody}
             </Text>
           ) : null}

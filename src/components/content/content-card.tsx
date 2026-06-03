@@ -5,6 +5,7 @@ import type {
   ContentCardModel,
   ContentKind,
 } from "../../features/content/types";
+import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
@@ -19,6 +20,8 @@ const KIND_GLYPH: Record<ContentKind, string> = {
 
 export function ContentCard({ item }: { item: ContentCardModel }) {
   const { theme } = useAppTheme();
+  const { scaleSpace, scaleFont } = useResponsive();
+  const tileSize = 64 * scaleSpace;
 
   const tileColor =
     item.kind === "video"
@@ -37,6 +40,8 @@ export function ContentCard({ item }: { item: ContentCardModel }) {
             borderRadius: theme.radii.md,
             backgroundColor: theme.colors.surface,
             borderColor: theme.colors.border,
+            padding: 14 * scaleSpace,
+            gap: 14 * scaleSpace,
           },
           pressed && styles.pressed,
         ]}
@@ -44,10 +49,15 @@ export function ContentCard({ item }: { item: ContentCardModel }) {
         <View
           style={[
             styles.tile,
-            { borderRadius: theme.radii.sm, backgroundColor: tileColor },
+            {
+              width: tileSize,
+              height: tileSize,
+              borderRadius: theme.radii.sm,
+              backgroundColor: tileColor,
+            },
           ]}
         >
-          <Text style={[styles.glyph, { color: theme.colors.accent }]}>
+          <Text style={[styles.glyph, { color: theme.colors.accent, fontSize: 24 * scaleFont }]}>
             {KIND_GLYPH[item.kind]}
           </Text>
           {item.isPremium ? (
@@ -66,25 +76,28 @@ export function ContentCard({ item }: { item: ContentCardModel }) {
           <Text
             style={[
               styles.kicker,
-              { color: item.isPremium ? theme.colors.premium : theme.colors.accent },
+              {
+                color: item.isPremium ? theme.colors.premium : theme.colors.accent,
+                fontSize: 10 * scaleFont,
+              },
             ]}
           >
             {item.kindLabel}
           </Text>
           <Text
             numberOfLines={2}
-            style={[styles.title, { color: theme.colors.heading }]}
+            style={[styles.title, { color: theme.colors.heading, fontSize: 18 * scaleFont }]}
           >
             {item.title}
           </Text>
           <Text
             numberOfLines={2}
-            style={[styles.summary, { color: theme.colors.text }]}
+            style={[styles.summary, { color: theme.colors.text, fontSize: 14 * scaleFont }]}
           >
             {item.summary}
           </Text>
           {item.metaLabel ? (
-            <Text style={[styles.meta, { color: theme.colors.textMuted }]}>
+            <Text style={[styles.meta, { color: theme.colors.textMuted, fontSize: 11 * scaleFont }]}>
               {item.metaLabel}
             </Text>
           ) : null}

@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the first runnable MediumShip prototype foundation with Expo, Convex, Clerk, a white-label app shell, and a minimum editorial domain for `Article`, `Episode`, and `Video`.
+**Goal:** Build the first runnable MediumShip prototype foundation with Expo, Convex, Clerk, a white-label app shell, modular i18n, responsive iPhone/iPad primitives, and a minimum editorial domain for `Article`, `Episode`, and `Video`.
 
-**Architecture:** Use a single Expo app at the repo root with Expo Router for navigation, Convex for backend state and content queries, and Clerk for authentication. Keep the product core small: one tenant config, one feed query, and one set of detail screens for article, episode, and video, with the UI reading from a stable multi-format content model.
+**Architecture:** Use a single Expo app at the repo root with Expo Router for navigation, Convex for backend state and content queries, and Clerk for authentication. Base the auth wiring on proven Expo + Clerk + Convex patterns from `../Ideo/IdeoMobile`, use modular translation files split by page/feature, and introduce a `useResponsive` primitive from the start so the first screens already account for iPhone and iPad.
 
 **Tech Stack:** Expo, React Native, TypeScript, Expo Router, Convex, Clerk, React Native Testing Library, Jest, Zod
 
@@ -21,6 +21,16 @@
 - `app/premium.tsx` — premium screen
 - `app/profile.tsx` — profile screen
 - `src/theme/tokens.ts` — white-label theme tokens
+- `src/lib/polyfills.ts` — mobile runtime polyfills required before auth providers
+- `src/lib/i18n/index.ts` — i18n initialization
+- `src/lib/i18n/resources.ts` — translation resource aggregation
+- `src/lib/responsive/use-responsive.ts` — responsive phone/tablet primitive
+- `src/i18n/en/common.json` — shared English strings
+- `src/i18n/en/home.json` — home screen English strings
+- `src/i18n/en/profile.json` — profile screen English strings
+- `src/i18n/fr/common.json` — shared French strings
+- `src/i18n/fr/home.json` — home screen French strings
+- `src/i18n/fr/profile.json` — profile screen French strings
 - `src/features/tenant/default-tenant.ts` — initial tenant config
 - `src/features/content/types.ts` — shared content model types
 - `src/features/content/selectors.ts` — view-model helpers for content cards and details
@@ -52,9 +62,11 @@
 Read:
 - `docs/convex-components-descriptions.md`
 - `docs/adr/0001-choose-expo-convex-clerk.md`
+- `docs/research/2026-06-03-reference-repositories.md`
 
 Expected decision notes:
 - Use Clerk for auth
+- Use `ConvexProviderWithClerk` for authenticated mobile queries
 - Keep R2/Mux/RevenueCat decisions open for later tasks
 - Do not introduce custom backend abstractions before checking components
 
@@ -76,7 +88,8 @@ Run:
 
 ```bash
 npx expo install expo-router react-native-safe-area-context react-native-screens expo-linking expo-status-bar
-npm install convex @clerk/clerk-expo zod
+npx expo install expo-localization expo-secure-store
+npm install convex @clerk/clerk-expo i18next react-i18next zod
 npm install -D jest jest-expo @testing-library/react-native @testing-library/jest-native @types/jest
 ```
 
@@ -316,6 +329,7 @@ git commit -m "Bootstrap Convex schema and queries"
 
 **Files:**
 - Modify: `app/_layout.tsx`
+- Create: `src/lib/polyfills.ts`
 - Create: `src/components/layout/screen.tsx`
 - Create: `app/profile.tsx`
 - Create: `app/premium.tsx`
@@ -323,32 +337,63 @@ git commit -m "Bootstrap Convex schema and queries"
 
 - [ ] **Step 1: Add the root provider shell**
 
+Create `src/lib/polyfills.ts`:
+
+```ts
+if (typeof navigator !== "undefined" && navigator.onLine === undefined) {
+  Object.defineProperty(navigator, "onLine", {
+    get: () => true,
+    configurable: true,
+  });
+}
+```
+
 Update `app/_layout.tsx`:
 
 ```tsx
-import { ClerkProvider, SignedIn, SignedOut } from "@clerk/clerk-expo";
-import { ConvexProvider, ConvexReactClient } from "convex/react";
+import "../src/lib/polyfills";
+import { ClerkProvider, useAuth as useClerkAuth } from "@clerk/clerk-expo";
+import { ConvexReactClient } from "convex/react";
+import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Stack } from "expo-router";
-import { Text } from "react-native";
+import * as SecureStore from "expo-secure-store";
 import { env } from "../src/lib/env";
 
 const convex = new ConvexReactClient(env.EXPO_PUBLIC_CONVEX_URL);
+const tokenCache = {
+  getToken: (key: string) => SecureStore.getItemAsync(key),
+  saveToken: (key: string, value: string) => SecureStore.setItemAsync(key, value),
+  clearToken: (key: string) => SecureStore.deleteItemAsync(key),
+};
+
+function useAuth() {
+  const auth = useClerkAuth();
+
+  return {
+    ...auth,
+    isLoaded: auth.isLoaded,
+    isSignedIn: auth.isSignedIn,
+    getToken: auth.getToken,
+  };
+}
 
 export default function RootLayout() {
   return (
-    <ClerkProvider publishableKey={env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}>
-      <ConvexProvider client={convex}>
-        <SignedIn>
-          <Stack screenOptions={{ headerShown: false }} />
-        </SignedIn>
-        <SignedOut>
-          <Text>Authentication required</Text>
-        </SignedOut>
-      </ConvexProvider>
+    <ClerkProvider
+      publishableKey={env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      tokenCache={tokenCache}
+    >
+      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+        <Stack screenOptions={{ headerShown: false }} />
+      </ConvexProviderWithClerk>
     </ClerkProvider>
   );
 }
 ```
+
+Note:
+- if Clerk v3 shows post-login auth flicker or data loss, port the stabilized `useAuth()` wrapper from `../Ideo/IdeoMobile/src/app/_layout.tsx`
+- keep the `navigator.onLine` polyfill before any Clerk import
 
 - [ ] **Step 2: Add a simple screen wrapper**
 
@@ -440,7 +485,110 @@ git add app/_layout.tsx app/profile.tsx app/premium.tsx src/components/layout/sc
 git commit -m "Wire Clerk and Convex providers"
 ```
 
-### Task 4: Define the multi-format content model and test its selectors
+### Task 4: Scaffold modular i18n and responsive primitives
+
+**Files:**
+- Create: `src/lib/i18n/index.ts`
+- Create: `src/lib/i18n/resources.ts`
+- Create: `src/lib/responsive/use-responsive.ts`
+- Create: `src/i18n/en/common.json`
+- Create: `src/i18n/en/home.json`
+- Create: `src/i18n/en/profile.json`
+- Create: `src/i18n/fr/common.json`
+- Create: `src/i18n/fr/home.json`
+- Create: `src/i18n/fr/profile.json`
+
+- [ ] **Step 1: Create translation resources by page**
+
+Create `src/i18n/en/common.json`:
+
+```json
+{
+  "loading": "Loading",
+  "premium": "Premium"
+}
+```
+
+Create `src/i18n/fr/common.json`:
+
+```json
+{
+  "loading": "Chargement",
+  "premium": "Premium"
+}
+```
+
+Create `src/i18n/en/home.json` and `src/i18n/fr/home.json` with only home-screen keys.
+
+- [ ] **Step 2: Aggregate resources**
+
+Create `src/lib/i18n/resources.ts`:
+
+```ts
+import commonEn from "../../i18n/en/common.json";
+import homeEn from "../../i18n/en/home.json";
+import profileEn from "../../i18n/en/profile.json";
+import commonFr from "../../i18n/fr/common.json";
+import homeFr from "../../i18n/fr/home.json";
+import profileFr from "../../i18n/fr/profile.json";
+
+export const resources = {
+  en: { common: commonEn, home: homeEn, profile: profileEn },
+  fr: { common: commonFr, home: homeFr, profile: profileFr },
+} as const;
+```
+
+- [ ] **Step 3: Initialize i18n**
+
+Create `src/lib/i18n/index.ts`:
+
+```ts
+import { getLocales } from "expo-localization";
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+import { resources } from "./resources";
+
+void i18n.use(initReactI18next).init({
+  resources,
+  lng: getLocales()[0]?.languageCode ?? "en",
+  fallbackLng: "en",
+  defaultNS: "common",
+  interpolation: { escapeValue: false },
+});
+
+export default i18n;
+```
+
+- [ ] **Step 4: Add responsive primitive**
+
+Create `src/lib/responsive/use-responsive.ts`:
+
+```ts
+import { useWindowDimensions } from "react-native";
+
+export function useResponsive() {
+  const { width, height } = useWindowDimensions();
+  const shortestSide = Math.min(width, height);
+  const isTablet = shortestSide >= 768;
+
+  return {
+    width,
+    height,
+    isTablet,
+    contentMaxWidth: isTablet ? 720 : width,
+    screenPadding: isTablet ? 24 : 16,
+  };
+}
+```
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/lib/i18n src/lib/responsive src/i18n
+git commit -m "Add modular i18n and responsive primitives"
+```
+
+### Task 5: Define the multi-format content model and test its selectors
 
 **Files:**
 - Create: `src/features/content/types.ts`
@@ -559,7 +707,7 @@ git add package.json src/features/content tests/content
 git commit -m "Define multi-format content model"
 ```
 
-### Task 5: Build the first feed and detail screens
+### Task 6: Build the first feed and detail screens
 
 **Files:**
 - Create: `src/components/content/content-card.tsx`
@@ -738,7 +886,7 @@ git add app src/components tests
 git commit -m "Add multi-format feed shell"
 ```
 
-### Task 6: Connect the feed UI to Convex data and seed demo content
+### Task 7: Connect the feed UI to Convex data and seed demo content
 
 **Files:**
 - Modify: `convex/seed.ts`

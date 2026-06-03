@@ -46,6 +46,8 @@ Le produit n'est pas centré exclusivement sur la vidéo. `Article`, `Episode` e
 - RevenueCat et Stripe restent dans le périmètre des décisions de monétisation selon les besoins mobile et web.
 - Cloudflare R2 est la première cible préférée pour le stockage média en upload direct si un composant Convex existant convient.
 - La vidéo est obligatoire pour la direction produit au 3 juin 2026.
+- L'application doit être pensée responsive dès le départ pour iPhone et iPad.
+- L'internationalisation doit être construite progressivement avec des fichiers de traduction découpés par page ou par feature.
 
 ## Règles Convex
 
@@ -62,6 +64,7 @@ Le produit n'est pas centré exclusivement sur la vidéo. `Article`, `Episode` e
 - Rendre les modules progressivement activables via feature flags.
 - Éviter la complexité multi-tenant de niveau production tant que la validation commerciale n'exige pas plus.
 - Favoriser les intégrations réversibles et les composants qui réduisent la surface backend spécifique.
+- Préférer des patterns déjà validés dans les repos de référence quand ils correspondent au besoin.
 
 ## Non-Objectifs
 

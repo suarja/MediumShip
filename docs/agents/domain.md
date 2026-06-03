@@ -7,6 +7,7 @@ How the engineering skills should consume this repo's domain documentation when 
 - `CONTEXT.md` at the repo root
 - `docs/adr/` for architectural decisions relevant to the current topic
 - `docs/convex-components-descriptions.md` before proposing, prototyping, or implementing a Convex-backed feature
+- `docs/research/2026-06-03-reference-repositories.md` when mobile implementation details, auth wiring, i18n structure, or responsive patterns are unclear
 
 If any of these files don't exist yet, proceed silently.
 
@@ -28,6 +29,10 @@ When naming domain concepts, use the terms defined in `CONTEXT.md`.
 ## Prefer existing Convex components
 
 When a feature touches auth, storage, video, payments, notifications, workflows, rate limiting, search, or other backend capabilities, review `docs/convex-components-descriptions.md` first. Prefer an existing Convex component when it covers the need cleanly; justify custom implementation when it does not.
+
+## Reuse proven mobile patterns
+
+For Expo/React Native decisions, prefer proven patterns from the documented reference repos, especially for Clerk + Convex auth wiring, env validation, translation structure, and iPhone/iPad responsiveness.
 
 ## Flag ADR conflicts
 

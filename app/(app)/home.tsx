@@ -64,7 +64,7 @@ export default function HomeFeedScreen() {
         style={styles.scroll}
         contentContainerStyle={[
           styles.list,
-          { gap: theme.spacing.lg * scaleSpace, paddingBottom: tabBarSpace },
+          { gap: theme.spacing.md * scaleSpace, paddingBottom: tabBarSpace },
         ]}
         showsVerticalScrollIndicator={false}
       >

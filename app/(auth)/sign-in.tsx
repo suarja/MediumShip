@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useOAuth, useSignIn } from "@clerk/clerk-expo";
-import { router } from "expo-router";
+import { Link, router } from "expo-router";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 
@@ -207,6 +207,13 @@ export default function SignInScreen() {
                 )}
               </Pressable>
             </View>
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Pas encore de compte ?</Text>
+              <Link href="/sign-up" style={styles.footerLink}>
+                Créer un compte
+              </Link>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -274,6 +281,14 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   submitText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  },
+  footerText: { color: "#475467", fontSize: 14 },
+  footerLink: { color: "#B42318", fontSize: 14, fontWeight: "700" },
   pressed: { opacity: 0.85 },
   disabled: { opacity: 0.5 },
 });

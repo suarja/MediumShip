@@ -6,6 +6,9 @@ const envSchema = z.object({
 });
 
 export const env = envSchema.parse({
+  // Prefer a CMS-local env file (`apps/cms/.env.local`). The Expo public vars
+  // remain as a local fallback so the CMS can still boot against the same
+  // backend before the dedicated file is created.
   convexUrl:
     process.env.NEXT_PUBLIC_CONVEX_URL ?? process.env.EXPO_PUBLIC_CONVEX_URL,
   clerkPublishableKey:

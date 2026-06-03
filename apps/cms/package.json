@@ -2,9 +2,9 @@
   "name": "mediumship-cms",
   "private": true,
   "scripts": {
-    "dev": "sh -ac 'set -a; . ../../.env.local; set +a; next dev'",
-    "build": "sh -ac 'set -a; . ../../.env.local; set +a; next build'",
-    "start": "sh -ac 'set -a; . ../../.env.local; set +a; next start'"
+    "dev": "sh -ac 'set -a; if [ -f .env.local ]; then . ./.env.local; elif [ -f ../../.env.local ]; then . ../../.env.local; fi; set +a; next dev'",
+    "build": "sh -ac 'set -a; if [ -f .env.local ]; then . ./.env.local; elif [ -f ../../.env.local ]; then . ../../.env.local; fi; set +a; next build'",
+    "start": "sh -ac 'set -a; if [ -f .env.local ]; then . ./.env.local; elif [ -f ../../.env.local ]; then . ../../.env.local; fi; set +a; next start'"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.39.1",

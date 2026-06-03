@@ -67,6 +67,23 @@ convex:
 seed:
     npx convex run tenants/seed:seedDemoContent
 
+# ─── CMS web ─────────────────────────────────────────────────────────────────
+
+# Start the milestone 2 internal CMS in dev mode.
+[group('cms')]
+cms:
+    npm run dev --prefix apps/cms
+
+# Build the CMS production bundle.
+[group('cms')]
+cms-build:
+    npm run build --prefix apps/cms
+
+# Regenerate Convex functions/types once for the CMS + mobile shared backend.
+[group('cms')]
+cms-convex:
+    npx convex dev --once
+
 # ─── Quality ─────────────────────────────────────────────────────────────────
 
 # Run the Jest test suite.

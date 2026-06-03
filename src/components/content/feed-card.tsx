@@ -146,11 +146,11 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.9 },
   rule: { height: 4, width: "100%" },
-  featuredCover: { width: "100%", height: 184, resizeMode: "cover" },
+  featuredCover: { width: "100%", height: 184 },
   body: {},
   header: { flexDirection: "row", alignItems: "center" },
   tile: { alignItems: "center", justifyContent: "center", overflow: "hidden" },
-  thumbnail: { width: "100%", height: "100%", resizeMode: "cover" },
+  thumbnail: { width: "100%", height: "100%" },
   glyph: { fontWeight: "700" },
   premiumBadge: {
     position: "absolute",

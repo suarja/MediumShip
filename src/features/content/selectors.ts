@@ -6,6 +6,72 @@ const KIND_LABELS: Record<ContentKind, string> = {
   video: "Video",
 };
 
+export function normalizeRemoteImageUrl(url: string | undefined) {
+  if (!url) {
+    return undefined;
+  }
+
+  try {
+    const parsed = new URL(url);
+
+    if (
+      parsed.hostname.includes("google.") &&
+      parsed.pathname === "/imgres"
+    ) {
+      const nested = parsed.searchParams.get("imgurl");
+      if (nested) {
+        return normalizeRemoteImageUrl(decodeURIComponent(nested));
+      }
+    }
+
+    if (parsed.protocol === "http:") {
+      parsed.protocol = "https:";
+    }
+
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
+export function getYoutubeVideoId(
+  source:
+    | Pick<Extract<NonNullable<ContentDoc["videoSource"]>, { kind: "youtube" }>, "youtubeUrl" | "youtubeVideoId">
+    | undefined,
+) {
+  if (!source) {
+    return undefined;
+  }
+
+  const directId = source.youtubeVideoId.trim();
+
+  try {
+    const parsed = new URL(source.youtubeUrl);
+    const host = parsed.hostname.replace(/^www\./, "");
+
+    if (host === "youtu.be") {
+      const pathId = parsed.pathname.split("/").filter(Boolean)[0];
+      return pathId || directId || undefined;
+    }
+
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      const watchId = parsed.searchParams.get("v");
+      if (watchId) {
+        return watchId;
+      }
+
+      const parts = parsed.pathname.split("/").filter(Boolean);
+      if (parts[0] === "embed" || parts[0] === "shorts") {
+        return parts[1] || directId || undefined;
+      }
+    }
+  } catch {
+    return directId || undefined;
+  }
+
+  return directId || undefined;
+}
+
 export function getYoutubeThumbnailUrl(youtubeVideoId: string) {
   return `https://i.ytimg.com/vi/${youtubeVideoId}/hqdefault.jpg`;
 }
@@ -13,12 +79,16 @@ export function getYoutubeThumbnailUrl(youtubeVideoId: string) {
 export function getContentCoverImageUrl(
   content: Pick<ContentDoc, "heroImageUrl" | "kind" | "videoSource">,
 ) {
-  if (content.heroImageUrl) {
-    return content.heroImageUrl;
+  const normalizedHeroImageUrl = normalizeRemoteImageUrl(content.heroImageUrl);
+  if (normalizedHeroImageUrl) {
+    return normalizedHeroImageUrl;
   }
 
   if (content.kind === "video" && content.videoSource?.kind === "youtube") {
-    return getYoutubeThumbnailUrl(content.videoSource.youtubeVideoId);
+    const youtubeVideoId = getYoutubeVideoId(content.videoSource);
+    if (youtubeVideoId) {
+      return getYoutubeThumbnailUrl(youtubeVideoId);
+    }
   }
 
   return undefined;

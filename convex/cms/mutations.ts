@@ -6,6 +6,10 @@ import {
   normalizeEnabledModules,
   normalizeFeedSections,
 } from "../../src/features/tenant/public-config";
+import {
+  getYoutubeVideoId,
+  normalizeRemoteImageUrl,
+} from "../../src/features/content/selectors";
 import { isThemePaletteName } from "../../src/features/theme/palette-catalog";
 import {
   findCurrentCmsUser,
@@ -46,6 +50,58 @@ function buildSlug(kind: "article" | "episode" | "video") {
 function sanitizeText(value: string | null) {
   const trimmed = value?.trim() ?? "";
   return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function normalizeHeroImageUrl(value: string | null) {
+  const trimmed = sanitizeText(value);
+  return trimmed ? normalizeRemoteImageUrl(trimmed) : undefined;
+}
+
+function normalizeVideoSource(
+  source:
+    | {
+        kind: "youtube";
+        youtubeVideoId: string;
+        youtubeUrl: string;
+      }
+    | {
+        kind: "hosted";
+        uploadKey: string;
+        playbackUrl: string;
+      }
+    | null,
+) {
+  if (!source) {
+    return undefined;
+  }
+
+  if (source.kind === "youtube") {
+    const youtubeUrl = source.youtubeUrl.trim();
+    const youtubeVideoId =
+      getYoutubeVideoId({
+        youtubeUrl,
+        youtubeVideoId: source.youtubeVideoId,
+      }) ?? source.youtubeVideoId.trim();
+
+    return youtubeUrl && youtubeVideoId
+      ? {
+          kind: "youtube" as const,
+          youtubeVideoId,
+          youtubeUrl,
+        }
+      : undefined;
+  }
+
+  const uploadKey = source.uploadKey.trim();
+  const playbackUrl = source.playbackUrl.trim();
+
+  return uploadKey && playbackUrl
+    ? {
+        kind: "hosted" as const,
+        uploadKey,
+        playbackUrl,
+      }
+    : undefined;
 }
 
 function buildContentRecord(args: {
@@ -257,7 +313,7 @@ export const updateContent = mutation({
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0),
       isPremium: args.isPremium,
-      heroImageUrl: sanitizeText(args.heroImageUrl),
+      heroImageUrl: normalizeHeroImageUrl(args.heroImageUrl),
       publishedAt: existing.publishedAt,
       readingTimeMinutes:
         existing.kind === "article" && args.readingTimeMinutes !== null
@@ -275,8 +331,8 @@ export const updateContent = mutation({
           ? args.durationSeconds
           : undefined,
       videoSource:
-        existing.kind === "video" && args.videoSource !== null
-          ? args.videoSource
+        existing.kind === "video"
+          ? normalizeVideoSource(args.videoSource)
           : undefined,
     });
 

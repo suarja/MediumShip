@@ -146,11 +146,11 @@ export default function EpisodeDetailScreen() {
 const styles = StyleSheet.create({
   scroll: { gap: 10, paddingBottom: 32 },
   cover: {
+    width: "100%",
     height: 160,
     borderRadius: 18,
     marginBottom: 6,
     overflow: "hidden",
-    resizeMode: "cover",
     justifyContent: "center",
     alignItems: "center",
   },

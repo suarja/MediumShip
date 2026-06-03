@@ -141,10 +141,10 @@ export default function VideoDetailScreen() {
 const styles = StyleSheet.create({
   scroll: { gap: 10, paddingBottom: 32 },
   cover: {
+    width: "100%",
     height: 180,
     borderRadius: 18,
     marginBottom: 6,
-    resizeMode: "cover",
     justifyContent: "center",
     alignItems: "center",
   },

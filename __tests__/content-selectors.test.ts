@@ -2,6 +2,8 @@ import { describe, expect, it } from "@jest/globals";
 
 import {
   getContentCoverImageUrl,
+  getYoutubeVideoId,
+  normalizeRemoteImageUrl,
   toContentCardModel,
 } from "../src/features/content/selectors";
 
@@ -67,5 +69,22 @@ describe("toContentCardModel", () => {
         },
       }),
     ).toBe("https://cdn.example.com/video-cover.jpg");
+  });
+
+  it("normalizes google image result urls to direct image urls", () => {
+    expect(
+      normalizeRemoteImageUrl(
+        "https://www.google.com/imgres?q=demo&imgurl=https%3A%2F%2Fexample.com%2Fcover.jpg&imgrefurl=https%3A%2F%2Fexample.com",
+      ),
+    ).toBe("https://example.com/cover.jpg");
+  });
+
+  it("derives the youtube id from the youtube url when the stored id is stale", () => {
+    expect(
+      getYoutubeVideoId({
+        youtubeUrl: "https://youtu.be/EfstHja6-jc?si=ywTGl4MKSPkvAmLb",
+        youtubeVideoId: "abc123xyz00",
+      }),
+    ).toBe("EfstHja6-jc");
   });
 });

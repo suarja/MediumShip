@@ -111,7 +111,7 @@ export default function ArticleDetailScreen() {
 
 const styles = StyleSheet.create({
   scroll: { gap: 10, paddingBottom: 32 },
-  cover: { height: 160, borderRadius: 18, marginBottom: 6 },
+  cover: { width: "100%", height: 160, borderRadius: 18, marginBottom: 6 },
   kicker: {
     fontFamily: fontFamilies.mono,
     fontSize: 11,

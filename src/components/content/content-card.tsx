@@ -37,11 +37,12 @@ export function ContentCard({ item }: { item: ContentCardModel }) {
         style={({ pressed }) => [
           styles.card,
           {
-            borderRadius: theme.radii.md,
+            borderRadius: theme.radii.lg,
             backgroundColor: theme.colors.surface,
             borderColor: theme.colors.border,
-            padding: 14 * scaleSpace,
-            gap: 14 * scaleSpace,
+            shadowColor: theme.colors.heading,
+            padding: theme.spacing.lg * scaleSpace,
+            gap: theme.spacing.md * scaleSpace,
           },
           pressed && styles.pressed,
         ]}
@@ -110,9 +111,12 @@ export function ContentCard({ item }: { item: ContentCardModel }) {
 const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
-    gap: 14,
-    padding: 14,
+    alignItems: "center",
     borderWidth: StyleSheet.hairlineWidth,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
   },
   pressed: { opacity: 0.85 },
   tile: {

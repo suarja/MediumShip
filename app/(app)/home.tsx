@@ -8,6 +8,7 @@ import { ContentCard } from "../../src/components/content/content-card";
 import { DegradedBanner } from "../../src/components/content/degraded-banner";
 import { FeaturedCard } from "../../src/components/content/featured-card";
 import { Screen } from "../../src/components/layout/screen";
+import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { toContentCardModel } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
@@ -20,6 +21,7 @@ export default function HomeFeedScreen() {
   const { t } = useTranslation("home");
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
+  const tabBarSpace = useTabBarSpace();
   const { state: networkState } = useNetworkStatus();
 
   const contents = useQuery(api.content.queries.listPublishedFeed, {
@@ -63,7 +65,7 @@ export default function HomeFeedScreen() {
         style={styles.scroll}
         contentContainerStyle={[
           styles.list,
-          { gap: theme.spacing.md * scaleSpace, paddingBottom: theme.spacing.xl * scaleSpace },
+          { gap: theme.spacing.lg * scaleSpace, paddingBottom: tabBarSpace },
         ]}
         showsVerticalScrollIndicator={false}
       >

@@ -11,13 +11,17 @@ export function Screen({ children }: PropsWithChildren) {
 
   return (
     <SafeAreaView
+      // No bottom edge: content runs to the bottom of the screen and scrolls
+      // under the floating tab bar over a single canvas color.
+      edges={["top", "left", "right"]}
       style={[styles.safeArea, { backgroundColor: theme.colors.canvas }]}
     >
       <View
         style={[
           styles.content,
           {
-            padding: theme.spacing.lg * scaleSpace,
+            paddingHorizontal: theme.spacing.lg * scaleSpace,
+            paddingTop: theme.spacing.lg * scaleSpace,
             maxWidth: contentMaxWidth,
             alignSelf: "center",
           },

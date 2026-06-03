@@ -37,6 +37,7 @@ export function FeaturedCard({ item }: { item: ContentCardModel }) {
             borderRadius: theme.radii.lg,
             backgroundColor: theme.colors.surface,
             borderColor: theme.colors.border,
+            shadowColor: theme.colors.heading,
           },
           pressed && styles.pressed,
         ]}
@@ -97,7 +98,14 @@ export function FeaturedCard({ item }: { item: ContentCardModel }) {
 }
 
 const styles = StyleSheet.create({
-  card: { overflow: "hidden", borderWidth: StyleSheet.hairlineWidth },
+  card: {
+    overflow: "hidden",
+    borderWidth: StyleSheet.hairlineWidth,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
   pressed: { opacity: 0.9 },
   rule: { height: 4, width: "100%" },
   body: { gap: 8 },

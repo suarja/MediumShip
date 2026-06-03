@@ -6,8 +6,8 @@ import { useWindowDimensions } from "react-native";
  * first-pass requirement, not later polish.
  *
  * - `isTablet`  — width >= 768pt (standard iPad threshold)
- * - `scaleSpace` — multiplier for spacing/dimensions (1.5x on tablet)
- * - `scaleFont`  — gentler multiplier for type (1.2x on tablet)
+ * - `scaleSpace` — multiplier for spacing/dimensions on tablet
+ * - `scaleFont`  — multiplier for type on tablet (bigger, the screen is large)
  * - `contentMaxWidth` — readable column cap on tablet, undefined on phone
  */
 export function useResponsive() {
@@ -16,8 +16,8 @@ export function useResponsive() {
 
   return {
     isTablet,
-    scaleSpace: isTablet ? 1.5 : 1,
-    scaleFont: isTablet ? 1.2 : 1,
-    contentMaxWidth: isTablet ? 680 : undefined,
+    scaleSpace: isTablet ? 1.4 : 1,
+    scaleFont: isTablet ? 1.3 : 1,
+    contentMaxWidth: isTablet ? 760 : undefined,
   };
 }

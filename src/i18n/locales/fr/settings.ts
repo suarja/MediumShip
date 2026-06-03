@@ -35,6 +35,11 @@ export default {
     },
   },
   account: {
+    status: "Statut",
+    guest: "Invite",
+    memberFeatures: "Reserve aux membres",
+    memberFeaturesDescription:
+      "Creez un compte pour synchroniser la progression, enregistrer des contenus, telecharger les formats pris en charge et acceder aux fonctions premium.",
     signedInAs: "Connecté en tant que",
     signOut: "Se déconnecter",
   },

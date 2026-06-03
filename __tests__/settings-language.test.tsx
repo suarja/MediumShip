@@ -13,6 +13,7 @@ jest.mock("convex/react", () => ({
 
 jest.mock("../src/features/auth/use-clerk-auth", () => ({
   useClerkAuth: () => ({
+    isSignedIn: true,
     email: "camille@example.com",
     fullName: "Camille",
     signOut: jest.fn(),

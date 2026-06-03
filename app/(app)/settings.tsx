@@ -11,7 +11,7 @@ import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 export default function SettingsScreen() {
   const { t } = useTranslation(["settings", "common"]);
-  const { email, fullName, signOut } = useClerkAuth();
+  const { isSignedIn, email, fullName, signOut } = useClerkAuth();
   const { theme, tenantName } = useAppTheme();
 
   return (
@@ -35,16 +35,32 @@ export default function SettingsScreen() {
         </SettingsSection>
 
         <SettingsSection title={t("settings:sections.account")}>
-          <SettingsRow
-            label={t("settings:account.signedInAs")}
-            value={fullName ?? email ?? "—"}
-          />
-          <SettingsRow
-            label={t("settings:account.signOut")}
-            danger
-            isLast
-            onPress={() => void signOut()}
-          />
+          {isSignedIn ? (
+            <>
+              <SettingsRow
+                label={t("settings:account.signedInAs")}
+                value={fullName ?? email ?? "—"}
+              />
+              <SettingsRow
+                label={t("settings:account.signOut")}
+                danger
+                isLast
+                onPress={() => void signOut()}
+              />
+            </>
+          ) : (
+            <>
+              <SettingsRow
+                label={t("settings:account.status")}
+                value={t("settings:account.guest")}
+              />
+              <SettingsRow
+                label={t("settings:account.memberFeatures")}
+                description={t("settings:account.memberFeaturesDescription")}
+                isLast
+              />
+            </>
+          )}
         </SettingsSection>
       </View>
     </Screen>

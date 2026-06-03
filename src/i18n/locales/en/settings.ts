@@ -35,6 +35,11 @@ export default {
     },
   },
   account: {
+    status: "Status",
+    guest: "Guest",
+    memberFeatures: "Members only",
+    memberFeaturesDescription:
+      "Create an account to sync progress, save items, download supported content, and access premium features.",
     signedInAs: "Signed in as",
     signOut: "Sign out",
   },

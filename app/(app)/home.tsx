@@ -19,7 +19,7 @@ import { useAppTheme } from "../../src/features/theme/theme-provider";
 export default function HomeFeedScreen() {
   const { t } = useTranslation("home");
   const { theme } = useAppTheme();
-  const { scaleFont } = useResponsive();
+  const { scaleFont, scaleSpace } = useResponsive();
   const { state: networkState } = useNetworkStatus();
 
   const contents = useQuery(api.content.queries.listPublishedFeed, {
@@ -33,7 +33,12 @@ export default function HomeFeedScreen() {
   return (
     <Screen>
       <DegradedBanner state={networkState} />
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          { gap: theme.spacing.xs * scaleSpace, marginBottom: theme.spacing.xl * scaleSpace },
+        ]}
+      >
         <Text
           style={[styles.eyebrow, { color: theme.colors.accent, fontSize: 11 * scaleFont }]}
         >
@@ -56,7 +61,10 @@ export default function HomeFeedScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[
+          styles.list,
+          { gap: theme.spacing.md * scaleSpace, paddingBottom: theme.spacing.xl * scaleSpace },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {items.length === 0 ? (

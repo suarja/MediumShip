@@ -258,7 +258,9 @@ const paletteCatalog: Record<ThemePaletteName, ThemePaletteDefinition> = {
       textMuted: "#7A6A4E",
       accent: "#B47A2A",
       accentSoft: "rgba(180, 122, 42, 0.13)",
-      accentContrast: "#FFF9EC",
+      // Ochre is a light accent, so on-accent text must be near-black (like the
+      // midnight gold accent) to stay readable — a cream contrast fails WCAG.
+      accentContrast: "#1F1505",
       premium: "#C89648",
       premiumSoft: "rgba(200, 150, 72, 0.14)",
       tabBar: "#DDD6C2",

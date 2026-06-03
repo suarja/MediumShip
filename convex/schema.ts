@@ -22,12 +22,19 @@ export default defineSchema({
   tenants: defineTable({
     slug: v.string(),
     name: v.string(),
-    theme: v.object({
-      primary: v.string(),
-      accent: v.string(),
-      background: v.string(),
-      foreground: v.string(),
-    }),
+    themeConfig: v.optional(
+      v.object({
+        paletteName: v.string(),
+      }),
+    ),
+    theme: v.optional(
+      v.object({
+        primary: v.string(),
+        accent: v.string(),
+        background: v.string(),
+        foreground: v.string(),
+      }),
+    ),
     enabledModules: v.array(v.string()),
   }).index("by_slug", ["slug"]),
   contents: defineTable({

@@ -10,6 +10,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { env } from "../src/lib/env";
 import { useStableAuth } from "../src/features/auth/use-stable-auth";
+import { AppThemeProvider } from "../src/features/theme/theme-provider";
 import { i18n, initI18n } from "../src/i18n";
 
 const convex = new ConvexReactClient(env.EXPO_PUBLIC_CONVEX_URL);
@@ -68,8 +69,10 @@ export default function RootLayout() {
         tokenCache={tokenCache}
       >
         <ConvexProviderWithClerk client={convex} useAuth={useStableAuth}>
-          <StatusBar style="auto" />
-          <Stack key={languageKey} screenOptions={{ headerShown: false }} />
+          <AppThemeProvider>
+            <StatusBar style="auto" />
+            <Stack key={languageKey} screenOptions={{ headerShown: false }} />
+          </AppThemeProvider>
         </ConvexProviderWithClerk>
       </ClerkProvider>
     </SafeAreaProvider>

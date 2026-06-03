@@ -15,12 +15,14 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../convex/_generated/api";
 import { Screen } from "../../src/components/layout/screen";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
+import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 export default function ConvexSliceScreen() {
   const { t } = useTranslation("home");
   const tenant = useQuery(api.tenants.queries.getDefaultTenant, {});
   const seedDemoTenant = useMutation(api.tenants.seed.seedDemoContent);
   const [isSeeding, setIsSeeding] = useState(false);
+  const { theme } = useAppTheme();
 
   const handleSeed = async () => {
     try {
@@ -39,19 +41,43 @@ export default function ConvexSliceScreen() {
   return (
     <Screen>
       <View style={styles.container}>
-        <Text style={styles.eyebrow}>{t("eyebrow")}</Text>
-        <Text style={styles.title}>{t("title")}</Text>
-        <Text style={styles.description}>{t("description")}</Text>
+        <Text style={[styles.eyebrow, { color: theme.colors.accent }]}>
+          {t("eyebrow")}
+        </Text>
+        <Text style={[styles.title, { color: theme.colors.heading }]}>{t("title")}</Text>
+        <Text style={[styles.description, { color: theme.colors.textMuted }]}>
+          {t("description")}
+        </Text>
 
         {tenant === undefined ? (
-          <View style={styles.card}>
-            <ActivityIndicator color="#B42318" />
-            <Text style={styles.cardText}>{t("loadingTenant")}</Text>
+          <View
+            style={[
+              styles.card,
+              {
+                borderRadius: theme.radii.lg,
+                backgroundColor: theme.colors.surface,
+              },
+            ]}
+          >
+            <ActivityIndicator color={theme.colors.accent} />
+            <Text style={[styles.cardText, { color: theme.colors.text }]}>
+              {t("loadingTenant")}
+            </Text>
           </View>
         ) : tenant === null ? (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>{t("emptyState.title")}</Text>
-            <Text style={styles.cardText}>
+          <View
+            style={[
+              styles.card,
+              {
+                borderRadius: theme.radii.lg,
+                backgroundColor: theme.colors.surface,
+              },
+            ]}
+          >
+            <Text style={[styles.cardTitle, { color: theme.colors.heading }]}>
+              {t("emptyState.title")}
+            </Text>
+            <Text style={[styles.cardText, { color: theme.colors.text }]}>
               {t("emptyState.expectedSeedSlug", { slug: defaultTenant.slug })}
             </Text>
             <Pressable
@@ -59,6 +85,10 @@ export default function ConvexSliceScreen() {
               disabled={isSeeding}
               style={({ pressed }) => [
                 styles.button,
+                {
+                  borderRadius: theme.radii.pill,
+                  backgroundColor: theme.colors.accent,
+                },
                 (pressed || isSeeding) && styles.buttonPressed,
               ]}
             >
@@ -68,25 +98,40 @@ export default function ConvexSliceScreen() {
             </Pressable>
           </View>
         ) : (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>{t("loadedState.title")}</Text>
-            <Text style={styles.cardText}>
+          <View
+            style={[
+              styles.card,
+              {
+                borderRadius: theme.radii.lg,
+                backgroundColor: theme.colors.surface,
+              },
+            ]}
+          >
+            <Text style={[styles.cardTitle, { color: theme.colors.heading }]}>
+              {t("loadedState.title")}
+            </Text>
+            <Text style={[styles.cardText, { color: theme.colors.text }]}>
               {t("loadedState.name", { value: tenant.name })}
             </Text>
-            <Text style={styles.cardText}>
+            <Text style={[styles.cardText, { color: theme.colors.text }]}>
               {t("loadedState.slug", { value: tenant.slug })}
             </Text>
-            <Text style={styles.cardText}>
+            <Text style={[styles.cardText, { color: theme.colors.text }]}>
               {t("loadedState.modules", {
                 value: tenant.enabledModules.join(", "),
               })}
+            </Text>
+            <Text style={[styles.cardText, { color: theme.colors.textMuted }]}>
+              Palette: {tenant.themeConfig?.paletteName ?? defaultTenant.themeConfig.paletteName}
             </Text>
           </View>
         )}
 
         <Link href="/profile" asChild>
           <Pressable style={({ pressed }) => [styles.link, pressed && styles.buttonPressed]}>
-            <Text style={styles.linkText}>{t("openProfile")}</Text>
+            <Text style={[styles.linkText, { color: theme.colors.accent }]}>
+              {t("openProfile")}
+            </Text>
           </Pressable>
         </Link>
       </View>
@@ -101,41 +146,32 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   eyebrow: {
-    color: "#B42318",
     fontSize: 13,
     fontWeight: "700",
     textTransform: "uppercase",
   },
   title: {
-    color: "#101828",
     fontSize: 28,
     fontWeight: "700",
   },
   description: {
-    color: "#475467",
     fontSize: 16,
     lineHeight: 24,
   },
   card: {
     gap: 12,
-    borderRadius: 20,
-    backgroundColor: "#FFFFFF",
     padding: 20,
   },
   cardTitle: {
-    color: "#101828",
     fontSize: 18,
     fontWeight: "700",
   },
   cardText: {
-    color: "#344054",
     fontSize: 15,
     lineHeight: 22,
   },
   button: {
     alignSelf: "flex-start",
-    borderRadius: 999,
-    backgroundColor: "#B42318",
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
@@ -152,7 +188,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   linkText: {
-    color: "#B42318",
     fontSize: 15,
     fontWeight: "600",
   },

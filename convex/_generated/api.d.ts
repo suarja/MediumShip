@@ -12,6 +12,7 @@ import type * as content_queries from "../content/queries.js";
 import type * as http from "../http.js";
 import type * as httpHandlers_clerkWebhook from "../httpHandlers/clerkWebhook.js";
 import type * as httpHandlers_svix from "../httpHandlers/svix.js";
+import type * as tenants_mutations from "../tenants/mutations.js";
 import type * as tenants_queries from "../tenants/queries.js";
 import type * as tenants_seed from "../tenants/seed.js";
 import type * as users_mutations from "../users/mutations.js";
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   "httpHandlers/clerkWebhook": typeof httpHandlers_clerkWebhook;
   "httpHandlers/svix": typeof httpHandlers_svix;
+  "tenants/mutations": typeof tenants_mutations;
   "tenants/queries": typeof tenants_queries;
   "tenants/seed": typeof tenants_seed;
   "users/mutations": typeof users_mutations;

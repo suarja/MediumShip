@@ -3,6 +3,8 @@ import { Tabs } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { useAppTheme } from "../../features/theme/theme-provider";
+
 const TAB_META: Record<string, { icon: string; labelKey: string }> = {
   home: { icon: "◉", labelKey: "home" },
   premium: { icon: "✦", labelKey: "premium" },
@@ -19,10 +21,20 @@ type AppTabBarProps =
 
 export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
   const { t } = useTranslation("navigation");
+  const { theme } = useAppTheme();
 
   return (
-    <View style={styles.outer}>
-      <View style={styles.inner}>
+    <View style={[styles.outer, { backgroundColor: theme.colors.tabBar }]}>
+      <View
+        style={[
+          styles.inner,
+          {
+            borderRadius: theme.radii.xl,
+            borderColor: theme.colors.border,
+            backgroundColor: theme.colors.tabBarCard,
+          },
+        ]}
+      >
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
           const meta = TAB_META[route.name] ?? { icon: "•", labelKey: route.name };
@@ -55,12 +67,27 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
               onLongPress={onLongPress}
               style={({ pressed }) => [
                 styles.tab,
-                isFocused && styles.tabActive,
+                isFocused && {
+                  borderRadius: theme.radii.lg,
+                  backgroundColor: theme.colors.heading,
+                },
                 pressed && styles.tabPressed,
               ]}
             >
-              <Text style={[styles.icon, isFocused && styles.iconActive]}>{meta.icon}</Text>
-              <Text style={[styles.label, isFocused && styles.labelActive]}>
+              <Text
+                style={[
+                  styles.icon,
+                  { color: isFocused ? theme.colors.surface : theme.colors.tabInactive },
+                ]}
+              >
+                {meta.icon}
+              </Text>
+              <Text
+                style={[
+                  styles.label,
+                  { color: isFocused ? theme.colors.surface : theme.colors.tabInactive },
+                ]}
+              >
                 {t(meta.labelKey)}
               </Text>
             </Pressable>
@@ -76,15 +103,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 18,
-    backgroundColor: "#F4F1EA",
   },
   inner: {
     flexDirection: "row",
     gap: 8,
-    borderRadius: 24,
     borderWidth: 1,
-    borderColor: "rgba(16,24,40,0.08)",
-    backgroundColor: "rgba(255,255,255,0.88)",
     padding: 8,
   },
   tab: {
@@ -95,27 +118,16 @@ const styles = StyleSheet.create({
     gap: 4,
     borderRadius: 18,
   },
-  tabActive: {
-    backgroundColor: "#101828",
-  },
   tabPressed: {
     opacity: 0.85,
   },
   icon: {
-    color: "#667085",
     fontSize: 14,
     fontWeight: "700",
   },
-  iconActive: {
-    color: "#FFFFFF",
-  },
   label: {
-    color: "#667085",
     fontSize: 11,
     fontWeight: "700",
     textTransform: "uppercase",
-  },
-  labelActive: {
-    color: "#FFFFFF",
   },
 });

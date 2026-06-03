@@ -1,6 +1,8 @@
 import { PropsWithChildren, ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { useAppTheme } from "../../features/theme/theme-provider";
+
 type SettingsRowProps = PropsWithChildren<{
   label: string;
   description?: string;
@@ -21,19 +23,48 @@ export function SettingsRow({
   isLast = false,
   children,
 }: SettingsRowProps) {
+  const { theme } = useAppTheme();
+
   const content = (
-    <View style={[styles.row, !isLast && styles.rowBorder]}>
+    <View
+      style={[
+        styles.row,
+        !isLast && { borderBottomWidth: 1, borderBottomColor: theme.colors.border },
+      ]}
+    >
       <View style={styles.left}>
-        {icon ? <View style={styles.iconWrap}>{icon}</View> : null}
+        {icon ? (
+          <View
+            style={[
+              styles.iconWrap,
+              { borderRadius: theme.radii.md, backgroundColor: theme.colors.surfaceMuted },
+            ]}
+          >
+            {icon}
+          </View>
+        ) : null}
         <View style={styles.copy}>
-          <Text style={[styles.label, danger && styles.labelDanger]}>{label}</Text>
-          {description ? <Text style={styles.description}>{description}</Text> : null}
+          <Text
+            style={[
+              styles.label,
+              { color: danger ? theme.colors.danger : theme.colors.heading },
+            ]}
+          >
+            {label}
+          </Text>
+          {description ? (
+            <Text style={[styles.description, { color: theme.colors.textMuted }]}>
+              {description}
+            </Text>
+          ) : null}
         </View>
       </View>
       <View style={styles.right}>
-        {value ? <Text style={styles.value}>{value}</Text> : null}
+        {value ? <Text style={[styles.value, { color: theme.colors.textMuted }]}>{value}</Text> : null}
         {children}
-        {onPress ? <Text style={styles.chevron}>›</Text> : null}
+        {onPress ? (
+          <Text style={[styles.chevron, { color: theme.colors.textMuted }]}>›</Text>
+        ) : null}
       </View>
     </View>
   );
@@ -59,10 +90,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 14,
   },
-  rowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(16,24,40,0.06)",
-  },
   left: {
     flex: 1,
     flexDirection: "row",
@@ -74,23 +101,16 @@ const styles = StyleSheet.create({
     height: 36,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 12,
-    backgroundColor: "#F2F4F7",
   },
   copy: {
     flex: 1,
     gap: 4,
   },
   label: {
-    color: "#101828",
     fontSize: 15,
     fontWeight: "600",
   },
-  labelDanger: {
-    color: "#B42318",
-  },
   description: {
-    color: "#667085",
     fontSize: 13,
     lineHeight: 18,
   },
@@ -100,12 +120,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   value: {
-    color: "#667085",
     fontSize: 14,
     fontWeight: "500",
   },
   chevron: {
-    color: "#98A2B3",
     fontSize: 18,
     fontWeight: "700",
   },

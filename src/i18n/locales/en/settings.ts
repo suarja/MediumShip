@@ -1,6 +1,6 @@
 export default {
   title: "Settings",
-  subtitle: "Manage language and account preferences.",
+  subtitle: "Manage language and the tenant visual identity.",
   sections: {
     general: "General",
     account: "Account",
@@ -10,6 +10,29 @@ export default {
     description: "Choose the app language used across the mobile experience.",
     fr: "French",
     en: "English",
+  },
+  appearance: {
+    themeLabel: "Palette",
+    themeDescription:
+      "Choose the tenant visual preset. The database stores only this palette name.",
+    palettes: {
+      brick: {
+        label: "Editorial Brick",
+        description: "Warm, premium, magazine-like.",
+      },
+      fjord: {
+        label: "Clear Fjord",
+        description: "Cleaner, fresher, more product-facing.",
+      },
+      canopy: {
+        label: "Canopy",
+        description: "Muted green, more institutional.",
+      },
+      midnight: {
+        label: "Midnight",
+        description: "Dark, denser, high-contrast version.",
+      },
+    },
   },
   account: {
     signedInAs: "Signed in as",

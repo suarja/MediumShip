@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useSignUp } from "@clerk/clerk-expo";
 import { Link, router } from "expo-router";
 import { useTranslation } from "react-i18next";
+import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 function clerkErrorMessage(err: unknown, fallback: string): string {
   const first = (err as { errors?: { longMessage?: string }[] })?.errors?.[0];
@@ -24,6 +25,7 @@ function clerkErrorMessage(err: unknown, fallback: string): string {
 export default function SignUpScreen() {
   const { t } = useTranslation("auth");
   const { signUp, setActive, isLoaded } = useSignUp();
+  const { theme, tenantName } = useAppTheme();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -75,7 +77,7 @@ export default function SignUpScreen() {
   }, [isLoaded, code, signUp, setActive, t]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.canvas }]}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -86,13 +88,15 @@ export default function SignUpScreen() {
         >
           <View style={styles.content}>
             <View style={styles.header}>
-              <Text style={styles.eyebrow}>MediumShip</Text>
-              <Text style={styles.title}>
+              <Text style={[styles.eyebrow, { color: theme.colors.accent }]}>
+                {tenantName}
+              </Text>
+              <Text style={[styles.title, { color: theme.colors.heading }]}>
                 {pendingVerification
                   ? t("signUp.verifyTitle")
                   : t("signUp.createTitle")}
               </Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.subtitle, { color: theme.colors.textMuted }]}>
                 {pendingVerification
                   ? t("signUp.verifySubtitle", { email })
                   : t("signUp.createSubtitle")}
@@ -100,18 +104,39 @@ export default function SignUpScreen() {
             </View>
 
             {error ? (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{error}</Text>
+              <View
+                style={[
+                  styles.errorBox,
+                  {
+                    borderRadius: theme.radii.md,
+                    backgroundColor: theme.colors.dangerSoft,
+                    borderColor: theme.colors.danger,
+                  },
+                ]}
+              >
+                <Text style={[styles.errorText, { color: theme.colors.danger }]}>
+                  {error}
+                </Text>
               </View>
             ) : null}
 
             {pendingVerification ? (
               <View style={styles.form}>
-                <Text style={styles.label}>{t("signUp.verificationCode")}</Text>
+                <Text style={[styles.label, { color: theme.colors.text }]}>
+                  {t("signUp.verificationCode")}
+                </Text>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      borderRadius: theme.radii.md,
+                      borderColor: theme.colors.border,
+                      backgroundColor: theme.colors.inputBackground,
+                      color: theme.colors.heading,
+                    },
+                  ]}
                   placeholder={t("signUp.verificationCodePlaceholder")}
-                  placeholderTextColor="#98A2B3"
+                  placeholderTextColor={theme.colors.textMuted}
                   value={code}
                   onChangeText={setCode}
                   keyboardType="number-pad"
@@ -123,24 +148,42 @@ export default function SignUpScreen() {
                   onPress={() => void onVerify()}
                   style={({ pressed }) => [
                     styles.submit,
+                    {
+                      borderRadius: theme.radii.lg,
+                      backgroundColor: theme.colors.accent,
+                    },
                     pressed && styles.pressed,
                     (submitting || !isLoaded) && styles.disabled,
                   ]}
                 >
                   {submitting ? (
-                    <ActivityIndicator color="#FFFFFF" />
+                    <ActivityIndicator color={theme.colors.accentContrast} />
                   ) : (
-                    <Text style={styles.submitText}>{t("signUp.submitVerify")}</Text>
+                    <Text
+                      style={[styles.submitText, { color: theme.colors.accentContrast }]}
+                    >
+                      {t("signUp.submitVerify")}
+                    </Text>
                   )}
                 </Pressable>
               </View>
             ) : (
               <View style={styles.form}>
-                <Text style={styles.label}>{t("signIn.email")}</Text>
+                <Text style={[styles.label, { color: theme.colors.text }]}>
+                  {t("signIn.email")}
+                </Text>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      borderRadius: theme.radii.md,
+                      borderColor: theme.colors.border,
+                      backgroundColor: theme.colors.inputBackground,
+                      color: theme.colors.heading,
+                    },
+                  ]}
                   placeholder={t("signIn.emailPlaceholder")}
-                  placeholderTextColor="#98A2B3"
+                  placeholderTextColor={theme.colors.textMuted}
                   value={email}
                   onChangeText={setEmail}
                   autoCapitalize="none"
@@ -150,11 +193,21 @@ export default function SignUpScreen() {
                   editable={!submitting}
                 />
 
-                <Text style={styles.label}>{t("signIn.password")}</Text>
+                <Text style={[styles.label, { color: theme.colors.text }]}>
+                  {t("signIn.password")}
+                </Text>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      borderRadius: theme.radii.md,
+                      borderColor: theme.colors.border,
+                      backgroundColor: theme.colors.inputBackground,
+                      color: theme.colors.heading,
+                    },
+                  ]}
                   placeholder={t("signIn.passwordPlaceholder")}
-                  placeholderTextColor="#98A2B3"
+                  placeholderTextColor={theme.colors.textMuted}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
@@ -168,22 +221,32 @@ export default function SignUpScreen() {
                   onPress={() => void onCreate()}
                   style={({ pressed }) => [
                     styles.submit,
+                    {
+                      borderRadius: theme.radii.lg,
+                      backgroundColor: theme.colors.accent,
+                    },
                     pressed && styles.pressed,
                     (submitting || !isLoaded) && styles.disabled,
                   ]}
                 >
                   {submitting ? (
-                    <ActivityIndicator color="#FFFFFF" />
+                    <ActivityIndicator color={theme.colors.accentContrast} />
                   ) : (
-                    <Text style={styles.submitText}>{t("signUp.submitCreate")}</Text>
+                    <Text
+                      style={[styles.submitText, { color: theme.colors.accentContrast }]}
+                    >
+                      {t("signUp.submitCreate")}
+                    </Text>
                   )}
                 </Pressable>
               </View>
             )}
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>{t("signUp.alreadyHaveAccount")}</Text>
-              <Link href="/sign-in" style={styles.footerLink}>
+              <Text style={[styles.footerText, { color: theme.colors.textMuted }]}>
+                {t("signUp.alreadyHaveAccount")}
+              </Text>
+              <Link href="/sign-in" style={[styles.footerLink, { color: theme.colors.accent }]}>
                 {t("signUp.signIn")}
               </Link>
             </View>
@@ -201,50 +264,40 @@ const styles = StyleSheet.create({
   content: { width: "100%", maxWidth: 480, alignSelf: "center", gap: 24 },
   header: { gap: 8 },
   eyebrow: {
-    color: "#B42318",
     fontSize: 13,
     fontWeight: "700",
     textTransform: "uppercase",
   },
-  title: { color: "#101828", fontSize: 32, fontWeight: "700" },
-  subtitle: { color: "#475467", fontSize: 16, lineHeight: 24 },
+  title: { fontSize: 32, fontWeight: "700" },
+  subtitle: { fontSize: 16, lineHeight: 24 },
   errorBox: {
-    backgroundColor: "rgba(180,35,24,0.08)",
-    borderColor: "rgba(180,35,24,0.25)",
     borderWidth: 1,
-    borderRadius: 12,
     padding: 12,
   },
-  errorText: { color: "#B42318", fontSize: 14, textAlign: "center" },
+  errorText: { fontSize: 14, textAlign: "center" },
   form: { gap: 8 },
-  label: { color: "#344054", fontSize: 14, fontWeight: "500", marginTop: 8 },
+  label: { fontSize: 14, fontWeight: "500", marginTop: 8 },
   input: {
     height: 48,
-    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#D0D5DD",
-    backgroundColor: "#FFFFFF",
     paddingHorizontal: 14,
-    color: "#101828",
     fontSize: 16,
   },
   submit: {
     height: 52,
-    borderRadius: 14,
-    backgroundColor: "#B42318",
     alignItems: "center",
     justifyContent: "center",
     marginTop: 12,
   },
-  submitText: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
+  submitText: { fontSize: 16, fontWeight: "700" },
   footer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     gap: 8,
   },
-  footerText: { color: "#475467", fontSize: 14 },
-  footerLink: { color: "#B42318", fontSize: 14, fontWeight: "700" },
+  footerText: { fontSize: 14 },
+  footerLink: { fontSize: 14, fontWeight: "700" },
   pressed: { opacity: 0.85 },
   disabled: { opacity: 0.5 },
 });

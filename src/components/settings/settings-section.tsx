@@ -1,15 +1,30 @@
 import { PropsWithChildren } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
+import { useAppTheme } from "../../features/theme/theme-provider";
+
 type SettingsSectionProps = PropsWithChildren<{
   title: string;
 }>;
 
 export function SettingsSection({ title, children }: SettingsSectionProps) {
+  const { theme } = useAppTheme();
+
   return (
     <View style={styles.section}>
-      <Text style={styles.title}>{title}</Text>
-      <View style={styles.card}>{children}</View>
+      <Text style={[styles.title, { color: theme.colors.heading }]}>{title}</Text>
+      <View
+        style={[
+          styles.card,
+          {
+            borderRadius: theme.radii.lg,
+            borderColor: theme.colors.border,
+            backgroundColor: theme.colors.surface,
+          },
+        ]}
+      >
+        {children}
+      </View>
     </View>
   );
 }
@@ -19,15 +34,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   title: {
-    color: "#101828",
     fontSize: 18,
     fontWeight: "700",
   },
   card: {
     overflow: "hidden",
-    borderRadius: 20,
     borderWidth: 1,
-    borderColor: "rgba(16,24,40,0.08)",
-    backgroundColor: "#FFFFFF",
   },
 });

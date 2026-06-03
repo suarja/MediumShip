@@ -3,6 +3,14 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react-nativ
 import SettingsScreen from "../app/(app)/settings";
 import { changeAppLanguage, initI18n, i18n } from "../src/i18n";
 
+jest.mock("convex/react", () => ({
+  useMutation: () => jest.fn().mockResolvedValue(undefined),
+  useQuery: () => ({
+    name: "Demo Media",
+    themeConfig: { paletteName: "brick" },
+  }),
+}));
+
 jest.mock("../src/features/auth/use-clerk-auth", () => ({
   useClerkAuth: () => ({
     email: "camille@example.com",
@@ -36,7 +44,7 @@ describe("settings language switch", () => {
     expect(i18n.language).toBe("en");
     expect(screen.getByText("English")).toBeTruthy();
     expect(
-      screen.getByText("Manage language and account preferences."),
+      screen.getByText("Manage language and the tenant visual identity."),
     ).toBeTruthy();
   });
 });

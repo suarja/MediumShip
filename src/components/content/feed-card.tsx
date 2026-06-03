@@ -57,8 +57,9 @@ export function FeedCard({
           style={[
             styles.body,
             {
-              padding: theme.spacing.lg * scaleSpace,
-              gap: theme.spacing.md * scaleSpace,
+              paddingHorizontal: theme.spacing.lg * scaleSpace,
+              paddingVertical: theme.spacing.sm * scaleSpace,
+              gap: theme.spacing.sm * scaleSpace,
             },
           ]}
         >

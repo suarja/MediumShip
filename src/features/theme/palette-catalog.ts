@@ -25,6 +25,8 @@ type ThemePaletteDefinition = {
     accent: string;
     accentSoft: string;
     accentContrast: string;
+    premium: string;
+    premiumSoft: string;
     tabBar: string;
     tabBarCard: string;
     tabInactive: string;
@@ -98,6 +100,8 @@ const paletteCatalog: Record<ThemePaletteName, ThemePaletteDefinition> = {
       accent: "#B14F2E",
       accentSoft: "#F2DED3",
       accentContrast: "#FFF8F4",
+      premium: "#C8964A",
+      premiumSoft: "rgba(200, 150, 74, 0.14)",
       tabBar: "#EEE2D4",
       tabBarCard: "rgba(255, 252, 247, 0.92)",
       tabInactive: "#8A7468",
@@ -121,6 +125,8 @@ const paletteCatalog: Record<ThemePaletteName, ThemePaletteDefinition> = {
       accent: "#2F7C91",
       accentSoft: "#D7EBF1",
       accentContrast: "#F6FDFF",
+      premium: "#C0913F",
+      premiumSoft: "rgba(192, 145, 63, 0.14)",
       tabBar: "#DCE9ED",
       tabBarCard: "rgba(251, 255, 255, 0.92)",
       tabInactive: "#6C8792",
@@ -144,6 +150,8 @@ const paletteCatalog: Record<ThemePaletteName, ThemePaletteDefinition> = {
       accent: "#5B7A35",
       accentSoft: "#E3ECD5",
       accentContrast: "#FBFFF5",
+      premium: "#B8923C",
+      premiumSoft: "rgba(184, 146, 60, 0.14)",
       tabBar: "#E1E7D7",
       tabBarCard: "rgba(252, 254, 248, 0.92)",
       tabInactive: "#70806A",
@@ -167,6 +175,8 @@ const paletteCatalog: Record<ThemePaletteName, ThemePaletteDefinition> = {
       accent: "#E7A13D",
       accentSoft: "rgba(231, 161, 61, 0.16)",
       accentContrast: "#1D1304",
+      premium: "#E7B85C",
+      premiumSoft: "rgba(231, 184, 92, 0.18)",
       tabBar: "#0F1825",
       tabBarCard: "rgba(19, 32, 48, 0.94)",
       tabInactive: "#7E91A6",

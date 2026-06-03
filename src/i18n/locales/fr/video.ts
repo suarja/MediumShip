@@ -1,0 +1,13 @@
+export default {
+  back: "← Fil",
+  loading: "Chargement de la vidéo…",
+  notFoundTitle: "Vidéo indisponible",
+  notFoundBody: "Cette vidéo n'est pas publiée ou n'existe plus.",
+  kicker: "Vidéo",
+  duration: "{{minutes}} min de visionnage",
+  providerLabel: "Source : {{provider}}",
+  youtubeProvider: "YouTube",
+  hostedProvider: "Hébergée",
+  watchYoutube: "Voir sur YouTube",
+  unavailable: "Cette vidéo n'a pas encore de source lisible.",
+} as const;

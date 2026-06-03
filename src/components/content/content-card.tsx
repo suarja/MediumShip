@@ -5,11 +5,12 @@ import type {
   ContentCardModel,
   ContentKind,
 } from "../../features/content/types";
+import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
-// Single glyph per editorial format, echoing the podapp mockups where each row
-// leads with a tinted media tile. Until real cover art is seeded we lean on a
-// typographic mark so the feed still reads as multi-format at a glance.
+// Single glyph per editorial format, echoing the Civica mockup rows where each
+// item leads with a tinted media tile. Until real cover art is seeded we lean
+// on a typographic mark so the feed still reads as multi-format at a glance.
 const KIND_GLYPH: Record<ContentKind, string> = {
   article: "✎",
   episode: "▷",
@@ -33,7 +34,7 @@ export function ContentCard({ item }: { item: ContentCardModel }) {
         style={({ pressed }) => [
           styles.card,
           {
-            borderRadius: theme.radii.lg,
+            borderRadius: theme.radii.md,
             backgroundColor: theme.colors.surface,
             borderColor: theme.colors.border,
           },
@@ -43,7 +44,7 @@ export function ContentCard({ item }: { item: ContentCardModel }) {
         <View
           style={[
             styles.tile,
-            { borderRadius: theme.radii.md, backgroundColor: tileColor },
+            { borderRadius: theme.radii.sm, backgroundColor: tileColor },
           ]}
         >
           <Text style={[styles.glyph, { color: theme.colors.accent }]}>
@@ -51,7 +52,10 @@ export function ContentCard({ item }: { item: ContentCardModel }) {
           </Text>
           {item.isPremium ? (
             <View
-              style={[styles.premiumBadge, { backgroundColor: theme.colors.accent }]}
+              style={[
+                styles.premiumBadge,
+                { backgroundColor: theme.colors.premium },
+              ]}
             >
               <Text style={styles.premiumStar}>★</Text>
             </View>
@@ -59,7 +63,12 @@ export function ContentCard({ item }: { item: ContentCardModel }) {
         </View>
 
         <View style={styles.body}>
-          <Text style={[styles.kicker, { color: theme.colors.accent }]}>
+          <Text
+            style={[
+              styles.kicker,
+              { color: item.isPremium ? theme.colors.premium : theme.colors.accent },
+            ]}
+          >
             {item.kindLabel}
           </Text>
           <Text
@@ -94,18 +103,18 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.85 },
   tile: {
-    width: 72,
-    height: 72,
+    width: 64,
+    height: 64,
     alignItems: "center",
     justifyContent: "center",
   },
-  glyph: { fontSize: 26, fontWeight: "700" },
+  glyph: { fontSize: 24, fontWeight: "700" },
   premiumBadge: {
     position: "absolute",
-    top: 6,
-    right: 6,
-    width: 20,
-    height: 20,
+    top: 5,
+    right: 5,
+    width: 19,
+    height: 19,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
@@ -113,12 +122,21 @@ const styles = StyleSheet.create({
   premiumStar: { color: "#FFFFFF", fontSize: 11, fontWeight: "700" },
   body: { flex: 1, gap: 4, justifyContent: "center" },
   kicker: {
-    fontSize: 12,
-    fontWeight: "700",
+    fontFamily: fontFamilies.mono,
+    fontSize: 10,
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 1.4,
   },
-  title: { fontSize: 17, fontWeight: "700", lineHeight: 22 },
+  title: {
+    fontFamily: fontFamilies.display,
+    fontSize: 18,
+    lineHeight: 23,
+  },
   summary: { fontSize: 14, lineHeight: 19 },
-  meta: { fontSize: 12, marginTop: 2 },
+  meta: {
+    fontFamily: fontFamilies.mono,
+    fontSize: 11,
+    letterSpacing: 0.4,
+    marginTop: 2,
+  },
 });

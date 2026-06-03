@@ -5,9 +5,11 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import { ContentCard } from "../../src/components/content/content-card";
+import { FeaturedCard } from "../../src/components/content/featured-card";
 import { Screen } from "../../src/components/layout/screen";
 import { toContentCardModel } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
+import { fontFamilies } from "../../src/features/theme/fonts";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
@@ -21,6 +23,7 @@ export default function HomeFeedScreen() {
 
   const items = (contents ?? []).map(toContentCardModel);
   const isLoading = contents === undefined;
+  const [featured, ...rest] = items;
 
   return (
     <Screen>
@@ -60,7 +63,12 @@ export default function HomeFeedScreen() {
             </Text>
           </View>
         ) : (
-          items.map((item) => <ContentCard key={item.id} item={item} />)
+          <>
+            {featured ? <FeaturedCard item={featured} /> : null}
+            {rest.map((item) => (
+              <ContentCard key={item.id} item={item} />
+            ))}
+          </>
         )}
       </ScrollView>
     </Screen>
@@ -70,12 +78,12 @@ export default function HomeFeedScreen() {
 const styles = StyleSheet.create({
   header: { gap: 6, marginBottom: 16 },
   eyebrow: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontFamily: fontFamilies.mono,
+    fontSize: 11,
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 1.6,
   },
-  title: { fontSize: 28, fontWeight: "700" },
+  title: { fontFamily: fontFamilies.display, fontSize: 30, lineHeight: 35 },
   subtitle: { fontSize: 15, lineHeight: 21 },
   scroll: { flex: 1 },
   list: { gap: 12, paddingBottom: 24 },

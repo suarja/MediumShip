@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Link } from "expo-router";
 
 import { useResponsive } from "../../features/responsive/use-responsive";
+import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 type ContentDetailState = "loading" | "notFound" | "ready";
@@ -76,8 +77,8 @@ export function ContentDetailShell({
 const styles = StyleSheet.create({
   safe: { flex: 1, alignItems: "center" },
   content: { flex: 1, width: "100%", gap: 16 },
-  back: { fontSize: 15, fontWeight: "600", paddingVertical: 4 },
+  back: { fontFamily: fontFamilies.bodySemiBold, fontSize: 15, paddingVertical: 4 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
-  notFoundTitle: { fontSize: 20, fontWeight: "700", textAlign: "center" },
-  muted: { fontSize: 15, lineHeight: 22, textAlign: "center" },
+  notFoundTitle: { fontFamily: fontFamilies.display, fontSize: 20, textAlign: "center" },
+  muted: { fontFamily: fontFamilies.body, fontSize: 15, lineHeight: 22, textAlign: "center" },
 });

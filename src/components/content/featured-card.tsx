@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 1.6,
   },
-  title: { fontFamily: fontFamilies.display, fontWeight: "700" },
-  summary: {},
+  title: { fontFamily: fontFamilies.displayBold },
+  summary: { fontFamily: fontFamilies.body },
   meta: { fontFamily: fontFamilies.mono, letterSpacing: 0.4, marginTop: 2 },
 });

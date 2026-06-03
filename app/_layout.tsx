@@ -11,6 +11,7 @@ import { StatusBar } from "expo-status-bar";
 import { env } from "../src/lib/env";
 import { useStableAuth } from "../src/features/auth/use-stable-auth";
 import { AppThemeProvider } from "../src/features/theme/theme-provider";
+import { useAppFonts } from "../src/features/theme/use-app-fonts";
 import { i18n, initI18n } from "../src/i18n";
 
 const convex = new ConvexReactClient(env.EXPO_PUBLIC_CONVEX_URL);
@@ -24,6 +25,7 @@ const tokenCache = {
 export default function RootLayout() {
   const [i18nReady, setI18nReady] = useState(false);
   const [languageKey, setLanguageKey] = useState("fr");
+  const fontsLoaded = useAppFonts();
 
   useEffect(() => {
     let mounted = true;
@@ -52,7 +54,7 @@ export default function RootLayout() {
     };
   }, []);
 
-  if (!i18nReady) {
+  if (!i18nReady || !fontsLoaded) {
     return (
       <SafeAreaProvider>
         <View style={styles.center}>

@@ -1,18 +1,19 @@
-import { Platform } from "react-native";
-
 /**
- * Font families echoing the Civica mockup (Newsreader serif display, grotesk
- * body, mono labels). We map to platform system fallbacks for now — no custom
- * font assets are bundled yet — so titles still read as editorial serif and
- * kickers as mono without adding dependencies.
+ * Font families matching the Civica mockup: Newsreader serif display, Hanken
+ * Grotesk body, JetBrains Mono labels. These string names are the family names
+ * registered by `useAppFonts` (see `use-app-fonts.ts`), loaded once in the root
+ * layout before the app renders. With weight-specific families, set the weight
+ * via the family (e.g. `bodyBold`) rather than `fontWeight`.
  */
 export const fontFamilies = {
-  // Editorial serif for titles/headings (mockup: Newsreader).
-  display: Platform.select({ ios: "Georgia", default: "serif" }),
-  // Mono for kickers, chips and meta labels (mockup: JetBrains Mono).
-  mono: Platform.select({
-    ios: "Menlo",
-    android: "monospace",
-    default: "monospace",
-  }),
+  // Editorial serif for titles/headings.
+  display: "Newsreader_600SemiBold",
+  displayBold: "Newsreader_700Bold",
+  // Grotesk body text.
+  body: "HankenGrotesk_400Regular",
+  bodyMedium: "HankenGrotesk_500Medium",
+  bodySemiBold: "HankenGrotesk_600SemiBold",
+  bodyBold: "HankenGrotesk_700Bold",
+  // Mono for kickers, chips and meta labels.
+  mono: "JetBrainsMono_500Medium",
 } as const;

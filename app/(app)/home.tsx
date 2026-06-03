@@ -107,10 +107,10 @@ const styles = StyleSheet.create({
     letterSpacing: 1.6,
   },
   title: { fontFamily: fontFamilies.display, fontSize: 30, lineHeight: 35 },
-  subtitle: { fontSize: 15, lineHeight: 21 },
+  subtitle: { fontFamily: fontFamilies.body, fontSize: 15, lineHeight: 21 },
   scroll: { flex: 1 },
   list: { gap: 12, paddingBottom: 24 },
   empty: { gap: 8, padding: 20, borderWidth: StyleSheet.hairlineWidth },
-  emptyTitle: { fontSize: 18, fontWeight: "700" },
-  emptyBody: { fontSize: 15, lineHeight: 22 },
+  emptyTitle: { fontFamily: fontFamilies.display, fontSize: 18 },
+  emptyBody: { fontFamily: fontFamilies.body, fontSize: 15, lineHeight: 22 },
 });

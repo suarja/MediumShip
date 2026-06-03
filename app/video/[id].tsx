@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   },
   title: { fontFamily: fontFamilies.display, fontSize: 28, lineHeight: 34 },
   meta: { fontFamily: fontFamilies.mono, fontSize: 11, letterSpacing: 0.4 },
-  summary: { fontSize: 16, lineHeight: 24 },
+  summary: { fontFamily: fontFamilies.body, fontSize: 16, lineHeight: 24 },
   button: {
     alignSelf: "flex-start",
     paddingHorizontal: 20,
@@ -145,6 +145,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   pressed: { opacity: 0.85 },
-  buttonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
-  unavailable: { fontSize: 14, lineHeight: 20, marginTop: 4 },
+  buttonText: { fontFamily: fontFamilies.bodySemiBold, color: "#FFFFFF", fontSize: 15 },
+  unavailable: { fontFamily: fontFamilies.body, fontSize: 14, lineHeight: 20, marginTop: 4 },
 });

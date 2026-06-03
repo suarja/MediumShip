@@ -101,6 +101,6 @@ const styles = StyleSheet.create({
   },
   title: { fontFamily: fontFamilies.display, fontSize: 28, lineHeight: 34 },
   meta: { fontFamily: fontFamilies.mono, fontSize: 11, letterSpacing: 0.4 },
-  summary: { fontSize: 16, lineHeight: 24, fontWeight: "600" },
-  body: { fontSize: 16, lineHeight: 26 },
+  summary: { fontFamily: fontFamilies.bodySemiBold, fontSize: 16, lineHeight: 24 },
+  body: { fontFamily: fontFamilies.body, fontSize: 16, lineHeight: 26 },
 });

@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     lineHeight: 23,
   },
-  summary: { fontSize: 14, lineHeight: 19 },
+  summary: { fontFamily: fontFamilies.body, fontSize: 14, lineHeight: 19 },
   meta: {
     fontFamily: fontFamilies.mono,
     fontSize: 11,

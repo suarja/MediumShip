@@ -16,15 +16,16 @@ const KIND_GLYPH: Record<ContentKind, string> = {
 };
 
 /**
- * Editorial hero for the lead feed item. Built on the readable `surface` +
- * `heading` token pair (high contrast in every palette) so the title clearly
- * stands out, with an accent-tinted media band + format glyph on top to keep
- * the hero feel — instead of low-contrast text on a full accent fill.
+ * Editorial hero for the lead feed item. Text-forward (big serif title on the
+ * high-contrast surface/heading pair) with a thin accent lead rule and a small
+ * format tile — deliberately no large empty media band, since there is no cover
+ * art to show yet.
  */
 export function FeaturedCard({ item }: { item: ContentCardModel }) {
   const { theme } = useAppTheme();
   const { scaleSpace, scaleFont } = useResponsive();
   const accentTone = item.isPremium ? theme.colors.premium : theme.colors.accent;
+  const tile = 40 * scaleSpace;
 
   return (
     <Link href={item.href as never} asChild>
@@ -40,41 +41,47 @@ export function FeaturedCard({ item }: { item: ContentCardModel }) {
           pressed && styles.pressed,
         ]}
       >
-        <View
-          style={[
-            styles.media,
-            { height: 120 * scaleSpace, backgroundColor: theme.colors.accentSoft },
-          ]}
-        >
-          <Text
-            style={[styles.glyph, { color: accentTone, fontSize: 56 * scaleFont }]}
-            accessible={false}
-          >
-            {KIND_GLYPH[item.kind]}
-          </Text>
-          {item.isPremium ? (
-            <View style={[styles.premiumBadge, { backgroundColor: theme.colors.premium }]}>
-              <Text style={styles.premiumStar}>★</Text>
-            </View>
-          ) : null}
-        </View>
+        <View style={[styles.rule, { backgroundColor: accentTone }]} />
 
         <View style={[styles.body, { padding: theme.spacing.lg * scaleSpace }]}>
-          <Text style={[styles.kicker, { color: accentTone, fontSize: 11 * scaleFont }]}>
-            {item.isPremium ? `${item.kindLabel} · Premium` : item.kindLabel}
-          </Text>
+          <View style={[styles.header, { gap: 10 * scaleSpace }]}>
+            <View
+              style={[
+                styles.tile,
+                {
+                  width: tile,
+                  height: tile,
+                  borderRadius: theme.radii.sm,
+                  backgroundColor: theme.colors.accentSoft,
+                },
+              ]}
+            >
+              <Text style={[styles.glyph, { color: accentTone, fontSize: 18 * scaleFont }]}>
+                {KIND_GLYPH[item.kind]}
+              </Text>
+              {item.isPremium ? (
+                <View style={[styles.premiumBadge, { backgroundColor: theme.colors.premium }]}>
+                  <Text style={styles.premiumStar}>★</Text>
+                </View>
+              ) : null}
+            </View>
+            <Text style={[styles.kicker, { color: accentTone, fontSize: 11 * scaleFont }]}>
+              {item.isPremium ? `${item.kindLabel} · Premium` : item.kindLabel}
+            </Text>
+          </View>
+
           <Text
             numberOfLines={3}
             style={[
               styles.title,
-              { color: theme.colors.heading, fontSize: 26 * scaleFont, lineHeight: 31 * scaleFont },
+              { color: theme.colors.heading, fontSize: 27 * scaleFont, lineHeight: 32 * scaleFont },
             ]}
           >
             {item.title}
           </Text>
           <Text
             numberOfLines={2}
-            style={[styles.summary, { color: theme.colors.text, fontSize: 15 * scaleFont, lineHeight: 21 * scaleFont }]}
+            style={[styles.summary, { color: theme.colors.text, fontSize: 15 * scaleFont, lineHeight: 22 * scaleFont }]}
           >
             {item.summary}
           </Text>
@@ -92,20 +99,22 @@ export function FeaturedCard({ item }: { item: ContentCardModel }) {
 const styles = StyleSheet.create({
   card: { overflow: "hidden", borderWidth: StyleSheet.hairlineWidth },
   pressed: { opacity: 0.9 },
-  media: { justifyContent: "center", alignItems: "center" },
-  glyph: { fontWeight: "700", opacity: 0.85 },
+  rule: { height: 4, width: "100%" },
+  body: { gap: 8 },
+  header: { flexDirection: "row", alignItems: "center" },
+  tile: { alignItems: "center", justifyContent: "center" },
+  glyph: { fontWeight: "700" },
   premiumBadge: {
     position: "absolute",
-    top: 10,
-    right: 10,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    top: -5,
+    right: -5,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
   },
-  premiumStar: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
-  body: { gap: 5 },
+  premiumStar: { color: "#FFFFFF", fontSize: 10, fontWeight: "700" },
   kicker: {
     fontFamily: fontFamilies.mono,
     textTransform: "uppercase",

@@ -39,7 +39,11 @@ export function ContentDetailShell({
       <View
         style={[
           styles.content,
-          { padding: theme.spacing.lg * scaleSpace, maxWidth: contentMaxWidth },
+          {
+            padding: theme.spacing.lg * scaleSpace,
+            maxWidth: contentMaxWidth,
+            alignSelf: "center",
+          },
         ]}
       >
         <Link href="/home" asChild>

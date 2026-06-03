@@ -19,6 +19,7 @@ export function Screen({ children }: PropsWithChildren) {
           {
             padding: theme.spacing.lg * scaleSpace,
             maxWidth: contentMaxWidth,
+            alignSelf: "center",
           },
         ]}
       >

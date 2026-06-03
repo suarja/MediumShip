@@ -32,6 +32,18 @@ export default {
         label: "Minuit",
         description: "Version sombre, dense et contrastée.",
       },
+      onde: {
+        label: "Onde Bourgogne",
+        description: "Bordeaux profond, littéraire et premium.",
+      },
+      boussole: {
+        label: "Boussole Cobalt",
+        description: "Cobalt froid, analytique et civique.",
+      },
+      commune: {
+        label: "Commune Chaude",
+        description: "Ocre chaleureux, humaniste et engageant.",
+      },
     },
   },
   account: {

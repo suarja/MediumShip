@@ -32,6 +32,18 @@ export default {
         label: "Midnight",
         description: "Dark, denser, high-contrast version.",
       },
+      onde: {
+        label: "Burgundy Onde",
+        description: "Deep burgundy, literary and premium.",
+      },
+      boussole: {
+        label: "Cobalt Boussole",
+        description: "Cool cobalt, analytical and civic.",
+      },
+      commune: {
+        label: "Warm Commune",
+        description: "Warm ochre, humanist and engaging.",
+      },
     },
   },
   account: {

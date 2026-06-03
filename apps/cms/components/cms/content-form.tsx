@@ -24,7 +24,6 @@ type EditorState = {
   audioUrl: string;
   durationSeconds: string;
   videoSourceKind: "" | "youtube" | "hosted";
-  youtubeVideoId: string;
   youtubeUrl: string;
   uploadKey: string;
   playbackUrl: string;
@@ -43,7 +42,6 @@ const emptyState: EditorState = {
   audioUrl: "",
   durationSeconds: "",
   videoSourceKind: "",
-  youtubeVideoId: "",
   youtubeUrl: "",
   uploadKey: "",
   playbackUrl: "",
@@ -73,10 +71,6 @@ function toEditorState(
     durationSeconds:
       content.durationSeconds !== undefined ? String(content.durationSeconds) : "",
     videoSourceKind: content.videoSource?.kind ?? "",
-    youtubeVideoId:
-      content.videoSource?.kind === "youtube"
-        ? content.videoSource.youtubeVideoId
-        : "",
     youtubeUrl:
       content.videoSource?.kind === "youtube"
         ? content.videoSource.youtubeUrl
@@ -99,11 +93,13 @@ export function ContentForm({ selectedId }: ContentFormProps) {
   const setContentStatus = useMutation(api.cms.mutations.setContentStatus);
   const [state, setState] = useState<EditorState>(emptyState);
   const [saveLabel, setSaveLabel] = useState("Save");
+  const [metadataOpen, setMetadataOpen] = useState(false);
 
   useEffect(() => {
     if (content) {
       setState(toEditorState(content));
       setSaveLabel("Save");
+      setMetadataOpen(false);
     }
   }, [content]);
 
@@ -154,12 +150,32 @@ export function ContentForm({ selectedId }: ContentFormProps) {
     };
 
   const save = async () => {
+    const fallbackSlug =
+      state.title
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") || `draft-${content.kind}`;
+    const fallbackCategory =
+      state.category.trim() ||
+      (content.kind === "article"
+        ? "Analysis"
+        : content.kind === "episode"
+          ? "Podcast"
+          : "Video");
+    const articleWordCount = state.articleBody
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean).length;
+    const estimatedReadingTime =
+      articleWordCount > 0 ? Math.max(1, Math.ceil(articleWordCount / 220)) : null;
+
     await updateContent({
       id: content._id,
-      slug: state.slug,
+      slug: state.slug.trim() || fallbackSlug,
       title: state.title,
       summary: state.summary,
-      category: state.category,
+      category: fallbackCategory,
       tags: state.tags
         .split(",")
         .map((tag) => tag.trim())
@@ -167,8 +183,10 @@ export function ContentForm({ selectedId }: ContentFormProps) {
       isPremium: state.isPremium,
       heroImageUrl: state.heroImageUrl || null,
       readingTimeMinutes:
-        content.kind === "article" && state.readingTimeMinutes
-          ? Number(state.readingTimeMinutes)
+        content.kind === "article"
+          ? state.readingTimeMinutes
+            ? Number(state.readingTimeMinutes)
+            : estimatedReadingTime
           : null,
       articleBody: content.kind === "article" ? state.articleBody || null : null,
       audioUrl: content.kind === "episode" ? state.audioUrl || null : null,
@@ -183,7 +201,7 @@ export function ContentForm({ selectedId }: ContentFormProps) {
           : state.videoSourceKind === "youtube"
             ? {
                 kind: "youtube",
-                youtubeVideoId: state.youtubeVideoId,
+                youtubeVideoId: "",
                 youtubeUrl: state.youtubeUrl,
               }
             : {
@@ -221,14 +239,6 @@ export function ContentForm({ selectedId }: ContentFormProps) {
       </div>
 
       <div className="form-grid">
-        <label>
-          <span>Slug</span>
-          <input value={state.slug} onChange={onChange("slug")} />
-        </label>
-        <label>
-          <span>Category</span>
-          <input value={state.category} onChange={onChange("category")} />
-        </label>
         <label className="field-wide">
           <span>Title</span>
           <input value={state.title} onChange={onChange("title")} />
@@ -245,29 +255,9 @@ export function ContentForm({ selectedId }: ContentFormProps) {
             placeholder="policy, podcast, culture"
           />
         </label>
-        <label className="field-wide checkbox-row">
-          <input
-            checked={state.isPremium}
-            onChange={onChange("isPremium")}
-            type="checkbox"
-          />
-          <span>Premium content</span>
-        </label>
-        <label className="field-wide">
-          <span>Hero image URL</span>
-          <input value={state.heroImageUrl} onChange={onChange("heroImageUrl")} />
-        </label>
 
         {content.kind === "article" ? (
           <>
-            <label>
-              <span>Reading time (minutes)</span>
-              <input
-                value={state.readingTimeMinutes}
-                onChange={onChange("readingTimeMinutes")}
-                type="number"
-              />
-            </label>
             <label className="field-wide">
               <span>Body</span>
               <textarea value={state.articleBody} onChange={onChange("articleBody")} rows={10} />
@@ -277,14 +267,6 @@ export function ContentForm({ selectedId }: ContentFormProps) {
 
         {content.kind === "episode" ? (
           <>
-            <label>
-              <span>Duration (seconds)</span>
-              <input
-                value={state.durationSeconds}
-                onChange={onChange("durationSeconds")}
-                type="number"
-              />
-            </label>
             <label className="field-wide">
               <span>Audio URL</span>
               <input value={state.audioUrl} onChange={onChange("audioUrl")} />
@@ -295,14 +277,6 @@ export function ContentForm({ selectedId }: ContentFormProps) {
         {content.kind === "video" ? (
           <>
             <label>
-              <span>Duration (seconds)</span>
-              <input
-                value={state.durationSeconds}
-                onChange={onChange("durationSeconds")}
-                type="number"
-              />
-            </label>
-            <label>
               <span>Video source</span>
               <select value={state.videoSourceKind} onChange={onChange("videoSourceKind")}>
                 <option value="">None</option>
@@ -311,32 +285,90 @@ export function ContentForm({ selectedId }: ContentFormProps) {
               </select>
             </label>
             {state.videoSourceKind === "youtube" ? (
-              <>
-                <label>
-                  <span>YouTube video id</span>
-                  <input value={state.youtubeVideoId} onChange={onChange("youtubeVideoId")} />
-                </label>
-                <label className="field-wide">
-                  <span>YouTube URL</span>
-                  <input value={state.youtubeUrl} onChange={onChange("youtubeUrl")} />
-                </label>
-              </>
+              <label className="field-wide">
+                <span>YouTube URL</span>
+                <input value={state.youtubeUrl} onChange={onChange("youtubeUrl")} />
+              </label>
             ) : null}
             {state.videoSourceKind === "hosted" ? (
               <>
-                <label>
-                  <span>Upload key</span>
-                  <input value={state.uploadKey} onChange={onChange("uploadKey")} />
-                </label>
                 <label className="field-wide">
                   <span>Playback URL</span>
                   <input value={state.playbackUrl} onChange={onChange("playbackUrl")} />
+                </label>
+                <label className="field-wide">
+                  <span>Upload key</span>
+                  <input value={state.uploadKey} onChange={onChange("uploadKey")} />
                 </label>
               </>
             ) : null}
           </>
         ) : null}
       </div>
+
+      <details
+        className="advanced-fields"
+        open={metadataOpen}
+        onToggle={(event) =>
+          setMetadataOpen((event.currentTarget as HTMLDetailsElement).open)
+        }
+      >
+        <summary>Advanced metadata</summary>
+        <div className="form-grid">
+          <label>
+            <span>Slug</span>
+            <input
+              value={state.slug}
+              onChange={onChange("slug")}
+              placeholder="Auto-generated from title if left blank"
+            />
+          </label>
+          <label>
+            <span>Category</span>
+            <input
+              value={state.category}
+              onChange={onChange("category")}
+              placeholder="Defaults from content type"
+            />
+          </label>
+          <label className="field-wide">
+            <span>Hero image URL</span>
+            <input value={state.heroImageUrl} onChange={onChange("heroImageUrl")} />
+          </label>
+          <label className="field-wide checkbox-row">
+            <input
+              checked={state.isPremium}
+              onChange={onChange("isPremium")}
+              type="checkbox"
+            />
+            <span>Premium content</span>
+          </label>
+
+          {content.kind === "article" ? (
+            <label>
+              <span>Reading time override (minutes)</span>
+              <input
+                value={state.readingTimeMinutes}
+                onChange={onChange("readingTimeMinutes")}
+                placeholder="Auto-estimated from body if left blank"
+                type="number"
+              />
+            </label>
+          ) : null}
+
+          {content.kind === "episode" || content.kind === "video" ? (
+            <label>
+              <span>Duration override (seconds)</span>
+              <input
+                value={state.durationSeconds}
+                onChange={onChange("durationSeconds")}
+                placeholder="Optional"
+                type="number"
+              />
+            </label>
+          ) : null}
+        </div>
+      </details>
 
       <div className="panel-footer">
         <span className={`status-pill status-${content.status}`}>{content.status}</span>

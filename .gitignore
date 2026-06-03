@@ -147,3 +147,7 @@ vite.config.ts.timestamp-*
 .expo/
 .env.local
 coverage/
+
+# Local agent skills
+.agents/
+.pi/skills/

@@ -144,3 +144,6 @@ vite.config.ts.timestamp-*
 .vite/
 # Local Pi runtime state
 .atl/
+.expo/
+.env.local
+coverage/

@@ -8,9 +8,9 @@
  * @module
  */
 
-import type * as content from "../content.js";
-import type * as seed from "../seed.js";
-import type * as tenants from "../tenants.js";
+import type * as content_queries from "../content/queries.js";
+import type * as tenants_queries from "../tenants/queries.js";
+import type * as tenants_seed from "../tenants/seed.js";
 
 import type {
   ApiFromModules,
@@ -19,9 +19,9 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  content: typeof content;
-  seed: typeof seed;
-  tenants: typeof tenants;
+  "content/queries": typeof content_queries;
+  "tenants/queries": typeof tenants_queries;
+  "tenants/seed": typeof tenants_seed;
 }>;
 
 /**

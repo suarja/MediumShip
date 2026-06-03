@@ -9,9 +9,7 @@ import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
-// Single glyph per editorial format, echoing the Civica mockup rows where each
-// item leads with a tinted media tile. Until real cover art is seeded we lean
-// on a typographic mark so the feed still reads as multi-format at a glance.
+// Format glyph per editorial kind (no cover art in the model yet).
 const KIND_GLYPH: Record<ContentKind, string> = {
   article: "✎",
   episode: "▷",
@@ -21,14 +19,8 @@ const KIND_GLYPH: Record<ContentKind, string> = {
 export function ContentCard({ item }: { item: ContentCardModel }) {
   const { theme } = useAppTheme();
   const { scaleSpace, scaleFont } = useResponsive();
-  const tileSize = 64 * scaleSpace;
-
-  const tileColor =
-    item.kind === "video"
-      ? theme.colors.canvasAccent
-      : item.kind === "episode"
-        ? theme.colors.surfaceMuted
-        : theme.colors.accentSoft;
+  const tile = 40 * scaleSpace;
+  const accentTone = item.isPremium ? theme.colors.premium : theme.colors.accent;
 
   return (
     <Link href={item.href as never} asChild>
@@ -47,62 +39,49 @@ export function ContentCard({ item }: { item: ContentCardModel }) {
           pressed && styles.pressed,
         ]}
       >
-        <View
-          style={[
-            styles.tile,
-            {
-              width: tileSize,
-              height: tileSize,
-              borderRadius: theme.radii.sm,
-              backgroundColor: tileColor,
-            },
-          ]}
-        >
-          <Text style={[styles.glyph, { color: theme.colors.accent, fontSize: 24 * scaleFont }]}>
-            {KIND_GLYPH[item.kind]}
-          </Text>
-          {item.isPremium ? (
-            <View
-              style={[
-                styles.premiumBadge,
-                { backgroundColor: theme.colors.premium },
-              ]}
-            >
-              <Text style={styles.premiumStar}>★</Text>
-            </View>
-          ) : null}
-        </View>
-
-        <View style={styles.body}>
-          <Text
+        <View style={[styles.header, { gap: 10 * scaleSpace, marginBottom: 2 * scaleSpace }]}>
+          <View
             style={[
-              styles.kicker,
+              styles.tile,
               {
-                color: item.isPremium ? theme.colors.premium : theme.colors.accent,
-                fontSize: 10 * scaleFont,
+                width: tile,
+                height: tile,
+                borderRadius: theme.radii.sm,
+                backgroundColor: theme.colors.accentSoft,
               },
             ]}
           >
+            <Text style={[styles.glyph, { color: accentTone, fontSize: 18 * scaleFont }]}>
+              {KIND_GLYPH[item.kind]}
+            </Text>
+            {item.isPremium ? (
+              <View style={[styles.premiumBadge, { backgroundColor: theme.colors.premium }]}>
+                <Text style={styles.premiumStar}>★</Text>
+              </View>
+            ) : null}
+          </View>
+          <Text style={[styles.kicker, { color: accentTone, fontSize: 11 * scaleFont }]}>
             {item.kindLabel}
           </Text>
-          <Text
-            numberOfLines={2}
-            style={[styles.title, { color: theme.colors.heading, fontSize: 18 * scaleFont }]}
-          >
-            {item.title}
-          </Text>
-          <Text
-            numberOfLines={2}
-            style={[styles.summary, { color: theme.colors.text, fontSize: 14 * scaleFont }]}
-          >
-            {item.summary}
-          </Text>
-          {item.metaLabel ? (
-            <Text style={[styles.meta, { color: theme.colors.textMuted, fontSize: 11 * scaleFont }]}>
-              {item.metaLabel}
-            </Text>
-          ) : null}
         </View>
+
+        <Text
+          numberOfLines={2}
+          style={[styles.title, { color: theme.colors.heading, fontSize: 19 * scaleFont, lineHeight: 24 * scaleFont }]}
+        >
+          {item.title}
+        </Text>
+        <Text
+          numberOfLines={2}
+          style={[styles.summary, { color: theme.colors.text, fontSize: 14 * scaleFont, lineHeight: 20 * scaleFont }]}
+        >
+          {item.summary}
+        </Text>
+        {item.metaLabel ? (
+          <Text style={[styles.meta, { color: theme.colors.textMuted, fontSize: 11 * scaleFont }]}>
+            {item.metaLabel}
+          </Text>
+        ) : null}
       </Pressable>
     </Link>
   );
@@ -110,8 +89,6 @@ export function ContentCard({ item }: { item: ContentCardModel }) {
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: "row",
-    alignItems: "center",
     borderWidth: StyleSheet.hairlineWidth,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.06,
@@ -119,41 +96,26 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   pressed: { opacity: 0.85 },
-  tile: {
-    width: 64,
-    height: 64,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  glyph: { fontSize: 24, fontWeight: "700" },
+  header: { flexDirection: "row", alignItems: "center" },
+  tile: { alignItems: "center", justifyContent: "center" },
+  glyph: { fontWeight: "700" },
   premiumBadge: {
     position: "absolute",
-    top: 5,
-    right: 5,
-    width: 19,
-    height: 19,
-    borderRadius: 10,
+    top: -5,
+    right: -5,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
   },
-  premiumStar: { color: "#FFFFFF", fontSize: 11, fontWeight: "700" },
-  body: { flex: 1, gap: 4, justifyContent: "center" },
+  premiumStar: { color: "#FFFFFF", fontSize: 10, fontWeight: "700" },
   kicker: {
     fontFamily: fontFamilies.mono,
-    fontSize: 10,
     textTransform: "uppercase",
-    letterSpacing: 1.4,
+    letterSpacing: 1.6,
   },
-  title: {
-    fontFamily: fontFamilies.display,
-    fontSize: 18,
-    lineHeight: 23,
-  },
-  summary: { fontFamily: fontFamilies.body, fontSize: 14, lineHeight: 19 },
-  meta: {
-    fontFamily: fontFamilies.mono,
-    fontSize: 11,
-    letterSpacing: 0.4,
-    marginTop: 2,
-  },
+  title: { fontFamily: fontFamilies.display },
+  summary: { fontFamily: fontFamilies.body },
+  meta: { fontFamily: fontFamilies.mono, letterSpacing: 0.4, marginTop: 2 },
 });

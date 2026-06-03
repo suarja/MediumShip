@@ -44,8 +44,8 @@ export function FeaturedCard({ item }: { item: ContentCardModel }) {
       >
         <View style={[styles.rule, { backgroundColor: accentTone }]} />
 
-        <View style={[styles.body, { padding: theme.spacing.lg * scaleSpace }]}>
-          <View style={[styles.header, { gap: 10 * scaleSpace }]}>
+        <View style={[styles.body, { padding: theme.spacing.lg * scaleSpace, gap: theme.spacing.md * scaleSpace }]}>
+          <View style={[styles.header, { gap: 10 * scaleSpace, marginBottom: 2 * scaleSpace }]}>
             <View
               style={[
                 styles.tile,

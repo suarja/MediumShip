@@ -6,6 +6,7 @@ How the engineering skills should consume this repo's domain documentation when 
 
 - `CONTEXT.md` at the repo root
 - `docs/adr/` for architectural decisions relevant to the current topic
+- `docs/convex-components-descriptions.md` before proposing, prototyping, or implementing a Convex-backed feature
 
 If any of these files don't exist yet, proceed silently.
 
@@ -23,6 +24,10 @@ This repo is configured as a single-context repo:
 ## Use the glossary's vocabulary
 
 When naming domain concepts, use the terms defined in `CONTEXT.md`.
+
+## Prefer existing Convex components
+
+When a feature touches auth, storage, video, payments, notifications, workflows, rate limiting, search, or other backend capabilities, review `docs/convex-components-descriptions.md` first. Prefer an existing Convex component when it covers the need cleanly; justify custom implementation when it does not.
 
 ## Flag ADR conflicts
 

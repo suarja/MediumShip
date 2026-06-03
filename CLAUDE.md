@@ -12,6 +12,10 @@ This repo uses the default Matt Pocock triage label vocabulary: `needs-triage`, 
 
 This repo uses a single-context layout with one root `CONTEXT.md` and ADRs in `docs/adr/`. See `docs/agents/domain.md`.
 
+### Convex components
+
+Before proposing, prototyping, or implementing a Convex-backed feature, review `docs/convex-components-descriptions.md` and prefer an existing component over a custom build when it fits.
+
 ## Commit workflow
 
 Prefer regular, small, atomic commits as the work progresses. Do not batch unrelated changes together. See `docs/agents/commit-workflow.md`.

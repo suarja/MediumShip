@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import HomeScreen from "../app/(app)/home";
+import { changeAppLanguage, initI18n } from "../src/i18n";
 
 const initialMetrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -27,6 +28,14 @@ jest.mock("convex/react", () => ({
 }));
 
 describe("home feed", () => {
+  beforeAll(async () => {
+    await initI18n();
+  });
+
+  beforeEach(async () => {
+    await changeAppLanguage("en");
+  });
+
   it("renders published content cards instead of the tenant seed state", () => {
     render(
       <SafeAreaProvider initialMetrics={initialMetrics}>

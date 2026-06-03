@@ -36,6 +36,18 @@ export default defineSchema({
       }),
     ),
     enabledModules: v.array(v.string()),
+    feedSections: v.optional(
+      v.array(
+        v.object({
+          kind: v.union(
+            v.literal("article"),
+            v.literal("episode"),
+            v.literal("video"),
+          ),
+          title: v.string(),
+        }),
+      ),
+    ),
   }).index("by_slug", ["slug"]),
   contents: defineTable({
     tenantSlug: v.string(),

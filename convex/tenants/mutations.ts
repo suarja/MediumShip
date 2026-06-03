@@ -24,6 +24,7 @@ export const setDefaultTenantPalette = mutation({
         name: defaultTenant.name,
         enabledModules: defaultTenant.enabledModules,
         themeConfig: { paletteName: args.paletteName },
+        feedSections: defaultTenant.feedSections,
       });
       return;
     }

@@ -8,26 +8,30 @@ import { DegradedBanner } from "../../src/components/content/degraded-banner";
 import { FeedCard } from "../../src/components/content/feed-card";
 import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
+import { filterAndOrderFeedContent } from "../../src/features/tenant/public-config";
 import { toContentCardModel } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { fontFamilies } from "../../src/features/theme/fonts";
-import { defaultTenant } from "../../src/features/tenant/default-tenant";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 export default function HomeFeedScreen() {
   const { t } = useTranslation("home");
-  const { theme } = useAppTheme();
+  const { theme, tenantSlug, enabledModules, feedSections } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
   const tabBarSpace = useTabBarSpace();
   const { state: networkState } = useNetworkStatus();
 
   const contents = useQuery(api.content.queries.listPublishedFeed, {
-    tenantSlug: defaultTenant.slug,
+    tenantSlug,
   }) as ContentDoc[] | undefined;
 
-  const items = (contents ?? []).map(toContentCardModel);
+  const items = filterAndOrderFeedContent(
+    contents ?? [],
+    enabledModules,
+    feedSections,
+  ).map(toContentCardModel);
   const isLoading = contents === undefined;
   const [featured, ...rest] = items;
 

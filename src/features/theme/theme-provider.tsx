@@ -2,6 +2,13 @@ import { createContext, PropsWithChildren, useContext, useMemo } from "react";
 import { useQuery } from "convex/react";
 
 import { api } from "../../../convex/_generated/api";
+import { defaultTenant } from "../tenant/default-tenant";
+import {
+  type EnabledModule,
+  type FeedSectionConfig,
+  normalizeEnabledModules,
+  normalizeFeedSections,
+} from "../tenant/public-config";
 import {
   AppTheme,
   defaultThemeConfig,
@@ -13,14 +20,20 @@ import {
 type ThemeContextValue = {
   theme: AppTheme;
   themeConfig: ThemeConfig;
+  tenantSlug: string;
   tenantName: string;
+  enabledModules: EnabledModule[];
+  feedSections: FeedSectionConfig[];
   isLoading: boolean;
 };
 
 const fallbackValue: ThemeContextValue = {
   theme: resolveTheme(defaultThemeConfig),
   themeConfig: defaultThemeConfig,
-  tenantName: "MediumShip",
+  tenantSlug: defaultTenant.slug,
+  tenantName: defaultTenant.name,
+  enabledModules: defaultTenant.enabledModules,
+  feedSections: defaultTenant.feedSections,
   isLoading: false,
 };
 
@@ -34,11 +47,18 @@ export function AppThemeProvider({ children }: PropsWithChildren) {
       tenant?.themeConfig && isThemePaletteName(tenant.themeConfig.paletteName)
         ? { paletteName: tenant.themeConfig.paletteName }
         : defaultThemeConfig;
+    const enabledModules = normalizeEnabledModules(
+      tenant?.enabledModules ?? defaultTenant.enabledModules,
+    );
+    const feedSections = normalizeFeedSections(tenant?.feedSections, enabledModules);
 
     return {
       theme: resolveTheme(themeConfig),
       themeConfig,
-      tenantName: tenant?.name ?? "MediumShip",
+      tenantSlug: tenant?.slug ?? defaultTenant.slug,
+      tenantName: tenant?.name ?? defaultTenant.name,
+      enabledModules,
+      feedSections,
       isLoading: tenant === undefined,
     };
   }, [tenant]);

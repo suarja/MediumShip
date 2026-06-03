@@ -65,6 +65,11 @@ export const seedDemoContent = mutation({
         name: defaultTenant.name,
         themeConfig: defaultTenant.themeConfig,
         enabledModules: defaultTenant.enabledModules,
+        feedSections: defaultTenant.feedSections,
+      });
+    } else if (!existingTenant.feedSections) {
+      await ctx.db.patch(existingTenant._id, {
+        feedSections: defaultTenant.feedSections,
       });
     }
 

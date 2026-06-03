@@ -22,20 +22,41 @@ export function DegradedBanner({ state }: { state: NetworkState }) {
       : state === "backendDegraded"
         ? t("backendDegraded")
         : t("authDegraded");
+  const tone =
+    state === "offline"
+      ? {
+          backgroundColor: theme.colors.dangerSoft,
+          borderColor: theme.colors.danger,
+          dotColor: theme.colors.danger,
+          textColor: theme.colors.heading,
+        }
+      : state === "backendDegraded"
+        ? {
+            backgroundColor: theme.colors.premiumSoft,
+            borderColor: theme.colors.premium,
+            dotColor: theme.colors.premium,
+            textColor: theme.colors.heading,
+          }
+        : {
+            backgroundColor: theme.colors.accentSoft,
+            borderColor: theme.colors.accent,
+            dotColor: theme.colors.accent,
+            textColor: theme.colors.heading,
+          };
 
   return (
     <View
       style={[
         styles.banner,
         {
-          borderRadius: theme.radii.sm,
-          backgroundColor: theme.colors.surfaceMuted,
-          borderColor: theme.colors.border,
+          borderRadius: theme.radii.md,
+          backgroundColor: tone.backgroundColor,
+          borderColor: tone.borderColor,
         },
       ]}
     >
-      <View style={[styles.dot, { backgroundColor: theme.colors.accent }]} />
-      <Text style={[styles.text, { color: theme.colors.text, fontSize: 12 * scaleFont }]}>
+      <View style={[styles.dot, { backgroundColor: tone.dotColor }]} />
+      <Text style={[styles.text, { color: tone.textColor, fontSize: 13 * scaleFont }]}>
         {label}
       </Text>
     </View>
@@ -46,16 +67,18 @@ const styles = StyleSheet.create({
   banner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderWidth: StyleSheet.hairlineWidth,
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    marginBottom: 12,
+    borderWidth: 1,
   },
-  dot: { width: 8, height: 8, borderRadius: 4 },
+  dot: { width: 10, height: 10, borderRadius: 5 },
   text: {
     fontFamily: fontFamilies.mono,
-    fontSize: 12,
+    fontSize: 13,
     letterSpacing: 0.3,
     flexShrink: 1,
+    lineHeight: 18,
   },
 });

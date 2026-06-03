@@ -1,7 +1,13 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import SettingsScreen from "../app/(app)/settings";
 import { changeAppLanguage, initI18n, i18n } from "../src/i18n";
+
+const initialMetrics = {
+  frame: { x: 0, y: 0, width: 390, height: 844 },
+  insets: { top: 47, left: 0, right: 0, bottom: 34 },
+};
 
 jest.mock("convex/react", () => ({
   useMutation: () => jest.fn().mockResolvedValue(undefined),
@@ -30,7 +36,11 @@ describe("settings language switch", () => {
   });
 
   it("switches the settings screen from French to English", async () => {
-    render(<SettingsScreen />);
+    render(
+      <SafeAreaProvider initialMetrics={initialMetrics}>
+        <SettingsScreen />
+      </SafeAreaProvider>,
+    );
 
     expect(screen.getByText("Réglages")).toBeTruthy();
     expect(screen.getByText("Français")).toBeTruthy();

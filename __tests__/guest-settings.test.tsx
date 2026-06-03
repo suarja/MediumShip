@@ -1,7 +1,13 @@
 import { render, screen } from "@testing-library/react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import SettingsScreen from "../app/(app)/settings";
 import { changeAppLanguage, initI18n } from "../src/i18n";
+
+const initialMetrics = {
+  frame: { x: 0, y: 0, width: 390, height: 844 },
+  insets: { top: 47, left: 0, right: 0, bottom: 34 },
+};
 
 jest.mock("convex/react", () => ({
   useMutation: () => jest.fn().mockResolvedValue(undefined),
@@ -30,7 +36,11 @@ describe("guest settings", () => {
   });
 
   it("keeps general settings public and removes member-only sign-out actions", () => {
-    render(<SettingsScreen />);
+    render(
+      <SafeAreaProvider initialMetrics={initialMetrics}>
+        <SettingsScreen />
+      </SafeAreaProvider>,
+    );
 
     expect(screen.getByText("Language")).toBeTruthy();
     expect(screen.getByText("Palette")).toBeTruthy();

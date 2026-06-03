@@ -1,12 +1,12 @@
 import { Redirect } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 import { useClerkAuth } from "../src/features/auth/use-clerk-auth";
-import { useTranslation } from "react-i18next";
 
-// Entry gate: route to the app or the auth flow once Clerk has loaded.
+// Entry gate: wait for Clerk, then always enter the public app shell.
 export default function Index() {
-  const { isLoaded, isSignedIn } = useClerkAuth();
+  const { isLoaded } = useClerkAuth();
   const { t } = useTranslation("common");
 
   if (!isLoaded) {
@@ -17,7 +17,7 @@ export default function Index() {
     );
   }
 
-  return <Redirect href={isSignedIn ? "/home" : "/sign-in"} />;
+  return <Redirect href="/home" />;
 }
 
 const styles = StyleSheet.create({

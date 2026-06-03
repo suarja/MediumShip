@@ -11,14 +11,71 @@ import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
+import { MemberGateCard } from "../../src/components/auth/member-gate-card";
 import { Screen } from "../../src/components/layout/screen";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 export default function ProfileScreen() {
   const { t } = useTranslation(["profile", "common"]);
+  const { isLoaded, isSignedIn, email, fullName, signOut } = useClerkAuth();
+  const { theme } = useAppTheme();
+
+  if (!isLoaded) {
+    return (
+      <Screen>
+        <View style={styles.loading}>
+          <ActivityIndicator color={theme.colors.accent} />
+          <Text style={[styles.cardText, { color: theme.colors.textMuted }]}>
+            {t("common:status.loading")}
+          </Text>
+        </View>
+      </Screen>
+    );
+  }
+
+  if (!isSignedIn) {
+    return (
+      <Screen>
+        <View style={styles.container}>
+          <Text style={[styles.eyebrow, { color: theme.colors.accent }]}>
+            {t("profile:eyebrow")}
+          </Text>
+          <Text style={[styles.title, { color: theme.colors.heading }]}>
+            {t("profile:guestTitle")}
+          </Text>
+          <MemberGateCard
+            title={t("profile:guestCardTitle")}
+            description={t("profile:guestCardDescription")}
+            ctaLabel={t("profile:createAccount")}
+          />
+        </View>
+      </Screen>
+    );
+  }
+
+  return (
+    <AuthenticatedProfileContent
+      email={email}
+      fullName={fullName}
+      signOut={signOut}
+    />
+  );
+}
+
+type AuthenticatedProfileContentProps = {
+  email: string | null;
+  fullName: string | null;
+  signOut: () => Promise<void>;
+};
+
+function AuthenticatedProfileContent({
+  email,
+  fullName,
+  signOut,
+}: AuthenticatedProfileContentProps) {
+  const { t } = useTranslation(["profile", "common"]);
   const { isAuthenticated } = useConvexAuth();
-  const { email, fullName, signOut } = useClerkAuth();
   const { theme } = useAppTheme();
 
   // Authenticated read — skipped until the Convex token is in place so the
@@ -112,6 +169,12 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, gap: 16, justifyContent: "center" },
+  loading: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
   eyebrow: {
     fontSize: 13,
     fontWeight: "700",

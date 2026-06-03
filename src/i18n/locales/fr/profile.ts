@@ -1,5 +1,10 @@
 export default {
-  eyebrow: "Slice auth",
+  eyebrow: "Membre",
+  guestTitle: "La lecture reste ouverte. Le compte debloque le reste.",
+  guestCardTitle: "Avantages membres",
+  guestCardDescription:
+    "Connectez-vous pour enregistrer des contenus, synchroniser la progression, telecharger les formats pris en charge et acceder aux fonctions premium.",
+  createAccount: "Creer un compte",
   fallbackTitle: "Connecté",
   description:
     "Cet écran valide le chemin Clerk → Convex JWT : l'identité ci-dessous est résolue côté serveur via ctx.auth.getUserIdentity().",

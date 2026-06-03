@@ -1,5 +1,10 @@
 export default {
-  eyebrow: "Auth slice",
+  eyebrow: "Membership",
+  guestTitle: "Reading is open. Membership unlocks the rest.",
+  guestCardTitle: "Member benefits",
+  guestCardDescription:
+    "Sign in to save stories, sync progress, download supported content, and access premium features.",
+  createAccount: "Create an account",
   fallbackTitle: "Signed in",
   description:
     "This screen proves the Clerk → Convex JWT path: the identity below is resolved server-side via ctx.auth.getUserIdentity().",

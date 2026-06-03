@@ -65,6 +65,7 @@ Le produit n'est pas centré exclusivement sur la vidéo. `Article`, `Episode` e
 - Éviter la complexité multi-tenant de niveau production tant que la validation commerciale n'exige pas plus.
 - Favoriser les intégrations réversibles et les composants qui réduisent la surface backend spécifique.
 - Préférer des patterns déjà validés dans les repos de référence quand ils correspondent au besoin.
+- Donner priorité aux patterns validés dans la référence mobile la plus complète avant de puiser dans des repos secondaires.
 
 ## Non-Objectifs
 

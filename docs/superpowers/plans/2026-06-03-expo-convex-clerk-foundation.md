@@ -4,7 +4,7 @@
 
 **Goal:** Build the first runnable MediumShip prototype foundation with Expo, Convex, Clerk, a white-label app shell, modular i18n, responsive iPhone/iPad primitives, and a minimum editorial domain for `Article`, `Episode`, and `Video`.
 
-**Architecture:** Use a single Expo app at the repo root with Expo Router for navigation, Convex for backend state and content queries, and Clerk for authentication. Base the auth wiring on proven Expo + Clerk + Convex patterns from `../Ideo/IdeoMobile`, use modular translation files split by page/feature, and introduce a `useResponsive` primitive from the start so the first screens already account for iPhone and iPad.
+**Architecture:** Use a single Expo app at the repo root with Expo Router for navigation, Convex for backend state and content queries, and Clerk for authentication. Base the mobile wiring first on proven patterns from `../editia/mobile`, use `../Ideo/IdeoMobile` as a secondary reference for additional Convex/Expo patterns, use modular translation files split by page/feature, and introduce a responsive primitive from the start so the first screens already account for iPhone and iPad.
 
 **Tech Stack:** Expo, React Native, TypeScript, Expo Router, Convex, Clerk, React Native Testing Library, Jest, Zod
 
@@ -392,8 +392,8 @@ export default function RootLayout() {
 ```
 
 Note:
-- if Clerk v3 shows post-login auth flicker or data loss, port the stabilized `useAuth()` wrapper from `../Ideo/IdeoMobile/src/app/_layout.tsx`
-- keep the `navigator.onLine` polyfill before any Clerk import
+- keep the `navigator.onLine` polyfill before any Clerk import, as observed in both `../editia/mobile` and `../Ideo/IdeoMobile`
+- if Clerk + Convex shows post-login auth flicker or data loss, port the more defensive stabilized auth wrapper from `../Ideo/IdeoMobile/src/app/_layout.tsx`
 
 - [ ] **Step 2: Add a simple screen wrapper**
 
@@ -561,7 +561,7 @@ export default i18n;
 
 - [ ] **Step 4: Add responsive primitive**
 
-Create `src/lib/responsive/use-responsive.ts`:
+Create `src/lib/responsive/use-responsive.ts`, inspired by `../editia/mobile/lib/hooks/useResponsiveSpacing.ts`:
 
 ```ts
 import { useWindowDimensions } from "react-native";
@@ -575,8 +575,9 @@ export function useResponsive() {
     width,
     height,
     isTablet,
+    multiplier: isTablet ? 1.5 : 1,
     contentMaxWidth: isTablet ? 720 : width,
-    screenPadding: isTablet ? 24 : 16,
+    screenPadding: (isTablet ? 24 : 16) * (isTablet ? 1.5 : 1),
   };
 }
 ```

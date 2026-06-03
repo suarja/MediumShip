@@ -20,6 +20,11 @@ Before proposing, prototyping, or implementing a Convex-backed feature, review `
 
 When implementation details are unclear, consult `docs/research/2026-06-03-reference-repositories.md` and reuse proven patterns from the reference repos before inventing a new approach.
 
+Priority order:
+- `../editia/mobile` first for production-grade mobile patterns
+- `../Ideo/IdeoMobile` second for additional Expo + Convex patterns
+- web references only when the mobile repos do not already answer the question
+
 ### Mobile foundation rules
 
 - For Clerk + Convex in Expo, prefer the proven `ConvexProviderWithClerk` pattern over a plain `ConvexProvider` when authenticated queries are involved.

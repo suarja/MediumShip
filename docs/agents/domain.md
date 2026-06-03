@@ -34,6 +34,8 @@ When a feature touches auth, storage, video, payments, notifications, workflows,
 
 For Expo/React Native decisions, prefer proven patterns from the documented reference repos, especially for Clerk + Convex auth wiring, env validation, translation structure, and iPhone/iPad responsiveness.
 
+When multiple reference repos exist, prefer the most production-proven mobile repo first, then use secondary repos only to complement missing patterns.
+
 ## Flag ADR conflicts
 
 If a proposal contradicts an existing ADR, surface it explicitly instead of silently overriding it.

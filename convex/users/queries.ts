@@ -11,19 +11,29 @@ export const getMe = query({
       return null;
     }
 
-    const stored = await ctx.db
+    // Prefer the canonical tokenIdentifier; fall back to the Clerk subject in
+    // case the issuer domain differs from what the webhook persisted.
+    let stored = await ctx.db
       .query("users")
-      .withIndex("by_token", (q) =>
+      .withIndex("by_tokenIdentifier", (q) =>
         q.eq("tokenIdentifier", identity.tokenIdentifier),
       )
       .unique();
 
+    if (!stored) {
+      stored = await ctx.db
+        .query("users")
+        .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+        .unique();
+    }
+
     return {
+      clerkId: identity.subject,
       tokenIdentifier: identity.tokenIdentifier,
       email: stored?.email ?? identity.email ?? null,
       name: stored?.name ?? identity.name ?? null,
-      lastSeenAt: stored?.lastSeenAt ?? null,
-      isStored: stored !== null,
+      avatarUrl: stored?.avatarUrl ?? null,
+      isStored: stored !== null && stored.deletedAt === undefined,
     };
   },
 });

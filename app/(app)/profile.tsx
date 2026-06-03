@@ -20,14 +20,15 @@ export default function ProfileScreen() {
   // Authenticated read — skipped until the Convex token is in place so the
   // subscription is never created unauthenticated (which would kill it).
   const me = useQuery(api.users.queries.getMe, isAuthenticated ? {} : "skip");
-  const upsertCurrentUser = useMutation(api.users.mutations.upsertCurrentUser);
+  const ensureCurrentUser = useMutation(api.users.mutations.ensureCurrentUser);
 
-  // Record the user in Convex once the authenticated session is live.
+  // Lazy-upsert the row once the authenticated session is live, so the slice is
+  // testable even before the Clerk webhook is configured.
   useEffect(() => {
     if (isAuthenticated) {
-      void upsertCurrentUser({});
+      void ensureCurrentUser({});
     }
-  }, [isAuthenticated, upsertCurrentUser]);
+  }, [isAuthenticated, ensureCurrentUser]);
 
   return (
     <Screen>

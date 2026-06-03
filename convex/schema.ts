@@ -3,13 +3,22 @@ import { v } from "convex/values";
 
 export default defineSchema({
   users: defineTable({
-    // Canonical stable identifier from the Clerk JWT (identity.tokenIdentifier).
-    // Never accepted as a function argument — always derived server-side.
+    // Canonical stable identifier from the Clerk JWT (identity.tokenIdentifier),
+    // formatted as `${issuer}|${clerkId}`. Derived server-side, never accepted
+    // as a function argument.
     tokenIdentifier: v.string(),
+    // Raw Clerk user id (identity.subject / webhook `data.id`). The webhook only
+    // carries this, so it is the join key shared by both write paths.
+    clerkId: v.string(),
     email: v.optional(v.string()),
     name: v.optional(v.string()),
-    lastSeenAt: v.string(),
-  }).index("by_token", ["tokenIdentifier"]),
+    avatarUrl: v.optional(v.string()),
+    lastSeenAt: v.optional(v.string()),
+    // Set by the Clerk user.deleted webhook (soft delete).
+    deletedAt: v.optional(v.number()),
+  })
+    .index("by_tokenIdentifier", ["tokenIdentifier"])
+    .index("by_clerkId", ["clerkId"]),
   tenants: defineTable({
     slug: v.string(),
     name: v.string(),

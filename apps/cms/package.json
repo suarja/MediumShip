@@ -1,0 +1,23 @@
+{
+  "name": "mediumship-cms",
+  "private": true,
+  "scripts": {
+    "dev": "sh -ac 'set -a; . ../../.env.local; set +a; next dev'",
+    "build": "sh -ac 'set -a; . ../../.env.local; set +a; next build'",
+    "start": "sh -ac 'set -a; . ../../.env.local; set +a; next start'"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^6.39.1",
+    "convex": "^1.40.0",
+    "next": "16.2.3",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "typescript": "~6.0.3"
+  }
+}

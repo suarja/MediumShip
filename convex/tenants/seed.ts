@@ -49,6 +49,38 @@ const demoContents = [
       youtubeUrl: "https://www.youtube.com/watch?v=abc123xyz00",
     },
   },
+  {
+    tenantSlug: defaultTenant.slug,
+    status: "draft" as const,
+    slug: "budget-des-villes-en-chantier",
+    kind: "article" as const,
+    title: "Budget des villes en chantier",
+    summary: "Un brouillon pour tester l'edition avant publication.",
+    category: "Brouillon",
+    tags: ["draft", "cities"],
+    isPremium: false,
+    readingTimeMinutes: 12,
+    articleBody:
+      "Ce brouillon sert au premier slice CMS. Il ne doit pas apparaitre dans le feed public tant qu'il reste en draft.",
+  },
+  {
+    tenantSlug: defaultTenant.slug,
+    status: "archived" as const,
+    slug: "archives-democratie-video",
+    kind: "video" as const,
+    title: "Archives de democratie locale",
+    summary: "Une ancienne video retiree du flux public mais visible en CMS.",
+    category: "Archive",
+    tags: ["archive", "video"],
+    isPremium: false,
+    publishedAt: "2026-05-28T10:00:00.000Z",
+    durationSeconds: 2540,
+    videoSource: {
+      kind: "youtube" as const,
+      youtubeVideoId: "archvideo001",
+      youtubeUrl: "https://www.youtube.com/watch?v=archvideo001",
+    },
+  },
 ];
 
 export const seedDemoContent = mutation({
@@ -73,17 +105,15 @@ export const seedDemoContent = mutation({
       });
     }
 
-    // Seed demo content once: skip if anything is already published for the
-    // tenant so repeated runs stay idempotent.
-    const existingContent = await ctx.db
-      .query("contents")
-      .withIndex("by_tenant_and_status", (q) =>
-        q.eq("tenantSlug", defaultTenant.slug).eq("status", "published"),
-      )
-      .first();
+    for (const content of demoContents) {
+      const existingContent = await ctx.db
+        .query("contents")
+        .withIndex("by_tenantSlug_and_slug", (q) =>
+          q.eq("tenantSlug", defaultTenant.slug).eq("slug", content.slug),
+        )
+        .unique();
 
-    if (!existingContent) {
-      for (const content of demoContents) {
+      if (!existingContent) {
         await ctx.db.insert("contents", content);
       }
     }

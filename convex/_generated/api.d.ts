@@ -8,6 +8,9 @@
  * @module
  */
 
+import type * as cms_authz from "../cms/authz.js";
+import type * as cms_mutations from "../cms/mutations.js";
+import type * as cms_queries from "../cms/queries.js";
 import type * as content_queries from "../content/queries.js";
 import type * as http from "../http.js";
 import type * as httpHandlers_clerkWebhook from "../httpHandlers/clerkWebhook.js";
@@ -25,6 +28,9 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "cms/authz": typeof cms_authz;
+  "cms/mutations": typeof cms_mutations;
+  "cms/queries": typeof cms_queries;
   "content/queries": typeof content_queries;
   http: typeof http;
   "httpHandlers/clerkWebhook": typeof httpHandlers_clerkWebhook;

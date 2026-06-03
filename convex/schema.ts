@@ -14,11 +14,13 @@ export default defineSchema({
     name: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
     lastSeenAt: v.optional(v.string()),
+    cmsRole: v.optional(v.literal("admin")),
     // Set by the Clerk user.deleted webhook (soft delete).
     deletedAt: v.optional(v.number()),
   })
     .index("by_tokenIdentifier", ["tokenIdentifier"])
-    .index("by_clerkId", ["clerkId"]),
+    .index("by_clerkId", ["clerkId"])
+    .index("by_cmsRole", ["cmsRole"]),
   tenants: defineTable({
     slug: v.string(),
     name: v.string(),
@@ -89,5 +91,7 @@ export default defineSchema({
     ),
   })
     .index("by_tenant_and_status", ["tenantSlug", "status"])
-    .index("by_tenant_and_kind", ["tenantSlug", "kind"]),
+    .index("by_tenant_and_kind", ["tenantSlug", "kind"])
+    .index("by_tenantSlug", ["tenantSlug"])
+    .index("by_tenantSlug_and_slug", ["tenantSlug", "slug"]),
 });

@@ -9,7 +9,11 @@ Use regular, small, atomic commits as work progresses through the repo.
 - Do not mix unrelated changes in the same commit.
 - Prefer a sequence of clean incremental commits over one large catch-up commit.
 - If a task spans several steps, commit at stable checkpoints rather than waiting for the entire task to finish.
+- Prefer commits that land a testable vertical slice over commits that only add invisible plumbing.
+- When adding a new platform or backend brick such as Clerk or Convex, try to pair it with the smallest possible end-to-end test surface in the same short sequence of work.
 
 ## Intent
 
 This repo should advance in steady, readable steps so history stays easy to review, revert, and continue from.
+
+It should also advance through slices that can be exercised quickly in the running app, not only through abstract infrastructure milestones.

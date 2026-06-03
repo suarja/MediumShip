@@ -31,6 +31,14 @@ Priority order:
 - Keep translations modular and split by page or feature. Do not accumulate all strings in one monolithic translation file.
 - Treat iPhone and iPad responsiveness as a first-pass requirement, not a later polish pass.
 
+### Delivery rules
+
+- Prefer testable vertical slices over horizontal infrastructure-only progress whenever possible.
+- Each new foundation brick should become manually testable quickly through a minimal end-to-end surface, even if the UI is temporary.
+- For auth work, expose a small test page or flow early so Clerk wiring can be validated in the app, not only in code structure.
+- For Convex work, start with a tiny schema and query/mutation path that can be exercised immediately before broadening the model.
+- Build the product through small end-to-end slices that can be verified incrementally, rather than stacking several invisible backend or provider layers before testing.
+
 ## Commit workflow
 
 Prefer regular, small, atomic commits as the work progresses. Do not batch unrelated changes together. See `docs/agents/commit-workflow.md`.

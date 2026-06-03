@@ -9,6 +9,7 @@ import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
+// Format glyph per editorial kind (no cover art in the model yet).
 const KIND_GLYPH: Record<ContentKind, string> = {
   article: "✎",
   episode: "▷",
@@ -16,16 +17,22 @@ const KIND_GLYPH: Record<ContentKind, string> = {
 };
 
 /**
- * Editorial hero for the lead feed item. Text-forward (big serif title on the
- * high-contrast surface/heading pair) with a thin accent lead rule and a small
- * format tile — deliberately no large empty media band, since there is no cover
- * art to show yet.
+ * The single feed card used for every item — both the lead `featured` hero and
+ * the standard rows share this exact layout, so their horizontal padding and
+ * left alignment can never drift apart. The only differences are an accent lead
+ * rule and a larger title on the featured variant.
  */
-export function FeaturedCard({ item }: { item: ContentCardModel }) {
+export function FeedCard({
+  item,
+  featured = false,
+}: {
+  item: ContentCardModel;
+  featured?: boolean;
+}) {
   const { theme } = useAppTheme();
   const { scaleSpace, scaleFont } = useResponsive();
-  const accentTone = item.isPremium ? theme.colors.premium : theme.colors.accent;
   const tile = 40 * scaleSpace;
+  const accentTone = item.isPremium ? theme.colors.premium : theme.colors.accent;
 
   return (
     <Link href={item.href as never} asChild>
@@ -42,10 +49,20 @@ export function FeaturedCard({ item }: { item: ContentCardModel }) {
           pressed && styles.pressed,
         ]}
       >
-        <View style={[styles.rule, { backgroundColor: accentTone }]} />
+        {featured ? (
+          <View style={[styles.rule, { backgroundColor: accentTone }]} />
+        ) : null}
 
-        <View style={[styles.body, { padding: theme.spacing.lg * scaleSpace, gap: theme.spacing.md * scaleSpace }]}>
-          <View style={[styles.header, { gap: 10 * scaleSpace, marginBottom: 2 * scaleSpace }]}>
+        <View
+          style={[
+            styles.body,
+            {
+              padding: theme.spacing.lg * scaleSpace,
+              gap: theme.spacing.md * scaleSpace,
+            },
+          ]}
+        >
+          <View style={[styles.header, { gap: 10 * scaleSpace }]}>
             <View
               style={[
                 styles.tile,
@@ -72,17 +89,22 @@ export function FeaturedCard({ item }: { item: ContentCardModel }) {
           </View>
 
           <Text
-            numberOfLines={3}
+            numberOfLines={featured ? 3 : 2}
             style={[
               styles.title,
-              { color: theme.colors.heading, fontSize: 27 * scaleFont, lineHeight: 32 * scaleFont },
+              {
+                color: theme.colors.heading,
+                fontFamily: featured ? fontFamilies.displayBold : fontFamilies.display,
+                fontSize: (featured ? 26 : 19) * scaleFont,
+                lineHeight: (featured ? 31 : 24) * scaleFont,
+              },
             ]}
           >
             {item.title}
           </Text>
           <Text
             numberOfLines={2}
-            style={[styles.summary, { color: theme.colors.text, fontSize: 15 * scaleFont, lineHeight: 22 * scaleFont }]}
+            style={[styles.summary, { color: theme.colors.text, fontSize: 15 * scaleFont, lineHeight: 21 * scaleFont }]}
           >
             {item.summary}
           </Text>
@@ -108,7 +130,7 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.9 },
   rule: { height: 4, width: "100%" },
-  body: { gap: 8 },
+  body: {},
   header: { flexDirection: "row", alignItems: "center" },
   tile: { alignItems: "center", justifyContent: "center" },
   glyph: { fontWeight: "700" },
@@ -128,7 +150,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 1.6,
   },
-  title: { fontFamily: fontFamilies.displayBold },
+  title: {},
   summary: { fontFamily: fontFamilies.body },
   meta: { fontFamily: fontFamilies.mono, letterSpacing: 0.4, marginTop: 2 },
 });

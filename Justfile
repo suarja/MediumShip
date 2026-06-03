@@ -1,0 +1,96 @@
+# MediumShip — task runner.
+#
+# `just` is the single, documented entry point for day-to-day commands.
+# Run `just` (no args) to list everything. Heavy logic lives in scripts/
+# (see scripts/README.md); recipes here stay thin and self-explanatory.
+
+set shell := ["bash", "-uc"]
+
+# Default simulator targets — override here if your installed devices differ.
+# (List yours with: xcrun simctl list devices available)
+iphone := "iPhone 17 Pro"
+ipad   := "iPad Air 13-inch (M3)"
+
+# Show all available commands (default).
+default:
+    @just --list --unsorted
+
+# ─── Dev server ─────────────────────────────────────────────────────────────
+
+# Start the Expo dev server (Metro). Keep this running in its own tab.
+[group('dev')]
+start:
+    npx expo start
+
+# Start Expo with the cache cleared — use after weird bundling errors.
+[group('dev')]
+start-clean:
+    npx expo start --clear
+
+# ─── iOS simulators ──────────────────────────────────────────────────────────
+# These need `just start` running in another tab. They drive simulators via
+# `xcrun simctl` (no AppleScript), so they work even when Expo's `i` crashes.
+
+# Open the app on the iPhone simulator.
+[group('ios')]
+ios:
+    IPHONE_NAME="{{iphone}}" IPAD_NAME="{{ipad}}" scripts/ios.sh iphone
+
+# Open the app on the iPad simulator.
+[group('ios')]
+ipad:
+    IPHONE_NAME="{{iphone}}" IPAD_NAME="{{ipad}}" scripts/ios.sh ipad
+
+# Open the app on the iPhone AND iPad at the same time.
+[group('ios')]
+ios-both:
+    IPHONE_NAME="{{iphone}}" IPAD_NAME="{{ipad}}" scripts/ios.sh both
+
+# Run on Android / web via Expo's own launchers.
+[group('ios')]
+android:
+    npx expo start --android
+
+[group('ios')]
+web:
+    npx expo start --web
+
+# ─── Convex backend ──────────────────────────────────────────────────────────
+
+# Start the Convex dev backend (codegen + live functions). Own tab.
+[group('backend')]
+convex:
+    npx convex dev
+
+# Seed the demo tenant content into Convex.
+[group('backend')]
+seed:
+    npx convex run tenants/seed:seedDemoContent
+
+# ─── Quality ─────────────────────────────────────────────────────────────────
+
+# Run the Jest test suite.
+[group('quality')]
+test:
+    npm test
+
+# Type-check the project without emitting output.
+[group('quality')]
+typecheck:
+    npx tsc -p tsconfig.json --noEmit
+
+# ─── Troubleshooting ─────────────────────────────────────────────────────────
+
+# Resets Warp's Automation permission so macOS re-prompts (fixes Expo `i` crash).
+#
+# After running this, fully QUIT Warp (Cmd+Q) and reopen it, then retry.
+# Note: `just ios` never needs this permission, so you can skip it entirely.
+[group('troubleshoot')]
+fix-warp:
+    tccutil reset AppleEvents dev.warp.Warp-Stable
+    @echo "✓ Reset done. Now Cmd+Q Warp completely and reopen it."
+
+# List installed iOS simulators and their boot state.
+[group('troubleshoot')]
+sims:
+    xcrun simctl list devices available

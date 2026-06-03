@@ -4,9 +4,8 @@ import { useQuery } from "convex/react";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
-import { ContentCard } from "../../src/components/content/content-card";
 import { DegradedBanner } from "../../src/components/content/degraded-banner";
-import { FeaturedCard } from "../../src/components/content/featured-card";
+import { FeedCard } from "../../src/components/content/feed-card";
 import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { toContentCardModel } from "../../src/features/content/selectors";
@@ -89,9 +88,9 @@ export default function HomeFeedScreen() {
           </View>
         ) : (
           <>
-            {featured ? <FeaturedCard item={featured} /> : null}
+            {featured ? <FeedCard item={featured} featured /> : null}
             {rest.map((item) => (
-              <ContentCard key={item.id} item={item} />
+              <FeedCard key={item.id} item={item} />
             ))}
           </>
         )}

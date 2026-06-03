@@ -44,22 +44,38 @@ export default defineSchema({
       v.literal("episode"),
       v.literal("video"),
     ),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("published"),
+      v.literal("archived"),
+    ),
+    slug: v.string(),
     title: v.string(),
     summary: v.string(),
     category: v.string(),
     tags: v.array(v.string()),
     isPremium: v.boolean(),
     heroImageUrl: v.optional(v.string()),
-    publishedAt: v.string(),
+    publishedAt: v.optional(v.string()),
+    readingTimeMinutes: v.optional(v.number()),
     articleBody: v.optional(v.string()),
     audioUrl: v.optional(v.string()),
+    durationSeconds: v.optional(v.number()),
     videoSource: v.optional(
-      v.object({
-        provider: v.union(v.literal("youtube"), v.literal("hosted")),
-        playbackId: v.string(),
-      }),
+      v.union(
+        v.object({
+          kind: v.literal("youtube"),
+          youtubeVideoId: v.string(),
+          youtubeUrl: v.string(),
+        }),
+        v.object({
+          kind: v.literal("hosted"),
+          uploadKey: v.string(),
+          playbackUrl: v.string(),
+        }),
+      ),
     ),
   })
-    .index("by_tenant", ["tenantSlug"])
-    .index("by_tenant_kind", ["tenantSlug", "kind"]),
+    .index("by_tenant_and_status", ["tenantSlug", "status"])
+    .index("by_tenant_and_kind", ["tenantSlug", "kind"]),
 });

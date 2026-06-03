@@ -41,6 +41,25 @@ Priority order:
 - For Convex work, start with a tiny schema and query/mutation path that can be exercised immediately before broadening the model.
 - Build the product through small end-to-end slices that can be verified incrementally, rather than stacking several invisible backend or provider layers before testing.
 
+### Current architecture direction
+
+The validated architecture direction is recorded in:
+
+- `docs/plans/2026-06-03-mediumship-architecture-design.md`
+- `docs/superpowers/plans/2026-06-03-guest-first-public-read-model.md`
+
+Treat these decisions as the current roadmap baseline unless the user explicitly revises them.
+
+Current baseline:
+
+- The mobile app is `guest-first`, not `auth-first`.
+- Public reading should work without `Clerk`; `Clerk` is only for member capabilities such as premium, bookmarks, sync, downloads, and personalization.
+- The first implementation milestone is the public read model: multi-format feed, public article/episode/video detail, and first-pass degraded network states.
+- The first CMS will be a mono-tenant internal web app, likely `Next.js`, sharing the same `Convex` backend.
+- Product configuration stays schema-bounded: `ThemeConfig`, `NavigationConfig`, `FeedSectionConfig`, enabled modules, and targeted feature flags.
+- `Video` supports both `YouTubeVideo` and `HostedVideo`, but offline premium only applies to `Article`, `Episode`, and `HostedVideo`.
+- Resilience should prefer graceful degradation, local cache, and an external incident-status channel over early multi-backend failover.
+
 ## Commit workflow
 
 Prefer regular, small, atomic commits as the work progresses. Do not batch unrelated changes together. See `docs/agents/commit-workflow.md`.

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { Screen } from "../../src/components/layout/screen";
 import { LanguageItem } from "../../src/components/settings/language-item";
+import { NetworkStateDebugItem } from "../../src/components/settings/network-state-debug-item";
 import { SettingsRow } from "../../src/components/settings/settings-row";
 import { SettingsSection } from "../../src/components/settings/settings-section";
 import { ThemePaletteItem } from "../../src/components/settings/theme-palette-item";
@@ -62,6 +63,12 @@ export default function SettingsScreen() {
             </>
           )}
         </SettingsSection>
+
+        {__DEV__ ? (
+          <SettingsSection title={t("settings:sections.debug")}>
+            <NetworkStateDebugItem isLast />
+          </SettingsSection>
+        ) : null}
       </View>
     </Screen>
   );

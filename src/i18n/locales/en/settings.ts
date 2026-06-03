@@ -4,6 +4,7 @@ export default {
   sections: {
     general: "General",
     account: "Account",
+    debug: "Debug",
   },
   language: {
     label: "Language",
@@ -54,5 +55,30 @@ export default {
       "Create an account to sync progress, save items, download supported content, and access premium features.",
     signedInAs: "Signed in as",
     signOut: "Sign out",
+  },
+  debug: {
+    network: {
+      label: "Network state override",
+      description:
+        "Developer-only override for degraded-state testing on the simulator.",
+      options: {
+        auto: {
+          label: "Auto",
+          description: "Use the real device connectivity state.",
+        },
+        offline: {
+          label: "Offline",
+          description: "Force public surfaces into their offline fallback.",
+        },
+        backendDegraded: {
+          label: "Backend degraded",
+          description: "Show the backend degraded banner state.",
+        },
+        authDegraded: {
+          label: "Auth degraded",
+          description: "Show the member-auth degraded banner state.",
+        },
+      },
+    },
   },
 } as const;

@@ -10,6 +10,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { env } from "../src/lib/env";
 import { useStableAuth } from "../src/features/auth/use-stable-auth";
+import { NetworkStatusDebugProvider } from "../src/features/network/use-network-status";
 import { AppThemeProvider } from "../src/features/theme/theme-provider";
 import { useAppFonts } from "../src/features/theme/use-app-fonts";
 import { i18n, initI18n } from "../src/i18n";
@@ -71,10 +72,12 @@ export default function RootLayout() {
         tokenCache={tokenCache}
       >
         <ConvexProviderWithClerk client={convex} useAuth={useStableAuth}>
-          <AppThemeProvider>
-            <StatusBar style="auto" />
-            <Stack key={languageKey} screenOptions={{ headerShown: false }} />
-          </AppThemeProvider>
+          <NetworkStatusDebugProvider>
+            <AppThemeProvider>
+              <StatusBar style="auto" />
+              <Stack key={languageKey} screenOptions={{ headerShown: false }} />
+            </AppThemeProvider>
+          </NetworkStatusDebugProvider>
         </ConvexProviderWithClerk>
       </ClerkProvider>
     </SafeAreaProvider>

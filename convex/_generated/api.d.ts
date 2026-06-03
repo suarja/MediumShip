@@ -11,6 +11,8 @@
 import type * as content_queries from "../content/queries.js";
 import type * as tenants_queries from "../tenants/queries.js";
 import type * as tenants_seed from "../tenants/seed.js";
+import type * as users_mutations from "../users/mutations.js";
+import type * as users_queries from "../users/queries.js";
 
 import type {
   ApiFromModules,
@@ -22,6 +24,8 @@ declare const fullApi: ApiFromModules<{
   "content/queries": typeof content_queries;
   "tenants/queries": typeof tenants_queries;
   "tenants/seed": typeof tenants_seed;
+  "users/mutations": typeof users_mutations;
+  "users/queries": typeof users_queries;
 }>;
 
 /**

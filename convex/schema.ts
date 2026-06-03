@@ -2,6 +2,14 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  users: defineTable({
+    // Canonical stable identifier from the Clerk JWT (identity.tokenIdentifier).
+    // Never accepted as a function argument — always derived server-side.
+    tokenIdentifier: v.string(),
+    email: v.optional(v.string()),
+    name: v.optional(v.string()),
+    lastSeenAt: v.string(),
+  }).index("by_token", ["tokenIdentifier"]),
   tenants: defineTable({
     slug: v.string(),
     name: v.string(),

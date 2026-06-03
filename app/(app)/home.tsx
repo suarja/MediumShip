@@ -5,10 +5,12 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import { ContentCard } from "../../src/components/content/content-card";
+import { DegradedBanner } from "../../src/components/content/degraded-banner";
 import { FeaturedCard } from "../../src/components/content/featured-card";
 import { Screen } from "../../src/components/layout/screen";
 import { toContentCardModel } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
+import { useNetworkStatus } from "../../src/features/network/use-network-status";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
@@ -16,6 +18,7 @@ import { useAppTheme } from "../../src/features/theme/theme-provider";
 export default function HomeFeedScreen() {
   const { t } = useTranslation("home");
   const { theme } = useAppTheme();
+  const { state: networkState } = useNetworkStatus();
 
   const contents = useQuery(api.content.queries.listPublishedFeed, {
     tenantSlug: defaultTenant.slug,
@@ -27,6 +30,7 @@ export default function HomeFeedScreen() {
 
   return (
     <Screen>
+      <DegradedBanner state={networkState} />
       <View style={styles.header}>
         <Text style={[styles.eyebrow, { color: theme.colors.accent }]}>
           {t("eyebrow")}

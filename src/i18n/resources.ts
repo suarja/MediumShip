@@ -4,6 +4,7 @@ import commonEn from "./locales/en/common";
 import episodeEn from "./locales/en/episode";
 import homeEn from "./locales/en/home";
 import navigationEn from "./locales/en/navigation";
+import networkEn from "./locales/en/network";
 import premiumEn from "./locales/en/premium";
 import profileEn from "./locales/en/profile";
 import settingsEn from "./locales/en/settings";
@@ -14,6 +15,7 @@ import commonFr from "./locales/fr/common";
 import episodeFr from "./locales/fr/episode";
 import homeFr from "./locales/fr/home";
 import navigationFr from "./locales/fr/navigation";
+import networkFr from "./locales/fr/network";
 import premiumFr from "./locales/fr/premium";
 import profileFr from "./locales/fr/profile";
 import settingsFr from "./locales/fr/settings";
@@ -31,6 +33,7 @@ export const resources = {
     article: articleEn,
     episode: episodeEn,
     video: videoEn,
+    network: networkEn,
   },
   fr: {
     common: commonFr,
@@ -43,6 +46,7 @@ export const resources = {
     article: articleFr,
     episode: episodeFr,
     video: videoFr,
+    network: networkFr,
   },
 } as const;
 

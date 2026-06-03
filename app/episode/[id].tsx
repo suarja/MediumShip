@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { useQuery } from "convex/react";
 import { Link, useLocalSearchParams } from "expo-router";
@@ -109,9 +109,17 @@ export default function EpisodeDetailScreen() {
                 {t("premiumBody")}
               </Text>
               <Link href="/sign-in" asChild>
-                <Text style={[styles.premiumCta, { color: theme.colors.premium }]}>
-                  {t("premiumCta")} →
-                </Text>
+                <Pressable
+                  accessibilityRole="link"
+                  style={{
+                    alignSelf: "flex-start",
+                    paddingTop: 4,
+                  }}
+                >
+                  <Text style={[styles.premiumCta, { color: theme.colors.premium }]}>
+                    {t("premiumCta")} →
+                  </Text>
+                </Pressable>
               </Link>
             </View>
           ) : (
@@ -162,7 +170,6 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.mono,
     fontSize: 13,
     letterSpacing: 0.5,
-    paddingTop: 4,
   },
   audioNote: { fontFamily: fontFamilies.body, fontSize: 14, lineHeight: 20, marginTop: 4 },
 });

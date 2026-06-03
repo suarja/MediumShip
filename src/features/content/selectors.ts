@@ -6,6 +6,24 @@ const KIND_LABELS: Record<ContentKind, string> = {
   video: "Video",
 };
 
+export function getYoutubeThumbnailUrl(youtubeVideoId: string) {
+  return `https://i.ytimg.com/vi/${youtubeVideoId}/hqdefault.jpg`;
+}
+
+export function getContentCoverImageUrl(
+  content: Pick<ContentDoc, "heroImageUrl" | "kind" | "videoSource">,
+) {
+  if (content.heroImageUrl) {
+    return content.heroImageUrl;
+  }
+
+  if (content.kind === "video" && content.videoSource?.kind === "youtube") {
+    return getYoutubeThumbnailUrl(content.videoSource.youtubeVideoId);
+  }
+
+  return undefined;
+}
+
 export function toContentCardModel(content: ContentDoc): ContentCardModel {
   const metaParts: string[] = [];
 
@@ -33,5 +51,6 @@ export function toContentCardModel(content: ContentDoc): ContentCardModel {
     metaLabel: metaParts.join(" · "),
     href: `/${content.kind}/${content._id}`,
     isPremium: content.isPremium,
+    coverImageUrl: getContentCoverImageUrl(content),
   };
 }

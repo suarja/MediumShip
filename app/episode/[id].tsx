@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { useQuery } from "convex/react";
 import { Link, useLocalSearchParams } from "expo-router";
@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
+import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
@@ -34,6 +35,7 @@ export default function EpisodeDetailScreen() {
       : content === null || content.kind !== "episode"
         ? "notFound"
         : "ready";
+  const coverImageUrl = content ? getContentCoverImageUrl(content) : undefined;
 
   return (
     <ContentDetailShell
@@ -51,14 +53,22 @@ export default function EpisodeDetailScreen() {
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
         >
-          <View
-            style={[
-              styles.cover,
-              { backgroundColor: theme.colors.accent, height: 160 * scaleSpace },
-            ]}
-          >
-            <View style={styles.coverGlow} />
-          </View>
+          {coverImageUrl ? (
+            <Image
+              accessibilityLabel={`${content.title} cover`}
+              source={{ uri: coverImageUrl }}
+              style={[styles.cover, { height: 160 * scaleSpace }]}
+            />
+          ) : (
+            <View
+              style={[
+                styles.cover,
+                { backgroundColor: theme.colors.accent, height: 160 * scaleSpace },
+              ]}
+            >
+              <View style={styles.coverGlow} />
+            </View>
+          )}
           <Text
             style={[
               styles.kicker,
@@ -140,6 +150,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     marginBottom: 6,
     overflow: "hidden",
+    resizeMode: "cover",
     justifyContent: "center",
     alignItems: "center",
   },

@@ -46,4 +46,5 @@ export type ContentCardModel = {
   metaLabel: string;
   href: string;
   isPremium: boolean;
+  coverImageUrl?: string;
 };

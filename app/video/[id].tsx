@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { useQuery } from "convex/react";
 import { useLocalSearchParams } from "expo-router";
@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
+import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
@@ -37,6 +38,7 @@ export default function VideoDetailScreen() {
         : "ready";
 
   const source = content?.videoSource;
+  const coverImageUrl = content ? getContentCoverImageUrl(content) : undefined;
   const providerLabel =
     source?.kind === "youtube"
       ? t("youtubeProvider")
@@ -66,18 +68,26 @@ export default function VideoDetailScreen() {
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
         >
-          <View
-            style={[
-              styles.cover,
-              { backgroundColor: theme.colors.accent, height: 180 * scaleSpace },
-            ]}
-          >
-            <Text
-              style={[styles.playGlyph, { color: theme.colors.accentContrast, fontSize: 40 * scaleFont }]}
+          {coverImageUrl ? (
+            <Image
+              accessibilityLabel={`${content.title} cover`}
+              source={{ uri: coverImageUrl }}
+              style={[styles.cover, { height: 180 * scaleSpace }]}
+            />
+          ) : (
+            <View
+              style={[
+                styles.cover,
+                { backgroundColor: theme.colors.accent, height: 180 * scaleSpace },
+              ]}
             >
-              ▶
-            </Text>
-          </View>
+              <Text
+                style={[styles.playGlyph, { color: theme.colors.accentContrast, fontSize: 40 * scaleFont }]}
+              >
+                ▶
+              </Text>
+            </View>
+          )}
           <Text style={[styles.kicker, { color: theme.colors.accent, fontSize: 11 * scaleFont }]}>
             {content.category || t("kicker")}
           </Text>
@@ -134,6 +144,7 @@ const styles = StyleSheet.create({
     height: 180,
     borderRadius: 18,
     marginBottom: 6,
+    resizeMode: "cover",
     justifyContent: "center",
     alignItems: "center",
   },

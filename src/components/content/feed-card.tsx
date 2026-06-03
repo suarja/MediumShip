@@ -1,5 +1,5 @@
 import { Link } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import type {
   ContentCardModel,
@@ -9,7 +9,6 @@ import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
-// Format glyph per editorial kind (no cover art in the model yet).
 const KIND_GLYPH: Record<ContentKind, string> = {
   article: "✎",
   episode: "▷",
@@ -53,6 +52,14 @@ export function FeedCard({
           <View style={[styles.rule, { backgroundColor: accentTone }]} />
         ) : null}
 
+        {featured && item.coverImageUrl ? (
+          <Image
+            accessibilityLabel={`${item.title} cover`}
+            source={{ uri: item.coverImageUrl }}
+            style={[styles.featuredCover, { backgroundColor: theme.colors.accentSoft }]}
+          />
+        ) : null}
+
         <View
           style={[
             styles.body,
@@ -75,9 +82,17 @@ export function FeedCard({
                 },
               ]}
             >
-              <Text style={[styles.glyph, { color: accentTone, fontSize: 18 * scaleFont }]}>
-                {KIND_GLYPH[item.kind]}
-              </Text>
+              {item.coverImageUrl ? (
+                <Image
+                  accessibilityLabel={`${item.title} thumbnail`}
+                  source={{ uri: item.coverImageUrl }}
+                  style={styles.thumbnail}
+                />
+              ) : (
+                <Text style={[styles.glyph, { color: accentTone, fontSize: 18 * scaleFont }]}>
+                  {KIND_GLYPH[item.kind]}
+                </Text>
+              )}
               {item.isPremium ? (
                 <View style={[styles.premiumBadge, { backgroundColor: theme.colors.premium }]}>
                   <Text style={styles.premiumStar}>★</Text>
@@ -131,9 +146,11 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.9 },
   rule: { height: 4, width: "100%" },
+  featuredCover: { width: "100%", height: 184, resizeMode: "cover" },
   body: {},
   header: { flexDirection: "row", alignItems: "center" },
-  tile: { alignItems: "center", justifyContent: "center" },
+  tile: { alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  thumbnail: { width: "100%", height: "100%", resizeMode: "cover" },
   glyph: { fontWeight: "700" },
   premiumBadge: {
     position: "absolute",

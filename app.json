@@ -13,7 +13,8 @@
       "expo-router",
       "expo-status-bar",
       "expo-localization",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

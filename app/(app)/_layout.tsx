@@ -1,10 +1,10 @@
-import { Redirect } from "expo-router";
+import { Redirect, Stack } from "expo-router";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
-import { useClerkAuth } from "../src/features/auth/use-clerk-auth";
+import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
 
-// Entry gate: route to the app or the auth flow once Clerk has loaded.
-export default function Index() {
+// Guard for the authenticated area: bounce to sign-in when not signed in.
+export default function AppLayout() {
   const { isLoaded, isSignedIn } = useClerkAuth();
 
   if (!isLoaded) {
@@ -15,7 +15,11 @@ export default function Index() {
     );
   }
 
-  return <Redirect href={isSignedIn ? "/home" : "/sign-in"} />;
+  if (!isSignedIn) {
+    return <Redirect href="/sign-in" />;
+  }
+
+  return <Stack screenOptions={{ headerShown: false }} />;
 }
 
 const styles = StyleSheet.create({

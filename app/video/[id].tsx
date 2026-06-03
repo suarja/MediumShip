@@ -1,12 +1,12 @@
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { useQuery } from "convex/react";
 import { useLocalSearchParams } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
+import { VideoPlayerCard } from "../../src/components/media/video-player-card";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
@@ -46,12 +46,6 @@ export default function VideoDetailScreen() {
         ? t("hostedProvider")
         : null;
 
-  const openYoutube = () => {
-    if (source?.kind === "youtube") {
-      void WebBrowser.openBrowserAsync(source.youtubeUrl);
-    }
-  };
-
   return (
     <ContentDetailShell
       state={state}
@@ -68,7 +62,9 @@ export default function VideoDetailScreen() {
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
         >
-          {coverImageUrl ? (
+          {source ? (
+            <VideoPlayerCard source={source} />
+          ) : coverImageUrl ? (
             <Image
               accessibilityLabel={`${content.title} cover`}
               source={{ uri: coverImageUrl }}
@@ -109,29 +105,11 @@ export default function VideoDetailScreen() {
           >
             {content.summary}
           </Text>
-
-          {source?.kind === "youtube" ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={openYoutube}
-              style={({ pressed }) => [
-                styles.button,
-                {
-                  borderRadius: theme.radii.pill,
-                  backgroundColor: theme.colors.accent,
-                },
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={[styles.buttonText, { color: theme.colors.accentContrast }]}>
-                {t("watchYoutube")}
-              </Text>
-            </Pressable>
-          ) : (
+          {!source ? (
             <Text style={[styles.unavailable, { color: theme.colors.textMuted }]}>
               {t("unavailable")}
             </Text>
-          )}
+          ) : null}
         </ScrollView>
       ) : null}
     </ContentDetailShell>
@@ -158,13 +136,5 @@ const styles = StyleSheet.create({
   title: { fontFamily: fontFamilies.display, fontSize: 28, lineHeight: 34 },
   meta: { fontFamily: fontFamilies.mono, fontSize: 11, letterSpacing: 0.4 },
   summary: { fontFamily: fontFamilies.body, fontSize: 16, lineHeight: 24 },
-  button: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 20,
-    paddingVertical: 13,
-    marginTop: 8,
-  },
-  pressed: { opacity: 0.85 },
-  buttonText: { fontFamily: fontFamilies.bodySemiBold, color: "#FFFFFF", fontSize: 15 },
   unavailable: { fontFamily: fontFamilies.body, fontSize: 14, lineHeight: 20, marginTop: 4 },
 });

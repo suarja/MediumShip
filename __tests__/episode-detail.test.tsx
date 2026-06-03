@@ -4,20 +4,10 @@ import { render, screen } from "@testing-library/react-native";
 import EpisodeDetailScreen from "../app/episode/[id]";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
+const mockUseQuery = jest.fn();
+
 jest.mock("convex/react", () => ({
-  useQuery: () => ({
-    _id: "episode_1",
-    tenantSlug: "demo-media",
-    kind: "episode",
-    status: "published",
-    title: "Avec Lea Bardin",
-    summary: "Entretien long format sur le travail invisible.",
-    category: "Podcast",
-    tags: ["podcast"],
-    isPremium: true,
-    publishedAt: "2026-06-03T09:00:00.000Z",
-    durationSeconds: 3240,
-  }),
+  useQuery: (...args: unknown[]) => mockUseQuery(...args),
 }));
 
 jest.mock("expo-router", () => ({
@@ -50,6 +40,19 @@ describe("episode detail", () => {
 
   beforeEach(async () => {
     await changeAppLanguage("en");
+    mockUseQuery.mockReturnValue({
+      _id: "episode_1",
+      tenantSlug: "demo-media",
+      kind: "episode",
+      status: "published",
+      title: "Avec Lea Bardin",
+      summary: "Entretien long format sur le travail invisible.",
+      category: "Podcast",
+      tags: ["podcast"],
+      isPremium: true,
+      publishedAt: "2026-06-03T09:00:00.000Z",
+      durationSeconds: 3240,
+    });
   });
 
   it("renders the premium episode CTA without crashing and shows the degraded banner", () => {
@@ -58,5 +61,28 @@ describe("episode detail", () => {
     expect(screen.getByText("You are offline")).toBeTruthy();
     expect(screen.getByText(/Members-only episode/)).toBeTruthy();
     expect(screen.getByText(/Become a member/)).toBeTruthy();
+  });
+
+  it("renders the inline audio player for free episodes with an audio url", () => {
+    mockUseQuery.mockReturnValue({
+      _id: "episode_1",
+      tenantSlug: "demo-media",
+      kind: "episode",
+      status: "published",
+      title: "Avec Lea Bardin",
+      summary: "Entretien long format sur le travail invisible.",
+      category: "Podcast",
+      tags: ["podcast"],
+      isPremium: false,
+      publishedAt: "2026-06-03T09:00:00.000Z",
+      durationSeconds: 3240,
+      audioUrl: "https://cdn.example.com/episode.mp3",
+    });
+
+    render(<EpisodeDetailScreen />);
+
+    expect(screen.getByText("Listen now")).toBeTruthy();
+    expect(screen.getByText("Play")).toBeTruthy();
+    expect(screen.queryByText(/Members-only episode/)).toBeNull();
   });
 });

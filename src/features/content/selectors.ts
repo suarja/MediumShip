@@ -76,6 +76,24 @@ export function getYoutubeThumbnailUrl(youtubeVideoId: string) {
   return `https://i.ytimg.com/vi/${youtubeVideoId}/hqdefault.jpg`;
 }
 
+export function getYoutubeEmbedUrl(
+  source:
+    | Pick<Extract<NonNullable<ContentDoc["videoSource"]>, { kind: "youtube" }>, "youtubeUrl" | "youtubeVideoId">
+    | undefined,
+) {
+  const youtubeVideoId = getYoutubeVideoId(source);
+  if (!youtubeVideoId) {
+    return undefined;
+  }
+
+  const embedUrl = new URL(`https://www.youtube-nocookie.com/embed/${youtubeVideoId}`);
+  embedUrl.searchParams.set("playsinline", "1");
+  embedUrl.searchParams.set("rel", "0");
+  embedUrl.searchParams.set("modestbranding", "1");
+
+  return embedUrl.toString();
+}
+
 export function getContentCoverImageUrl(
   content: Pick<ContentDoc, "heroImageUrl" | "kind" | "videoSource">,
 ) {

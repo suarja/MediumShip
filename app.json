@@ -15,7 +15,9 @@
       "expo-localization",
       "expo-secure-store",
       "expo-web-browser",
-      "expo-font"
+      "expo-font",
+      "expo-audio",
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true

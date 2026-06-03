@@ -10,6 +10,6 @@ export default {
   providerLabel: "Source : {{provider}}",
   youtubeProvider: "YouTube",
   hostedProvider: "Hébergée",
-  watchYoutube: "Voir sur YouTube",
+  openExternal: "Ouvrir sur YouTube",
   unavailable: "Cette vidéo n'a pas encore de source lisible.",
 } as const;

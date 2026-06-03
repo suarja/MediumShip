@@ -2,6 +2,7 @@ import { describe, expect, it } from "@jest/globals";
 
 import {
   getContentCoverImageUrl,
+  getYoutubeEmbedUrl,
   getYoutubeVideoId,
   normalizeRemoteImageUrl,
   toContentCardModel,
@@ -86,5 +87,16 @@ describe("toContentCardModel", () => {
         youtubeVideoId: "abc123xyz00",
       }),
     ).toBe("EfstHja6-jc");
+  });
+
+  it("builds a privacy-friendly youtube embed url from the public video url", () => {
+    expect(
+      getYoutubeEmbedUrl({
+        youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=43",
+        youtubeVideoId: "stale-id",
+      }),
+    ).toBe(
+      "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?playsinline=1&rel=0&modestbranding=1",
+    );
   });
 });

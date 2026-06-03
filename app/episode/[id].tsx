@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
+import { EpisodeAudioPlayer } from "../../src/components/media/episode-audio-player";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
@@ -132,6 +133,8 @@ export default function EpisodeDetailScreen() {
                 </Pressable>
               </Link>
             </View>
+          ) : content.audioUrl ? (
+            <EpisodeAudioPlayer audioUrl={content.audioUrl} title={content.title} />
           ) : (
             <Text style={[styles.audioNote, { color: theme.colors.textMuted }]}>
               {t("audioNote")}

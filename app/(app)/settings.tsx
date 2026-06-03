@@ -1,0 +1,71 @@
+import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
+
+import { Screen } from "../../src/components/layout/screen";
+import { LanguageItem } from "../../src/components/settings/language-item";
+import { SettingsRow } from "../../src/components/settings/settings-row";
+import { SettingsSection } from "../../src/components/settings/settings-section";
+import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
+
+export default function SettingsScreen() {
+  const { t } = useTranslation(["settings", "common"]);
+  const { email, fullName, signOut } = useClerkAuth();
+
+  return (
+    <Screen>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.eyebrow}>MediumShip</Text>
+          <Text style={styles.title}>{t("settings:title")}</Text>
+          <Text style={styles.subtitle}>{t("settings:subtitle")}</Text>
+        </View>
+
+        <SettingsSection title={t("settings:sections.general")}>
+          <LanguageItem isLast />
+        </SettingsSection>
+
+        <SettingsSection title={t("settings:sections.account")}>
+          <SettingsRow
+            label={t("settings:account.signedInAs")}
+            value={fullName ?? email ?? "—"}
+          />
+          <SettingsRow
+            label={t("settings:account.signOut")}
+            danger
+            isLast
+            onPress={() => void signOut()}
+          />
+        </SettingsSection>
+      </View>
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    gap: 24,
+    paddingBottom: 24,
+  },
+  header: {
+    gap: 8,
+    paddingTop: 8,
+  },
+  eyebrow: {
+    color: "#B42318",
+    fontSize: 13,
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
+  title: {
+    color: "#101828",
+    fontSize: 32,
+    fontWeight: "700",
+  },
+  subtitle: {
+    color: "#475467",
+    fontSize: 16,
+    lineHeight: 24,
+    maxWidth: 560,
+  },
+});

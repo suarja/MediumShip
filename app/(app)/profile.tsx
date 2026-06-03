@@ -8,12 +8,14 @@ import {
 } from "react-native";
 
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
+import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import { Screen } from "../../src/components/layout/screen";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
 
 export default function ProfileScreen() {
+  const { t } = useTranslation(["profile", "common"]);
   const { isAuthenticated } = useConvexAuth();
   const { email, fullName, signOut } = useClerkAuth();
 
@@ -33,28 +35,35 @@ export default function ProfileScreen() {
   return (
     <Screen>
       <View style={styles.container}>
-        <Text style={styles.eyebrow}>Auth slice</Text>
-        <Text style={styles.title}>{fullName ?? email ?? "Signed in"}</Text>
-        <Text style={styles.description}>
-          This screen proves the Clerk → Convex JWT path: the identity below is
-          resolved server-side via ctx.auth.getUserIdentity().
+        <Text style={styles.eyebrow}>{t("profile:eyebrow")}</Text>
+        <Text style={styles.title}>
+          {fullName ?? email ?? t("profile:fallbackTitle")}
         </Text>
+        <Text style={styles.description}>{t("profile:description")}</Text>
 
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Convex identity</Text>
+          <Text style={styles.cardTitle}>{t("profile:cardTitle")}</Text>
           {!isAuthenticated || me === undefined ? (
             <View style={styles.row}>
               <ActivityIndicator color="#B42318" />
-              <Text style={styles.cardText}>Resolving authenticated query…</Text>
+              <Text style={styles.cardText}>{t("profile:loadingIdentity")}</Text>
             </View>
           ) : me === null ? (
-            <Text style={styles.cardText}>No identity returned.</Text>
+            <Text style={styles.cardText}>{t("profile:noIdentity")}</Text>
           ) : (
             <>
-              <Text style={styles.cardText}>Email: {me.email ?? "—"}</Text>
-              <Text style={styles.cardText}>Name: {me.name ?? "—"}</Text>
               <Text style={styles.cardText}>
-                Stored in Convex: {me.isStored ? "yes" : "not yet"}
+                {t("profile:email", { value: me.email ?? "—" })}
+              </Text>
+              <Text style={styles.cardText}>
+                {t("profile:name", { value: me.name ?? "—" })}
+              </Text>
+              <Text style={styles.cardText}>
+                {t("profile:storedInConvex", {
+                  value: me.isStored
+                    ? t("profile:storedYes")
+                    : t("profile:storedNo"),
+                })}
               </Text>
               <Text style={styles.code}>{me.tokenIdentifier}</Text>
             </>
@@ -65,7 +74,7 @@ export default function ProfileScreen() {
           onPress={() => void signOut()}
           style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
         >
-          <Text style={styles.buttonText}>Sign out</Text>
+          <Text style={styles.buttonText}>{t("common:actions.signOut")}</Text>
         </Pressable>
       </View>
     </Screen>

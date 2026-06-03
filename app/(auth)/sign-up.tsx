@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useSignUp } from "@clerk/clerk-expo";
 import { Link, router } from "expo-router";
+import { useTranslation } from "react-i18next";
 
 function clerkErrorMessage(err: unknown, fallback: string): string {
   const first = (err as { errors?: { longMessage?: string }[] })?.errors?.[0];
@@ -21,6 +22,7 @@ function clerkErrorMessage(err: unknown, fallback: string): string {
 }
 
 export default function SignUpScreen() {
+  const { t } = useTranslation("auth");
   const { signUp, setActive, isLoaded } = useSignUp();
 
   const [email, setEmail] = useState("");
@@ -33,7 +35,7 @@ export default function SignUpScreen() {
   const onCreate = useCallback(async () => {
     if (!isLoaded) return;
     if (!email.trim() || !password.trim()) {
-      setError("Entrez un email et un mot de passe.");
+      setError(t("signUp.errors.missingCredentials"));
       return;
     }
     try {
@@ -43,16 +45,16 @@ export default function SignUpScreen() {
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setPendingVerification(true);
     } catch (err) {
-      setError(clerkErrorMessage(err, "Impossible de créer le compte."));
+      setError(clerkErrorMessage(err, t("signUp.errors.createFailed")));
     } finally {
       setSubmitting(false);
     }
-  }, [isLoaded, email, password, signUp]);
+  }, [isLoaded, email, password, signUp, t]);
 
   const onVerify = useCallback(async () => {
     if (!isLoaded) return;
     if (!code.trim()) {
-      setError("Entrez le code reçu par email.");
+      setError(t("signUp.errors.missingCode"));
       return;
     }
     try {
@@ -63,14 +65,14 @@ export default function SignUpScreen() {
         await setActive({ session: attempt.createdSessionId });
         router.replace("/home");
       } else {
-        setError("Vérification incomplète. Réessayez.");
+        setError(t("signUp.errors.verificationIncomplete"));
       }
     } catch (err) {
-      setError(clerkErrorMessage(err, "Code invalide."));
+      setError(clerkErrorMessage(err, t("signUp.errors.invalidCode")));
     } finally {
       setSubmitting(false);
     }
-  }, [isLoaded, code, signUp, setActive]);
+  }, [isLoaded, code, signUp, setActive, t]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -86,12 +88,14 @@ export default function SignUpScreen() {
             <View style={styles.header}>
               <Text style={styles.eyebrow}>MediumShip</Text>
               <Text style={styles.title}>
-                {pendingVerification ? "Vérifiez votre email" : "Créer un compte"}
+                {pendingVerification
+                  ? t("signUp.verifyTitle")
+                  : t("signUp.createTitle")}
               </Text>
               <Text style={styles.subtitle}>
                 {pendingVerification
-                  ? `Entrez le code envoyé à ${email}.`
-                  : "Rejoignez votre média en quelques secondes."}
+                  ? t("signUp.verifySubtitle", { email })
+                  : t("signUp.createSubtitle")}
               </Text>
             </View>
 
@@ -103,10 +107,10 @@ export default function SignUpScreen() {
 
             {pendingVerification ? (
               <View style={styles.form}>
-                <Text style={styles.label}>Code de vérification</Text>
+                <Text style={styles.label}>{t("signUp.verificationCode")}</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="123456"
+                  placeholder={t("signUp.verificationCodePlaceholder")}
                   placeholderTextColor="#98A2B3"
                   value={code}
                   onChangeText={setCode}
@@ -126,16 +130,16 @@ export default function SignUpScreen() {
                   {submitting ? (
                     <ActivityIndicator color="#FFFFFF" />
                   ) : (
-                    <Text style={styles.submitText}>Vérifier</Text>
+                    <Text style={styles.submitText}>{t("signUp.submitVerify")}</Text>
                   )}
                 </Pressable>
               </View>
             ) : (
               <View style={styles.form}>
-                <Text style={styles.label}>Email</Text>
+                <Text style={styles.label}>{t("signIn.email")}</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="votre@email.com"
+                  placeholder={t("signIn.emailPlaceholder")}
                   placeholderTextColor="#98A2B3"
                   value={email}
                   onChangeText={setEmail}
@@ -146,10 +150,10 @@ export default function SignUpScreen() {
                   editable={!submitting}
                 />
 
-                <Text style={styles.label}>Mot de passe</Text>
+                <Text style={styles.label}>{t("signIn.password")}</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="••••••••"
+                  placeholder={t("signIn.passwordPlaceholder")}
                   placeholderTextColor="#98A2B3"
                   value={password}
                   onChangeText={setPassword}
@@ -171,16 +175,16 @@ export default function SignUpScreen() {
                   {submitting ? (
                     <ActivityIndicator color="#FFFFFF" />
                   ) : (
-                    <Text style={styles.submitText}>Créer le compte</Text>
+                    <Text style={styles.submitText}>{t("signUp.submitCreate")}</Text>
                   )}
                 </Pressable>
               </View>
             )}
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Déjà un compte ?</Text>
+              <Text style={styles.footerText}>{t("signUp.alreadyHaveAccount")}</Text>
               <Link href="/sign-in" style={styles.footerLink}>
-                Se connecter
+                {t("signUp.signIn")}
               </Link>
             </View>
           </View>

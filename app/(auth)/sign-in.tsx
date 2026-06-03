@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useOAuth, useSignIn } from "@clerk/clerk-expo";
 import { Link, router } from "expo-router";
 import * as Linking from "expo-linking";
+import { useTranslation } from "react-i18next";
 import * as WebBrowser from "expo-web-browser";
 
 // Completes any pending OAuth web-browser session on return to the app.
@@ -23,6 +24,7 @@ WebBrowser.maybeCompleteAuthSession();
 type OAuthProvider = "google" | "apple";
 
 export default function SignInScreen() {
+  const { t } = useTranslation("auth");
   const { signIn, setActive, isLoaded } = useSignIn();
   const { startOAuthFlow: startGoogle } = useOAuth({ strategy: "oauth_google" });
   const { startOAuthFlow: startApple } = useOAuth({ strategy: "oauth_apple" });
@@ -54,12 +56,12 @@ export default function SignInScreen() {
         if (/cancel|dismiss/i.test(message)) {
           return; // user backed out — not an error
         }
-        setError("La connexion a échoué. Réessayez.");
+        setError(t("signIn.errors.oauthFailed"));
       } finally {
         setLoadingProvider(null);
       }
     },
-    [startGoogle, startApple],
+    [startGoogle, startApple, t],
   );
 
   const onEmailPassword = useCallback(async () => {
@@ -67,7 +69,7 @@ export default function SignInScreen() {
       return;
     }
     if (!email.trim() || !password.trim()) {
-      setError("Entrez votre email et votre mot de passe.");
+      setError(t("signIn.errors.missingCredentials"));
       return;
     }
 
@@ -80,16 +82,16 @@ export default function SignInScreen() {
         await setActive({ session: attempt.createdSessionId });
         router.replace("/home");
       } else {
-        setError("Connexion incomplète. Réessayez.");
+        setError(t("signIn.errors.incomplete"));
       }
     } catch (err: unknown) {
       const clerkError = (err as { errors?: { longMessage?: string }[] })
         ?.errors?.[0];
-      setError(clerkError?.longMessage ?? "Email ou mot de passe incorrect.");
+      setError(clerkError?.longMessage ?? t("signIn.errors.invalidCredentials"));
     } finally {
       setSubmitting(false);
     }
-  }, [isLoaded, email, password, signIn, setActive]);
+  }, [isLoaded, email, password, signIn, setActive, t]);
 
   const busy = submitting || loadingProvider !== null;
 
@@ -106,10 +108,8 @@ export default function SignInScreen() {
           <View style={styles.content}>
             <View style={styles.header}>
               <Text style={styles.eyebrow}>MediumShip</Text>
-              <Text style={styles.title}>Bon retour</Text>
-              <Text style={styles.subtitle}>
-                Connectez-vous pour accéder à votre média.
-              </Text>
+              <Text style={styles.title}>{t("signIn.title")}</Text>
+              <Text style={styles.subtitle}>{t("signIn.subtitle")}</Text>
             </View>
 
             {error ? (
@@ -131,7 +131,9 @@ export default function SignInScreen() {
                 {loadingProvider === "google" ? (
                   <ActivityIndicator color="#101828" />
                 ) : (
-                  <Text style={styles.providerText}>Continuer avec Google</Text>
+                  <Text style={styles.providerText}>
+                    {t("signIn.continueWithGoogle")}
+                  </Text>
                 )}
               </Pressable>
 
@@ -150,7 +152,7 @@ export default function SignInScreen() {
                     <ActivityIndicator color="#FFFFFF" />
                   ) : (
                     <Text style={[styles.providerText, styles.providerTextDark]}>
-                      Continuer avec Apple
+                      {t("signIn.continueWithApple")}
                     </Text>
                   )}
                 </Pressable>
@@ -159,15 +161,15 @@ export default function SignInScreen() {
 
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>ou</Text>
+              <Text style={styles.dividerText}>{t("signIn.or")}</Text>
               <View style={styles.dividerLine} />
             </View>
 
             <View style={styles.form}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>{t("signIn.email")}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="votre@email.com"
+                placeholder={t("signIn.emailPlaceholder")}
                 placeholderTextColor="#98A2B3"
                 value={email}
                 onChangeText={setEmail}
@@ -178,10 +180,10 @@ export default function SignInScreen() {
                 editable={!busy}
               />
 
-              <Text style={styles.label}>Mot de passe</Text>
+              <Text style={styles.label}>{t("signIn.password")}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="••••••••"
+                placeholder={t("signIn.passwordPlaceholder")}
                 placeholderTextColor="#98A2B3"
                 value={password}
                 onChangeText={setPassword}
@@ -203,15 +205,15 @@ export default function SignInScreen() {
                 {submitting ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.submitText}>Se connecter</Text>
+                  <Text style={styles.submitText}>{t("signIn.submit")}</Text>
                 )}
               </Pressable>
             </View>
 
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Pas encore de compte ?</Text>
+              <Text style={styles.footerText}>{t("signIn.noAccount")}</Text>
               <Link href="/sign-up" style={styles.footerLink}>
-                Créer un compte
+                {t("signIn.createAccount")}
               </Link>
             </View>
           </View>

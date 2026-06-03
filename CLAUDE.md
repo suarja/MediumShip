@@ -22,14 +22,16 @@ When implementation details are unclear, consult `docs/research/2026-06-03-refer
 
 Priority order:
 - `../editia/mobile` first for production-grade mobile patterns
-- `../Ideo/IdeoMobile` second for additional Expo + Convex patterns
-- web references only when the mobile repos do not already answer the question
+- `../editia/web` second when mobile topics benefit from an existing Editia web pattern, especially for i18n, design tokens, theming, and reusable product surfaces
+- `../Ideo/IdeoMobile` third for additional Expo + Convex patterns
+- only invent a new pattern after checking the existing Editia bases and confirming they do not fit cleanly
 
 ### Mobile foundation rules
 
 - For Clerk + Convex in Expo, prefer the proven `ConvexProviderWithClerk` pattern over a plain `ConvexProvider` when authenticated queries are involved.
 - Keep translations modular and split by page or feature. Do not accumulate all strings in one monolithic translation file.
 - Treat iPhone and iPad responsiveness as a first-pass requirement, not a later polish pass.
+- For translations and design system work, start by inspecting `../editia/mobile`, then complement with `../editia/web` when useful, and adapt what is already production-proven before creating new abstractions.
 
 ### Delivery rules
 
@@ -42,3 +44,20 @@ Priority order:
 ## Commit workflow
 
 Prefer regular, small, atomic commits as the work progresses. Do not batch unrelated changes together. See `docs/agents/commit-workflow.md`.
+
+Additional rule:
+- Once a coherent slice is implemented and verified locally, commit it before starting the next major area of work. Do not accumulate several validated slices in the worktree.
+
+<!-- convex-ai-start -->
+
+This project uses [Convex](https://convex.dev) as its backend.
+
+When working on Convex code, **always read
+`convex/_generated/ai/guidelines.md` first** for important guidelines on
+how to correctly use Convex APIs and patterns. The file contains rules that
+override what you may have learned about Convex from training data.
+
+Convex agent skills for common tasks can be installed by running
+`npx convex ai-files install`.
+
+<!-- convex-ai-end -->

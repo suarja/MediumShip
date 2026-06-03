@@ -4,10 +4,13 @@ import { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Stack } from "expo-router";
 import * as SecureStore from "expo-secure-store";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, View, StyleSheet } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { env } from "../src/lib/env";
 import { useStableAuth } from "../src/features/auth/use-stable-auth";
+import { i18n, initI18n } from "../src/i18n";
 
 const convex = new ConvexReactClient(env.EXPO_PUBLIC_CONVEX_URL);
 
@@ -18,6 +21,46 @@ const tokenCache = {
 };
 
 export default function RootLayout() {
+  const [i18nReady, setI18nReady] = useState(false);
+  const [languageKey, setLanguageKey] = useState("fr");
+
+  useEffect(() => {
+    let mounted = true;
+
+    void initI18n().then(() => {
+      if (mounted) {
+        setLanguageKey(i18n.resolvedLanguage ?? i18n.language);
+        setI18nReady(true);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleLanguageChanged = (language: string) => {
+      setLanguageKey(language);
+    };
+
+    i18n.on("languageChanged", handleLanguageChanged);
+
+    return () => {
+      i18n.off("languageChanged", handleLanguageChanged);
+    };
+  }, []);
+
+  if (!i18nReady) {
+    return (
+      <SafeAreaProvider>
+        <View style={styles.center}>
+          <ActivityIndicator color="#B42318" />
+        </View>
+      </SafeAreaProvider>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <ClerkProvider
@@ -26,9 +69,18 @@ export default function RootLayout() {
       >
         <ConvexProviderWithClerk client={convex} useAuth={useStableAuth}>
           <StatusBar style="auto" />
-          <Stack screenOptions={{ headerShown: false }} />
+          <Stack key={languageKey} screenOptions={{ headerShown: false }} />
         </ConvexProviderWithClerk>
       </ClerkProvider>
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  center: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FCFCFD",
+  },
+});

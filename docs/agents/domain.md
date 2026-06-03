@@ -7,7 +7,7 @@ How the engineering skills should consume this repo's domain documentation when 
 - `CONTEXT.md` at the repo root
 - `docs/adr/` for architectural decisions relevant to the current topic
 - `docs/convex-components-descriptions.md` before proposing, prototyping, or implementing a Convex-backed feature
-- `docs/research/2026-06-03-reference-repositories.md` when mobile implementation details, auth wiring, i18n structure, or responsive patterns are unclear
+- `docs/research/2026-06-03-reference-repositories.md` when mobile implementation details, auth wiring, i18n structure, design tokens, or responsive patterns are unclear
 
 If any of these files don't exist yet, proceed silently.
 
@@ -32,9 +32,9 @@ When a feature touches auth, storage, video, payments, notifications, workflows,
 
 ## Reuse proven mobile patterns
 
-For Expo/React Native decisions, prefer proven patterns from the documented reference repos, especially for Clerk + Convex auth wiring, env validation, translation structure, and iPhone/iPad responsiveness.
+For Expo/React Native decisions, prefer proven patterns from the documented reference repos, especially for Clerk + Convex auth wiring, env validation, translation structure, design-system tokens, and iPhone/iPad responsiveness.
 
-When multiple reference repos exist, prefer the most production-proven mobile repo first, then use secondary repos only to complement missing patterns.
+When multiple reference repos exist, prefer `../editia/mobile` first, then `../editia/web` for related i18n and theming patterns, and use other repos only to complement missing pieces.
 
 ## Flag ADR conflicts
 

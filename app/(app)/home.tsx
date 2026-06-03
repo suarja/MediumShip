@@ -10,12 +10,14 @@ import {
 
 import { Link } from "expo-router";
 import { useMutation, useQuery } from "convex/react";
+import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import { Screen } from "../../src/components/layout/screen";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
 
 export default function ConvexSliceScreen() {
+  const { t } = useTranslation("home");
   const tenant = useQuery(api.tenants.queries.getDefaultTenant, {});
   const seedDemoTenant = useMutation(api.tenants.seed.seedDemoContent);
   const [isSeeding, setIsSeeding] = useState(false);
@@ -26,8 +28,8 @@ export default function ConvexSliceScreen() {
       await seedDemoTenant({});
     } catch (error) {
       Alert.alert(
-        "Convex seed failed",
-        error instanceof Error ? error.message : "Unknown error",
+        t("seedFailedTitle"),
+        error instanceof Error ? error.message : t("unknownError"),
       );
     } finally {
       setIsSeeding(false);
@@ -37,23 +39,20 @@ export default function ConvexSliceScreen() {
   return (
     <Screen>
       <View style={styles.container}>
-        <Text style={styles.eyebrow}>Convex slice</Text>
-        <Text style={styles.title}>MediumShip backend connectivity</Text>
-        <Text style={styles.description}>
-          This screen proves the first end-to-end Convex path in the app:
-          query the default tenant and seed it if it does not exist yet.
-        </Text>
+        <Text style={styles.eyebrow}>{t("eyebrow")}</Text>
+        <Text style={styles.title}>{t("title")}</Text>
+        <Text style={styles.description}>{t("description")}</Text>
 
         {tenant === undefined ? (
           <View style={styles.card}>
             <ActivityIndicator color="#B42318" />
-            <Text style={styles.cardText}>Loading tenant from Convex...</Text>
+            <Text style={styles.cardText}>{t("loadingTenant")}</Text>
           </View>
         ) : tenant === null ? (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>No tenant found yet</Text>
+            <Text style={styles.cardTitle}>{t("emptyState.title")}</Text>
             <Text style={styles.cardText}>
-              Expected seed slug: <Text style={styles.code}>{defaultTenant.slug}</Text>
+              {t("emptyState.expectedSeedSlug", { slug: defaultTenant.slug })}
             </Text>
             <Pressable
               onPress={handleSeed}
@@ -64,24 +63,30 @@ export default function ConvexSliceScreen() {
               ]}
             >
               <Text style={styles.buttonText}>
-                {isSeeding ? "Seeding..." : "Seed demo tenant"}
+                {isSeeding ? t("emptyState.ctaBusy") : t("emptyState.ctaIdle")}
               </Text>
             </Pressable>
           </View>
         ) : (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Tenant loaded from Convex</Text>
-            <Text style={styles.cardText}>Name: {tenant.name}</Text>
-            <Text style={styles.cardText}>Slug: {tenant.slug}</Text>
+            <Text style={styles.cardTitle}>{t("loadedState.title")}</Text>
             <Text style={styles.cardText}>
-              Modules: {tenant.enabledModules.join(", ")}
+              {t("loadedState.name", { value: tenant.name })}
+            </Text>
+            <Text style={styles.cardText}>
+              {t("loadedState.slug", { value: tenant.slug })}
+            </Text>
+            <Text style={styles.cardText}>
+              {t("loadedState.modules", {
+                value: tenant.enabledModules.join(", "),
+              })}
             </Text>
           </View>
         )}
 
         <Link href="/profile" asChild>
           <Pressable style={({ pressed }) => [styles.link, pressed && styles.buttonPressed]}>
-            <Text style={styles.linkText}>Open profile (auth slice) →</Text>
+            <Text style={styles.linkText}>{t("openProfile")}</Text>
           </Pressable>
         </Link>
       </View>
@@ -126,9 +131,6 @@ const styles = StyleSheet.create({
     color: "#344054",
     fontSize: 15,
     lineHeight: 22,
-  },
-  code: {
-    fontFamily: "Courier",
   },
   button: {
     alignSelf: "flex-start",

@@ -6,6 +6,8 @@ Socle produit mobile white-label pour transformer une audience existante en méd
 
 MediumShip est un cadre d'application média mobile-first pour médias indépendants, créateurs, podcasts, newsletters et communautés éditoriales engagées. Chaque client doit pouvoir publier, organiser un univers éditorial, activer une relation directe avec ses membres, et monétiser certains accès sans reconstruire le produit à chaque fois.
 
+Le produit n'est pas centré exclusivement sur la vidéo. `Article`, `Episode` et `Video` sont des types de contenu de premier rang dans le modèle produit. La vidéo est indispensable pour la crédibilité marché, mais elle ne doit pas écraser la proposition de valeur multi-format éditoriale.
+
 ## Positionnement
 
 - Pas un réseau social
@@ -27,6 +29,7 @@ MediumShip est un cadre d'application média mobile-first pour médias indépend
 - Authentification via Clerk
 - Configuration tenant portée par Convex
 - Feed d'accueil mêlant plusieurs types de contenus
+- Parité de traitement entre articles, épisodes et vidéos dans le modèle éditorial
 - Détail d'article
 - Détail d'épisode avec lecture audio basique
 - Détail vidéo avec support des vidéos d'origine YouTube et des vidéos hébergées

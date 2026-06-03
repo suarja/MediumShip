@@ -1,6 +1,7 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { DegradedBanner } from "../../src/components/content/degraded-banner";
 import { Screen } from "../../src/components/layout/screen";
 import { LanguageItem } from "../../src/components/settings/language-item";
 import { NetworkStateDebugItem } from "../../src/components/settings/network-state-debug-item";
@@ -9,6 +10,7 @@ import { SettingsRow } from "../../src/components/settings/settings-row";
 import { SettingsSection } from "../../src/components/settings/settings-section";
 import { ThemePaletteItem } from "../../src/components/settings/theme-palette-item";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
+import { useNetworkStatus } from "../../src/features/network/use-network-status";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
@@ -17,6 +19,7 @@ export default function SettingsScreen() {
   const { isSignedIn, email, fullName, signOut } = useClerkAuth();
   const { theme, tenantName } = useAppTheme();
   const { scaleSpace } = useResponsive();
+  const { state: networkState } = useNetworkStatus();
   const tabBarSpace = useTabBarSpace();
 
   return (
@@ -32,6 +35,8 @@ export default function SettingsScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        <DegradedBanner state={networkState} />
+
         <View style={styles.header}>
           <Text style={[styles.eyebrow, { color: theme.colors.accent }]}>
             {tenantName}

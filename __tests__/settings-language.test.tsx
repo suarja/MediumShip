@@ -26,6 +26,14 @@ jest.mock("../src/features/auth/use-clerk-auth", () => ({
   }),
 }));
 
+jest.mock("../src/features/network/use-network-status", () => ({
+  useNetworkStatus: () => ({ state: "online" }),
+  useNetworkStatusDebug: () => ({
+    override: "auto",
+    setOverride: jest.fn(),
+  }),
+}));
+
 describe("settings language switch", () => {
   beforeAll(async () => {
     await initI18n();

@@ -26,6 +26,14 @@ jest.mock("../src/features/auth/use-clerk-auth", () => ({
   }),
 }));
 
+jest.mock("../src/features/network/use-network-status", () => ({
+  useNetworkStatus: () => ({ state: "offline" }),
+  useNetworkStatusDebug: () => ({
+    override: "auto",
+    setOverride: jest.fn(),
+  }),
+}));
+
 describe("guest settings", () => {
   beforeAll(async () => {
     await initI18n();
@@ -46,6 +54,7 @@ describe("guest settings", () => {
     expect(screen.getByText("Palette")).toBeTruthy();
     expect(screen.getByText("Guest")).toBeTruthy();
     expect(screen.getByText("Members only")).toBeTruthy();
+    expect(screen.getByText("You are offline")).toBeTruthy();
     expect(screen.getByText("Network state override")).toBeTruthy();
     expect(screen.queryByText("Sign out")).toBeNull();
   });

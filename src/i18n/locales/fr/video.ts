@@ -1,6 +1,8 @@
 export default {
   back: "← Fil",
   loading: "Chargement de la vidéo…",
+  offlineTitle: "Vidéo indisponible hors ligne",
+  offlineBody: "Reconnectez-vous pour charger cette vidéo une première fois.",
   notFoundTitle: "Vidéo indisponible",
   notFoundBody: "Cette vidéo n'est pas publiée ou n'existe plus.",
   kicker: "Vidéo",

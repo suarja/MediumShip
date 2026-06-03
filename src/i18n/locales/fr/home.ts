@@ -4,6 +4,8 @@ export default {
   feedSubtitle: "Articles, épisodes et vidéos dans un seul fil public.",
   loadingTitle: "Chargement du fil",
   loadingBody: "Récupération des derniers contenus publiés depuis Convex.",
+  offlineTitle: "Fil indisponible hors ligne",
+  offlineBody: "Reconnectez-vous pour charger le fil public une première fois.",
   emptyTitle: "Rien de publié pour l'instant",
   emptyBody: "Dès qu'un contenu éditorial est publié, il apparaît ici.",
 } as const;

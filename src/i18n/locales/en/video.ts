@@ -1,6 +1,8 @@
 export default {
   back: "← Feed",
   loading: "Loading video…",
+  offlineTitle: "Video unavailable offline",
+  offlineBody: "Reconnect to load this video for the first time.",
   notFoundTitle: "Video unavailable",
   notFoundBody: "This video is not published or no longer exists.",
   kicker: "Video",

@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
 import type { ContentDoc } from "../../src/features/content/types";
+import { useNetworkStatus } from "../../src/features/network/use-network-status";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
@@ -17,6 +18,7 @@ export default function VideoDetailScreen() {
   const { t } = useTranslation("video");
   const { theme } = useAppTheme();
   const { scaleSpace, scaleFont } = useResponsive();
+  const { state: networkState } = useNetworkStatus();
 
   const content = useQuery(
     api.content.queries.getPublishedById,
@@ -24,7 +26,11 @@ export default function VideoDetailScreen() {
   ) as ContentDoc | null | undefined;
 
   const state =
-    content === undefined
+    content && content.kind === "video"
+      ? "ready"
+      : content === undefined && networkState === "offline"
+        ? "offline"
+        : content === undefined
       ? "loading"
       : content === null || content.kind !== "video"
         ? "notFound"
@@ -47,8 +53,11 @@ export default function VideoDetailScreen() {
   return (
     <ContentDetailShell
       state={state}
+      networkState={networkState}
       backLabel={t("back")}
       loadingLabel={t("loading")}
+      offlineTitle={t("offlineTitle")}
+      offlineBody={t("offlineBody")}
       notFoundTitle={t("notFoundTitle")}
       notFoundBody={t("notFoundBody")}
     >

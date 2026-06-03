@@ -1,19 +1,24 @@
 import { PropsWithChildren } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Link } from "expo-router";
 
+import { DegradedBanner } from "./degraded-banner";
+import type { NetworkState } from "../../features/network/use-network-status";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
-type ContentDetailState = "loading" | "notFound" | "ready";
+type ContentDetailState = "loading" | "offline" | "notFound" | "ready";
 
 type ContentDetailShellProps = PropsWithChildren<{
   state: ContentDetailState;
+  networkState: NetworkState;
   backLabel: string;
   loadingLabel: string;
+  offlineTitle: string;
+  offlineBody: string;
   notFoundTitle: string;
   notFoundBody: string;
 }>;
@@ -25,8 +30,11 @@ type ContentDetailShellProps = PropsWithChildren<{
  */
 export function ContentDetailShell({
   state,
+  networkState,
   backLabel,
   loadingLabel,
+  offlineTitle,
+  offlineBody,
   notFoundTitle,
   notFoundBody,
   children,
@@ -46,12 +54,23 @@ export function ContentDetailShell({
           },
         ]}
       >
+        <DegradedBanner state={networkState} />
         <Link href="/home" asChild>
-          <Text
-            style={[styles.back, { color: theme.colors.accent, fontSize: 15 * scaleFont }]}
+          <Pressable
+            accessibilityRole="link"
+            style={{
+              paddingVertical: 4,
+            }}
           >
-            {backLabel}
-          </Text>
+            <Text
+              style={[
+                styles.back,
+                { color: theme.colors.accent, fontSize: 15 * scaleFont },
+              ]}
+            >
+              {backLabel}
+            </Text>
+          </Pressable>
         </Link>
 
         {state === "loading" ? (
@@ -59,6 +78,15 @@ export function ContentDetailShell({
             <ActivityIndicator color={theme.colors.accent} />
             <Text style={[styles.muted, { color: theme.colors.textMuted }]}>
               {loadingLabel}
+            </Text>
+          </View>
+        ) : state === "offline" ? (
+          <View style={styles.center}>
+            <Text style={[styles.notFoundTitle, { color: theme.colors.heading }]}>
+              {offlineTitle}
+            </Text>
+            <Text style={[styles.muted, { color: theme.colors.textMuted }]}>
+              {offlineBody}
             </Text>
           </View>
         ) : state === "notFound" ? (

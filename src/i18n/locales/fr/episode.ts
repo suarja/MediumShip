@@ -1,6 +1,8 @@
 export default {
   back: "← Fil",
   loading: "Chargement de l'épisode…",
+  offlineTitle: "Épisode indisponible hors ligne",
+  offlineBody: "Reconnectez-vous pour charger cet épisode une première fois.",
   notFoundTitle: "Épisode indisponible",
   notFoundBody: "Cet épisode n'est pas publié ou n'existe plus.",
   kicker: "Épisode",

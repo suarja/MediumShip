@@ -84,10 +84,18 @@ export default function HomeFeedScreen() {
             ]}
           >
             <Text style={[styles.emptyTitle, { color: theme.colors.heading }]}>
-              {isLoading ? t("loadingTitle") : t("emptyTitle")}
+              {isLoading
+                ? networkState === "offline"
+                  ? t("offlineTitle")
+                  : t("loadingTitle")
+                : t("emptyTitle")}
             </Text>
             <Text style={[styles.emptyBody, { color: theme.colors.textMuted }]}>
-              {isLoading ? t("loadingBody") : t("emptyBody")}
+              {isLoading
+                ? networkState === "offline"
+                  ? t("offlineBody")
+                  : t("loadingBody")
+                : t("emptyBody")}
             </Text>
           </View>
         ) : (

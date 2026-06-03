@@ -1,3 +1,5 @@
+import { useNetInfo } from "@react-native-community/netinfo";
+
 export type NetworkState =
   | "online"
   | "offline"
@@ -5,11 +7,14 @@ export type NetworkState =
   | "authDegraded";
 
 /**
- * First-pass network awareness. The architecture calls for explicit
- * online/offline/backendDegraded/authDegraded states; this stub always reports
- * `online` so the banner plumbing exists end-to-end before real connectivity
- * and Convex/Clerk health signals are wired in a later milestone.
+ * First-pass runtime network awareness. We map device-level connectivity to a
+ * real `offline` state now; backend/auth degraded states remain reserved until
+ * they have explicit upstream health signals.
  */
 export function useNetworkStatus(): { state: NetworkState } {
-  return { state: "online" };
+  const netInfo = useNetInfo();
+  const isOffline =
+    netInfo.isConnected === false || netInfo.isInternetReachable === false;
+
+  return { state: isOffline ? "offline" : "online" };
 }

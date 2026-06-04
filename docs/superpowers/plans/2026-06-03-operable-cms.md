@@ -737,7 +737,7 @@ git commit -m "Add cms tenant settings and preview"
 - Modify: `docs/plans/2026-06-03-mediumship-architecture-design.md` only if the implementation revealed a material decision change
 - Modify: `docs/superpowers/plans/2026-06-03-operable-cms.md` only to check boxes while executing
 
-- [ ] **Step 1: Run the targeted validation suite**
+- [x] **Step 1: Run the targeted validation suite**
 
 Run:
 

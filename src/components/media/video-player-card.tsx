@@ -73,6 +73,11 @@ export function VideoPlayerCard({
       );
     }
 
+    const startedEmbedUrl = new URL(embedUrl);
+    if (hasStarted) {
+      startedEmbedUrl.searchParams.set("autoplay", "1");
+    }
+
     return (
       <View style={styles.wrapper}>
         {hasStarted ? (
@@ -91,7 +96,7 @@ export function VideoPlayerCard({
               allowsInlineMediaPlayback
               mediaPlaybackRequiresUserAction
               source={{
-                uri: embedUrl,
+                uri: startedEmbedUrl.toString(),
                 headers: {
                   Referer: youtubeRefererUrl,
                 },

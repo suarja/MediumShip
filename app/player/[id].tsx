@@ -64,10 +64,6 @@ export default function PlayerScreen() {
   const [progressTrackWidth, setProgressTrackWidth] = useState(0);
   const [scrubPreviewTime, setScrubPreviewTime] = useState<number | null>(null);
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  // Latest known play state, read on focus to restore playback after a PiP
-  // hand-off without forcing play when the user had paused.
-  const wasPlayingRef = useRef(isPlaying);
-  wasPlayingRef.current = isPlaying;
 
   const { isMember } = useIsMember();
 
@@ -142,22 +138,9 @@ export default function PlayerScreen() {
   // native fullscreen modal which would not report the reverse rotation.
   const isLandscapeVideo = isHostedVideo && windowWidth > windowHeight;
 
-  // PiP is started/cancelled by the provider based on the active route, so
-  // returning here cancels it automatically. We only preserve the play/pause
-  // state across the PiP -> inline handoff: if it was playing on return, keep it
-  // playing (re-attaching the view can otherwise pause it); leave it paused
-  // otherwise.
-  useFocusEffect(
-    useCallback(() => {
-      if (!isHostedVideo) {
-        return;
-      }
-
-      if (wasPlayingRef.current) {
-        videoPlayer?.play();
-      }
-    }, [isHostedVideo, videoPlayer]),
-  );
+  // PiP is started/cancelled by the provider based on the active route, and the
+  // provider also re-asserts the play state after cancelling, so returning here
+  // both drops PiP and keeps a playing video playing.
 
   // Keep the app portrait everywhere, but unlock rotation while the player is
   // focused so the device can drive the fullscreen flip above. Portrait is

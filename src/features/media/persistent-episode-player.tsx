@@ -318,6 +318,11 @@ export function PersistentMediaPlayerProvider({
     Boolean(audioStatus.didJustFinish) ||
     (durationSeconds > 0 && currentTimeSeconds >= durationSeconds);
 
+  // Latest play state, read (not depended on) when cancelling PiP so we can
+  // re-assert playback after the stop without forcing play on a paused video.
+  const isPlayingRef = useRef(isPlaying);
+  isPlayingRef.current = isPlaying;
+
   const disableAudioLockScreen = () => {
     safelyReleasePlayer(
       () => audioPlayer.clearLockScreenControls(),
@@ -496,7 +501,21 @@ export function PersistentMediaPlayerProvider({
 
     if (onPlayerRoute) {
       // Back on the player: the inline surface shows the video, cancel PiP.
+      // Capture the play state BEFORE stopping (iOS may pause as part of the
+      // PiP-stop transition), then re-assert it so a video that was playing
+      // keeps playing — without forcing play on one the user had paused.
+      const wasPlaying = isPlayingRef.current;
       void pipHostRef.current?.stopPictureInPicture().catch(() => {});
+      if (wasPlaying) {
+        const resume = setTimeout(() => {
+          try {
+            videoPlayer.play();
+          } catch {
+            // player may be mid-teardown; ignore
+          }
+        }, 200);
+        return () => clearTimeout(resume);
+      }
       return;
     }
 

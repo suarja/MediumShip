@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Link } from "expo-router";
 
-import { DegradedBanner } from "./degraded-banner";
+import { StatusBannerStack } from "./status-banner-stack";
 import { OVER_MEDIA } from "../../features/content/card-presentation";
 import { usePersistentMediaPlayerSpace } from "../../features/media/persistent-media-player";
 import type { NetworkState } from "../../features/network/use-network-status";
@@ -63,7 +63,7 @@ export function ContentDetailShell({
       edges={["top", "left", "right"]}
       style={[styles.safe, { backgroundColor: theme.colors.canvas }]}
     >
-      <DegradedBanner state={networkState} />
+      <StatusBannerStack networkState={networkState} />
 
       {heroLayout ? (
         <View style={[styles.heroColumn, { maxWidth: contentMaxWidth }]}>

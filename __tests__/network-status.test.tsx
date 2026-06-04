@@ -11,7 +11,7 @@ describe("degraded banner", () => {
 
   it("renders an offline message when the app is offline", () => {
     render(<DegradedBanner state="offline" />);
-    expect(screen.getByText("You are offline")).toBeTruthy();
+    expect(screen.getByText("You are offline — downloaded items still work")).toBeTruthy();
   });
 
   it("renders nothing when the app is online", () => {

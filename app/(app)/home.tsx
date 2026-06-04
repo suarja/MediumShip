@@ -5,7 +5,6 @@ import { useQuery } from "convex/react";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
-import { DegradedBanner } from "../../src/components/content/degraded-banner";
 import {
   FeedFilterChips,
   type FeedFilter,
@@ -13,6 +12,7 @@ import {
 } from "../../src/components/content/feed-filter-chips";
 import { FeedHeroCard } from "../../src/components/content/feed-hero-card";
 import { FeedRow } from "../../src/components/content/feed-row";
+import { StatusBannerStack } from "../../src/components/content/status-banner-stack";
 import { Screen } from "../../src/components/layout/screen";
 import { BrandHeader } from "../../src/components/navigation/brand-header";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
@@ -78,7 +78,7 @@ export default function HomeFeedScreen() {
 
   return (
     <Screen>
-      <DegradedBanner state={networkState} />
+      <StatusBannerStack networkState={networkState} />
       <BrandHeader />
       <View style={{ marginBottom: theme.spacing.lg * scaleSpace }}>
         <FeedFilterChips chips={chips} active={filter} onSelect={setFilter} />

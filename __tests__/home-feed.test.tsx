@@ -66,7 +66,7 @@ describe("home feed", () => {
       </SafeAreaProvider>,
     );
 
-    expect(screen.getByText("You are offline")).toBeTruthy();
+    expect(screen.getByText("You are offline — downloaded items still work")).toBeTruthy();
     expect(screen.getByText("Feed unavailable offline")).toBeTruthy();
     expect(
       screen.getByText("Reconnect to load the public feed for the first time."),

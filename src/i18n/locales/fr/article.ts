@@ -2,7 +2,7 @@ export default {
   back: "← Fil",
   loading: "Chargement de l'article…",
   offlineTitle: "Article indisponible hors ligne",
-  offlineBody: "Reconnectez-vous pour charger cet article une première fois.",
+  offlineBody: "Reconnectez-vous pour charger cet article une première fois, ou ouvrez une copie téléchargée.",
   notFoundTitle: "Article indisponible",
   notFoundBody: "Cet article n'est pas publié ou n'existe plus.",
   kicker: "Article",

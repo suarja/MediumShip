@@ -1,8 +1,8 @@
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
-import { DegradedBanner } from "../../src/components/content/degraded-banner";
 import { Screen } from "../../src/components/layout/screen";
+import { StatusBannerStack } from "../../src/components/content/status-banner-stack";
 import { LanguageItem } from "../../src/components/settings/language-item";
 import { NetworkStateDebugItem } from "../../src/components/settings/network-state-debug-item";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
@@ -38,7 +38,7 @@ export default function SettingsScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <DegradedBanner state={networkState} />
+        <StatusBannerStack networkState={networkState} />
 
         <View style={styles.header}>
           {appIconUrl ? (

@@ -54,7 +54,7 @@ describe("guest settings", () => {
     expect(screen.getByText("Palette")).toBeTruthy();
     expect(screen.getByText("Guest")).toBeTruthy();
     expect(screen.getByText("Members only")).toBeTruthy();
-    expect(screen.getByText("You are offline")).toBeTruthy();
+    expect(screen.getByText("You are offline — downloaded items still work")).toBeTruthy();
     expect(screen.getByText("Network state override")).toBeTruthy();
     expect(screen.queryByText("Sign out")).toBeNull();
   });

@@ -2,7 +2,7 @@ export default {
   back: "← Feed",
   loading: "Loading episode…",
   offlineTitle: "Episode unavailable offline",
-  offlineBody: "Reconnect to load this episode for the first time.",
+  offlineBody: "Reconnect to load this episode for the first time, or play a downloaded copy.",
   notFoundTitle: "Episode unavailable",
   notFoundBody: "This episode is not published or no longer exists.",
   kicker: "Episode",

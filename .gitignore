@@ -157,3 +157,9 @@ coverage/
 
 expo-env.d.ts
 # @end expo-cli
+
+ios/
+android/
+
+# Agent worktrees
+.claude/worktrees/

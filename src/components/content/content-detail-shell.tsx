@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Link } from "expo-router";
 
 import { DegradedBanner } from "./degraded-banner";
+import { OVER_MEDIA } from "../../features/content/card-presentation";
 import { usePersistentMediaPlayerSpace } from "../../features/media/persistent-media-player";
 import type { NetworkState } from "../../features/network/use-network-status";
 import { useResponsive } from "../../features/responsive/use-responsive";
@@ -175,10 +176,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    backgroundColor: OVER_MEDIA.scrimSoft,
   },
   floatingBackGlyph: {
-    color: "#FFFFFF",
+    color: OVER_MEDIA.onScrim,
     fontSize: 22,
     lineHeight: 24,
     fontWeight: "700",

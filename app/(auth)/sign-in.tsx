@@ -287,7 +287,7 @@ export default function SignInScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FCFCFD" },
+  safeArea: { flex: 1 },
   flex: { flex: 1 },
   scroll: { flexGrow: 1, justifyContent: "center", padding: 24 },
   // Cap width and center so the form reads well on iPad as well as iPhone.

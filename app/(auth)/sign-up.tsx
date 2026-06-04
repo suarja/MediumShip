@@ -259,7 +259,7 @@ export default function SignUpScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#FCFCFD" },
+  safeArea: { flex: 1 },
   flex: { flex: 1 },
   scroll: { flexGrow: 1, justifyContent: "center", padding: 24 },
   content: { width: "100%", maxWidth: 480, alignSelf: "center", gap: 24 },

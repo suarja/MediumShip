@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 
-import { PREMIUM_ON_FILL } from "../../features/content/card-presentation";
+import { OVER_MEDIA, PREMIUM_ON_FILL } from "../../features/content/card-presentation";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
@@ -120,11 +120,11 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 999,
-    backgroundColor: "rgba(244, 241, 232, 0.95)",
+    backgroundColor: OVER_MEDIA.controlSurface,
     alignItems: "center",
     justifyContent: "center",
   },
-  playGlyph: { color: "#14110E", fontSize: 20, marginLeft: 3 },
+  playGlyph: { color: OVER_MEDIA.onControlSurface, fontSize: 20, marginLeft: 3 },
   premium: {
     position: "absolute",
     top: 12,
@@ -146,12 +146,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: 5,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    backgroundColor: OVER_MEDIA.scrim,
   },
   durationText: {
     fontFamily: fontFamilies.mono,
     fontSize: 10,
     letterSpacing: 0.6,
-    color: "#FFFFFF",
+    color: OVER_MEDIA.onScrim,
   },
 });

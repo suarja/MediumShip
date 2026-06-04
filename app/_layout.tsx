@@ -15,9 +15,17 @@ import {
   PersistentMediaPlayerProvider,
 } from "../src/features/media/persistent-media-player";
 import { NetworkStatusDebugProvider } from "../src/features/network/use-network-status";
+import {
+  defaultThemeConfig,
+  resolveTheme,
+} from "../src/features/theme/palette-catalog";
 import { AppThemeProvider } from "../src/features/theme/theme-provider";
 import { useAppFonts } from "../src/features/theme/use-app-fonts";
 import { i18n, initI18n } from "../src/i18n";
+
+// Colours for the pre-theme bootstrap screen (the ThemeProvider is not mounted
+// yet) come from the resolved default palette rather than hardcoded literals.
+const bootstrapTheme = resolveTheme(defaultThemeConfig);
 
 const convex = new ConvexReactClient(env.EXPO_PUBLIC_CONVEX_URL);
 
@@ -62,8 +70,8 @@ export default function RootLayout() {
   if (!i18nReady || !fontsLoaded) {
     return (
       <SafeAreaProvider>
-        <View style={styles.center}>
-          <ActivityIndicator color="#B42318" />
+        <View style={[styles.center, { backgroundColor: bootstrapTheme.colors.canvas }]}>
+          <ActivityIndicator color={bootstrapTheme.colors.accent} />
         </View>
       </SafeAreaProvider>
     );
@@ -98,7 +106,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FCFCFD",
   },
   appFrame: {
     flex: 1,

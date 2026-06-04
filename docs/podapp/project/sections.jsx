@@ -13,10 +13,16 @@ const Nav = () => (
         <a href="#variants">Variantes</a>
         <a href="#process">Process</a>
       </nav>
-      <a href="#cta" className="btn btn--primary nav__cta">
-        Booker un appel
-        <span className="arr">→</span>
-      </a>
+      <div className="nav__cta-group">
+        <a href="cms/index.html" className="btn btn--ghost nav__login" title="Accéder au CMS">
+          <span className="nav__login-dot"></span>
+          CMS
+        </a>
+        <a href="#cta" className="btn btn--primary nav__cta">
+          Booker un appel
+          <span className="arr">→</span>
+        </a>
+      </div>
     </div>
   </header>
 );

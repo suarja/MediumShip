@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
+import { usePersistentEpisodePlayerSpace } from "../../src/features/media/persistent-episode-player";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
@@ -19,6 +20,7 @@ export default function ArticleDetailScreen() {
   const { theme } = useAppTheme();
   const { scaleSpace, scaleFont } = useResponsive();
   const { state: networkState } = useNetworkStatus();
+  const persistentPlayerSpace = usePersistentEpisodePlayerSpace();
 
   const content = useQuery(
     api.content.queries.getPublishedById,
@@ -50,7 +52,10 @@ export default function ArticleDetailScreen() {
     >
       {content ? (
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={[
+            styles.scroll,
+            { paddingBottom: 32 + persistentPlayerSpace },
+          ]}
           showsVerticalScrollIndicator={false}
         >
           {coverImageUrl ? (
@@ -110,7 +115,7 @@ export default function ArticleDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { gap: 10, paddingBottom: 32 },
+  scroll: { gap: 10 },
   cover: { width: "100%", height: 160, borderRadius: 18, marginBottom: 6 },
   kicker: {
     fontFamily: fontFamilies.mono,

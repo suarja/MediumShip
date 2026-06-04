@@ -5,6 +5,7 @@ import * as WebBrowser from "expo-web-browser";
 import { WebView } from "react-native-webview";
 import { useTranslation } from "react-i18next";
 
+import { env } from "../../lib/env";
 import {
   getYoutubeEmbedUrl,
 } from "../../features/content/selectors";
@@ -16,6 +17,11 @@ import { useAppTheme } from "../../features/theme/theme-provider";
 type VideoPlayerCardProps = {
   source: VideoSource;
 };
+
+const youtubeRefererUrl =
+  env.EXPO_PUBLIC_EMBED_REFERER_URL ??
+  env.EXPO_PUBLIC_CONVEX_SITE_URL ??
+  "https://mediumship.app";
 
 export function VideoPlayerCard({ source }: VideoPlayerCardProps) {
   const { t } = useTranslation("video");
@@ -52,7 +58,12 @@ export function VideoPlayerCard({ source }: VideoPlayerCardProps) {
             allowsFullscreenVideo
             allowsInlineMediaPlayback
             mediaPlaybackRequiresUserAction
-            source={{ uri: embedUrl }}
+            source={{
+              uri: embedUrl,
+              headers: {
+                Referer: youtubeRefererUrl,
+              },
+            }}
             style={styles.webview}
             testID="youtube-player"
           />

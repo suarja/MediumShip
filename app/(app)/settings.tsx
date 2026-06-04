@@ -10,6 +10,7 @@ import { SettingsRow } from "../../src/components/settings/settings-row";
 import { SettingsSection } from "../../src/components/settings/settings-section";
 import { ThemePaletteItem } from "../../src/components/settings/theme-palette-item";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
+import { usePersistentEpisodePlayerSpace } from "../../src/features/media/persistent-episode-player";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
@@ -21,6 +22,7 @@ export default function SettingsScreen() {
   const { scaleSpace } = useResponsive();
   const { state: networkState } = useNetworkStatus();
   const tabBarSpace = useTabBarSpace();
+  const persistentPlayerSpace = usePersistentEpisodePlayerSpace();
 
   return (
     <Screen>
@@ -30,7 +32,7 @@ export default function SettingsScreen() {
           styles.container,
           {
             gap: 24 * scaleSpace,
-            paddingBottom: tabBarSpace,
+            paddingBottom: tabBarSpace + persistentPlayerSpace,
           },
         ]}
         showsVerticalScrollIndicator={false}

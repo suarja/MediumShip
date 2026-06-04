@@ -10,6 +10,10 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { env } from "../src/lib/env";
 import { useStableAuth } from "../src/features/auth/use-stable-auth";
+import {
+  PersistentEpisodeMiniPlayer,
+  PersistentEpisodePlayerProvider,
+} from "../src/features/media/persistent-episode-player";
 import { NetworkStatusDebugProvider } from "../src/features/network/use-network-status";
 import { AppThemeProvider } from "../src/features/theme/theme-provider";
 import { useAppFonts } from "../src/features/theme/use-app-fonts";
@@ -74,8 +78,13 @@ export default function RootLayout() {
         <ConvexProviderWithClerk client={convex} useAuth={useStableAuth}>
           <NetworkStatusDebugProvider>
             <AppThemeProvider>
-              <StatusBar style="auto" />
-              <Stack key={languageKey} screenOptions={{ headerShown: false }} />
+              <PersistentEpisodePlayerProvider>
+                <StatusBar style="auto" />
+                <View style={styles.appFrame}>
+                  <Stack key={languageKey} screenOptions={{ headerShown: false }} />
+                  <PersistentEpisodeMiniPlayer />
+                </View>
+              </PersistentEpisodePlayerProvider>
             </AppThemeProvider>
           </NetworkStatusDebugProvider>
         </ConvexProviderWithClerk>
@@ -90,5 +99,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#FCFCFD",
+  },
+  appFrame: {
+    flex: 1,
   },
 });

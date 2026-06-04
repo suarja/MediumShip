@@ -1,6 +1,12 @@
+process.env.EXPO_PUBLIC_CONVEX_URL ??= "https://example.convex.cloud";
+process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ??= "pk_test_mock";
+process.env.EXPO_PUBLIC_CONVEX_SITE_URL ??= "https://example.convex.site";
+process.env.EXPO_PUBLIC_EMBED_REFERER_URL ??= "https://example.mediumship.app";
+
 jest.mock("expo-audio", () => ({
   setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
   useAudioPlayer: () => ({
+    replace: jest.fn(),
     play: jest.fn(),
     pause: jest.fn(),
     seekTo: jest.fn().mockResolvedValue(undefined),

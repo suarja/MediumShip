@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
 import { EpisodeAudioPlayer } from "../../src/components/media/episode-audio-player";
+import { usePersistentEpisodePlayerSpace } from "../../src/features/media/persistent-episode-player";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
@@ -20,6 +21,7 @@ export default function EpisodeDetailScreen() {
   const { theme } = useAppTheme();
   const { scaleSpace, scaleFont } = useResponsive();
   const { state: networkState } = useNetworkStatus();
+  const persistentPlayerSpace = usePersistentEpisodePlayerSpace();
 
   const content = useQuery(
     api.content.queries.getPublishedById,
@@ -51,7 +53,10 @@ export default function EpisodeDetailScreen() {
     >
       {content ? (
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={[
+            styles.scroll,
+            { paddingBottom: 32 + persistentPlayerSpace },
+          ]}
           showsVerticalScrollIndicator={false}
         >
           {coverImageUrl ? (
@@ -134,7 +139,12 @@ export default function EpisodeDetailScreen() {
               </Link>
             </View>
           ) : content.audioUrl ? (
-            <EpisodeAudioPlayer audioUrl={content.audioUrl} title={content.title} />
+            <EpisodeAudioPlayer
+              audioUrl={content.audioUrl}
+              contentId={content._id}
+              durationSeconds={content.durationSeconds}
+              title={content.title}
+            />
           ) : (
             <Text style={[styles.audioNote, { color: theme.colors.textMuted }]}>
               {t("audioNote")}
@@ -147,7 +157,7 @@ export default function EpisodeDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { gap: 10, paddingBottom: 32 },
+  scroll: { gap: 10 },
   cover: {
     width: "100%",
     height: 160,

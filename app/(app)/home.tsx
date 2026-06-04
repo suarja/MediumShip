@@ -8,6 +8,7 @@ import { DegradedBanner } from "../../src/components/content/degraded-banner";
 import { FeedCard } from "../../src/components/content/feed-card";
 import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
+import { usePersistentEpisodePlayerSpace } from "../../src/features/media/persistent-episode-player";
 import { filterAndOrderFeedContent } from "../../src/features/tenant/public-config";
 import { toContentCardModel } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
@@ -21,6 +22,7 @@ export default function HomeFeedScreen() {
   const { theme, tenantSlug, enabledModules, feedSections } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
   const tabBarSpace = useTabBarSpace();
+  const persistentPlayerSpace = usePersistentEpisodePlayerSpace();
   const { state: networkState } = useNetworkStatus();
 
   const contents = useQuery(api.content.queries.listPublishedFeed, {
@@ -68,7 +70,10 @@ export default function HomeFeedScreen() {
         style={styles.scroll}
         contentContainerStyle={[
           styles.list,
-          { gap: theme.spacing.sm * scaleSpace, paddingBottom: tabBarSpace },
+          {
+            gap: theme.spacing.sm * scaleSpace,
+            paddingBottom: tabBarSpace + persistentPlayerSpace,
+          },
         ]}
         showsVerticalScrollIndicator={false}
       >

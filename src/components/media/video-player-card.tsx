@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { useEventListener } from "expo";
 import {
   isPictureInPictureSupported,
   useVideoPlayer,
@@ -20,6 +21,7 @@ import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 type VideoPlayerCardProps = {
+  onPlaybackIntent?: () => void;
   source: VideoSource;
 };
 
@@ -28,7 +30,7 @@ const youtubeRefererUrl =
   env.EXPO_PUBLIC_CONVEX_SITE_URL ??
   "https://mediumship.app";
 
-export function VideoPlayerCard({ source }: VideoPlayerCardProps) {
+export function VideoPlayerCard({ onPlaybackIntent, source }: VideoPlayerCardProps) {
   const { t } = useTranslation("video");
   const { theme } = useAppTheme();
   const { scaleFont } = useResponsive();
@@ -36,6 +38,12 @@ export function VideoPlayerCard({ source }: VideoPlayerCardProps) {
   const player = useVideoPlayer(
     source.kind === "hosted" ? { uri: source.playbackUrl } : null,
   );
+
+  useEventListener(player, "playingChange", ({ isPlaying }) => {
+    if (source.kind === "hosted" && isPlaying) {
+      onPlaybackIntent?.();
+    }
+  });
 
   if (source.kind === "youtube") {
     const embedUrl = getYoutubeEmbedUrl(source);
@@ -76,7 +84,10 @@ export function VideoPlayerCard({ source }: VideoPlayerCardProps) {
         </View>
         <Pressable
           accessibilityRole="button"
-          onPress={() => void WebBrowser.openBrowserAsync(source.youtubeUrl)}
+          onPress={() => {
+            onPlaybackIntent?.();
+            void WebBrowser.openBrowserAsync(source.youtubeUrl);
+          }}
           style={({ pressed }) => [
             styles.linkButton,
             {
@@ -121,7 +132,10 @@ export function VideoPlayerCard({ source }: VideoPlayerCardProps) {
       {pipSupported ? (
         <Pressable
           accessibilityRole="button"
-          onPress={() => void hostedVideoRef.current?.startPictureInPicture()}
+          onPress={() => {
+            onPlaybackIntent?.();
+            void hostedVideoRef.current?.startPictureInPicture();
+          }}
           style={({ pressed }) => [
             styles.linkButton,
             {

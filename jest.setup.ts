@@ -4,6 +4,13 @@ process.env.EXPO_PUBLIC_CONVEX_SITE_URL ??= "https://example.convex.site";
 process.env.EXPO_PUBLIC_EMBED_REFERER_URL ??= "https://example.mediumship.app";
 
 jest.mock("expo-audio", () => ({
+  createAudioPlayer: () => ({
+    remove: jest.fn(),
+    replace: jest.fn(),
+    play: jest.fn(),
+    pause: jest.fn(),
+    seekTo: jest.fn().mockResolvedValue(undefined),
+  }),
   setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
   useAudioPlayer: () => ({
     replace: jest.fn(),
@@ -32,6 +39,15 @@ jest.mock("expo-audio", () => ({
     timeControlStatus: "paused",
   }),
 }));
+
+jest.mock("expo", () => {
+  const actualExpo = jest.requireActual("expo");
+
+  return {
+    ...actualExpo,
+    useEventListener: jest.fn(),
+  };
+});
 
 jest.mock("expo-video", () => {
   const React = require("react");

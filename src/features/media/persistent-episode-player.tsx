@@ -9,8 +9,8 @@ import {
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import {
+  createAudioPlayer,
   setAudioModeAsync,
-  useAudioPlayer,
   useAudioPlayerStatus,
 } from "expo-audio";
 import { useRouter, useSegments } from "expo-router";
@@ -68,12 +68,11 @@ export function PersistentEpisodePlayerProvider({
   children,
 }: PropsWithChildren) {
   const [activeTrack, setActiveTrack] = useState<EpisodeTrack | null>(null);
-  const player = useAudioPlayer(
-    activeTrack ? { uri: activeTrack.audioUrl } : null,
-    { updateInterval: 250 },
-  );
+  const playerRef = useRef(createAudioPlayer(null, { updateInterval: 250 }));
+  const player = playerRef.current;
   const status = useAudioPlayerStatus(player);
   const pendingPlayRef = useRef(false);
+  const loadedTrackKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     void setAudioModeAsync({
@@ -85,7 +84,17 @@ export function PersistentEpisodePlayerProvider({
     if (!activeTrack) {
       player.pause();
       pendingPlayRef.current = false;
+      loadedTrackKeyRef.current = null;
+      return;
     }
+
+    const nextTrackKey = `${activeTrack.contentId}:${activeTrack.audioUrl}`;
+    if (loadedTrackKeyRef.current === nextTrackKey) {
+      return;
+    }
+
+    loadedTrackKeyRef.current = nextTrackKey;
+    player.replace({ uri: activeTrack.audioUrl });
   }, [activeTrack, player]);
 
   useEffect(() => {
@@ -94,6 +103,12 @@ export function PersistentEpisodePlayerProvider({
       player.play();
     }
   }, [activeTrack, player, status.isLoaded]);
+
+  useEffect(() => {
+    return () => {
+      player.remove();
+    };
+  }, [player]);
 
   const currentTimeSeconds = status.currentTime || 0;
   const durationSeconds = status.duration || activeTrack?.durationSeconds || 0;
@@ -153,6 +168,7 @@ export function PersistentEpisodePlayerProvider({
 
   const closePlayer = () => {
     pendingPlayRef.current = false;
+    loadedTrackKeyRef.current = null;
     player.pause();
     setActiveTrack(null);
   };

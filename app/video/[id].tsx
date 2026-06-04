@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { useQuery } from "convex/react";
@@ -27,10 +26,6 @@ export default function VideoDetailScreen() {
   const { state: networkState } = useNetworkStatus();
   const { closePlayer } = usePersistentEpisodePlayer();
   const persistentPlayerSpace = usePersistentEpisodePlayerSpace();
-
-  useEffect(() => {
-    closePlayer();
-  }, [id]);
 
   const content = useQuery(
     api.content.queries.getPublishedById,
@@ -77,7 +72,7 @@ export default function VideoDetailScreen() {
           showsVerticalScrollIndicator={false}
         >
           {source ? (
-            <VideoPlayerCard source={source} />
+            <VideoPlayerCard onPlaybackIntent={closePlayer} source={source} />
           ) : coverImageUrl ? (
             <Image
               accessibilityLabel={`${content.title} cover`}

@@ -1,11 +1,12 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import type { ChangeEvent, CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
 
 import { api } from "../../../../convex/_generated/api";
 import type { Doc } from "../../../../convex/_generated/dataModel";
+import { extractYoutubeVideoId } from "../../../../convex/youtube/helpers";
 import { collectContentUrlWarnings } from "../../lib/content-url-warnings";
 
 type ContentFormProps = {
@@ -199,14 +200,18 @@ export function ContentForm({ selectedId }: ContentFormProps) {
     api.cms.queries.getContent,
     selectedId ? { id: selectedId as never } : "skip",
   );
+  const enrichFromYoutube = useAction(api.youtube.enrich.enrichFromYoutube);
   const updateContent = useMutation(api.cms.mutations.updateContent);
   const setContentStatus = useMutation(api.cms.mutations.setContentStatus);
   const [state, setState] = useState<EditorState>(emptyState);
+  const [enrichMessage, setEnrichMessage] = useState<string | null>(null);
+  const [enriching, setEnriching] = useState(false);
   const [saveLabel, setSaveLabel] = useState("Enregistrer");
 
   useEffect(() => {
     if (content) {
       setState(toEditorState(content));
+      setEnrichMessage(null);
       setSaveLabel("Enregistrer");
     }
   }, [content]);
@@ -292,6 +297,10 @@ export function ContentForm({ selectedId }: ContentFormProps) {
     const estimatedReadingTime =
       articleWordCount > 0 ? Math.max(1, Math.ceil(articleWordCount / 220)) : null;
     const normalizedSlug = state.slug.trim() || slugify(state.title) || `draft-${content.kind}`;
+    const youtubeVideoId =
+      content.kind === "video" && state.videoSourceKind === "youtube"
+        ? extractYoutubeVideoId(state.youtubeUrl.trim()) ?? ""
+        : "";
 
     await updateContent({
       id: content._id,
@@ -325,7 +334,7 @@ export function ContentForm({ selectedId }: ContentFormProps) {
           : state.videoSourceKind === "youtube"
             ? {
                 kind: "youtube",
-                youtubeVideoId: "",
+                youtubeVideoId,
                 youtubeUrl: state.youtubeUrl.trim(),
               }
             : {
@@ -340,6 +349,47 @@ export function ContentForm({ selectedId }: ContentFormProps) {
 
   const changeStatus = async (status: "draft" | "published" | "archived") => {
     await setContentStatus({ id: content._id, status });
+  };
+
+  const handleYoutubeEnrich = async () => {
+    if (!state.youtubeUrl.trim()) {
+      return;
+    }
+
+    setEnriching(true);
+    setEnrichMessage(null);
+
+    try {
+      const result = await enrichFromYoutube({
+        youtubeUrl: state.youtubeUrl.trim(),
+      });
+
+      if (!result.enriched) {
+        const message =
+          result.reason === "not-a-youtube-url"
+            ? "Le lien fourni ne ressemble pas à une URL YouTube valide."
+            : result.reason === "missing-api-key"
+              ? "La variable YOUTUBE_DATA_API_KEY n’est pas configurée sur Convex."
+              : "Impossible de récupérer la vidéo (quota ou vidéo introuvable).";
+        setEnrichMessage(message);
+        return;
+      }
+
+      setState((current) => ({
+        ...current,
+        durationSeconds: result.durationSeconds
+          ? String(result.durationSeconds)
+          : current.durationSeconds,
+        heroImageUrl: result.thumbnailUrl || current.heroImageUrl,
+        title: current.title.trim() ? current.title : result.title,
+      }));
+      setEnrichMessage("Enrichissement YouTube appliqué à l’éditeur.");
+      setSaveLabel("Enregistrer");
+    } catch {
+      setEnrichMessage("L’enrichissement YouTube a échoué.");
+    } finally {
+      setEnriching(false);
+    }
   };
 
   return (
@@ -510,14 +560,30 @@ export function ContentForm({ selectedId }: ContentFormProps) {
               </Field>
 
               {state.videoSourceKind === "youtube" ? (
-                <Field label="YouTube URL" wide>
-                  <input
-                    className="input input--mono"
-                    onChange={onTextChange("youtubeUrl")}
-                    placeholder="https://youtube.com/watch?v=…"
-                    value={state.youtubeUrl}
-                  />
-                </Field>
+                <div className="field field--wide">
+                  <span className="field__lbl">YouTube URL</span>
+                  <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                    <input
+                      className="input input--mono"
+                      onChange={onTextChange("youtubeUrl")}
+                      placeholder="https://youtube.com/watch?v=…"
+                      value={state.youtubeUrl}
+                    />
+                    <button
+                      className="btn btn--surface"
+                      disabled={!state.youtubeUrl.trim() || enriching}
+                      onClick={handleYoutubeEnrich}
+                      type="button"
+                    >
+                      {enriching ? "Enrich…" : "Enrichir"}
+                    </button>
+                  </div>
+                  {enrichMessage ? (
+                    <div className="upload__d" style={{ marginTop: 8 }}>
+                      {enrichMessage}
+                    </div>
+                  ) : null}
+                </div>
               ) : null}
 
               {state.videoSourceKind === "hosted" ? (

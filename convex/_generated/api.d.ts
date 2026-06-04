@@ -20,6 +20,8 @@ import type * as tenants_queries from "../tenants/queries.js";
 import type * as tenants_seed from "../tenants/seed.js";
 import type * as users_mutations from "../users/mutations.js";
 import type * as users_queries from "../users/queries.js";
+import type * as youtube_enrich from "../youtube/enrich.js";
+import type * as youtube_helpers from "../youtube/helpers.js";
 
 import type {
   ApiFromModules,
@@ -40,6 +42,8 @@ declare const fullApi: ApiFromModules<{
   "tenants/seed": typeof tenants_seed;
   "users/mutations": typeof users_mutations;
   "users/queries": typeof users_queries;
+  "youtube/enrich": typeof youtube_enrich;
+  "youtube/helpers": typeof youtube_helpers;
 }>;
 
 /**
@@ -68,4 +72,6 @@ export declare const internal: FilterApi<
   FunctionReference<any, "internal">
 >;
 
-export declare const components: {};
+export declare const components: {
+  youtubeMetadata: import("convex-youtube-cache/_generated/component.js").ComponentApi<"youtubeMetadata">;
+};

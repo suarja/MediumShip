@@ -19,6 +19,7 @@ import type * as entitlements_queries from "../entitlements/queries.js";
 import type * as http from "../http.js";
 import type * as httpHandlers_clerkWebhook from "../httpHandlers/clerkWebhook.js";
 import type * as httpHandlers_svix from "../httpHandlers/svix.js";
+import type * as media_r2 from "../media/r2.js";
 import type * as tenants_mutations from "../tenants/mutations.js";
 import type * as tenants_queries from "../tenants/queries.js";
 import type * as tenants_seed from "../tenants/seed.js";
@@ -45,6 +46,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   "httpHandlers/clerkWebhook": typeof httpHandlers_clerkWebhook;
   "httpHandlers/svix": typeof httpHandlers_svix;
+  "media/r2": typeof media_r2;
   "tenants/mutations": typeof tenants_mutations;
   "tenants/queries": typeof tenants_queries;
   "tenants/seed": typeof tenants_seed;
@@ -82,4 +84,5 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   youtubeMetadata: import("convex-youtube-cache/_generated/component.js").ComponentApi<"youtubeMetadata">;
+  r2: import("@convex-dev/r2/_generated/component.js").ComponentApi<"r2">;
 };

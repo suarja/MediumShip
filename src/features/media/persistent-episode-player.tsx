@@ -519,8 +519,8 @@ export function PersistentMediaPlayerProvider({
         }
       };
       replay();
-      const t1 = setTimeout(replay, 150);
-      const t2 = setTimeout(replay, 450);
+      const t1 = setTimeout(replay, 60);
+      const t2 = setTimeout(replay, 180);
       return () => {
         clearTimeout(t1);
         clearTimeout(t2);

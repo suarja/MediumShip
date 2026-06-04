@@ -12,6 +12,7 @@ export default {
   youtubeProvider: "YouTube",
   hostedProvider: "Hosted",
   playVideo: "Play video",
+  resumeVideo: "Back to player",
   enterPictureInPicture: "Picture in Picture",
   fullscreen: "Fullscreen",
   rotateForFullscreen: "Rotate for fullscreen",

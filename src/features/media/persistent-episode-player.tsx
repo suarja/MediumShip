@@ -650,21 +650,20 @@ export function PersistentMediaMiniPlayer() {
     togglePlayback,
   } = usePersistentMediaPlayer();
   const pipVideoRef = useRef<VideoView>(null);
-  const [isPipActive, setIsPipActive] = useState(false);
 
   const isHostedVideo = activeSession?.kind === "hostedVideo";
   const onPlayerScreen = shouldHideMiniPlayerForSegments(segments);
   const shouldHost = Boolean(activeSession) && isHostedVideo && !onPlayerScreen;
 
   // The mini-player is always mounted at the app root, so it is the stable
-  // surface that can hold Picture-in-Picture across navigation. When it appears
-  // for a hosted video (i.e. you have left the player screen), start PiP; when
-  // it unmounts (you return to the player, or close), PiP stops with it. This is
+  // surface that holds Picture-in-Picture across navigation. When it appears for
+  // a hosted video (i.e. you have left the player screen), start PiP; when it
+  // unmounts (you return to the player, or close), PiP stops with it. This is
   // why PiP must NOT be driven from the player screen's own VideoView, which is
-  // torn down the moment you navigate away.
+  // torn down the moment you navigate away. The surface stays mounted (just
+  // offscreen) so the restore callback keeps firing.
   useEffect(() => {
     if (!shouldHost) {
-      setIsPipActive(false);
       return;
     }
 
@@ -689,40 +688,33 @@ export function PersistentMediaMiniPlayer() {
       : Math.max(insets.bottom, PERSISTENT_MEDIA_PLAYER_GAP);
 
   // Hosted video off the player screen: the system Picture-in-Picture window is
-  // the only floating UI. We do NOT render the mini-player card here — for video
-  // it would be a redundant, out-of-sync second floating player. We still mount a
-  // tiny surface (tap = back to player) that hands the video off to PiP, then
-  // hides once PiP is active.
+  // the only floating UI — no mini-player card (it would be a redundant,
+  // out-of-sync second floating player). The surface that hosts PiP stays
+  // mounted but offscreen, so PiP keeps running across navigation AND its
+  // restore callback still fires (a display:none view is detached natively and
+  // never reports the restore tap).
   if (isHostedVideo) {
     return videoPlayer ? (
       <View
-        pointerEvents="box-none"
-        style={[styles.pipHostOverlay, { bottom: bottomOffset }]}
+        pointerEvents="none"
+        style={styles.pipHostOffscreen}
         testID="media-pip-host"
       >
-        <Pressable
-          accessibilityRole="button"
-          onPress={openPlayer}
-          style={[styles.pipHost, isPipActive && styles.miniVideoHidden]}
-        >
-          <VideoView
-            allowsPictureInPicture
-            contentFit="cover"
-            nativeControls={false}
-            onPictureInPictureStart={() => setIsPipActive(true)}
-            onPictureInPictureStop={() => {
-              setIsPipActive(false);
-              // Tapping the PiP window's restore control returns to the full
-              // player. Guarded + idempotent, so programmatic stops (returning
-              // to the player, closing) are no-ops here.
-              openPlayer();
-            }}
-            player={videoPlayer}
-            ref={pipVideoRef}
-            startsPictureInPictureAutomatically
-            style={StyleSheet.absoluteFill}
-          />
-        </Pressable>
+        <VideoView
+          allowsPictureInPicture
+          contentFit="contain"
+          nativeControls={false}
+          onPictureInPictureStop={() => {
+            // Tapping the PiP window's restore control returns to the full
+            // player. openPlayer is idempotent + route-guarded, so programmatic
+            // stops (returning to the player, closing) are no-ops here.
+            openPlayer();
+          }}
+          player={videoPlayer}
+          ref={pipVideoRef}
+          startsPictureInPictureAutomatically
+          style={StyleSheet.absoluteFill}
+        />
       </View>
     ) : null;
   }
@@ -859,20 +851,14 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     elevation: 10,
   },
-  pipHostOverlay: {
+  // Mounted (so PiP keeps running and the restore callback fires) but parked
+  // offscreen, since the system PiP window is the only floating UI for video.
+  pipHostOffscreen: {
     position: "absolute",
-    left: 16,
-    right: 16,
-    alignItems: "flex-end",
-  },
-  pipHost: {
-    width: 128,
-    height: 72,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  miniVideoHidden: {
-    display: "none",
+    left: -1000,
+    top: 0,
+    width: 200,
+    height: 112,
   },
   metaBlock: {
     flex: 1,

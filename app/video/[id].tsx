@@ -115,7 +115,7 @@ export default function VideoDetailScreen() {
               description={t("premiumBody")}
               ctaLabel={t("premiumCta")}
             />
-          ) : source?.kind === "hosted" && activeSession?.contentId !== content._id ? (
+          ) : source?.kind === "hosted" ? (
             <Pressable
               accessibilityRole="button"
               onPress={() => {
@@ -131,7 +131,9 @@ export default function VideoDetailScreen() {
               ]}
             >
               <Text style={[styles.ctaLabel, { color: theme.colors.accentContrast }]}>
-                {t("playVideo")}
+                {activeSession?.contentId === content._id
+                  ? t("resumeVideo")
+                  : t("playVideo")}
               </Text>
             </Pressable>
           ) : null}

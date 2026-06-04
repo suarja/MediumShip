@@ -8,7 +8,6 @@ import {
   type EditorialStatusFilter,
 } from "./editorial-list";
 import { ContentForm } from "./content-form";
-import { PreviewPane } from "./preview-pane";
 
 type ContentsTabProps = {
   items: Doc<"contents">[];
@@ -102,10 +101,6 @@ export function ContentsTab({
         />
 
         <ContentForm key={selectedId ?? "none"} selectedId={selectedId} />
-
-        <div className="col-preview">
-          <PreviewPane key={`preview-${selectedId ?? "none"}`} selectedId={selectedId} />
-        </div>
       </div>
     </main>
   );

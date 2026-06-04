@@ -60,13 +60,20 @@ export function BrandHeader() {
           hitSlop={8}
           style={({ pressed }) => [
             styles.iconButton,
-            {
-              width: iconSize,
-              height: iconSize,
-              borderRadius: theme.radii.pill,
-              borderColor: theme.colors.border,
-              backgroundColor: theme.colors.surface,
-            },
+            showAppIcon
+              ? {
+                  width: iconSize,
+                  height: iconSize,
+                  borderRadius: theme.radii.pill,
+                  backgroundColor: theme.colors.surfaceMuted,
+                }
+              : {
+                  width: iconSize,
+                  height: iconSize,
+                  borderRadius: theme.radii.pill,
+                  borderColor: theme.colors.border,
+                  backgroundColor: theme.colors.surface,
+                },
             pressed && styles.pressed,
           ]}
         >
@@ -110,7 +117,6 @@ const styles = StyleSheet.create({
   iconButton: {
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: StyleSheet.hairlineWidth,
     overflow: "hidden",
   },
   pressed: { opacity: 0.7 },

@@ -14,5 +14,9 @@ export default {
   playVideo: "Play video",
   enterPictureInPicture: "Picture in Picture",
   openExternal: "Open on YouTube",
+  premiumTitle: "Members-only video",
+  premiumBody:
+    "This video is part of the premium catalogue. Sign in to watch it.",
+  premiumCta: "Become a member",
   unavailable: "This video has no playable source yet.",
 } as const;

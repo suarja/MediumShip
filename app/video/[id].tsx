@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
+import { MemberGateCard } from "../../src/components/auth/member-gate-card";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
 import { DetailHeader } from "../../src/components/content/detail-header";
 import { DetailHero } from "../../src/components/content/detail-hero";
@@ -63,7 +64,17 @@ export default function VideoDetailScreen() {
       notFoundBody={t("notFoundBody")}
       hero={
         content ? (
-          source?.kind === "youtube" ? (
+          content.isPremium ? (
+            <DetailHero
+              key={content._id}
+              coverImageUrl={coverImageUrl}
+              mediaKey={content._id}
+              watermarkGlyph="▶"
+              height={200 * scaleSpace}
+              playGlyph="▶"
+              premiumLabel={t("premiumTag")}
+            />
+          ) : source?.kind === "youtube" ? (
             <VideoPlayerCard
               coverImageUrl={coverImageUrl}
               onPlaybackIntent={closePlayer}
@@ -77,7 +88,6 @@ export default function VideoDetailScreen() {
               watermarkGlyph="▶"
               height={200 * scaleSpace}
               playGlyph="▶"
-              premiumLabel={content.isPremium ? t("premiumTag") : undefined}
             />
           )
         ) : undefined
@@ -92,7 +102,13 @@ export default function VideoDetailScreen() {
             lede={content.summary}
             premium={content.isPremium}
           />
-          {source?.kind === "hosted" && activeSession?.contentId !== content._id ? (
+          {content.isPremium ? (
+            <MemberGateCard
+              title={t("premiumTitle")}
+              description={t("premiumBody")}
+              ctaLabel={t("premiumCta")}
+            />
+          ) : source?.kind === "hosted" && activeSession?.contentId !== content._id ? (
             <Pressable
               accessibilityRole="button"
               onPress={() => {

@@ -14,7 +14,10 @@ import { VideoView } from "expo-video";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
+import { MemberGateCard } from "../../src/components/auth/member-gate-card";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
+import { DetailHeader } from "../../src/components/content/detail-header";
+import { DetailHero } from "../../src/components/content/detail-hero";
 import {
   PauseGlyph,
   PlayGlyph,
@@ -68,6 +71,15 @@ export default function PlayerScreen() {
       return;
     }
 
+    if (content.isPremium) {
+      router.replace(
+        (content.kind === "video"
+          ? `/video/${content._id}`
+          : `/episode/${content._id}`) as never,
+      );
+      return;
+    }
+
     if (content.kind === "episode" && content.audioUrl) {
       const isSameSession =
         activeSession?.kind === "episode" &&
@@ -103,7 +115,7 @@ export default function PlayerScreen() {
         });
       }
     }
-  }, [activeSession, content, coverImageUrl, playEpisode, playHostedVideo]);
+  }, [activeSession, content, coverImageUrl, playEpisode, playHostedVideo, router]);
 
   const state =
     content &&
@@ -145,6 +157,78 @@ export default function PlayerScreen() {
             : tEpisode("notFoundBody")
         }
       />
+    );
+  }
+
+  if (content.isPremium) {
+    return (
+      <ContentDetailShell
+        state="ready"
+        networkState={networkState}
+        backLabel={content.kind === "video" ? tVideo("back") : tEpisode("back")}
+        loadingLabel={content.kind === "video" ? tVideo("loading") : tEpisode("loading")}
+        offlineTitle={
+          content.kind === "video" ? tVideo("offlineTitle") : tEpisode("offlineTitle")
+        }
+        offlineBody={
+          content.kind === "video" ? tVideo("offlineBody") : tEpisode("offlineBody")
+        }
+        notFoundTitle={
+          content.kind === "video" ? tVideo("notFoundTitle") : tEpisode("notFoundTitle")
+        }
+        notFoundBody={
+          content.kind === "video" ? tVideo("notFoundBody") : tEpisode("notFoundBody")
+        }
+        hero={
+          <DetailHero
+            key={content._id}
+            coverImageUrl={coverImageUrl}
+            mediaKey={content._id}
+            watermarkGlyph={content.kind === "video" ? "▶" : "▷"}
+            height={content.kind === "video" ? 200 * scaleSpace : 210 * scaleSpace}
+            playGlyph={content.kind === "video" ? "▶" : undefined}
+            premiumLabel={
+              content.kind === "video"
+                ? tVideo("premiumTag")
+                : tEpisode("premiumTag")
+            }
+          />
+        }
+      >
+        <DetailHeader
+          kicker={
+            content.category ||
+            (content.kind === "video" ? tVideo("kicker") : tEpisode("kicker"))
+          }
+          title={content.title}
+          meta={
+            content.kind === "episode"
+              ? content.durationSeconds
+                ? tEpisode("duration", {
+                    minutes: Math.round(content.durationSeconds / 60),
+                  })
+                : undefined
+              : tVideo("providerLabel", { provider: tVideo("hostedProvider") })
+          }
+          lede={content.summary}
+          premium
+        />
+        <MemberGateCard
+          title={
+            content.kind === "video"
+              ? tVideo("premiumTitle")
+              : tEpisode("premiumTitle")
+          }
+          description={
+            content.kind === "video"
+              ? tVideo("premiumBody")
+              : tEpisode("premiumBody")
+          }
+          ctaLabel={
+            content.kind === "video" ? tVideo("premiumCta") : tEpisode("premiumCta")
+          }
+        />
+      </ContentDetailShell>
     );
   }
 

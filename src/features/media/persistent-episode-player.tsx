@@ -171,6 +171,10 @@ export function PersistentMediaPlayerProvider({
   );
   const lastSavedProgressRef = useRef(0);
   const pipHostRef = useRef<VideoView>(null);
+  // User's *intent* to play, toggled only by explicit play/pause actions — not
+  // by iOS's transient pauses during the PiP-stop transition. Used to restore
+  // playback when returning to the player.
+  const playIntentRef = useRef(true);
   const router = useRouter();
   const segments = useSegments();
   const [audioPlayer, setAudioPlayer] = useState(() =>
@@ -318,11 +322,6 @@ export function PersistentMediaPlayerProvider({
     Boolean(audioStatus.didJustFinish) ||
     (durationSeconds > 0 && currentTimeSeconds >= durationSeconds);
 
-  // Latest play state, read (not depended on) when cancelling PiP so we can
-  // re-assert playback after the stop without forcing play on a paused video.
-  const isPlayingRef = useRef(isPlaying);
-  isPlayingRef.current = isPlaying;
-
   const disableAudioLockScreen = () => {
     safelyReleasePlayer(
       () => audioPlayer.clearLockScreenControls(),
@@ -448,6 +447,9 @@ export function PersistentMediaPlayerProvider({
       activeSessionRef.current.contentId === track.contentId &&
       activeSessionRef.current.playbackUrl === track.playbackUrl;
 
+    // Launching (or relaunching) a hosted video is an explicit intent to play.
+    playIntentRef.current = true;
+
     if (!isSameTrack) {
       safelyReleasePlayer(() => audioPlayer.pause(), "Failed to pause audio player");
       disableAudioLockScreen();
@@ -500,23 +502,29 @@ export function PersistentMediaPlayerProvider({
     }
 
     if (onPlayerRoute) {
-      // Back on the player: the inline surface shows the video, cancel PiP.
-      // Capture the play state BEFORE stopping (iOS may pause as part of the
-      // PiP-stop transition), then re-assert it so a video that was playing
-      // keeps playing — without forcing play on one the user had paused.
-      const wasPlaying = isPlayingRef.current;
+      // Back on the player: the inline surface shows the video, cancel PiP. iOS
+      // pauses as part of the PiP-stop transition, so if the user's intent is to
+      // play, re-assert it across the transition (a couple of attempts, since
+      // the transition pause can land after the first one).
       void pipHostRef.current?.stopPictureInPicture().catch(() => {});
-      if (wasPlaying) {
-        const resume = setTimeout(() => {
-          try {
-            videoPlayer.play();
-          } catch {
-            // player may be mid-teardown; ignore
-          }
-        }, 200);
-        return () => clearTimeout(resume);
+      if (!playIntentRef.current) {
+        return;
       }
-      return;
+
+      const replay = () => {
+        try {
+          videoPlayer.play();
+        } catch {
+          // player may be mid-teardown; ignore
+        }
+      };
+      replay();
+      const t1 = setTimeout(replay, 150);
+      const t2 = setTimeout(replay, 450);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
     }
 
     // Left the player: float the video.
@@ -533,6 +541,7 @@ export function PersistentMediaPlayerProvider({
 
     if (activeSession.kind === "hostedVideo") {
       if (videoState.isPlaying) {
+        playIntentRef.current = false;
         videoPlayer.pause();
         return;
       }
@@ -541,6 +550,7 @@ export function PersistentMediaPlayerProvider({
         (videoPlayer as { currentTime?: number }).currentTime = 0;
       }
 
+      playIntentRef.current = true;
       videoPlayer.play();
       return;
     }

@@ -10,6 +10,7 @@ export default {
   providerLabel: "Source : {{provider}}",
   youtubeProvider: "YouTube",
   hostedProvider: "Hébergée",
+  playVideo: "Lancer la vidéo",
   enterPictureInPicture: "Picture in Picture",
   openExternal: "Ouvrir sur YouTube",
   unavailable: "Cette vidéo n'a pas encore de source lisible.",

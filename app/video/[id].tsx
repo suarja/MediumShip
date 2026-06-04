@@ -72,7 +72,11 @@ export default function VideoDetailScreen() {
           showsVerticalScrollIndicator={false}
         >
           {source ? (
-            <VideoPlayerCard onPlaybackIntent={closePlayer} source={source} />
+            <VideoPlayerCard
+              coverImageUrl={coverImageUrl}
+              onPlaybackIntent={closePlayer}
+              source={source}
+            />
           ) : coverImageUrl ? (
             <Image
               accessibilityLabel={`${content.title} cover`}

@@ -68,11 +68,11 @@ export function PersistentEpisodePlayerProvider({
   children,
 }: PropsWithChildren) {
   const [activeTrack, setActiveTrack] = useState<EpisodeTrack | null>(null);
-  const playerRef = useRef(createAudioPlayer(null, { updateInterval: 250 }));
-  const player = playerRef.current;
+  const [player, setPlayer] = useState(() =>
+    createAudioPlayer(null, { updateInterval: 250 }),
+  );
   const status = useAudioPlayerStatus(player);
   const pendingPlayRef = useRef(false);
-  const loadedTrackKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     void setAudioModeAsync({
@@ -84,17 +84,8 @@ export function PersistentEpisodePlayerProvider({
     if (!activeTrack) {
       player.pause();
       pendingPlayRef.current = false;
-      loadedTrackKeyRef.current = null;
       return;
     }
-
-    const nextTrackKey = `${activeTrack.contentId}:${activeTrack.audioUrl}`;
-    if (loadedTrackKeyRef.current === nextTrackKey) {
-      return;
-    }
-
-    loadedTrackKeyRef.current = nextTrackKey;
-    player.replace({ uri: activeTrack.audioUrl });
   }, [activeTrack, player]);
 
   useEffect(() => {
@@ -123,6 +114,14 @@ export function PersistentEpisodePlayerProvider({
 
     if (!isSameTrack) {
       pendingPlayRef.current = true;
+      setPlayer((currentPlayer) => {
+        currentPlayer.pause();
+        currentPlayer.remove();
+        return createAudioPlayer(
+          { uri: track.audioUrl },
+          { updateInterval: 250 },
+        );
+      });
       setActiveTrack(track);
       return;
     }
@@ -168,7 +167,6 @@ export function PersistentEpisodePlayerProvider({
 
   const closePlayer = () => {
     pendingPlayRef.current = false;
-    loadedTrackKeyRef.current = null;
     player.pause();
     setActiveTrack(null);
   };

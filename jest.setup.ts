@@ -55,7 +55,9 @@ jest.mock("expo-video", () => {
 
   return {
     isPictureInPictureSupported: () => true,
-    useVideoPlayer: () => ({}),
+    useVideoPlayer: () => ({
+      play: jest.fn(),
+    }),
     VideoView: React.forwardRef(
       ({ testID }: { testID?: string }, ref: React.Ref<{ startPictureInPicture: () => Promise<void> }>) => {
         React.useImperativeHandle(ref, () => ({

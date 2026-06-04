@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import VideoDetailScreen from "../app/video/[id]";
 import { changeAppLanguage, initI18n } from "../src/i18n";
@@ -62,9 +62,14 @@ describe("video detail", () => {
 
     render(<VideoDetailScreen />);
 
+    expect(screen.getByText("Play video")).toBeTruthy();
     expect(mockClosePlayer).not.toHaveBeenCalled();
-    expect(screen.getByTestId("youtube-player")).toBeTruthy();
     expect(screen.getByText("Open on YouTube")).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId("video-start-button"));
+
+    expect(screen.getByTestId("youtube-player")).toBeTruthy();
+    expect(mockClosePlayer).toHaveBeenCalledTimes(1);
   });
 
   it("renders a Picture in Picture action for hosted videos", () => {
@@ -88,7 +93,12 @@ describe("video detail", () => {
 
     render(<VideoDetailScreen />);
 
+    expect(screen.getByText("Play video")).toBeTruthy();
+
+    fireEvent.press(screen.getByTestId("video-start-button"));
+
     expect(screen.getByTestId("hosted-video-player")).toBeTruthy();
     expect(screen.getByText("Picture in Picture")).toBeTruthy();
+    expect(mockClosePlayer).toHaveBeenCalledTimes(1);
   });
 });

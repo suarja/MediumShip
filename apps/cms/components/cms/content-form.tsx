@@ -265,7 +265,8 @@ export function ContentForm({ selectedId }: ContentFormProps) {
 
   const onBooleanChange =
     (key: keyof EditorState) => (event: ChangeEvent<HTMLInputElement>) => {
-      setState((current) => ({ ...current, [key]: event.currentTarget.checked }));
+      const { checked } = event.currentTarget;
+      setState((current) => ({ ...current, [key]: checked }));
       setSaveLabel("Enregistrer");
     };
 

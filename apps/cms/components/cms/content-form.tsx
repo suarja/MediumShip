@@ -1,13 +1,14 @@
 "use client";
 
 import { useAction, useMutation, useQuery } from "convex/react";
-import type { ChangeEvent, CSSProperties, ReactNode } from "react";
+import type { ChangeEvent, ReactNode } from "react";
 import { useEffect, useState } from "react";
 
 import { api } from "../../../../convex/_generated/api";
 import type { Doc } from "../../../../convex/_generated/dataModel";
 import { extractYoutubeVideoId } from "../../../../convex/youtube/helpers";
 import { collectContentUrlWarnings } from "../../lib/content-url-warnings";
+import { R2UploadField } from "./r2-upload-field";
 
 type ContentFormProps = {
   selectedId: string | null;
@@ -152,45 +153,6 @@ function Field({
         {optional ? <span className="opt">facultatif</span> : null}
       </span>
       {children}
-    </div>
-  );
-}
-
-function ImageUploadCard({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const thumbStyle: CSSProperties | undefined = value
-    ? {
-        backgroundImage: `url("${value}")`,
-        backgroundPosition: "center",
-        backgroundSize: "cover",
-      }
-    : undefined;
-
-  return (
-    <div className="field field--wide">
-      <span className="field__lbl">Cover URL</span>
-      <div className="upload">
-        <div className="upload__thumb" style={thumbStyle} />
-        <div className="upload__meta">
-          <h5 className="upload__t">
-            {value || "Coller l’URL distante de la cover"}
-          </h5>
-          <div className="upload__d">
-            Pas de file storage dans ce scope · image distante uniquement
-          </div>
-        </div>
-      </div>
-      <input
-        className="input input--mono"
-        onChange={(event) => onChange(event.currentTarget.value)}
-        placeholder="https://…/cover.jpg"
-        value={value}
-      />
     </div>
   );
 }
@@ -478,13 +440,26 @@ export function ContentForm({ selectedId }: ContentFormProps) {
             />
           </Field>
 
-          <ImageUploadCard
-            onChange={(value) => {
-              setState((current) => ({ ...current, heroImageUrl: value }));
+          <R2UploadField
+            accept="image/*"
+            currentUrl={state.heroImageUrl}
+            hint="Upload R2 (recommandé) — ou colle une URL distante ci-dessous."
+            kind="image"
+            label="Cover"
+            onUploaded={(_key, url) => {
+              setState((current) => ({ ...current, heroImageUrl: url }));
               setSaveLabel("Enregistrer");
             }}
-            value={state.heroImageUrl}
           />
+
+          <Field label="Cover URL (upload ou URL distante)" wide>
+            <input
+              className="input input--mono"
+              onChange={onTextChange("heroImageUrl")}
+              placeholder="https://…/cover.jpg"
+              value={state.heroImageUrl}
+            />
+          </Field>
 
           {content.kind === "article" ? (
             <>
@@ -589,21 +564,32 @@ export function ContentForm({ selectedId }: ContentFormProps) {
 
               {state.videoSourceKind === "hosted" ? (
                 <>
-                  <Field label="Playback URL" wide>
+                  <R2UploadField
+                    accept="video/*"
+                    currentUrl={state.playbackUrl}
+                    hint={
+                      state.uploadKey
+                        ? `Hébergé sur R2 · clé ${state.uploadKey}`
+                        : "Upload MP4 vers R2 — ou colle une URL de stream ci-dessous."
+                    }
+                    kind="video"
+                    label="Fichier vidéo (R2)"
+                    onUploaded={(key, url) => {
+                      setState((current) => ({
+                        ...current,
+                        playbackUrl: url,
+                        uploadKey: key,
+                      }));
+                      setSaveLabel("Enregistrer");
+                    }}
+                  />
+
+                  <Field label="Playback URL (upload ou stream externe)" wide>
                     <input
                       className="input input--mono"
                       onChange={onTextChange("playbackUrl")}
                       placeholder="https://…/master.m3u8"
                       value={state.playbackUrl}
-                    />
-                  </Field>
-
-                  <Field label="Upload key" wide>
-                    <input
-                      className="input input--mono"
-                      onChange={onTextChange("uploadKey")}
-                      placeholder="remote-upload-key"
-                      value={state.uploadKey}
                     />
                   </Field>
                 </>

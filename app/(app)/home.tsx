@@ -17,7 +17,7 @@ import { Screen } from "../../src/components/layout/screen";
 import { BrandHeader } from "../../src/components/navigation/brand-header";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { cardKicker, cardMeta } from "../../src/features/content/card-presentation";
-import { usePersistentEpisodePlayerSpace } from "../../src/features/media/persistent-episode-player";
+import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import { toContentCardModel } from "../../src/features/content/selectors";
 import type { ContentDoc, ContentKind } from "../../src/features/content/types";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
@@ -40,7 +40,7 @@ export default function HomeFeedScreen() {
   const { theme, tenantSlug, enabledModules, feedSections } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
   const tabBarSpace = useTabBarSpace();
-  const persistentPlayerSpace = usePersistentEpisodePlayerSpace();
+  const persistentPlayerSpace = usePersistentMediaPlayerSpace();
   const { state: networkState } = useNetworkStatus();
   const [filter, setFilter] = useState<FeedFilter>("all");
 

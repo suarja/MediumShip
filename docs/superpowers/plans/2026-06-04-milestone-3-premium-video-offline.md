@@ -24,14 +24,19 @@
   - ⚠️ **Gap:** not synced across devices for members. 3B adds Convex sync.
 - ❌ Not started: entitlement model, R2 upload, bookmarks, progress sync, offline downloads, incident banner.
 
-## ⚠️ Decision to confirm with the user before 3A
+## Entitlement approach — DECIDED: modular, source-of-truth in Convex
 
-**How does a user become premium?** Options:
-1. **Simple entitlement flag (recommended MVP):** a `members`/entitlement field on the Convex user, grantable from the CMS (admin) + readable by mobile. Unlocks the full gating loop end-to-end *now*, no store review. RevenueCat layers on later writing the same field.
-2. **RevenueCat IAP** (Editia's pattern, `convex-revenuecat`): real mobile in-app purchase. Heavier (store setup, webhooks).
-3. **Stripe** (web checkout): less natural for a mobile-first guest app.
+**Confirmed with the user:** do **not** wire RevenueCat now — build a modular entitlement so we keep velocity and swap in RevenueCat later with **zero app change**. This is exactly the proven cross-platform pattern in **Editia mobile** (`../editia/mobile/CLAUDE.md` § "Pro entitlement (cross-platform)"):
 
-This plan assumes **Option 1 first** (testable slice), RevenueCat-ready. Confirm before implementing 3A Task 1.
+> `isPro = Convex \`entitlements\` query`. The Convex `entitlements` table is the **single source of truth**; payment providers (Stripe webhook, RevenueCat webhook) only *write* to it. A user who becomes Pro on any provider is Pro everywhere.
+
+Apply the same shape:
+- **Read path (stable, never changes):** an `entitlements` table + `getMyEntitlement`/`useIsMember`. The mobile gate and CMS read this.
+- **Write path (pluggable adapters):**
+  - **Now (this milestone):** a manual admin mutation `grantMembership`/`revokeMembership`, driven from a **CMS Users tab**. This is the compromise that unlocks the loop today.
+  - **Later (drop-in):** mount the `convex-revenuecat` component's `httpHandler()` at `/webhooks/revenuecat`; its events write the *same* `entitlements` table. Optionally a Stripe webhook too. No mobile/gate change.
+
+References: `../editia/mobile/contexts/providers/RevenueCat.tsx` (client `Purchases.getCustomerInfo` → updates Convex), the pasted `convex-revenuecat` component (`npm install convex-revenuecat`, `RevenueCat.hasEntitlement()`, webhook at `/webhooks/revenuecat`). **RevenueCat Web is not relevant** (no web site yet) — ignore it.
 
 ---
 
@@ -39,12 +44,13 @@ This plan assumes **Option 1 first** (testable slice), RevenueCat-ready. Confirm
 
 **Outcome:** an admin can grant premium to a user; that user unlocks premium content end-to-end; editors upload hosted videos (and covers) from the CMS instead of pasting URLs.
 
-### Task 3A.1: Member entitlement model + read path
-- Schema: add entitlement to `users` (e.g. `isMember: v.optional(v.boolean())` + `memberSince`, RevenueCat-ready fields optional).
-- Convex: `requireMember`/`getMemberStatus` helper; a query the mobile app calls to know if the signed-in user is a member.
-- CMS: a minimal admin control to grant/revoke member status on a user (mono-tenant, admin-guarded).
-- Mobile: replace the "blocked for everyone" premium gate with a real check — member → content plays; guest/non-member → paywall (themed, from the mockup Paywall screen). Sign-in CTA wired.
-- Test the gate logic (member vs not) at a pure seam. **Commit.**
+### Task 3A.1: Modular entitlement — Convex source of truth + manual CMS grant
+- **Schema:** an `entitlements` table keyed by user (`tokenIdentifier`/`clerkId`, `isPro: boolean`, `source: "manual" | "revenuecat" | "stripe"`, `grantedBy`, `updatedAt`), indexed by user. Keep it provider-agnostic so any writer can upsert it.
+- **Read path (stable):** `convex/entitlements/queries.ts` → `getMyEntitlement` (signed-in user's `isPro`); a `requireMember(ctx)` guard for member-only mutations. A mobile hook `useIsMember()` wrapping the query. **This read API must not change when RevenueCat is added later.**
+- **Write adapter (now = manual):** `convex/entitlements/mutations.ts` → `grantMembership`/`revokeMembership`, **admin-guarded** (`requireCmsAdmin`), upserting `entitlements` with `source: "manual"`. Leave a documented seam (`// later: revenuecat/stripe webhooks upsert the same row`).
+- **CMS Users tab:** new tab listing users with a grant/revoke premium toggle calling those mutations (mirror the design language of the Contenus/Tenant tabs). Needs a `listUsers` admin query.
+- **Mobile gate:** replace the "blocked for everyone" premium gate with `useIsMember()` — member → premium content plays; guest/non-member → themed paywall (from the mockup Paywall screen, `theme.colors.*`) with a sign-in / "become member" CTA.
+- Test the gate logic (member vs not) and `requireMember` at a pure seam. **Commit.**
 
 ### Task 3A.2: Register R2 + server client
 - `npm install @convex-dev/r2`; add `app.use(r2)` to `convex/convex.config.ts` (already has `youtubeCache`).

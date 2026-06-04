@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 import { api } from "../../../../convex/_generated/api";
 import type { Doc } from "../../../../convex/_generated/dataModel";
+import { collectContentUrlWarnings } from "../../lib/content-url-warnings";
 
 type ContentFormProps = {
   selectedId: string | null;
@@ -150,6 +151,26 @@ export function ContentForm({ selectedId }: ContentFormProps) {
     };
 
   const save = async () => {
+    const warnings = collectContentUrlWarnings({
+      kind: content.kind,
+      audioUrl: state.audioUrl,
+      heroImageUrl: state.heroImageUrl,
+      videoSourceKind: state.videoSourceKind,
+      youtubeUrl: state.youtubeUrl,
+      playbackUrl: state.playbackUrl,
+    });
+
+    if (warnings.length > 0) {
+      const proceed = window.confirm(
+        `⚠️ Vérifie les URLs avant d'enregistrer :\n\n- ${warnings.join(
+          "\n- ",
+        )}\n\nEnregistrer quand même ?`,
+      );
+      if (!proceed) {
+        return;
+      }
+    }
+
     const fallbackSlug =
       state.title
         .trim()

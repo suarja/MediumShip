@@ -25,6 +25,14 @@ import { useResponsive } from "../responsive/use-responsive";
 import { fontFamilies } from "../theme/fonts";
 import { useAppTheme } from "../theme/theme-provider";
 import { formatMediaClock } from "./format-media-clock";
+import {
+  clearPlaybackProgress,
+  END_THRESHOLD_SECONDS,
+  loadPlaybackProgress,
+  MIN_RESUMABLE_SECONDS,
+  resolveResumeTarget,
+  savePlaybackProgress,
+} from "./playback-progress";
 
 export const PERSISTENT_MEDIA_PLAYER_HEIGHT = 64;
 const PERSISTENT_MEDIA_PLAYER_GAP = 8;
@@ -158,6 +166,10 @@ export function PersistentMediaPlayerProvider({
     playbackError: null,
   });
   const activeSessionRef = useRef<ActiveMediaSession | null>(null);
+  const pendingResumeRef = useRef<{ contentId: string; seconds: number } | null>(
+    null,
+  );
+  const lastSavedProgressRef = useRef(0);
   const router = useRouter();
   const [audioPlayer, setAudioPlayer] = useState(() =>
     createAudioPlayer(null, { updateInterval: 250 }),
@@ -309,6 +321,45 @@ export function PersistentMediaPlayerProvider({
     };
   }, [audioPlayer]);
 
+  // Resume to the saved position once the freshly built player has loaded.
+  useEffect(() => {
+    const resume = pendingResumeRef.current;
+    if (
+      resume &&
+      activeSession?.kind === "episode" &&
+      activeSession.contentId === resume.contentId &&
+      audioStatus.isLoaded
+    ) {
+      pendingResumeRef.current = null;
+      void audioPlayer.seekTo(resume.seconds);
+    }
+  }, [activeSession, audioPlayer, audioStatus.isLoaded]);
+
+  // Persist listening progress (throttled), and clear it near the end so a
+  // finished episode starts over next time.
+  useEffect(() => {
+    if (activeSession?.kind !== "episode") {
+      return;
+    }
+
+    const { contentId } = activeSession;
+    if (
+      durationSeconds > 0 &&
+      currentTimeSeconds >= durationSeconds - END_THRESHOLD_SECONDS
+    ) {
+      void clearPlaybackProgress(contentId);
+      return;
+    }
+
+    if (
+      currentTimeSeconds >= MIN_RESUMABLE_SECONDS &&
+      Math.abs(currentTimeSeconds - lastSavedProgressRef.current) >= 5
+    ) {
+      lastSavedProgressRef.current = currentTimeSeconds;
+      void savePlaybackProgress(contentId, currentTimeSeconds);
+    }
+  }, [activeSession, currentTimeSeconds, durationSeconds]);
+
   const playEpisode = async (track: EpisodeTrack) => {
     const isSameTrack =
       activeSessionRef.current?.kind === "episode" &&
@@ -320,6 +371,16 @@ export function PersistentMediaPlayerProvider({
         () => videoPlayer.pause(),
         "Failed to pause hosted video player",
       );
+
+      // Resolve the saved listening position before building the player so we
+      // can resume once the source is loaded.
+      const savedSeconds = await loadPlaybackProgress(track.contentId);
+      const resumeTarget = resolveResumeTarget(savedSeconds, track.durationSeconds);
+      pendingResumeRef.current =
+        resumeTarget !== null
+          ? { contentId: track.contentId, seconds: resumeTarget }
+          : null;
+      lastSavedProgressRef.current = resumeTarget ?? 0;
 
       // Build the player with the source already attached so it loads at
       // construction, then play immediately. This is the proven pattern; a
@@ -473,6 +534,16 @@ export function PersistentMediaPlayerProvider({
     } else {
       safelyReleasePlayer(() => audioPlayer.pause(), "Failed to pause audio player");
       disableAudioLockScreen();
+      if (
+        activeSessionRef.current?.kind === "episode" &&
+        currentTimeSeconds >= MIN_RESUMABLE_SECONDS &&
+        !hasFinished
+      ) {
+        void savePlaybackProgress(
+          activeSessionRef.current.contentId,
+          currentTimeSeconds,
+        );
+      }
     }
 
     activeSessionRef.current = null;

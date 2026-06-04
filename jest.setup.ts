@@ -126,6 +126,18 @@ jest.mock("expo-screen-orientation", () => ({
   },
 }));
 
+jest.mock("@expo/vector-icons", () => {
+  const React = require("react");
+  const { Text } = require("react-native");
+
+  const Icon = ({ name, testID }: { name?: string; testID?: string }) =>
+    React.createElement(Text, { testID }, name ?? "icon");
+
+  return {
+    Ionicons: Icon,
+  };
+});
+
 jest.mock("react-native-webview", () => {
   const React = require("react");
   const { View } = require("react-native");

@@ -94,7 +94,12 @@ describe("episode detail", () => {
     expect(screen.getByText("You are offline — downloaded items still work")).toBeTruthy();
     expect(screen.getByText(/Members-only episode/)).toBeTruthy();
     expect(screen.getByText(/Become a member/)).toBeTruthy();
-    expect(screen.getByText("Sign in to save or download")).toBeTruthy();
+    expect(screen.getByText("Sign in")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Activate your profile to save content, sync progress, and download supported formats.",
+      ),
+    ).toBeTruthy();
   });
 
   it("renders a simple playback CTA for free episodes with an audio url", () => {

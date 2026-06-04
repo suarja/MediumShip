@@ -57,6 +57,32 @@ export default {
     signOut: "Sign out",
   },
   debug: {
+    panelLabel: "Developer panel",
+    panelDescription:
+      "Open technical account data, Convex identity details, and network overrides.",
+    back: "Back to settings",
+    title: "Debug",
+    subtitle:
+      "Developer-only surface to inspect session state, Convex identity, and runtime network overrides.",
+    sections: {
+      session: "Session",
+      identity: "Identity",
+      network: "Network",
+    },
+    rows: {
+      auth: "Auth state",
+      convex: "Convex state",
+      member: "Member",
+      userId: "User ID",
+      name: "Clerk name",
+      email: "Email",
+      stored: "Stored in Convex",
+      clerkId: "Clerk ID",
+      tokenIdentifier: "Token identifier",
+      avatar: "Avatar",
+      displayName: "Resolved name",
+      networkRuntime: "Runtime network state",
+    },
     network: {
       label: "Network state override",
       description:

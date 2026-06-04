@@ -1,99 +1,61 @@
-import { useRouter } from "expo-router";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { getContentCoverImageUrl } from "../../features/content/selectors";
 import { useBookmarks } from "../../features/bookmarks/use-bookmarks";
 import { useClerkAuth } from "../../features/auth/use-clerk-auth";
-import { fontFamilies } from "../../features/theme/fonts";
-import { useAppTheme } from "../../features/theme/theme-provider";
-import { SettingsRow } from "../settings/settings-row";
-import { SettingsSection } from "../settings/settings-section";
-
-const KIND_GLYPHS = {
-  article: "✎",
-  episode: "▷",
-  video: "▶",
-} as const;
+import { ProfileCollectionSection, type ProfileCollectionItem } from "./profile-collection-section";
 
 export function SavedContentSection() {
-  const { t } = useTranslation("library");
-  const { theme } = useAppTheme();
+  const { t } = useTranslation(["library", "profile"]);
   const { isSignedIn } = useClerkAuth();
   const { bookmarks, isMember, isMembershipLoading, isBookmarksLoading } = useBookmarks();
-  const router = useRouter();
+
+  const items: ProfileCollectionItem[] = bookmarks.map((bookmark) => ({
+    id: bookmark.content._id,
+    href: `/${bookmark.content.kind}/${bookmark.content._id}`,
+    title: bookmark.content.title,
+    eyebrow: `${t(`library:kinds.${bookmark.content.kind}`)} · ${bookmark.content.category}`,
+    meta: bookmark.content.isPremium
+      ? t("library:saved.rowMetaPremium")
+      : t("library:saved.rowMeta"),
+    imageUrl: getContentCoverImageUrl(bookmark.content),
+    iconName: "bookmark",
+    badgeLabel: t("library:saved.badge"),
+    tone: bookmark.content.isPremium ? "premium" : "accent",
+  }));
+
+  let emptyTitle = t("library:saved.emptyTitle");
+  let emptyBody = t("library:saved.empty");
+  let emptyCtaLabel: string | undefined;
+  let emptyCtaHref: string | undefined;
+
+  if (!isSignedIn) {
+    emptyTitle = t("library:saved.guestTitle");
+    emptyBody = t("library:saved.guestHint");
+    emptyCtaLabel = t("profile:createAccount");
+    emptyCtaHref = "/sign-in";
+  } else if (!isMember) {
+    emptyTitle = t("library:saved.memberTitle");
+    emptyBody = t("library:saved.memberHint");
+    emptyCtaLabel = t("library:actions.memberCta");
+    emptyCtaHref = "/premium";
+  } else if (items.length === 0) {
+    emptyCtaLabel = t("library:saved.exploreCta");
+    emptyCtaHref = "/home";
+  }
 
   return (
-    <SettingsSection title={t("saved.sectionTitle")}>
-      {isMembershipLoading || isBookmarksLoading ? (
-        <View style={styles.loadingRow}>
-          <ActivityIndicator color={theme.colors.accent} />
-          <Text style={[styles.message, { color: theme.colors.textMuted }]}>
-            {t("saved.loading")}
-          </Text>
-        </View>
-      ) : !isSignedIn ? (
-        <View style={styles.messageWrap}>
-          <Text style={[styles.message, { color: theme.colors.textMuted }]}>
-            {t("saved.guestHint")}
-          </Text>
-        </View>
-      ) : !isMember ? (
-        <View style={styles.messageWrap}>
-          <Text style={[styles.message, { color: theme.colors.textMuted }]}>
-            {t("saved.memberHint")}
-          </Text>
-        </View>
-      ) : bookmarks.length === 0 ? (
-        <View style={styles.messageWrap}>
-          <Text style={[styles.message, { color: theme.colors.textMuted }]}>
-            {t("saved.empty")}
-          </Text>
-        </View>
-      ) : (
-        bookmarks.map((bookmark, index) => (
-          <SettingsRow
-            key={bookmark.content._id}
-            label={bookmark.content.title}
-            description={t("saved.rowDescription", {
-              kind: t(`kinds.${bookmark.content.kind}`),
-              category: bookmark.content.category,
-            })}
-            icon={
-              <Text style={[styles.icon, { color: theme.colors.heading }]}>
-                {KIND_GLYPHS[bookmark.content.kind]}
-              </Text>
-            }
-            isLast={index === bookmarks.length - 1}
-            onPress={() => {
-              router.push(`/${bookmark.content.kind}/${bookmark.content._id}` as never);
-            }}
-          />
-        ))
-      )}
-    </SettingsSection>
+    <ProfileCollectionSection
+      emptyBody={emptyBody}
+      emptyCtaHref={emptyCtaHref}
+      emptyCtaLabel={emptyCtaLabel}
+      emptyIconName="bookmark-outline"
+      emptyTitle={emptyTitle}
+      isLoading={isMembershipLoading || isBookmarksLoading}
+      items={items}
+      loadingLabel={t("library:saved.loading")}
+      subtitle={t("profile:sections.librarySubtitle")}
+      title={t("profile:sections.libraryTitle")}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  loadingRow: {
-    minHeight: 72,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-  },
-  messageWrap: {
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-  },
-  message: {
-    fontFamily: fontFamilies.body,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  icon: {
-    fontFamily: fontFamilies.bodySemiBold,
-    fontSize: 16,
-  },
-});

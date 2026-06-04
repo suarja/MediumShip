@@ -5,40 +5,66 @@ export default {
     video: "Video",
   },
   bookmark: {
-    saveCta: "Save for later",
+    saveCta: "Keep",
     savedCta: "Saved",
+    saveHint: "Add this format to your personal library.",
+    savedHint: "Already stored in your member library.",
   },
   actions: {
-    loading: "Checking your member actions...",
-    signInCta: "Sign in to save or download",
-    signInHint: "Create an account to save items, sync progress, and download supported content.",
-    memberCta: "Members can save and download",
-    memberHint: "Bookmarks, synced progress, and offline downloads are reserved for members.",
+    loading: "Checking your member access...",
+    signInCta: "Sign in",
+    signInHint:
+      "Activate your profile to save content, sync progress, and download supported formats.",
+    memberCta: "Become a member",
+    memberHint:
+      "Saved items, synced progress, and offline downloads are reserved for members.",
+    memberFooter:
+      "Member actions keep your library, sync, and offline copies together.",
+    memberFooterWide:
+      "Member actions keep your personal library, synced progress, and offline copies in one flow.",
   },
   download: {
-    downloadCta: "Download offline",
-    downloadingCta: "Downloading…",
+    downloadCta: "Offline",
+    downloadingCta: "Downloading",
     downloadedCta: "Downloaded",
-    downloadedHint: "This copy is stored on the device for offline reading or playback.",
-    memberHint: "Articles, episodes, and hosted videos can be downloaded for offline access.",
-    youtubeCta: "YouTube only",
-    youtubeHint: "YouTube videos stay stream-only and cannot be downloaded.",
+    downloadHint: "Store this format on this device.",
+    downloadedHint: "This copy is already ready offline.",
+    memberHint:
+      "Articles, episodes, and hosted videos can be downloaded for offline access.",
+    youtubeCta: "YouTube",
+    youtubeHint: "YouTube videos stay streaming-only.",
     unavailableCta: "Unavailable",
+    unavailableHint: "No downloadable source is available for this content.",
   },
   saved: {
-    sectionTitle: "Saved",
-    loading: "Loading your saved items...",
-    guestHint: "Sign in to start building your saved list.",
-    memberHint: "Saved items are available with member access.",
-    empty: "Nothing saved yet. Use the save button on any article, episode, or hosted video.",
-    rowDescription: "{{kind}} · {{category}}",
+    loading: "Loading your saved library...",
+    badge: "Saved",
+    rowMeta: "Ready to revisit later",
+    rowMetaPremium: "Premium · ready to reopen",
+    guestTitle: "Keep what deserves a return visit",
+    guestHint:
+      "Sign in to build your personal library as you read, watch, and listen.",
+    memberTitle: "Upgrade to save items",
+    memberHint:
+      "Member access unlocks persistent bookmarks and synced resumes across devices.",
+    emptyTitle: "Your library is waiting for its first marker",
+    empty:
+      "Save an article, episode, or hosted video to see it here with its cover art.",
+    exploreCta: "Explore the catalogue",
   },
   downloads: {
-    sectionTitle: "Downloads",
-    loading: "Loading your downloads...",
-    guestHint: "Sign in to unlock offline downloads on supported content.",
-    memberHint: "Offline downloads are available with member access.",
-    empty: "No downloads yet. Download an article, episode, or hosted video to keep it on this device.",
-    rowDescription: "{{kind}} · {{category}}",
+    loading: "Loading your local copies...",
+    badge: "Offline",
+    rowMeta: "Available without a network on this device",
+    guestTitle: "Offline copies arrive with the account",
+    guestHint:
+      "Sign in to download supported formats and keep them even without a network.",
+    memberTitle: "Offline is member-only",
+    memberHint:
+      "Member access unlocks downloads for articles, episodes, and hosted videos.",
+    emptyTitle: "No offline shelf yet",
+    empty:
+      "Download a supported format to surface its cover art and local copy here.",
+    exploreCta: "Find something to download",
   },
 } as const;

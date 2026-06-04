@@ -17,6 +17,10 @@ jest.mock("convex/react", () => ({
   }),
 }));
 
+jest.mock("expo-router", () => ({
+  useRouter: () => ({ push: jest.fn() }),
+}));
+
 jest.mock("../src/features/auth/use-clerk-auth", () => ({
   useClerkAuth: () => ({
     isSignedIn: false,
@@ -32,6 +36,10 @@ jest.mock("../src/features/network/use-network-status", () => ({
     override: "auto",
     setOverride: jest.fn(),
   }),
+}));
+
+jest.mock("../src/features/media/persistent-media-player", () => ({
+  usePersistentMediaPlayerSpace: () => 0,
 }));
 
 describe("guest settings", () => {
@@ -55,7 +63,7 @@ describe("guest settings", () => {
     expect(screen.getByText("Guest")).toBeTruthy();
     expect(screen.getByText("Members only")).toBeTruthy();
     expect(screen.getByText("You are offline — downloaded items still work")).toBeTruthy();
-    expect(screen.getByText("Network state override")).toBeTruthy();
+    expect(screen.getByText("Developer panel")).toBeTruthy();
     expect(screen.queryByText("Sign out")).toBeNull();
   });
 });

@@ -17,6 +17,10 @@ jest.mock("convex/react", () => ({
   }),
 }));
 
+jest.mock("expo-router", () => ({
+  useRouter: () => ({ push: jest.fn() }),
+}));
+
 jest.mock("../src/features/auth/use-clerk-auth", () => ({
   useClerkAuth: () => ({
     isSignedIn: true,
@@ -32,6 +36,10 @@ jest.mock("../src/features/network/use-network-status", () => ({
     override: "auto",
     setOverride: jest.fn(),
   }),
+}));
+
+jest.mock("../src/features/media/persistent-media-player", () => ({
+  usePersistentMediaPlayerSpace: () => 0,
 }));
 
 describe("settings language switch", () => {

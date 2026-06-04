@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -7,12 +8,15 @@ import type { ContentDoc } from "../../features/content/types";
 import { getDownloadSupport } from "../../features/downloads/model";
 import { useDownloads } from "../../features/downloads/use-downloads";
 import { useClerkAuth } from "../../features/auth/use-clerk-auth";
+import { useResponsive } from "../../features/responsive/use-responsive";
+import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 export function ContentActionsBar({ content }: { content: ContentDoc }) {
   const { t } = useTranslation("library");
   const { theme } = useAppTheme();
+  const { isTablet, scaleFont, scaleSpace } = useResponsive();
   const { isSignedIn } = useClerkAuth();
   const {
     bookmarks,
@@ -36,35 +40,19 @@ export function ContentActionsBar({ content }: { content: ContentDoc }) {
 
   if (!isSignedIn) {
     return (
-      <View style={styles.stack}>
-        <Link href="/sign-in" asChild>
-          <Pressable
-            accessibilityRole="link"
-            style={({ pressed }) => [
-              styles.primaryButton,
-              {
-                borderRadius: theme.radii.pill,
-                backgroundColor: theme.colors.accent,
-              },
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={[styles.primaryLabel, { color: theme.colors.accentContrast }]}>
-              {t("actions.signInCta")}
-            </Text>
-          </Pressable>
-        </Link>
-        <Text style={[styles.hint, { color: theme.colors.textMuted }]}>
-          {t("actions.signInHint")}
-        </Text>
-      </View>
+      <MembershipActionCard
+        body={t("actions.signInHint")}
+        ctaHref="/sign-in"
+        ctaLabel={t("actions.signInCta")}
+        iconName="person-circle-outline"
+      />
     );
   }
 
   if (isMembershipLoading || isBookmarksLoading || isDownloadsLoading) {
     return (
-      <View style={styles.stack}>
-        <Text style={[styles.hint, { color: theme.colors.textMuted }]}>
+      <View style={styles.loadingWrap}>
+        <Text style={[styles.loadingLabel, { color: theme.colors.textMuted }]}>
           {t("actions.loading")}
         </Text>
       </View>
@@ -73,29 +61,12 @@ export function ContentActionsBar({ content }: { content: ContentDoc }) {
 
   if (!isMember) {
     return (
-      <View style={styles.stack}>
-        <Link href="/premium" asChild>
-          <Pressable
-            accessibilityRole="link"
-            style={({ pressed }) => [
-              styles.secondaryButton,
-              {
-                borderRadius: theme.radii.pill,
-                borderColor: theme.colors.border,
-                backgroundColor: theme.colors.surface,
-              },
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={[styles.secondaryLabel, { color: theme.colors.heading }]}>
-              {t("actions.memberCta")}
-            </Text>
-          </Pressable>
-        </Link>
-        <Text style={[styles.hint, { color: theme.colors.textMuted }]}>
-          {t("actions.memberHint")}
-        </Text>
-      </View>
+      <MembershipActionCard
+        body={t("actions.memberHint")}
+        ctaHref="/premium"
+        ctaLabel={t("actions.memberCta")}
+        iconName="sparkles-outline"
+      />
     );
   }
 
@@ -115,122 +86,251 @@ export function ContentActionsBar({ content }: { content: ContentDoc }) {
   const downloadHint =
     downloadSupport.kind === "unsupported" && downloadSupport.reason === "youtube"
       ? t("download.youtubeHint")
-      : downloadedItem
-        ? t("download.downloadedHint")
-        : t("download.memberHint");
+      : downloadSupport.kind === "unsupported"
+        ? t("download.unavailableHint")
+        : downloadedItem
+          ? t("download.downloadedHint")
+          : t("download.downloadHint");
 
   return (
-    <View style={styles.stack}>
-      <View style={styles.row}>
-        <Pressable
-          accessibilityRole="button"
+    <View style={[styles.stack, { gap: theme.spacing.sm * scaleSpace }]}>
+      <View style={[styles.row, { gap: theme.spacing.sm * scaleSpace }]}>
+        <ActionCard
+          body={isSaved ? t("bookmark.savedHint") : t("bookmark.saveHint")}
+          ctaLabel={isSaved ? t("bookmark.savedCta") : t("bookmark.saveCta")}
+          iconName={isSaved ? "bookmark" : "bookmark-outline"}
           onPress={() => void toggleBookmark({ contentId: content._id as never })}
-          style={({ pressed }) => [
-            styles.memberButton,
-            {
-              borderRadius: theme.radii.pill,
-              backgroundColor: isSaved ? theme.colors.premium : theme.colors.accent,
-            },
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text
-            style={[
-              styles.primaryLabel,
-              {
-                color: isSaved ? theme.colors.heading : theme.colors.accentContrast,
-              },
-            ]}
-          >
-            {isSaved ? t("bookmark.savedCta") : t("bookmark.saveCta")}
-          </Text>
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
+          tone="accent"
+        />
+        <ActionCard
+          body={downloadHint}
+          ctaLabel={downloadLabel}
           disabled={downloadDisabled}
+          iconName={
+            downloadedItem
+              ? "download"
+              : downloadSupport.kind === "unsupported"
+                ? "cloud-offline-outline"
+                : "download-outline"
+          }
           onPress={() => void downloadContent(content)}
-          style={({ pressed }) => [
-            styles.memberButton,
-            {
-              borderRadius: theme.radii.pill,
-              backgroundColor: downloadedItem
-                ? theme.colors.premiumSoft
-                : theme.colors.surface,
-              borderColor: theme.colors.border,
-            },
-            styles.outlinedButton,
-            pressed && !downloadDisabled && styles.pressed,
-            downloadDisabled && styles.disabled,
-          ]}
-        >
-          <Text style={[styles.secondaryLabel, { color: theme.colors.heading }]}>
-            {downloadLabel}
-          </Text>
-        </Pressable>
+          tone={downloadedItem ? "premium" : "accent"}
+        />
       </View>
-
-      <Text style={[styles.hint, { color: theme.colors.textMuted }]}>
-        {downloadHint}
+      <Text
+        style={[
+          styles.footerHint,
+          { color: withAlpha(theme.colors.textMuted, 0.92), fontSize: 12 * scaleFont },
+        ]}
+      >
+        {isTablet ? t("actions.memberFooterWide") : t("actions.memberFooter")}
       </Text>
     </View>
   );
 }
 
+function MembershipActionCard({
+  body,
+  ctaHref,
+  ctaLabel,
+  iconName,
+}: {
+  body: string;
+  ctaHref: string;
+  ctaLabel: string;
+  iconName: keyof typeof Ionicons.glyphMap;
+}) {
+  const { theme } = useAppTheme();
+  const { scaleFont, scaleSpace } = useResponsive();
+
+  return (
+    <Link href={ctaHref as never} asChild>
+      <Pressable accessibilityRole="link" style={({ pressed }) => [pressed && styles.pressed]}>
+        <View
+          style={[
+            styles.membershipCard,
+            {
+              borderRadius: theme.radii.xl,
+              borderColor: theme.colors.border,
+              backgroundColor: theme.colors.surface,
+              gap: theme.spacing.sm * scaleSpace,
+              padding: theme.spacing.md * scaleSpace,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.membershipIconWrap,
+              {
+                borderRadius: theme.radii.pill,
+                backgroundColor: theme.colors.accentSoft,
+              },
+            ]}
+          >
+            <Ionicons color={theme.colors.accent} name={iconName} size={20 * scaleFont} />
+          </View>
+          <View style={[styles.membershipCopy, { gap: 4 * scaleSpace }]}>
+            <Text
+              style={[
+                styles.membershipTitle,
+                { color: theme.colors.heading, fontSize: 15 * scaleFont },
+              ]}
+            >
+              {ctaLabel}
+            </Text>
+            <Text
+              style={[
+                styles.membershipBody,
+                { color: theme.colors.textMuted, fontSize: 13 * scaleFont },
+              ]}
+            >
+              {body}
+            </Text>
+          </View>
+          <Ionicons
+            color={theme.colors.textMuted}
+            name="chevron-forward"
+            size={18 * scaleFont}
+          />
+        </View>
+      </Pressable>
+    </Link>
+  );
+}
+
+function ActionCard({
+  body,
+  ctaLabel,
+  disabled = false,
+  iconName,
+  onPress,
+  tone,
+}: {
+  body: string;
+  ctaLabel: string;
+  disabled?: boolean;
+  iconName: keyof typeof Ionicons.glyphMap;
+  onPress: () => void;
+  tone: "accent" | "premium";
+}) {
+  const { theme } = useAppTheme();
+  const { scaleFont, scaleSpace } = useResponsive();
+  const color = tone === "premium" ? theme.colors.premium : theme.colors.accent;
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.actionCard,
+        {
+          borderRadius: theme.radii.xl,
+          borderColor: theme.colors.border,
+          backgroundColor: theme.colors.surface,
+          gap: theme.spacing.sm * scaleSpace,
+          padding: theme.spacing.md * scaleSpace,
+        },
+        pressed && !disabled && styles.pressed,
+        disabled && styles.disabled,
+      ]}
+    >
+      <View
+        style={[
+          styles.actionIconWrap,
+          {
+            borderRadius: theme.radii.pill,
+            backgroundColor: withAlpha(color, 0.12),
+          },
+        ]}
+      >
+        <Ionicons color={color} name={iconName} size={20 * scaleFont} />
+      </View>
+      <View style={[styles.actionCopy, { gap: 4 * scaleSpace }]}>
+        <Text
+          style={[
+            styles.actionTitle,
+            { color: theme.colors.heading, fontSize: 15 * scaleFont },
+          ]}
+        >
+          {ctaLabel}
+        </Text>
+        <Text
+          style={[
+            styles.actionBody,
+            { color: theme.colors.textMuted, fontSize: 13 * scaleFont },
+          ]}
+        >
+          {body}
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
-  stack: {
-    gap: 8,
-  },
+  stack: {},
   row: {
     flexDirection: "row",
-    gap: 10,
   },
-  primaryButton: {
-    minHeight: 48,
+  loadingWrap: {
+    minHeight: 56,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
   },
-  secondaryButton: {
-    minHeight: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  memberButton: {
-    flex: 1,
-    minHeight: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  outlinedButton: {
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  primaryLabel: {
-    fontFamily: fontFamilies.bodySemiBold,
-    fontSize: 15,
-    textAlign: "center",
-  },
-  secondaryLabel: {
-    fontFamily: fontFamilies.bodySemiBold,
-    fontSize: 15,
-    textAlign: "center",
-  },
-  hint: {
+  loadingLabel: {
     fontFamily: fontFamilies.body,
     fontSize: 13,
+  },
+  membershipCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  membershipIconWrap: {
+    width: 46,
+    height: 46,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  membershipCopy: {
+    flex: 1,
+  },
+  membershipTitle: {
+    fontFamily: fontFamilies.bodySemiBold,
+  },
+  membershipBody: {
+    fontFamily: fontFamilies.body,
     lineHeight: 18,
-    textAlign: "center",
+  },
+  actionCard: {
+    flex: 1,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  actionIconWrap: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  actionCopy: {
+    flex: 1,
+  },
+  actionTitle: {
+    fontFamily: fontFamilies.bodySemiBold,
+  },
+  actionBody: {
+    fontFamily: fontFamilies.body,
+    lineHeight: 18,
+  },
+  footerHint: {
+    fontFamily: fontFamilies.body,
+    lineHeight: 17,
   },
   pressed: {
     opacity: 0.84,
   },
   disabled: {
-    opacity: 0.7,
+    opacity: 0.68,
   },
 });

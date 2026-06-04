@@ -47,8 +47,9 @@ describe("guest profile", () => {
   it("shows a member CTA instead of authenticated identity fields", () => {
     render(<ProfileScreen />);
 
-    expect(screen.getByText("Create an account")).toBeTruthy();
-    expect(screen.getByText("Saved")).toBeTruthy();
+    expect(screen.getAllByText("Create an account").length).toBeGreaterThan(0);
+    expect(screen.getByText("Guest reader")).toBeTruthy();
+    expect(screen.getByText("Saved library")).toBeTruthy();
     expect(screen.queryByText(/Stored in Convex/i)).toBeNull();
   });
 });

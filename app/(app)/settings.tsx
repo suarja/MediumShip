@@ -1,10 +1,10 @@
+import { useRouter } from "expo-router";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { Screen } from "../../src/components/layout/screen";
 import { StatusBannerStack } from "../../src/components/content/status-banner-stack";
 import { LanguageItem } from "../../src/components/settings/language-item";
-import { NetworkStateDebugItem } from "../../src/components/settings/network-state-debug-item";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { SettingsRow } from "../../src/components/settings/settings-row";
 import { SettingsSection } from "../../src/components/settings/settings-section";
@@ -22,6 +22,7 @@ export default function SettingsScreen() {
   const { appIconUrl, theme, tenantName } = useAppTheme();
   const { scaleSpace } = useResponsive();
   const { state: networkState } = useNetworkStatus();
+  const router = useRouter();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
 
@@ -102,7 +103,14 @@ export default function SettingsScreen() {
 
         {__DEV__ ? (
           <SettingsSection title={t("settings:sections.debug")}>
-            <NetworkStateDebugItem isLast />
+            <SettingsRow
+              description={t("settings:debug.panelDescription")}
+              isLast
+              label={t("settings:debug.panelLabel")}
+              onPress={() => {
+                router.push("/settings-debug");
+              }}
+            />
           </SettingsSection>
         ) : null}
       </ScrollView>

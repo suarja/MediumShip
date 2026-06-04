@@ -57,6 +57,32 @@ export default {
     signOut: "Se déconnecter",
   },
   debug: {
+    panelLabel: "Panneau debug",
+    panelDescription:
+      "Ouvrir les donnees techniques du compte, de l'identite Convex et les surcharges reseau.",
+    back: "Retour aux reglages",
+    title: "Debug",
+    subtitle:
+      "Surface reservee au developpement pour inspecter l'etat de session, l'identite Convex et les etats reseau.",
+    sections: {
+      session: "Session",
+      identity: "Identite",
+      network: "Reseau",
+    },
+    rows: {
+      auth: "Etat auth",
+      convex: "Etat Convex",
+      member: "Membre",
+      userId: "User ID",
+      name: "Nom Clerk",
+      email: "Email",
+      stored: "Stocke dans Convex",
+      clerkId: "Clerk ID",
+      tokenIdentifier: "Token identifier",
+      avatar: "Avatar",
+      displayName: "Nom resolu",
+      networkRuntime: "Etat reseau runtime",
+    },
     network: {
       label: "Surcharge d'etat reseau",
       description:

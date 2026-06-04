@@ -10,6 +10,9 @@ const STORAGE_PREFIX = "mediumship:progress:";
 export const MIN_RESUMABLE_SECONDS = 5;
 // Within this window of the end we consider the episode finished and clear it.
 export const END_THRESHOLD_SECONDS = 15;
+// Only persist once the position has moved at least this much since the last
+// write — throttles AsyncStorage churn during continuous playback.
+export const SAVE_INTERVAL_SECONDS = 5;
 
 function keyFor(contentId: string): string {
   return `${STORAGE_PREFIX}${contentId}`;
@@ -71,4 +74,42 @@ export function resolveResumeTarget(
     return null;
   }
   return savedSeconds;
+}
+
+export type ProgressAction =
+  | { type: "clear" }
+  | { type: "save"; seconds: number }
+  | { type: "none" };
+
+/**
+ * Pure decision for what to do with playback progress on each tick — shared by
+ * audio and hosted-video so both media types resume identically.
+ *
+ * - Near the end (within END_THRESHOLD of a known duration) → clear, so a
+ *   finished item starts over next time.
+ * - Past the resumable floor and far enough from the last write → save.
+ * - Otherwise → nothing.
+ */
+export function resolveProgressAction(args: {
+  currentSeconds: number;
+  durationSeconds: number;
+  lastSavedSeconds: number;
+}): ProgressAction {
+  const { currentSeconds, durationSeconds, lastSavedSeconds } = args;
+
+  if (
+    durationSeconds > 0 &&
+    currentSeconds >= durationSeconds - END_THRESHOLD_SECONDS
+  ) {
+    return { type: "clear" };
+  }
+
+  if (
+    currentSeconds >= MIN_RESUMABLE_SECONDS &&
+    Math.abs(currentSeconds - lastSavedSeconds) >= SAVE_INTERVAL_SECONDS
+  ) {
+    return { type: "save", seconds: currentSeconds };
+  }
+
+  return { type: "none" };
 }

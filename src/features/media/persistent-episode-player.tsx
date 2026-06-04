@@ -27,9 +27,9 @@ import { useAppTheme } from "../theme/theme-provider";
 import { formatMediaClock } from "./format-media-clock";
 import {
   clearPlaybackProgress,
-  END_THRESHOLD_SECONDS,
   loadPlaybackProgress,
   MIN_RESUMABLE_SECONDS,
+  resolveProgressAction,
   resolveResumeTarget,
   savePlaybackProgress,
 } from "./playback-progress";
@@ -241,6 +241,17 @@ export function PersistentMediaPlayerProvider({
       durationSeconds:
         payload.duration ?? activeSessionRef.current?.durationSeconds ?? 0,
     }));
+
+    // The source is now loaded — resume to the saved position if any.
+    const resume = pendingResumeRef.current;
+    if (resume && resume.contentId === activeSessionRef.current.contentId) {
+      pendingResumeRef.current = null;
+      (videoPlayer as { currentTime?: number }).currentTime = resume.seconds;
+      setVideoState((current) => ({
+        ...current,
+        currentTimeSeconds: resume.seconds,
+      }));
+    }
   });
 
   useEventListener(
@@ -335,28 +346,26 @@ export function PersistentMediaPlayerProvider({
     }
   }, [activeSession, audioPlayer, audioStatus.isLoaded]);
 
-  // Persist listening progress (throttled), and clear it near the end so a
-  // finished episode starts over next time.
+  // Persist playback progress (throttled), and clear it near the end so a
+  // finished item starts over next time. Applies to both audio episodes and
+  // hosted video so each resumes where it was left off.
   useEffect(() => {
-    if (activeSession?.kind !== "episode") {
+    if (!activeSession) {
       return;
     }
 
     const { contentId } = activeSession;
-    if (
-      durationSeconds > 0 &&
-      currentTimeSeconds >= durationSeconds - END_THRESHOLD_SECONDS
-    ) {
-      void clearPlaybackProgress(contentId);
-      return;
-    }
+    const action = resolveProgressAction({
+      currentSeconds: currentTimeSeconds,
+      durationSeconds,
+      lastSavedSeconds: lastSavedProgressRef.current,
+    });
 
-    if (
-      currentTimeSeconds >= MIN_RESUMABLE_SECONDS &&
-      Math.abs(currentTimeSeconds - lastSavedProgressRef.current) >= 5
-    ) {
-      lastSavedProgressRef.current = currentTimeSeconds;
-      void savePlaybackProgress(contentId, currentTimeSeconds);
+    if (action.type === "clear") {
+      void clearPlaybackProgress(contentId);
+    } else if (action.type === "save") {
+      lastSavedProgressRef.current = action.seconds;
+      void savePlaybackProgress(contentId, action.seconds);
     }
   }, [activeSession, currentTimeSeconds, durationSeconds]);
 
@@ -435,6 +444,16 @@ export function PersistentMediaPlayerProvider({
     if (!isSameTrack) {
       safelyReleasePlayer(() => audioPlayer.pause(), "Failed to pause audio player");
       disableAudioLockScreen();
+
+      // Resolve the saved position before the source loads; applied on the
+      // `sourceLoad` event below (seeking earlier is unreliable on native).
+      const savedSeconds = await loadPlaybackProgress(track.contentId);
+      const resumeTarget = resolveResumeTarget(savedSeconds, track.durationSeconds);
+      pendingResumeRef.current =
+        resumeTarget !== null
+          ? { contentId: track.contentId, seconds: resumeTarget }
+          : null;
+      lastSavedProgressRef.current = resumeTarget ?? 0;
 
       const nextSession: ActiveMediaSession = { kind: "hostedVideo", ...track };
       activeSessionRef.current = nextSession;
@@ -526,24 +545,26 @@ export function PersistentMediaPlayerProvider({
   };
 
   const closePlayer = () => {
-    if (activeSessionRef.current?.kind === "hostedVideo") {
+    const closing = activeSessionRef.current;
+
+    if (closing?.kind === "hostedVideo") {
       safelyReleasePlayer(
         () => videoPlayer.pause(),
         "Failed to pause hosted video player",
       );
-    } else {
+    } else if (closing) {
       safelyReleasePlayer(() => audioPlayer.pause(), "Failed to pause audio player");
       disableAudioLockScreen();
-      if (
-        activeSessionRef.current?.kind === "episode" &&
-        currentTimeSeconds >= MIN_RESUMABLE_SECONDS &&
-        !hasFinished
-      ) {
-        void savePlaybackProgress(
-          activeSessionRef.current.contentId,
-          currentTimeSeconds,
-        );
-      }
+    }
+
+    // Persist the final position so the next open resumes here — same rule for
+    // audio and hosted video.
+    if (
+      closing &&
+      currentTimeSeconds >= MIN_RESUMABLE_SECONDS &&
+      !hasFinished
+    ) {
+      void savePlaybackProgress(closing.contentId, currentTimeSeconds);
     }
 
     activeSessionRef.current = null;

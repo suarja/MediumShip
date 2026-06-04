@@ -5,8 +5,10 @@ import {
   END_THRESHOLD_SECONDS,
   loadPlaybackProgress,
   MIN_RESUMABLE_SECONDS,
+  resolveProgressAction,
   resolveResumeTarget,
   savePlaybackProgress,
+  SAVE_INTERVAL_SECONDS,
 } from "../src/features/media/playback-progress";
 
 describe("resolveResumeTarget", () => {
@@ -28,6 +30,58 @@ describe("resolveResumeTarget", () => {
 
   it("resumes when the duration is unknown", () => {
     expect(resolveResumeTarget(420, undefined)).toBe(420);
+  });
+});
+
+describe("resolveProgressAction", () => {
+  it("clears near the end of a known duration", () => {
+    expect(
+      resolveProgressAction({
+        currentSeconds: 1800 - END_THRESHOLD_SECONDS + 1,
+        durationSeconds: 1800,
+        lastSavedSeconds: 0,
+      }),
+    ).toEqual({ type: "clear" });
+  });
+
+  it("saves once moved far enough past the last write", () => {
+    expect(
+      resolveProgressAction({
+        currentSeconds: 100,
+        durationSeconds: 1800,
+        lastSavedSeconds: 100 - SAVE_INTERVAL_SECONDS,
+      }),
+    ).toEqual({ type: "save", seconds: 100 });
+  });
+
+  it("does nothing below the resumable floor", () => {
+    expect(
+      resolveProgressAction({
+        currentSeconds: MIN_RESUMABLE_SECONDS - 1,
+        durationSeconds: 1800,
+        lastSavedSeconds: 0,
+      }),
+    ).toEqual({ type: "none" });
+  });
+
+  it("does nothing when the move is within the throttle window", () => {
+    expect(
+      resolveProgressAction({
+        currentSeconds: 100,
+        durationSeconds: 1800,
+        lastSavedSeconds: 100 - (SAVE_INTERVAL_SECONDS - 1),
+      }),
+    ).toEqual({ type: "none" });
+  });
+
+  it("still saves when the duration is unknown (live/unloaded)", () => {
+    expect(
+      resolveProgressAction({
+        currentSeconds: 60,
+        durationSeconds: 0,
+        lastSavedSeconds: 0,
+      }),
+    ).toEqual({ type: "save", seconds: 60 });
   });
 });
 

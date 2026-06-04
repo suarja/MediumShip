@@ -54,6 +54,21 @@ export async function clearPlaybackProgress(contentId: string): Promise<void> {
   }
 }
 
+export function resolvePreferredProgress(
+  localSeconds: number | null,
+  remoteSeconds: number | null,
+): number | null {
+  const candidates = [localSeconds, remoteSeconds].filter(
+    (value): value is number => Number.isFinite(value) && value !== null,
+  );
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  return Math.max(...candidates);
+}
+
 /**
  * Resolve the position to resume at, or null to start from the beginning.
  * Returns null when there is no saved progress, it is too early, or it is

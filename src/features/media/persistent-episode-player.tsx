@@ -13,6 +13,7 @@ import {
   setAudioModeAsync,
   useAudioPlayerStatus,
 } from "expo-audio";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { useEventListener } from "expo";
 import { useRouter, useSegments } from "expo-router";
 import { useVideoPlayer, VideoView, type VideoPlayer } from "expo-video";
@@ -21,6 +22,8 @@ import { useTranslation } from "react-i18next";
 
 import { PauseGlyph, PlayGlyph, ReplayGlyph } from "../../components/media/player-icons";
 import { useTabBarSpace } from "../../components/navigation/app-tab-bar";
+import { api } from "../../../convex/_generated/api";
+import { useIsMember } from "../membership/use-is-member";
 import { useResponsive } from "../responsive/use-responsive";
 import { fontFamilies } from "../theme/fonts";
 import { useAppTheme } from "../theme/theme-provider";
@@ -29,6 +32,7 @@ import {
   clearPlaybackProgress,
   loadPlaybackProgress,
   MIN_RESUMABLE_SECONDS,
+  resolvePreferredProgress,
   resolveProgressAction,
   resolveResumeTarget,
   savePlaybackProgress,
@@ -169,6 +173,9 @@ export function PersistentMediaPlayerProvider({
   const pendingResumeRef = useRef<{ contentId: string; seconds: number } | null>(
     null,
   );
+  const resumeSeedRef = useRef<{ contentId: string; seconds: number | null } | null>(
+    null,
+  );
   const lastSavedProgressRef = useRef(0);
   const pipHostRef = useRef<VideoView>(null);
   // User's *intent* to play, toggled only by explicit play/pause actions — not
@@ -177,8 +184,17 @@ export function PersistentMediaPlayerProvider({
   const playIntentRef = useRef(true);
   const router = useRouter();
   const segments = useSegments();
+  const { isAuthenticated } = useConvexAuth();
+  const { isMember } = useIsMember();
   const [audioPlayer, setAudioPlayer] = useState(() =>
     createAudioPlayer(null, { updateInterval: 250 }),
+  );
+  const canSyncRemoteProgress = isAuthenticated && isMember;
+  const saveRemotePlaybackProgress = useMutation(
+    api.playbackProgress.mutations.saveMyPlaybackProgress,
+  );
+  const clearRemotePlaybackProgress = useMutation(
+    api.playbackProgress.mutations.clearMyPlaybackProgress,
   );
   const audioStatus = useAudioPlayerStatus(audioPlayer);
   const hostedVideoSession =
@@ -192,6 +208,12 @@ export function PersistentMediaPlayerProvider({
         }
       : null;
   const videoPlayer = useVideoPlayer(hostedVideoSession);
+  const remotePlaybackProgress = useQuery(
+    api.playbackProgress.queries.getMyPlaybackProgress,
+    canSyncRemoteProgress && activeSession
+      ? { contentId: activeSession.contentId as never }
+      : "skip",
+  );
 
   useEffect(() => {
     void setAudioModeAsync(audioModeConfig);
@@ -352,6 +374,65 @@ export function PersistentMediaPlayerProvider({
     }
   }, [activeSession, audioPlayer, audioStatus.isLoaded]);
 
+  useEffect(() => {
+    if (!activeSession || !resumeSeedRef.current || remotePlaybackProgress === undefined) {
+      return;
+    }
+
+    const currentSeed = resumeSeedRef.current;
+    if (currentSeed.contentId !== activeSession.contentId) {
+      return;
+    }
+
+    const mergedSeconds = resolvePreferredProgress(
+      currentSeed.seconds,
+      remotePlaybackProgress?.seconds ?? null,
+    );
+    const nextResumeTarget = resolveResumeTarget(
+      mergedSeconds,
+      activeSession.durationSeconds,
+    );
+
+    if (nextResumeTarget === currentSeed.seconds) {
+      return;
+    }
+
+    resumeSeedRef.current = {
+      contentId: activeSession.contentId,
+      seconds: nextResumeTarget,
+    };
+    lastSavedProgressRef.current = nextResumeTarget ?? 0;
+    pendingResumeRef.current =
+      nextResumeTarget !== null
+        ? { contentId: activeSession.contentId, seconds: nextResumeTarget }
+        : null;
+
+    if (nextResumeTarget === null || nextResumeTarget <= currentTimeSeconds + 1) {
+      return;
+    }
+
+    if (activeSession.kind === "episode") {
+      if (audioStatus.isLoaded) {
+        pendingResumeRef.current = null;
+        void audioPlayer.seekTo(nextResumeTarget);
+      }
+      return;
+    }
+
+    (videoPlayer as { currentTime?: number }).currentTime = nextResumeTarget;
+    setVideoState((current) => ({
+      ...current,
+      currentTimeSeconds: nextResumeTarget,
+    }));
+  }, [
+    activeSession,
+    audioPlayer,
+    audioStatus.isLoaded,
+    currentTimeSeconds,
+    remotePlaybackProgress,
+    videoPlayer,
+  ]);
+
   // Persist playback progress (throttled), and clear it near the end so a
   // finished item starts over next time. Applies to both audio episodes and
   // hosted video so each resumes where it was left off.
@@ -369,11 +450,27 @@ export function PersistentMediaPlayerProvider({
 
     if (action.type === "clear") {
       void clearPlaybackProgress(contentId);
+      if (canSyncRemoteProgress) {
+        void clearRemotePlaybackProgress({ contentId: contentId as never });
+      }
     } else if (action.type === "save") {
       lastSavedProgressRef.current = action.seconds;
       void savePlaybackProgress(contentId, action.seconds);
+      if (canSyncRemoteProgress) {
+        void saveRemotePlaybackProgress({
+          contentId: contentId as never,
+          seconds: action.seconds,
+        });
+      }
     }
-  }, [activeSession, currentTimeSeconds, durationSeconds]);
+  }, [
+    activeSession,
+    canSyncRemoteProgress,
+    clearRemotePlaybackProgress,
+    currentTimeSeconds,
+    durationSeconds,
+    saveRemotePlaybackProgress,
+  ]);
 
   const playEpisode = async (track: EpisodeTrack) => {
     const isSameTrack =
@@ -391,6 +488,10 @@ export function PersistentMediaPlayerProvider({
       // can resume once the source is loaded.
       const savedSeconds = await loadPlaybackProgress(track.contentId);
       const resumeTarget = resolveResumeTarget(savedSeconds, track.durationSeconds);
+      resumeSeedRef.current = {
+        contentId: track.contentId,
+        seconds: resumeTarget,
+      };
       pendingResumeRef.current =
         resumeTarget !== null
           ? { contentId: track.contentId, seconds: resumeTarget }
@@ -458,6 +559,10 @@ export function PersistentMediaPlayerProvider({
       // `sourceLoad` event below (seeking earlier is unreliable on native).
       const savedSeconds = await loadPlaybackProgress(track.contentId);
       const resumeTarget = resolveResumeTarget(savedSeconds, track.durationSeconds);
+      resumeSeedRef.current = {
+        contentId: track.contentId,
+        seconds: resumeTarget,
+      };
       pendingResumeRef.current =
         resumeTarget !== null
           ? { contentId: track.contentId, seconds: resumeTarget }
@@ -620,9 +725,16 @@ export function PersistentMediaPlayerProvider({
       !hasFinished
     ) {
       void savePlaybackProgress(closing.contentId, currentTimeSeconds);
+      if (canSyncRemoteProgress) {
+        void saveRemotePlaybackProgress({
+          contentId: closing.contentId as never,
+          seconds: currentTimeSeconds,
+        });
+      }
     }
 
     activeSessionRef.current = null;
+    resumeSeedRef.current = null;
     setActiveSession(null);
   };
 

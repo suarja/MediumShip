@@ -7,10 +7,21 @@ import {
 } from "../src/features/media/persistent-media-player";
 
 const mockPush = jest.fn();
+const mockConvexUseQuery = jest.fn();
 
 jest.mock("expo-router", () => ({
   useRouter: () => ({ push: mockPush }),
   useSegments: () => ["(app)"],
+}));
+
+jest.mock("convex/react", () => ({
+  useConvexAuth: () => ({ isAuthenticated: false }),
+  useMutation: () => jest.fn(),
+  useQuery: (...args: unknown[]) => mockConvexUseQuery(...args),
+}));
+
+jest.mock("../src/features/membership/use-is-member", () => ({
+  useIsMember: () => ({ isMember: false, isLoading: false }),
 }));
 
 function Harness() {
@@ -62,6 +73,7 @@ function Harness() {
 describe("PersistentMediaPlayerProvider", () => {
   beforeEach(() => {
     mockPush.mockClear();
+    mockConvexUseQuery.mockReturnValue(undefined);
   });
 
   it("replaces an active episode session with a hosted video session", async () => {

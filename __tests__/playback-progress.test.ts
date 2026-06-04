@@ -5,6 +5,7 @@ import {
   END_THRESHOLD_SECONDS,
   loadPlaybackProgress,
   MIN_RESUMABLE_SECONDS,
+  resolvePreferredProgress,
   resolveProgressAction,
   resolveResumeTarget,
   savePlaybackProgress,
@@ -30,6 +31,22 @@ describe("resolveResumeTarget", () => {
 
   it("resumes when the duration is unknown", () => {
     expect(resolveResumeTarget(420, undefined)).toBe(420);
+  });
+});
+
+describe("resolvePreferredProgress", () => {
+  it("returns null when neither source has progress", () => {
+    expect(resolvePreferredProgress(null, null)).toBeNull();
+  });
+
+  it("prefers the higher of local and remote progress", () => {
+    expect(resolvePreferredProgress(120, 340)).toBe(340);
+    expect(resolvePreferredProgress(480, 90)).toBe(480);
+  });
+
+  it("returns the only available source when one side is missing", () => {
+    expect(resolvePreferredProgress(120, null)).toBe(120);
+    expect(resolvePreferredProgress(null, 340)).toBe(340);
   });
 });
 

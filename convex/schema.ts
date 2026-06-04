@@ -126,4 +126,12 @@ export default defineSchema({
   })
     .index("by_tokenIdentifier_and_contentId", ["tokenIdentifier", "contentId"])
     .index("by_tokenIdentifier_and_createdAt", ["tokenIdentifier", "createdAt"]),
+  playbackProgress: defineTable({
+    tokenIdentifier: v.string(),
+    contentId: v.id("contents"),
+    seconds: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_tokenIdentifier_and_contentId", ["tokenIdentifier", "contentId"])
+    .index("by_tokenIdentifier_and_updatedAt", ["tokenIdentifier", "updatedAt"]),
 });

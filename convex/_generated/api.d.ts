@@ -23,6 +23,8 @@ import type * as http from "../http.js";
 import type * as httpHandlers_clerkWebhook from "../httpHandlers/clerkWebhook.js";
 import type * as httpHandlers_svix from "../httpHandlers/svix.js";
 import type * as media_r2 from "../media/r2.js";
+import type * as playbackProgress_mutations from "../playbackProgress/mutations.js";
+import type * as playbackProgress_queries from "../playbackProgress/queries.js";
 import type * as tenants_mutations from "../tenants/mutations.js";
 import type * as tenants_queries from "../tenants/queries.js";
 import type * as tenants_seed from "../tenants/seed.js";
@@ -53,6 +55,8 @@ declare const fullApi: ApiFromModules<{
   "httpHandlers/clerkWebhook": typeof httpHandlers_clerkWebhook;
   "httpHandlers/svix": typeof httpHandlers_svix;
   "media/r2": typeof media_r2;
+  "playbackProgress/mutations": typeof playbackProgress_mutations;
+  "playbackProgress/queries": typeof playbackProgress_queries;
   "tenants/mutations": typeof tenants_mutations;
   "tenants/queries": typeof tenants_queries;
   "tenants/seed": typeof tenants_seed;

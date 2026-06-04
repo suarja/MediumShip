@@ -1,5 +1,4 @@
-import { Link } from "expo-router";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import { useEffect, useState } from "react";
 
 import { useResponsive } from "../../features/responsive/use-responsive";
@@ -54,52 +53,32 @@ export function BrandHeader() {
         )}
       </View>
 
-      <Link href={"/settings" as never} asChild>
-        <Pressable
-          accessibilityRole="button"
-          hitSlop={8}
-          style={({ pressed }) => [
-            styles.iconButton,
-            showAppIcon
-              ? {
-                  width: iconSize,
-                  height: iconSize,
-                  borderRadius: theme.radii.pill,
-                  backgroundColor: theme.colors.surfaceMuted,
-                }
-              : {
-                  width: iconSize,
-                  height: iconSize,
-                  borderRadius: theme.radii.pill,
-                  borderColor: theme.colors.border,
-                  backgroundColor: theme.colors.surface,
-                },
-            pressed && styles.pressed,
-          ]}
-        >
-          {showAppIcon ? (
-            <Image
-              accessibilityLabel={`${tenantName} app icon`}
-              onError={() => setAppIconFailed(true)}
-              source={{ uri: appIconUrl }}
-              style={styles.appIcon}
-            />
-          ) : (
-            <View
-              style={[
-                styles.appIconFallback,
-                {
-                  backgroundColor: theme.colors.surfaceMuted,
-                },
-              ]}
-            >
-              <Text style={[styles.appIconFallbackLabel, { color: theme.colors.heading }]}>
-                {(tenantName.trim().charAt(0) || "M").toUpperCase()}
-              </Text>
-            </View>
-          )}
-        </Pressable>
-      </Link>
+      <View
+        style={[
+          styles.iconShell,
+          {
+            width: iconSize,
+            height: iconSize,
+            borderRadius: theme.radii.pill,
+            backgroundColor: theme.colors.surfaceMuted,
+          },
+        ]}
+      >
+        {showAppIcon ? (
+          <Image
+            accessibilityLabel={`${tenantName} app icon`}
+            onError={() => setAppIconFailed(true)}
+            source={{ uri: appIconUrl }}
+            style={styles.appIcon}
+          />
+        ) : (
+          <View style={styles.appIconFallback}>
+            <Text style={[styles.appIconFallbackLabel, { color: theme.colors.heading }]}>
+              {(tenantName.trim().charAt(0) || "M").toUpperCase()}
+            </Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 }
@@ -114,12 +93,11 @@ const styles = StyleSheet.create({
   logo: { fontFamily: fontFamilies.displayBoldItalic, letterSpacing: -0.3 },
   logoImage: { width: 132, height: 28, marginLeft: -6 },
   dot: { width: 6, height: 6, borderRadius: 999, marginLeft: 3, marginBottom: 6 },
-  iconButton: {
+  iconShell: {
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
   },
-  pressed: { opacity: 0.7 },
   appIcon: { width: "100%", height: "100%" },
   appIconFallback: {
     width: "100%",

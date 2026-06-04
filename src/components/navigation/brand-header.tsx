@@ -1,5 +1,5 @@
 import { Link } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
@@ -12,20 +12,31 @@ import { useAppTheme } from "../../features/theme/theme-provider";
  * deliberately light. Tenant name and all colours come from the resolved theme.
  */
 export function BrandHeader() {
-  const { theme, tenantName } = useAppTheme();
+  const { brandLogoUrl, theme, tenantName } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
   const iconSize = 34 * scaleSpace;
 
   return (
     <View style={[styles.row, { marginBottom: theme.spacing.lg * scaleSpace }]}>
       <View style={styles.brand}>
-        <Text
-          numberOfLines={1}
-          style={[styles.logo, { color: theme.colors.heading, fontSize: 22 * scaleFont }]}
-        >
-          {tenantName}
-        </Text>
-        <View style={[styles.dot, { backgroundColor: theme.colors.accent }]} />
+        {brandLogoUrl ? (
+          <Image
+            accessibilityLabel={`${tenantName} logo`}
+            resizeMode="contain"
+            source={{ uri: brandLogoUrl }}
+            style={styles.logoImage}
+          />
+        ) : (
+          <>
+            <Text
+              numberOfLines={1}
+              style={[styles.logo, { color: theme.colors.heading, fontSize: 22 * scaleFont }]}
+            >
+              {tenantName}
+            </Text>
+            <View style={[styles.dot, { backgroundColor: theme.colors.accent }]} />
+          </>
+        )}
       </View>
 
       <Link href={"/settings" as never} asChild>
@@ -61,6 +72,7 @@ const styles = StyleSheet.create({
   },
   brand: { flexDirection: "row", alignItems: "flex-end", flexShrink: 1 },
   logo: { fontFamily: fontFamilies.displayBoldItalic, letterSpacing: -0.3 },
+  logoImage: { width: 148, height: 32 },
   dot: { width: 6, height: 6, borderRadius: 999, marginLeft: 3, marginBottom: 6 },
   iconButton: {
     alignItems: "center",

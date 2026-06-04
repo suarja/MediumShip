@@ -105,13 +105,34 @@ function HomeScreen({
           <span>9:41</span>
           <span>● ● ●</span>
         </div>
-        <div className="mfeed">
+          <div className="mfeed">
           <div className="mfeed__hdr">
             <div className="mfeed__logo">
-              <i>{preview.tenant.name}</i>
-              <span className="d" />
+              {preview.tenant.brandLogoUrl ? (
+                <img
+                  alt={`${preview.tenant.name} logo`}
+                  src={preview.tenant.brandLogoUrl}
+                  style={{ height: 26, maxWidth: 132, objectFit: "contain" }}
+                />
+              ) : (
+                <>
+                  <i>{preview.tenant.name}</i>
+                  <span className="d" />
+                </>
+              )}
             </div>
-            <div className="mfeed__av" />
+            <div
+              className="mfeed__av"
+              style={
+                preview.tenant.appIconUrl
+                  ? {
+                      backgroundImage: `url(${preview.tenant.appIconUrl})`,
+                      backgroundPosition: "center",
+                      backgroundSize: "cover",
+                    }
+                  : undefined
+              }
+            />
           </div>
           <div className="mfeed__tabs">
             {sections.slice(0, 4).map((section, index) => (

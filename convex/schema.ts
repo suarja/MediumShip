@@ -24,6 +24,8 @@ export default defineSchema({
   tenants: defineTable({
     slug: v.string(),
     name: v.string(),
+    brandLogoUrl: v.optional(v.string()),
+    appIconUrl: v.optional(v.string()),
     themeConfig: v.optional(
       v.object({
         paletteName: v.string(),

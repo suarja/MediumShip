@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { DegradedBanner } from "../../src/components/content/degraded-banner";
@@ -19,7 +19,7 @@ import { useAppTheme } from "../../src/features/theme/theme-provider";
 export default function SettingsScreen() {
   const { t } = useTranslation(["settings", "common"]);
   const { isSignedIn, email, fullName, signOut } = useClerkAuth();
-  const { theme, tenantName } = useAppTheme();
+  const { appIconUrl, theme, tenantName } = useAppTheme();
   const { scaleSpace } = useResponsive();
   const { state: networkState } = useNetworkStatus();
   const tabBarSpace = useTabBarSpace();
@@ -41,6 +41,20 @@ export default function SettingsScreen() {
         <DegradedBanner state={networkState} />
 
         <View style={styles.header}>
+          {appIconUrl ? (
+            <Image
+              accessibilityLabel={`${tenantName} app icon`}
+              source={{ uri: appIconUrl }}
+              style={[
+                styles.appIcon,
+                {
+                  borderRadius: 18,
+                  borderColor: theme.colors.border,
+                  backgroundColor: theme.colors.surface,
+                },
+              ]}
+            />
+          ) : null}
           <Text style={[styles.eyebrow, { color: theme.colors.accent }]}>
             {tenantName}
           </Text>
@@ -105,6 +119,11 @@ const styles = StyleSheet.create({
   header: {
     gap: 8,
     paddingTop: 8,
+  },
+  appIcon: {
+    width: 72,
+    height: 72,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   eyebrow: {
     fontFamily: fontFamilies.mono,

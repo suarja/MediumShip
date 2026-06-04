@@ -18,6 +18,8 @@ import {
 
 type TenantSettingsFormProps = {
   tenant: {
+    appIconUrl?: string;
+    brandLogoUrl?: string;
     enabledModules: string[];
     feedSections?: FeedSectionConfig[];
     name: string;
@@ -59,13 +61,17 @@ function Field({
 }
 
 function MobilePhonePreview({
+  appIconUrl,
   enabledModules,
   feedSections,
+  logoUrl,
   name,
   paletteName,
 }: {
+  appIconUrl: string;
   enabledModules: string[];
   feedSections: FeedSectionConfig[];
+  logoUrl: string;
   name: string;
   paletteName: string;
 }) {
@@ -104,10 +110,31 @@ function MobilePhonePreview({
         <div className="mfeed">
           <div className="mfeed__hdr">
             <div className="mfeed__logo">
-              <i>{name || "MediumShip"}</i>
-              <span className="d" />
+              {logoUrl ? (
+                <img
+                  alt={`${name || "MediumShip"} logo`}
+                  src={logoUrl}
+                  style={{ height: 26, maxWidth: 128, objectFit: "contain" }}
+                />
+              ) : (
+                <>
+                  <i>{name || "MediumShip"}</i>
+                  <span className="d" />
+                </>
+              )}
             </div>
-            <div className="mfeed__av" />
+            <div
+              className="mfeed__av"
+              style={
+                appIconUrl
+                  ? {
+                      backgroundImage: `url(${appIconUrl})`,
+                      backgroundPosition: "center",
+                      backgroundSize: "cover",
+                    }
+                  : undefined
+              }
+            />
           </div>
 
           <div className="mfeed__tabs">
@@ -174,9 +201,8 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
   const [feedSections, setFeedSections] = useState<FeedSectionConfig[]>(
     tenant.feedSections ?? [],
   );
-  // TODO: real upload needs Convex storage.
-  const [logoUrl, setLogoUrl] = useState("");
-  const [appIconUrl, setAppIconUrl] = useState("");
+  const [logoUrl, setLogoUrl] = useState(tenant.brandLogoUrl ?? "");
+  const [appIconUrl, setAppIconUrl] = useState(tenant.appIconUrl ?? "");
   const [saveLabel, setSaveLabel] = useState("Enregistrer");
 
   useEffect(() => {
@@ -184,6 +210,8 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
     setPaletteName(tenant.themeConfig?.paletteName ?? "brick");
     setEnabledModules(tenant.enabledModules);
     setFeedSections(tenant.feedSections ?? []);
+    setLogoUrl(tenant.brandLogoUrl ?? "");
+    setAppIconUrl(tenant.appIconUrl ?? "");
     setSaveLabel("Enregistrer");
   }, [tenant]);
 
@@ -243,6 +271,8 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
   const save = async () => {
     await updateTenantSettings({
       name,
+      brandLogoUrl: logoUrl,
+      appIconUrl,
       paletteName: safePalette,
       enabledModules,
       feedSections,
@@ -280,30 +310,59 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
           </div>
 
           <div className="upload" style={{ marginTop: 14 }}>
-            <div className="upload__thumb" />
+            <div
+              className="upload__thumb"
+              style={
+                logoUrl
+                  ? {
+                      backgroundImage: `url(${logoUrl})`,
+                      backgroundPosition: "center",
+                      backgroundSize: "contain",
+                      backgroundRepeat: "no-repeat",
+                    }
+                  : undefined
+              }
+            />
             <div className="upload__meta">
               <h5 className="upload__t">Logo de marque</h5>
-              <div className="upload__d">Affichage local uniquement pour cette refonte</div>
+              <div className="upload__d">URL persistée et utilisée dans les previews</div>
             </div>
           </div>
           <input
             className="input input--mono"
-            onChange={(event) => setLogoUrl(event.currentTarget.value)}
+            onChange={(event) => {
+              setLogoUrl(event.currentTarget.value);
+              setSaveLabel("Enregistrer");
+            }}
             placeholder="https://…/logo.png"
             style={{ marginTop: 10 }}
             value={logoUrl}
           />
 
           <div className="upload" style={{ marginTop: 14 }}>
-            <div className="upload__thumb" />
+            <div
+              className="upload__thumb"
+              style={
+                appIconUrl
+                  ? {
+                      backgroundImage: `url(${appIconUrl})`,
+                      backgroundPosition: "center",
+                      backgroundSize: "cover",
+                    }
+                  : undefined
+              }
+            />
             <div className="upload__meta">
               <h5 className="upload__t">App icon</h5>
-              <div className="upload__d">TODO: vrai upload via Convex storage</div>
+              <div className="upload__d">URL persistée et utilisée dans l’app/settings</div>
             </div>
           </div>
           <input
             className="input input--mono"
-            onChange={(event) => setAppIconUrl(event.currentTarget.value)}
+            onChange={(event) => {
+              setAppIconUrl(event.currentTarget.value);
+              setSaveLabel("Enregistrer");
+            }}
             placeholder="https://…/app-icon.png"
             style={{ marginTop: 10 }}
             value={appIconUrl}
@@ -431,8 +490,10 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
           </div>
 
           <MobilePhonePreview
+            appIconUrl={appIconUrl}
             enabledModules={enabledModules}
             feedSections={feedSections}
+            logoUrl={logoUrl}
             name={name}
             paletteName={safePalette}
           />

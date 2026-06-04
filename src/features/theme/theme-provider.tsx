@@ -18,6 +18,8 @@ import {
 } from "./palette-catalog";
 
 type ThemeContextValue = {
+  appIconUrl?: string;
+  brandLogoUrl?: string;
   theme: AppTheme;
   themeConfig: ThemeConfig;
   tenantSlug: string;
@@ -28,6 +30,8 @@ type ThemeContextValue = {
 };
 
 const fallbackValue: ThemeContextValue = {
+  appIconUrl: defaultTenant.appIconUrl,
+  brandLogoUrl: defaultTenant.brandLogoUrl,
   theme: resolveTheme(defaultThemeConfig),
   themeConfig: defaultThemeConfig,
   tenantSlug: defaultTenant.slug,
@@ -53,6 +57,8 @@ export function AppThemeProvider({ children }: PropsWithChildren) {
     const feedSections = normalizeFeedSections(tenant?.feedSections, enabledModules);
 
     return {
+      appIconUrl: tenant?.appIconUrl ?? defaultTenant.appIconUrl,
+      brandLogoUrl: tenant?.brandLogoUrl ?? defaultTenant.brandLogoUrl,
       theme: resolveTheme(themeConfig),
       themeConfig,
       tenantSlug: tenant?.slug ?? defaultTenant.slug,

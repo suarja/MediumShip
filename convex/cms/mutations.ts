@@ -57,6 +57,11 @@ function normalizeHeroImageUrl(value: string | null) {
   return trimmed ? normalizeRemoteImageUrl(trimmed) : undefined;
 }
 
+function normalizeBrandAssetUrl(value: string | null) {
+  const trimmed = sanitizeText(value);
+  return trimmed ? normalizeRemoteImageUrl(trimmed) : undefined;
+}
+
 function normalizeAudioUrl(value: string | null) {
   const trimmed = sanitizeText(value);
   if (!trimmed) {
@@ -418,6 +423,8 @@ export const setContentStatus = mutation({
 export const updateTenantSettings = mutation({
   args: {
     name: v.string(),
+    brandLogoUrl: v.string(),
+    appIconUrl: v.string(),
     paletteName: v.string(),
     enabledModules: v.array(v.string()),
     feedSections: v.array(
@@ -437,6 +444,8 @@ export const updateTenantSettings = mutation({
     const enabledModules = normalizeEnabledModules(args.enabledModules);
     const feedSections = normalizeFeedSections(args.feedSections, enabledModules);
     const name = args.name.trim() || defaultTenant.name;
+    const brandLogoUrl = normalizeBrandAssetUrl(args.brandLogoUrl);
+    const appIconUrl = normalizeBrandAssetUrl(args.appIconUrl);
 
     const tenant = await ctx.db
       .query("tenants")
@@ -446,6 +455,8 @@ export const updateTenantSettings = mutation({
     if (tenant) {
       await ctx.db.patch(tenant._id, {
         name,
+        brandLogoUrl,
+        appIconUrl,
         themeConfig: { paletteName: args.paletteName },
         enabledModules,
         feedSections,
@@ -456,6 +467,8 @@ export const updateTenantSettings = mutation({
     return await ctx.db.insert("tenants", {
       slug: defaultTenant.slug,
       name,
+      ...(brandLogoUrl ? { brandLogoUrl } : {}),
+      ...(appIconUrl ? { appIconUrl } : {}),
       themeConfig: { paletteName: args.paletteName },
       enabledModules,
       feedSections,

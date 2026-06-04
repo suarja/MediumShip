@@ -63,6 +63,38 @@ function Field({
   );
 }
 
+function PreviewBrandLogo({
+  logoUrl,
+  name,
+}: {
+  logoUrl: string;
+  name: string;
+}) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [logoUrl]);
+
+  if (!logoUrl || hasError) {
+    return (
+      <>
+        <i>{name || "MediumShip"}</i>
+        <span className="d" />
+      </>
+    );
+  }
+
+  return (
+    <img
+      alt={`${name || "MediumShip"} logo`}
+      onError={() => setHasError(true)}
+      src={logoUrl}
+      style={{ height: 24, maxWidth: 112, objectFit: "contain" }}
+    />
+  );
+}
+
 function MobilePhonePreview({
   appIconUrl,
   enabledModules,
@@ -113,18 +145,7 @@ function MobilePhonePreview({
         <div className="mfeed">
           <div className="mfeed__hdr">
             <div className="mfeed__logo">
-              {logoUrl ? (
-                <img
-                  alt={`${name || "MediumShip"} logo`}
-                  src={logoUrl}
-                  style={{ height: 26, maxWidth: 128, objectFit: "contain" }}
-                />
-              ) : (
-                <>
-                  <i>{name || "MediumShip"}</i>
-                  <span className="d" />
-                </>
-              )}
+              <PreviewBrandLogo logoUrl={logoUrl} name={name} />
             </div>
             <div
               className="mfeed__av"

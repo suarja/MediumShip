@@ -1,5 +1,6 @@
 import { Link } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
 
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
@@ -15,13 +16,21 @@ export function BrandHeader() {
   const { brandLogoUrl, theme, tenantName } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
   const iconSize = 34 * scaleSpace;
+  const [logoFailed, setLogoFailed] = useState(false);
+
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [brandLogoUrl]);
+
+  const showBrandLogo = Boolean(brandLogoUrl) && !logoFailed;
 
   return (
     <View style={[styles.row, { marginBottom: theme.spacing.lg * scaleSpace }]}>
       <View style={styles.brand}>
-        {brandLogoUrl ? (
+        {showBrandLogo ? (
           <Image
             accessibilityLabel={`${tenantName} logo`}
+            onError={() => setLogoFailed(true)}
             resizeMode="contain"
             source={{ uri: brandLogoUrl }}
             style={styles.logoImage}
@@ -72,7 +81,7 @@ const styles = StyleSheet.create({
   },
   brand: { flexDirection: "row", alignItems: "flex-end", flexShrink: 1 },
   logo: { fontFamily: fontFamilies.displayBoldItalic, letterSpacing: -0.3 },
-  logoImage: { width: 148, height: 32 },
+  logoImage: { width: 132, height: 28 },
   dot: { width: 6, height: 6, borderRadius: 999, marginLeft: 3, marginBottom: 6 },
   iconButton: {
     alignItems: "center",

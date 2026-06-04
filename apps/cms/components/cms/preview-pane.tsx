@@ -2,7 +2,7 @@
 
 import { useQuery } from "convex/react";
 import type { CSSProperties, ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { api } from "../../../../convex/_generated/api";
 import {
@@ -85,6 +85,38 @@ function usePreviewData(selectedId: string | null) {
   );
 }
 
+function PreviewBrandLogo({
+  logoUrl,
+  name,
+}: {
+  logoUrl: string | undefined;
+  name: string;
+}) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [logoUrl]);
+
+  if (!logoUrl || hasError) {
+    return (
+      <>
+        <i>{name}</i>
+        <span className="d" />
+      </>
+    );
+  }
+
+  return (
+    <img
+      alt={`${name} logo`}
+      onError={() => setHasError(true)}
+      src={logoUrl}
+      style={{ height: 24, maxWidth: 116, objectFit: "contain" }}
+    />
+  );
+}
+
 function HomeScreen({
   preview,
   style,
@@ -105,21 +137,13 @@ function HomeScreen({
           <span>9:41</span>
           <span>● ● ●</span>
         </div>
-          <div className="mfeed">
+        <div className="mfeed">
           <div className="mfeed__hdr">
             <div className="mfeed__logo">
-              {preview.tenant.brandLogoUrl ? (
-                <img
-                  alt={`${preview.tenant.name} logo`}
-                  src={preview.tenant.brandLogoUrl}
-                  style={{ height: 26, maxWidth: 132, objectFit: "contain" }}
-                />
-              ) : (
-                <>
-                  <i>{preview.tenant.name}</i>
-                  <span className="d" />
-                </>
-              )}
+              <PreviewBrandLogo
+                logoUrl={preview.tenant.brandLogoUrl}
+                name={preview.tenant.name}
+              />
             </div>
             <div
               className="mfeed__av"

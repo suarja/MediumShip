@@ -32,6 +32,44 @@ const youtubeRefererUrl =
   env.EXPO_PUBLIC_CONVEX_SITE_URL ??
   "https://mediumship.app";
 
+function buildYoutubeEmbedHtml(embedUrl: string) {
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+    />
+    <meta name="referrer" content="origin" />
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        overflow: hidden;
+      }
+
+      iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <iframe
+      src="${embedUrl}"
+      title="YouTube player"
+      allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+      allowfullscreen
+    ></iframe>
+  </body>
+</html>`;
+}
+
 export function VideoPlayerCard({
   coverImageUrl,
   onPlaybackIntent,
@@ -79,6 +117,7 @@ export function VideoPlayerCard({
     if (hasStarted) {
       startedEmbedUrl.searchParams.set("autoplay", "1");
     }
+    const youtubeEmbedHtml = buildYoutubeEmbedHtml(startedEmbedUrl.toString());
 
     return (
       <View style={styles.wrapper}>
@@ -100,10 +139,8 @@ export function VideoPlayerCard({
               mediaPlaybackRequiresUserAction={false}
               scrollEnabled={false}
               source={{
-                uri: startedEmbedUrl.toString(),
-                headers: {
-                  Referer: youtubeRefererUrl,
-                },
+                html: youtubeEmbedHtml,
+                baseUrl: youtubeRefererUrl,
               }}
               style={styles.webview}
               testID="youtube-player"

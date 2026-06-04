@@ -22,6 +22,12 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
   };
 }
 
+/** Returns a solid hex color as an `rgba()` string with the given alpha (0–1). */
+export function withAlpha(hex: string, alpha: number): string {
+  const { r, g, b } = hexToRgb(hex);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 function channelToLinear(channel8bit: number): number {
   const c = channel8bit / 255;
   return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);

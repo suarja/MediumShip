@@ -15,6 +15,12 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
+import {
+  PauseGlyph,
+  PlayGlyph,
+  ReplayGlyph,
+  SkipGlyph,
+} from "../../src/components/media/player-icons";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { formatMediaClock } from "../../src/features/media/format-media-clock";
@@ -22,6 +28,7 @@ import { usePersistentMediaPlayer } from "../../src/features/media/persistent-me
 import { getScrubTimeFromPress } from "../../src/features/media/scrubbing";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
+import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
@@ -156,6 +163,11 @@ export default function PlayerScreen() {
   const displayedProgressRatio =
     durationSeconds > 0 ? Math.min(displayedCurrentTime / durationSeconds, 1) : 0;
 
+  // The player is a fixed dark surface (heading background); the contrasting
+  // foreground is the palette's canvas color, which moves opposite to heading
+  // across every palette (including midnight).
+  const fg = theme.colors.canvas;
+
   const getScrubTime = (locationX: number) => {
     if (durationSeconds <= 0) {
       return 0;
@@ -188,12 +200,12 @@ export default function PlayerScreen() {
           onPress={() => router.back()}
           style={styles.topAction}
         >
-          <Text style={styles.topActionText}>↓</Text>
+          <Text style={[styles.topActionText, { color: fg }]}>↓</Text>
         </Pressable>
         <Text
           style={[
             styles.topLabel,
-            { fontSize: 10 * scaleFont, color: "rgba(244, 241, 232, 0.56)" },
+            { fontSize: 10 * scaleFont, color: withAlpha(fg, 0.56) },
           ]}
         >
           {content.kind === "episode" ? "LECTURE EN COURS" : "VIDEO EN COURS"}
@@ -203,7 +215,7 @@ export default function PlayerScreen() {
           onPress={() => router.back()}
           style={styles.topAction}
         >
-          <Text style={styles.topActionText}>×</Text>
+          <Text style={[styles.topActionText, { color: fg }]}>×</Text>
         </Pressable>
       </View>
 
@@ -224,7 +236,7 @@ export default function PlayerScreen() {
                 {
                   borderRadius: 18,
                   backgroundColor: theme.colors.canvasAccent,
-                  borderColor: "rgba(244, 241, 232, 0.12)",
+                  borderColor: withAlpha(fg, 0.12),
                 },
               ]}
               testID="player-screen-audio"
@@ -238,7 +250,14 @@ export default function PlayerScreen() {
                     { backgroundColor: theme.colors.accent },
                   ]}
                 >
-                  <Text style={styles.audioArtworkFallbackGlyph}>▷</Text>
+                  <Text
+                    style={[
+                      styles.audioArtworkFallbackGlyph,
+                      { color: theme.colors.accentContrast },
+                    ]}
+                  >
+                    ▷
+                  </Text>
                 </View>
               )}
             </View>
@@ -246,7 +265,7 @@ export default function PlayerScreen() {
               <Text
                 style={[
                   styles.subtitle,
-                  { fontSize: 10 * scaleFont, color: "rgba(244, 241, 232, 0.56)" },
+                  { fontSize: 10 * scaleFont, color: withAlpha(fg, 0.56) },
                 ]}
               >
                 {subtitle}
@@ -255,7 +274,7 @@ export default function PlayerScreen() {
                 style={[
                   styles.title,
                   styles.audioTitle,
-                  { fontSize: 27 * scaleFont, color: "#F4F1E8" },
+                  { fontSize: 27 * scaleFont, color: fg },
                 ]}
               >
                 {title}
@@ -268,7 +287,7 @@ export default function PlayerScreen() {
               styles.videoSurface,
               {
                 borderRadius: 18,
-                borderColor: "rgba(244, 241, 232, 0.12)",
+                borderColor: withAlpha(fg, 0.12),
               },
             ]}
             testID="player-screen-video"
@@ -291,7 +310,7 @@ export default function PlayerScreen() {
             <Text
               style={[
                 styles.subtitle,
-                { fontSize: 10 * scaleFont, color: "rgba(244, 241, 232, 0.56)" },
+                { fontSize: 10 * scaleFont, color: withAlpha(fg, 0.56) },
               ]}
             >
               {subtitle}
@@ -299,7 +318,7 @@ export default function PlayerScreen() {
             <Text
               style={[
                 styles.title,
-                { fontSize: 27 * scaleFont, color: "#F4F1E8" },
+                { fontSize: 27 * scaleFont, color: fg },
               ]}
             >
               {title}
@@ -309,7 +328,7 @@ export default function PlayerScreen() {
         <Text
           style={[
             styles.summary,
-            { fontSize: 13 * scaleFont, color: "rgba(244, 241, 232, 0.62)" },
+            { fontSize: 13 * scaleFont, color: withAlpha(fg, 0.62) },
           ]}
         >
           {content.summary}
@@ -334,7 +353,7 @@ export default function PlayerScreen() {
             }}
             onStartShouldSetResponder={() => true}
             onMoveShouldSetResponder={() => true}
-            style={styles.progressTrack}
+            style={[styles.progressTrack, { backgroundColor: withAlpha(fg, 0.12) }]}
           >
             <View
               style={[
@@ -350,38 +369,51 @@ export default function PlayerScreen() {
             />
           </View>
           <View style={styles.timeRow}>
-            <Text style={styles.timeText}>{formatMediaClock(displayedCurrentTime)}</Text>
-            <Text style={styles.timeText}>{formatMediaClock(durationSeconds)}</Text>
+            <Text style={[styles.timeText, { color: withAlpha(fg, 0.52) }]}>
+              {formatMediaClock(displayedCurrentTime)}
+            </Text>
+            <Text style={[styles.timeText, { color: withAlpha(fg, 0.52) }]}>
+              {formatMediaClock(durationSeconds)}
+            </Text>
           </View>
         </View>
 
         <View style={styles.controls}>
           <Pressable
+            accessibilityLabel={tEpisode("skipBack")}
             accessibilityRole="button"
+            hitSlop={12}
             onPress={() => void seekBy(-15)}
-            style={styles.secondaryControl}
+            style={({ pressed }) => [styles.secondaryControl, pressed && styles.controlPressed]}
           >
-            <Text style={styles.secondaryControlText}>{tEpisode("skipBack")}</Text>
+            <SkipGlyph color={withAlpha(fg, 0.82)} direction="back" seconds={15} size={30} />
           </Pressable>
           <Pressable
+            accessibilityLabel={playLabel}
             accessibilityRole="button"
             onPress={() => void togglePlayback()}
-            style={[
+            style={({ pressed }) => [
               styles.primaryControl,
-              {
-                backgroundColor: "#F4F1E8",
-                borderRadius: 14,
-              },
+              { backgroundColor: fg },
+              pressed && styles.controlPressed,
             ]}
           >
-            <Text style={styles.primaryControlText}>{playLabel}</Text>
+            {hasFinished ? (
+              <ReplayGlyph color={theme.colors.heading} size={26} />
+            ) : isPlaying ? (
+              <PauseGlyph color={theme.colors.heading} size={26} />
+            ) : (
+              <PlayGlyph color={theme.colors.heading} size={26} />
+            )}
           </Pressable>
           <Pressable
+            accessibilityLabel={tEpisode("skipForward")}
             accessibilityRole="button"
+            hitSlop={12}
             onPress={() => void seekBy(30)}
-            style={styles.secondaryControl}
+            style={({ pressed }) => [styles.secondaryControl, pressed && styles.controlPressed]}
           >
-            <Text style={styles.secondaryControlText}>{tEpisode("skipForward")}</Text>
+            <SkipGlyph color={withAlpha(fg, 0.82)} direction="forward" seconds={30} size={30} />
           </Pressable>
         </View>
 
@@ -392,12 +424,14 @@ export default function PlayerScreen() {
             style={[
               styles.videoAction,
               {
-                borderColor: "rgba(244, 241, 232, 0.14)",
+                borderColor: withAlpha(fg, 0.14),
                 borderRadius: 12,
               },
             ]}
           >
-            <Text style={styles.videoActionText}>{tVideo("enterPictureInPicture")}</Text>
+            <Text style={[styles.videoActionText, { color: fg }]}>
+              {tVideo("enterPictureInPicture")}
+            </Text>
           </Pressable>
         ) : null}
       </View>
@@ -423,7 +457,6 @@ const styles = StyleSheet.create({
     width: 36,
   },
   topActionText: {
-    color: "#F4F1E8",
     fontFamily: fontFamilies.bodySemiBold,
     fontSize: 22,
     lineHeight: 24,
@@ -453,7 +486,6 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   audioArtworkFallbackGlyph: {
-    color: "#FFFFFF",
     fontFamily: fontFamilies.displayBold,
     fontSize: 42,
   },
@@ -499,7 +531,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   progressTrack: {
-    backgroundColor: "rgba(244, 241, 232, 0.12)",
     borderRadius: 3,
     height: 6,
     overflow: "hidden",
@@ -513,7 +544,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   timeText: {
-    color: "rgba(244, 241, 232, 0.52)",
     fontFamily: fontFamilies.mono,
     fontSize: 10,
   },
@@ -527,26 +557,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 10,
     justifyContent: "center",
-    minWidth: 68,
+    minWidth: 56,
     paddingHorizontal: 8,
     paddingVertical: 10,
-  },
-  secondaryControlText: {
-    color: "rgba(244, 241, 232, 0.72)",
-    fontFamily: fontFamilies.mono,
-    fontSize: 13,
   },
   primaryControl: {
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 56,
-    minWidth: 124,
-    paddingHorizontal: 20,
+    height: 76,
+    width: 76,
+    borderRadius: 38,
   },
-  primaryControlText: {
-    color: "#14110E",
-    fontFamily: fontFamilies.bodySemiBold,
-    fontSize: 16,
+  controlPressed: {
+    opacity: 0.7,
   },
   videoAction: {
     alignItems: "center",
@@ -557,7 +580,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   videoActionText: {
-    color: "#F4F1E8",
     fontFamily: fontFamilies.bodySemiBold,
     fontSize: 14,
   },

@@ -19,6 +19,7 @@ import { useVideoPlayer, type VideoPlayer } from "expo-video";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
+import { PauseGlyph, PlayGlyph, ReplayGlyph } from "../../components/media/player-icons";
 import { useTabBarSpace } from "../../components/navigation/app-tab-bar";
 import { useResponsive } from "../responsive/use-responsive";
 import { fontFamilies } from "../theme/fonts";
@@ -634,25 +635,22 @@ export function PersistentMediaMiniPlayer() {
 
         <View style={styles.actions}>
           <Pressable
+            accessibilityLabel={playButtonLabel}
             accessibilityRole="button"
             onPress={() => void togglePlayback()}
             style={({ pressed }) => [
               styles.playButton,
-              {
-                borderRadius: 10,
-                backgroundColor: theme.colors.accent,
-              },
+              { backgroundColor: theme.colors.accent },
               pressed && styles.pressed,
             ]}
           >
-            <Text
-              style={[
-                styles.playButtonText,
-                { color: theme.colors.accentContrast, fontSize: 11 * scaleFont },
-              ]}
-            >
-              {playButtonLabel}
-            </Text>
+            {hasFinished ? (
+              <ReplayGlyph color={theme.colors.accentContrast} size={15} />
+            ) : isPlaying ? (
+              <PauseGlyph color={theme.colors.accentContrast} size={15} />
+            ) : (
+              <PlayGlyph color={theme.colors.accentContrast} size={15} />
+            )}
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -724,15 +722,11 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   playButton: {
-    minWidth: 44,
-    minHeight: 40,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 10,
-  },
-  playButtonText: {
-    fontFamily: fontFamilies.bodySemiBold,
-    lineHeight: 16,
   },
   closeButton: {
     width: 28,

@@ -28,6 +28,7 @@ Priority order:
 
 ### Mobile foundation rules
 
+- **Never hardcode colors. Ever.** Every color must come from the active theme tokens (`theme.colors.*` via `useAppTheme()`), never a literal hex/rgba in a component. The palette is user-selectable in Settings and includes a dark `midnight` palette, so do not assume a token is light or dark — pair backgrounds and foregrounds from tokens that move together (e.g. `heading` background ↔ `canvas` foreground, `accent` ↔ `accentContrast`). For translucent variants use the `withAlpha(theme.colors.x, a)` helper, not a literal `rgba(...)`. If a needed color is missing, add a token to every palette in `src/features/theme/palette-catalog.ts`. Verify against all palettes (especially `midnight`) before declaring done. Fonts likewise come from the centralized theme `fontFamilies`.
 - For Clerk + Convex in Expo, prefer the proven `ConvexProviderWithClerk` pattern over a plain `ConvexProvider` when authenticated queries are involved.
 - Keep translations modular and split by page or feature. Do not accumulate all strings in one monolithic translation file.
 - Treat iPhone and iPad responsiveness as a first-pass requirement, not a later polish pass.

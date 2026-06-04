@@ -14,6 +14,7 @@ import { api } from "../../convex/_generated/api";
 import { MemberGateCard } from "../../src/components/auth/member-gate-card";
 import { Screen } from "../../src/components/layout/screen";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
+import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 export default function ProfileScreen() {
@@ -160,7 +161,9 @@ function AuthenticatedProfileContent({
             pressed && styles.buttonPressed,
           ]}
         >
-          <Text style={styles.buttonText}>{t("common:actions.signOut")}</Text>
+          <Text style={[styles.buttonText, { color: theme.colors.canvas }]}>
+            {t("common:actions.signOut")}
+          </Text>
         </Pressable>
       </View>
     </Screen>
@@ -176,22 +179,23 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   eyebrow: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontFamily: fontFamilies.mono,
+    fontSize: 11,
+    letterSpacing: 1.6,
     textTransform: "uppercase",
   },
-  title: { fontSize: 28, fontWeight: "700" },
-  description: { fontSize: 16, lineHeight: 24 },
+  title: { fontFamily: fontFamilies.display, fontSize: 28, letterSpacing: -0.4 },
+  description: { fontFamily: fontFamilies.body, fontSize: 16, lineHeight: 24 },
   card: { gap: 8, padding: 20 },
-  cardTitle: { fontSize: 18, fontWeight: "700" },
-  cardText: { fontSize: 15, lineHeight: 22 },
+  cardTitle: { fontFamily: fontFamilies.display, fontSize: 18, letterSpacing: -0.2 },
+  cardText: { fontFamily: fontFamilies.body, fontSize: 15, lineHeight: 22 },
   row: { flexDirection: "row", alignItems: "center", gap: 10 },
-  code: { fontFamily: "Courier", fontSize: 12 },
+  code: { fontFamily: fontFamilies.mono, fontSize: 12 },
   button: {
     alignSelf: "flex-start",
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   buttonPressed: { opacity: 0.8 },
-  buttonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
+  buttonText: { fontFamily: fontFamilies.bodySemiBold, fontSize: 15 },
 });

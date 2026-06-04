@@ -60,4 +60,29 @@ describe("video detail", () => {
     expect(screen.getByTestId("youtube-player")).toBeTruthy();
     expect(screen.getByText("Open on YouTube")).toBeTruthy();
   });
+
+  it("renders a Picture in Picture action for hosted videos", () => {
+    mockUseQuery.mockReturnValue({
+      _id: "video_2",
+      tenantSlug: "demo-media",
+      kind: "video",
+      status: "published",
+      title: "Film manifeste",
+      summary: "Hosted long-form video.",
+      category: "Film",
+      tags: ["video"],
+      isPremium: false,
+      publishedAt: "2026-06-03T10:00:00.000Z",
+      videoSource: {
+        kind: "hosted",
+        uploadKey: "video-asset-1",
+        playbackUrl: "https://cdn.example.com/video.mp4",
+      },
+    });
+
+    render(<VideoDetailScreen />);
+
+    expect(screen.getByTestId("hosted-video-player")).toBeTruthy();
+    expect(screen.getByText("Picture in Picture")).toBeTruthy();
+  });
 });

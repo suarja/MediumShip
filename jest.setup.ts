@@ -38,9 +38,17 @@ jest.mock("expo-video", () => {
   const { View } = require("react-native");
 
   return {
+    isPictureInPictureSupported: () => true,
     useVideoPlayer: () => ({}),
-    VideoView: ({ testID }: { testID?: string }) =>
-      React.createElement(View, { testID }),
+    VideoView: React.forwardRef(
+      ({ testID }: { testID?: string }, ref: React.Ref<{ startPictureInPicture: () => Promise<void> }>) => {
+        React.useImperativeHandle(ref, () => ({
+          startPictureInPicture: jest.fn().mockResolvedValue(undefined),
+        }));
+
+        return React.createElement(View, { testID });
+      },
+    ),
   };
 });
 

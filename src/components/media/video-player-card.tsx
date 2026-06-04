@@ -1,6 +1,11 @@
+import { useRef } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { useVideoPlayer, VideoView } from "expo-video";
+import {
+  isPictureInPictureSupported,
+  useVideoPlayer,
+  VideoView,
+} from "expo-video";
 import * as WebBrowser from "expo-web-browser";
 import { WebView } from "react-native-webview";
 import { useTranslation } from "react-i18next";
@@ -27,6 +32,7 @@ export function VideoPlayerCard({ source }: VideoPlayerCardProps) {
   const { t } = useTranslation("video");
   const { theme } = useAppTheme();
   const { scaleFont } = useResponsive();
+  const hostedVideoRef = useRef<VideoView>(null);
   const player = useVideoPlayer(
     source.kind === "hosted" ? { uri: source.playbackUrl } : null,
   );
@@ -88,6 +94,8 @@ export function VideoPlayerCard({ source }: VideoPlayerCardProps) {
     );
   }
 
+  const pipSupported = isPictureInPictureSupported();
+
   return (
     <View style={styles.wrapper}>
       <View
@@ -105,10 +113,34 @@ export function VideoPlayerCard({ source }: VideoPlayerCardProps) {
           contentFit="cover"
           nativeControls
           player={player}
+          ref={hostedVideoRef}
           style={styles.videoView}
           testID="hosted-video-player"
         />
       </View>
+      {pipSupported ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void hostedVideoRef.current?.startPictureInPicture()}
+          style={({ pressed }) => [
+            styles.linkButton,
+            {
+              backgroundColor: theme.colors.accentSoft,
+              borderRadius: theme.radii.pill,
+            },
+            pressed && styles.pressed,
+          ]}
+        >
+          <Text
+            style={[
+              styles.linkButtonText,
+              { color: theme.colors.accent, fontSize: 14 * scaleFont },
+            ]}
+          >
+            {t("enterPictureInPicture")}
+          </Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }

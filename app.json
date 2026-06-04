@@ -17,7 +17,12 @@
       "expo-web-browser",
       "expo-font",
       "expo-audio",
-      "expo-video"
+      [
+        "expo-video",
+        {
+          "supportsPictureInPicture": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

@@ -1,9 +1,6 @@
 import { mutation } from "../_generated/server";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
 
-const demoEpisodeAudioUrl =
-  "https://d3ctxlq1ktw2nl.cloudfront.net/staging/2020-11-30/141758914-44100-2-fc5d22f01b785193.mp3";
-
 const demoContents = [
   {
     tenantSlug: defaultTenant.slug,
@@ -32,7 +29,38 @@ const demoContents = [
     isPremium: true,
     publishedAt: "2026-06-03T09:00:00.000Z",
     durationSeconds: 3240,
-    audioUrl: demoEpisodeAudioUrl,
+    audioUrl:
+      "https://d3ctxlq1ktw2nl.cloudfront.net/staging/2020-11-30/141758914-44100-2-fc5d22f01b785193.mp3",
+  },
+  {
+    tenantSlug: defaultTenant.slug,
+    status: "published" as const,
+    slug: "monde-dapres-episode-2",
+    kind: "episode" as const,
+    title: "Monde d'apres · Episode 2",
+    summary: "Conversation sur le care, les institutions et l'apres-crise.",
+    category: "Podcast",
+    tags: ["podcast", "care"],
+    isPremium: false,
+    publishedAt: "2026-06-03T09:30:00.000Z",
+    durationSeconds: 3120,
+    audioUrl:
+      "https://d3ctxlq1ktw2nl.cloudfront.net/staging/2020-11-30/141758893-44100-2-0e99e327fd0086f3.mp3",
+  },
+  {
+    tenantSlug: defaultTenant.slug,
+    status: "published" as const,
+    slug: "monde-dapres-episode-3",
+    kind: "episode" as const,
+    title: "Monde d'apres · Episode 3",
+    summary: "Long format sur les formes de solidarite qui tiennent encore.",
+    category: "Podcast",
+    tags: ["podcast", "solidarite"],
+    isPremium: false,
+    publishedAt: "2026-06-03T09:45:00.000Z",
+    durationSeconds: 2980,
+    audioUrl:
+      "https://d3ctxlq1ktw2nl.cloudfront.net/staging/2020-11-30/141758850-44100-2-c3873faffdf20e90.mp3",
   },
   {
     tenantSlug: defaultTenant.slug,
@@ -121,10 +149,11 @@ export const seedDemoContent = mutation({
       } else if (
         content.kind === "episode" &&
         (!existingContent.audioUrl ||
-          existingContent.audioUrl.includes("example.com/audio/"))
+          existingContent.audioUrl.includes("example.com/audio/") ||
+          existingContent.audioUrl !== content.audioUrl)
       ) {
         await ctx.db.patch(existingContent._id, {
-          audioUrl: demoEpisodeAudioUrl,
+          audioUrl: content.audioUrl,
         });
       }
     }

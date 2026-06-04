@@ -10,6 +10,7 @@ export default {
   providerLabel: "Source: {{provider}}",
   youtubeProvider: "YouTube",
   hostedProvider: "Hosted",
+  enterPictureInPicture: "Picture in Picture",
   openExternal: "Open on YouTube",
   unavailable: "This video has no playable source yet.",
 } as const;

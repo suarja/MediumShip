@@ -15,7 +15,7 @@ import {
 } from "expo-audio";
 import { useEventListener } from "expo";
 import { useRouter, useSegments } from "expo-router";
-import { useVideoPlayer, type VideoPlayer } from "expo-video";
+import { useVideoPlayer, VideoView, type VideoPlayer } from "expo-video";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
@@ -633,16 +633,42 @@ export function PersistentMediaMiniPlayer() {
     durationSeconds,
     hasFinished,
     isPlaying,
+    videoPlayer,
     closePlayer,
     openPlayer,
     togglePlayback,
   } = usePersistentMediaPlayer();
+  const pipVideoRef = useRef<VideoView>(null);
+  const [isPipActive, setIsPipActive] = useState(false);
+
+  const isHostedVideo = activeSession?.kind === "hostedVideo";
+  const onPlayerScreen = shouldHideMiniPlayerForSegments(segments);
+  const shouldHost = Boolean(activeSession) && isHostedVideo && !onPlayerScreen;
+
+  // The mini-player is always mounted at the app root, so it is the stable
+  // surface that can hold Picture-in-Picture across navigation. When it appears
+  // for a hosted video (i.e. you have left the player screen), start PiP; when
+  // it unmounts (you return to the player, or close), PiP stops with it. This is
+  // why PiP must NOT be driven from the player screen's own VideoView, which is
+  // torn down the moment you navigate away.
+  useEffect(() => {
+    if (!shouldHost) {
+      setIsPipActive(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      void pipVideoRef.current?.startPictureInPicture().catch(() => {});
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [shouldHost]);
 
   if (!activeSession) {
     return null;
   }
 
-  if (shouldHideMiniPlayerForSegments(segments)) {
+  if (onPlayerScreen) {
     return null;
   }
 
@@ -676,6 +702,24 @@ export function PersistentMediaMiniPlayer() {
           },
         ]}
       >
+        {isHostedVideo && videoPlayer ? (
+          <VideoView
+            allowsPictureInPicture
+            contentFit="cover"
+            nativeControls={false}
+            onPictureInPictureStart={() => setIsPipActive(true)}
+            onPictureInPictureStop={() => setIsPipActive(false)}
+            player={videoPlayer}
+            ref={pipVideoRef}
+            startsPictureInPictureAutomatically
+            style={[
+              styles.miniVideo,
+              { backgroundColor: theme.colors.canvasAccent },
+              isPipActive && styles.miniVideoHidden,
+            ]}
+          />
+        ) : null}
+
         <Pressable
           accessibilityRole="button"
           onPress={openPlayer}
@@ -781,6 +825,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 18,
     elevation: 10,
+  },
+  miniVideo: {
+    width: 56,
+    height: 34,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  miniVideoHidden: {
+    display: "none",
   },
   metaBlock: {
     flex: 1,

@@ -130,25 +130,23 @@ export default function PlayerScreen() {
   const isHostedVideo =
     content?.kind === "video" && content.videoSource?.kind === "hosted";
 
-  // Keep the hosted video alive in Picture-in-Picture when leaving the player by
-  // in-app navigation (back, deep link, etc.). Only the mini-player's close (X)
-  // tears the session down. Background PiP (home / app switcher) is handled by
-  // the VideoView's `startsPictureInPictureAutomatically` prop.
+  // Navigation drives PiP: the always-mounted mini-player starts PiP when you
+  // leave the player. Coming back onto the player screen, the inline surface
+  // shows the video, so we cancel any active PiP — seeing the floating window
+  // on top of the full player would be odd.
   useFocusEffect(
     useCallback(() => {
-      return () => {
-        if (isHostedVideo && !hasFinished) {
-          void hostedVideoRef.current?.startPictureInPicture().catch(() => {});
-        }
-      };
-    }, [isHostedVideo, hasFinished]),
+      if (isHostedVideo) {
+        void hostedVideoRef.current?.stopPictureInPicture().catch(() => {});
+      }
+    }, [isHostedVideo]),
   );
 
   // "Rotate to fullscreen", YouTube-style, while keeping the app in portrait
-  // elsewhere: unlock orientation only on the player screen so a physical
-  // landscape rotation is detected, then present the native fullscreen player
-  // (which rotates on its own). Portrait is restored on leave and on fullscreen
-  // exit; the explicit fullscreen button below is the always-reliable path.
+  // elsewhere: unlock orientation only on the player screen so physical rotation
+  // is detected — landscape enters the native fullscreen player, portrait exits
+  // it. Portrait is re-locked on leave; the explicit Fullscreen button is the
+  // always-reliable path.
   useFocusEffect(
     useCallback(() => {
       if (!isHostedVideo) {
@@ -164,6 +162,11 @@ export default function PlayerScreen() {
             orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
           ) {
             void hostedVideoRef.current?.enterFullscreen().catch(() => {});
+          } else if (
+            orientation === ScreenOrientation.Orientation.PORTRAIT_UP ||
+            orientation === ScreenOrientation.Orientation.PORTRAIT_DOWN
+          ) {
+            void hostedVideoRef.current?.exitFullscreen().catch(() => {});
           }
         },
       );
@@ -441,11 +444,6 @@ export default function PlayerScreen() {
                 allowsPictureInPicture
                 contentFit="cover"
                 nativeControls
-                onFullscreenExit={() => {
-                  void ScreenOrientation.lockAsync(
-                    ScreenOrientation.OrientationLock.PORTRAIT_UP,
-                  ).catch(() => {});
-                }}
                 player={videoPlayer}
                 ref={hostedVideoRef}
                 startsPictureInPictureAutomatically
@@ -568,34 +566,18 @@ export default function PlayerScreen() {
         </View>
 
         {content.kind === "video" && videoPlayer ? (
-          <View style={styles.videoActionRow}>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => void hostedVideoRef.current?.enterFullscreen()}
-              style={[
-                styles.videoAction,
-                styles.videoActionFlex,
-                { borderColor: withAlpha(fg, 0.14), borderRadius: 12 },
-              ]}
-            >
-              <Text style={[styles.videoActionText, { color: fg }]}>
-                {tVideo("fullscreen")}
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => void hostedVideoRef.current?.startPictureInPicture()}
-              style={[
-                styles.videoAction,
-                styles.videoActionFlex,
-                { borderColor: withAlpha(fg, 0.14), borderRadius: 12 },
-              ]}
-            >
-              <Text style={[styles.videoActionText, { color: fg }]}>
-                {tVideo("enterPictureInPicture")}
-              </Text>
-            </Pressable>
-          </View>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => void hostedVideoRef.current?.enterFullscreen()}
+            style={[
+              styles.videoAction,
+              { borderColor: withAlpha(fg, 0.14), borderRadius: 12 },
+            ]}
+          >
+            <Text style={[styles.videoActionText, { color: fg }]}>
+              {tVideo("fullscreen")}
+            </Text>
+          </Pressable>
         ) : null}
       </View>
     </SafeAreaView>
@@ -734,11 +716,6 @@ const styles = StyleSheet.create({
   controlPressed: {
     opacity: 0.7,
   },
-  videoActionRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 4,
-  },
   videoAction: {
     alignItems: "center",
     borderWidth: StyleSheet.hairlineWidth,
@@ -746,10 +723,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
     minHeight: 46,
     paddingHorizontal: 18,
-  },
-  videoActionFlex: {
-    flex: 1,
-    marginTop: 0,
   },
   videoActionText: {
     fontFamily: fontFamilies.bodySemiBold,

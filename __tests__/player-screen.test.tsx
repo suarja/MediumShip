@@ -120,6 +120,6 @@ describe("PlayerScreen", () => {
     render(<PlayerScreen />);
 
     expect(screen.getByTestId("player-screen-video")).toBeTruthy();
-    expect(screen.getByText("Picture in Picture")).toBeTruthy();
+    expect(screen.getByText("Fullscreen")).toBeTruthy();
   });
 });

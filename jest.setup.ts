@@ -92,9 +92,12 @@ jest.mock("expo-video", () => {
     isPictureInPictureSupported: () => true,
     useVideoPlayer: () => mockVideoPlayer,
     VideoView: React.forwardRef(
-      ({ testID }: { testID?: string }, ref: React.Ref<{ startPictureInPicture: () => Promise<void> }>) => {
+      ({ testID }: { testID?: string }, ref: React.Ref<unknown>) => {
         React.useImperativeHandle(ref, () => ({
           startPictureInPicture: jest.fn().mockResolvedValue(undefined),
+          stopPictureInPicture: jest.fn().mockResolvedValue(undefined),
+          enterFullscreen: jest.fn().mockResolvedValue(undefined),
+          exitFullscreen: jest.fn().mockResolvedValue(undefined),
         }));
 
         return React.createElement(View, { testID });
@@ -114,6 +117,7 @@ jest.mock("expo-screen-orientation", () => ({
   removeOrientationChangeListener: jest.fn(),
   Orientation: {
     PORTRAIT_UP: 1,
+    PORTRAIT_DOWN: 2,
     LANDSCAPE_LEFT: 3,
     LANDSCAPE_RIGHT: 4,
   },

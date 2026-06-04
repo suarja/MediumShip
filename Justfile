@@ -28,8 +28,10 @@ start-clean:
     npx expo start --clear
 
 # ─── iOS simulators ──────────────────────────────────────────────────────────
-# These need `just start` running in another tab. They drive simulators via
-# `xcrun simctl` (no AppleScript), so they work even when Expo's `i` crashes.
+# `just ios` / `just ipad` expect an already-installed app (Expo Go or dev
+# client) and a running `just start`. Use the rebuild recipes below whenever
+# native modules, Expo plugins, or simulator app state drift make Metro reloads
+# insufficient.
 
 # Open the app on the iPhone simulator.
 [group('ios')]
@@ -45,6 +47,26 @@ ipad:
 [group('ios')]
 ios-both:
     IPHONE_NAME="{{iphone}}" IPAD_NAME="{{ipad}}" scripts/ios.sh both
+
+# Rebuild and install the iPhone app binary, then launch it.
+[group('ios')]
+ios-rebuild:
+    npx expo run:ios --device "{{iphone}}"
+
+# Same as `ios-rebuild`, but clears Xcode derived data first.
+[group('ios')]
+ios-rebuild-clean:
+    npx expo run:ios --device "{{iphone}}" --no-build-cache
+
+# Rebuild and install the iPad app binary, then launch it.
+[group('ios')]
+ipad-rebuild:
+    npx expo run:ios --device "{{ipad}}"
+
+# Same as `ipad-rebuild`, but clears Xcode derived data first.
+[group('ios')]
+ipad-rebuild-clean:
+    npx expo run:ios --device "{{ipad}}" --no-build-cache
 
 # Run on Android / web via Expo's own launchers.
 [group('ios')]

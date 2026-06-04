@@ -8,9 +8,9 @@ import { useAppTheme } from "../../features/theme/theme-provider";
 
 /**
  * Compact editorial masthead from the Civica mockup: an italic-serif wordmark
- * with an accent dot on the left, and a single settings affordance on the
- * right. The dark hero card below carries the editorial weight, so this stays
- * deliberately light. Tenant name and all colours come from the resolved theme.
+ * with an accent dot on the left, and the app icon on the right. The dark hero
+ * card below carries the editorial weight, so this stays deliberately light.
+ * Tenant branding and all colours come from the resolved theme.
  */
 export function BrandHeader() {
   const { appIconUrl, brandLogoUrl, theme, tenantName } = useAppTheme();
@@ -78,11 +78,18 @@ export function BrandHeader() {
               style={styles.appIcon}
             />
           ) : (
-            <Text
-              style={[styles.icon, { color: theme.colors.heading, fontSize: 15 * scaleFont }]}
+            <View
+              style={[
+                styles.appIconFallback,
+                {
+                  backgroundColor: theme.colors.surfaceMuted,
+                },
+              ]}
             >
-              ⚙
-            </Text>
+              <Text style={[styles.appIconFallbackLabel, { color: theme.colors.heading }]}>
+                {(tenantName.trim().charAt(0) || "M").toUpperCase()}
+              </Text>
+            </View>
           )}
         </Pressable>
       </Link>
@@ -107,6 +114,16 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   pressed: { opacity: 0.7 },
-  icon: { fontWeight: "700" },
   appIcon: { width: "100%", height: "100%" },
+  appIconFallback: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  appIconFallbackLabel: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: 14,
+    lineHeight: 16,
+  },
 });

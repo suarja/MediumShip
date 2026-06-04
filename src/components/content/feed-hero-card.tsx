@@ -37,17 +37,19 @@ export function FeedHeroCard({
     <Link href={item.href as never} asChild>
       <Pressable
         accessibilityRole="link"
-        style={({ pressed }) => [
-          styles.card,
-          {
-            borderRadius: theme.radii.xl,
-            backgroundColor: heroBg,
-            shadowColor: theme.colors.heading,
-          },
-          pressed && styles.pressed,
-        ]}
+        style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
       >
-        <View style={[styles.media, { height: mediaHeight }]}>
+        <View
+          style={[
+            styles.card,
+            {
+              borderRadius: theme.radii.xl,
+              backgroundColor: heroBg,
+              shadowColor: theme.colors.heading,
+            },
+          ]}
+        >
+          <View style={[styles.media, { height: mediaHeight }]}>
           {item.coverImageUrl ? (
             <Image
               accessibilityLabel={`${item.title} cover`}
@@ -115,12 +117,14 @@ export function FeedHeroCard({
             </View>
           ) : null}
         </View>
+       </View>
       </Pressable>
     </Link>
   );
 }
 
 const styles = StyleSheet.create({
+  pressable: {},
   card: {
     overflow: "hidden",
     shadowOffset: { width: 0, height: 12 },

@@ -32,17 +32,19 @@ export function FeedRow({
     <Link href={item.href as never} asChild>
       <Pressable
         accessibilityRole="link"
-        style={({ pressed }) => [
-          styles.row,
-          {
-            gap: theme.spacing.md * scaleSpace,
-            paddingTop: divider ? theme.spacing.md * scaleSpace : 0,
-            borderTopWidth: divider ? StyleSheet.hairlineWidth : 0,
-            borderTopColor: theme.colors.border,
-          },
-          pressed && styles.pressed,
-        ]}
+        style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
       >
+        <View
+          style={[
+            styles.row,
+            {
+              gap: theme.spacing.md * scaleSpace,
+              paddingTop: divider ? theme.spacing.md * scaleSpace : 0,
+              borderTopWidth: divider ? StyleSheet.hairlineWidth : 0,
+              borderTopColor: theme.colors.border,
+            },
+          ]}
+        >
         <View
           style={[
             styles.tile,
@@ -97,12 +99,14 @@ export function FeedRow({
             </Text>
           ) : null}
         </View>
+        </View>
       </Pressable>
     </Link>
   );
 }
 
 const styles = StyleSheet.create({
+  pressable: {},
   row: { flexDirection: "row", alignItems: "center" },
   pressed: { opacity: 0.7 },
   tile: {

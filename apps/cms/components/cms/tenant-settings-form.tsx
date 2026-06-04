@@ -6,8 +6,11 @@ import { useEffect, useMemo, useState } from "react";
 
 import { api } from "../../../../convex/_generated/api";
 import {
+  createDefaultFeedSection,
   ENABLED_MODULES,
   contentKindToModule,
+  moduleToContentKind,
+  PUBLIC_CONTENT_MODULES,
   type FeedSectionConfig,
 } from "../../../../src/features/tenant/public-config";
 import {
@@ -220,12 +223,43 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
     [paletteName],
   );
 
-  const toggleModule = (module: string) => {
+  const enabledPublicModules = useMemo(
+    () =>
+      enabledModules.filter((module): module is (typeof PUBLIC_CONTENT_MODULES)[number] =>
+        PUBLIC_CONTENT_MODULES.includes(module as (typeof PUBLIC_CONTENT_MODULES)[number]),
+      ),
+    [enabledModules],
+  );
+
+  const addableKinds = useMemo(() => {
+    const usedKinds = new Set(feedSections.map((section) => section.kind));
+    return enabledPublicModules
+      .map((module) => moduleToContentKind(module))
+      .filter((kind) => !usedKinds.has(kind));
+  }, [enabledPublicModules, feedSections]);
+
+  const toggleModule = (module: (typeof ENABLED_MODULES)[number]) => {
+    const isEnabled = enabledModules.includes(module);
+
     setEnabledModules((current) =>
-      current.includes(module)
+      isEnabled
         ? current.filter((value) => value !== module)
         : [...current, module],
     );
+
+    if (module !== "premium") {
+      const kind = moduleToContentKind(module);
+      setFeedSections((current) => {
+        if (isEnabled) {
+          return current.filter((section) => section.kind !== kind);
+        }
+
+        return current.some((section) => section.kind === kind)
+          ? current
+          : [...current, createDefaultFeedSection(kind)];
+      });
+    }
+
     setSaveLabel("Enregistrer");
   };
 
@@ -254,10 +288,12 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
   };
 
   const addSection = () => {
-    setFeedSections((current) => [
-      ...current,
-      { kind: "article", title: "Nouvelle section" },
-    ]);
+    const nextKind = addableKinds[0];
+    if (!nextKind) {
+      return;
+    }
+
+    setFeedSections((current) => [...current, createDefaultFeedSection(nextKind)]);
     setSaveLabel("Enregistrer");
   };
 
@@ -433,10 +469,19 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
             <h3 className="tenant-section__t" style={{ marginBottom: 0 }}>
               Architecture <i>du home.</i>
             </h3>
-            <button className="btn btn--surface btn--sm" onClick={addSection} type="button">
+            <button
+              className="btn btn--surface btn--sm"
+              disabled={addableKinds.length === 0}
+              onClick={addSection}
+              type="button"
+            >
               Ajouter
             </button>
           </div>
+          <p className="tenant-note" style={{ marginBottom: 10 }}>
+            Les modules activent les formats publics. Les sections du feed choisissent
+            lesquels apparaissent sur le home et dans quel ordre.
+          </p>
           <div className="feed-list">
             {feedSections.map((section, index) => (
               <div className="feed-row" key={`${section.kind}-${index}`}>
@@ -450,9 +495,21 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
                   }
                   value={section.kind}
                 >
-                  <option value="article">article</option>
-                  <option value="episode">episode</option>
-                  <option value="video">video</option>
+                  {enabledPublicModules
+                    .map((module) => moduleToContentKind(module))
+                    .filter(
+                      (kind) =>
+                        kind === section.kind ||
+                        !feedSections.some(
+                          (existing, existingIndex) =>
+                            existingIndex !== index && existing.kind === kind,
+                        ),
+                    )
+                    .map((kind) => (
+                      <option key={kind} value={kind}>
+                        {KIND_LABELS[kind]}
+                      </option>
+                    ))}
                 </select>
                 <input
                   className="input"

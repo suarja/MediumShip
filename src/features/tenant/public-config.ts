@@ -20,6 +20,12 @@ export const DEFAULT_FEED_SECTIONS: FeedSectionConfig[] = [
   { kind: "video", title: "Watch now" },
 ];
 
+const DEFAULT_FEED_SECTION_TITLES: Record<ContentKind, string> = {
+  article: "Latest stories",
+  episode: "New episodes",
+  video: "Watch now",
+};
+
 const CONTENT_KIND_MODULES: Record<ContentKind, EnabledModule> = {
   article: "articles",
   episode: "episodes",
@@ -28,6 +34,13 @@ const CONTENT_KIND_MODULES: Record<ContentKind, EnabledModule> = {
 
 export function isEnabledModule(value: string): value is EnabledModule {
   return (ENABLED_MODULES as readonly string[]).includes(value);
+}
+
+export function createDefaultFeedSection(kind: ContentKind): FeedSectionConfig {
+  return {
+    kind,
+    title: DEFAULT_FEED_SECTION_TITLES[kind],
+  };
 }
 
 export function normalizeEnabledModules(
@@ -53,7 +66,16 @@ export function normalizeFeedSections(
   );
 
   if (sections !== undefined) {
-    return sections.filter((section) => enabledKinds.has(section.kind));
+    const seenKinds = new Set<ContentKind>();
+
+    return sections.filter((section) => {
+      if (!enabledKinds.has(section.kind) || seenKinds.has(section.kind)) {
+        return false;
+      }
+
+      seenKinds.add(section.kind);
+      return true;
+    });
   }
 
   return DEFAULT_FEED_SECTIONS.filter((section) => enabledKinds.has(section.kind));

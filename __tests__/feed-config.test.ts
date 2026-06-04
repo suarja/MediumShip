@@ -1,8 +1,10 @@
 import { describe, expect, it } from "@jest/globals";
 
 import {
+  createDefaultFeedSection,
   filterAndOrderFeedContent,
   normalizeEnabledModules,
+  normalizeFeedSections,
 } from "../src/features/tenant/public-config";
 import type { ContentDoc } from "../src/features/content/types";
 
@@ -90,5 +92,32 @@ describe("filterAndOrderFeedContent", () => {
 describe("normalizeEnabledModules", () => {
   it("keeps an explicit empty module selection instead of restoring defaults", () => {
     expect(normalizeEnabledModules([])).toEqual([]);
+  });
+});
+
+describe("normalizeFeedSections", () => {
+  it("removes duplicate kinds while keeping the first occurrence", () => {
+    expect(
+      normalizeFeedSections(
+        [
+          { kind: "article", title: "Read now" },
+          { kind: "article", title: "Again" },
+          { kind: "video", title: "Watch now" },
+        ],
+        ["articles", "videos", "premium"],
+      ),
+    ).toEqual([
+      { kind: "article", title: "Read now" },
+      { kind: "video", title: "Watch now" },
+    ]);
+  });
+});
+
+describe("createDefaultFeedSection", () => {
+  it("returns the canonical section title for a kind", () => {
+    expect(createDefaultFeedSection("episode")).toEqual({
+      kind: "episode",
+      title: "New episodes",
+    });
   });
 });

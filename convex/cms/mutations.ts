@@ -417,6 +417,7 @@ export const setContentStatus = mutation({
 
 export const updateTenantSettings = mutation({
   args: {
+    name: v.string(),
     paletteName: v.string(),
     enabledModules: v.array(v.string()),
     feedSections: v.array(
@@ -435,6 +436,7 @@ export const updateTenantSettings = mutation({
 
     const enabledModules = normalizeEnabledModules(args.enabledModules);
     const feedSections = normalizeFeedSections(args.feedSections, enabledModules);
+    const name = args.name.trim() || defaultTenant.name;
 
     const tenant = await ctx.db
       .query("tenants")
@@ -443,6 +445,7 @@ export const updateTenantSettings = mutation({
 
     if (tenant) {
       await ctx.db.patch(tenant._id, {
+        name,
         themeConfig: { paletteName: args.paletteName },
         enabledModules,
         feedSections,
@@ -452,7 +455,7 @@ export const updateTenantSettings = mutation({
 
     return await ctx.db.insert("tenants", {
       slug: defaultTenant.slug,
-      name: defaultTenant.name,
+      name,
       themeConfig: { paletteName: args.paletteName },
       enabledModules,
       feedSections,

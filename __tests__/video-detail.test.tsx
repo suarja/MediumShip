@@ -10,6 +10,8 @@ const mockUseEventListener = jest.fn();
 const mockPush = jest.fn();
 
 jest.mock("convex/react", () => ({
+  useConvexAuth: () => ({ isAuthenticated: false }),
+  useMutation: () => jest.fn(),
   useQuery: (...args: unknown[]) => mockUseQuery(...args),
 }));
 
@@ -29,6 +31,18 @@ jest.mock("../src/features/media/persistent-media-player", () => ({
     closePlayer: jest.fn(),
   }),
   usePersistentMediaPlayerSpace: () => 0,
+}));
+
+jest.mock("../src/features/auth/use-clerk-auth", () => ({
+  useClerkAuth: () => ({
+    isLoaded: true,
+    isSignedIn: false,
+    userId: null,
+    user: null,
+    email: null,
+    fullName: null,
+    signOut: jest.fn(),
+  }),
 }));
 
 jest.mock("expo", () => ({

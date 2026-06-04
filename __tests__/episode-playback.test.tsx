@@ -6,9 +6,21 @@ import {
   usePersistentMediaPlayer,
 } from "../src/features/media/persistent-media-player";
 
+const mockConvexUseQuery = jest.fn();
+
 jest.mock("expo-router", () => ({
   useRouter: () => ({ push: jest.fn() }),
   useSegments: () => ["(app)"],
+}));
+
+jest.mock("convex/react", () => ({
+  useConvexAuth: () => ({ isAuthenticated: false }),
+  useMutation: () => jest.fn(),
+  useQuery: (...args: unknown[]) => mockConvexUseQuery(...args),
+}));
+
+jest.mock("../src/features/membership/use-is-member", () => ({
+  useIsMember: () => ({ isMember: false, isLoading: false }),
 }));
 
 type CreatedPlayer = {
@@ -75,6 +87,7 @@ function Harness() {
 describe("episode playback", () => {
   beforeEach(() => {
     createdPlayers.length = 0;
+    mockConvexUseQuery.mockReturnValue(undefined);
   });
 
   it("builds a source-bearing player and plays it immediately", async () => {

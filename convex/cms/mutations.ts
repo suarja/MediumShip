@@ -57,6 +57,28 @@ function normalizeHeroImageUrl(value: string | null) {
   return trimmed ? normalizeRemoteImageUrl(trimmed) : undefined;
 }
 
+function normalizeAudioUrl(value: string | null) {
+  const trimmed = sanitizeText(value);
+  if (!trimmed) {
+    return undefined;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.hostname === "example.com") {
+      return undefined;
+    }
+
+    if (parsed.protocol === "http:") {
+      parsed.protocol = "https:";
+    }
+
+    return parsed.toString();
+  } catch {
+    return trimmed;
+  }
+}
+
 function normalizeVideoSource(
   source:
     | {
@@ -250,10 +272,7 @@ export const createContent = mutation({
           args.kind === "article"
             ? "Write the first draft here."
             : undefined,
-        audioUrl:
-          args.kind === "episode"
-            ? "https://example.com/audio/draft-episode.mp3"
-            : undefined,
+        audioUrl: undefined,
         durationSeconds:
           args.kind === "episode" || args.kind === "video" ? 1800 : undefined,
         videoSource:
@@ -324,7 +343,7 @@ export const updateContent = mutation({
           ? sanitizeText(args.articleBody)
           : undefined,
       audioUrl:
-        existing.kind === "episode" ? sanitizeText(args.audioUrl) : undefined,
+        existing.kind === "episode" ? normalizeAudioUrl(args.audioUrl) : undefined,
       durationSeconds:
         (existing.kind === "episode" || existing.kind === "video") &&
         args.durationSeconds !== null

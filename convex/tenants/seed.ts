@@ -1,6 +1,8 @@
 import { mutation } from "../_generated/server";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
 
+const demoEpisodeAudioUrl = "https://samplelib.com/lib/preview/mp3/sample-12s.mp3";
+
 const demoContents = [
   {
     tenantSlug: defaultTenant.slug,
@@ -29,7 +31,7 @@ const demoContents = [
     isPremium: true,
     publishedAt: "2026-06-03T09:00:00.000Z",
     durationSeconds: 3240,
-    audioUrl: "https://example.com/audio/lea-bardin.mp3",
+    audioUrl: demoEpisodeAudioUrl,
   },
   {
     tenantSlug: defaultTenant.slug,
@@ -115,6 +117,14 @@ export const seedDemoContent = mutation({
 
       if (!existingContent) {
         await ctx.db.insert("contents", content);
+      } else if (
+        content.kind === "episode" &&
+        (!existingContent.audioUrl ||
+          existingContent.audioUrl.includes("example.com/audio/"))
+      ) {
+        await ctx.db.patch(existingContent._id, {
+          audioUrl: demoEpisodeAudioUrl,
+        });
       }
     }
   },

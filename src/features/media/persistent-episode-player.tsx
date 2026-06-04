@@ -13,7 +13,9 @@ import {
   setAudioModeAsync,
   useAudioPlayerStatus,
 } from "expo-audio";
+import { useEventListener } from "expo";
 import { useRouter, useSegments } from "expo-router";
+import { useVideoPlayer, type VideoPlayer } from "expo-video";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
@@ -23,17 +25,44 @@ import { fontFamilies } from "../theme/fonts";
 import { useAppTheme } from "../theme/theme-provider";
 import { formatMediaClock } from "./format-media-clock";
 
-export const PERSISTENT_EPISODE_PLAYER_HEIGHT = 88;
-const PERSISTENT_EPISODE_PLAYER_GAP = 12;
+export const PERSISTENT_MEDIA_PLAYER_HEIGHT = 64;
+const PERSISTENT_MEDIA_PLAYER_GAP = 8;
+const audioModeConfig = {
+  interruptionMode: "doNotMix" as const,
+  playsInSilentMode: true,
+  shouldPlayInBackground: true,
+};
 
-type EpisodeTrack = {
+export type EpisodeTrack = {
   contentId: string;
   title: string;
   audioUrl: string;
+  artworkUrl?: string;
   durationSeconds?: number;
 };
 
-type PersistentEpisodePlayerContextValue = {
+export type HostedVideoTrack = {
+  contentId: string;
+  title: string;
+  playbackUrl: string;
+  artworkUrl?: string;
+  durationSeconds?: number;
+};
+
+export type ActiveMediaSession =
+  | ({ kind: "episode" } & EpisodeTrack)
+  | ({ kind: "hostedVideo" } & HostedVideoTrack);
+
+type VideoPlaybackState = {
+  currentTimeSeconds: number;
+  durationSeconds: number;
+  isBuffering: boolean;
+  isPlaying: boolean;
+  playbackError: string | null;
+};
+
+type PersistentMediaPlayerContextValue = {
+  activeSession: ActiveMediaSession | null;
   activeTrack: EpisodeTrack | null;
   currentTimeSeconds: number;
   durationSeconds: number;
@@ -41,13 +70,19 @@ type PersistentEpisodePlayerContextValue = {
   isPlaying: boolean;
   hasFinished: boolean;
   playbackError: string | null;
+  videoPlayer: VideoPlayer | null;
+  playEpisode: (track: EpisodeTrack) => Promise<void>;
+  playHostedVideo: (track: HostedVideoTrack) => Promise<void>;
   playTrack: (track: EpisodeTrack) => Promise<void>;
   togglePlayback: () => Promise<void>;
   seekBy: (deltaSeconds: number) => Promise<void>;
+  seekTo: (seconds: number) => Promise<void>;
   closePlayer: () => void;
+  openPlayer: () => void;
 };
 
-const fallbackContextValue: PersistentEpisodePlayerContextValue = {
+const fallbackContextValue: PersistentMediaPlayerContextValue = {
+  activeSession: null,
   activeTrack: null,
   currentTimeSeconds: 0,
   durationSeconds: 0,
@@ -55,25 +90,28 @@ const fallbackContextValue: PersistentEpisodePlayerContextValue = {
   isPlaying: false,
   hasFinished: false,
   playbackError: null,
+  videoPlayer: null,
+  playEpisode: async () => {},
+  playHostedVideo: async () => {},
   playTrack: async () => {},
   togglePlayback: async () => {},
   seekBy: async () => {},
+  seekTo: async () => {},
   closePlayer: () => {},
+  openPlayer: () => {},
 };
 
-const PersistentEpisodePlayerContext =
-  createContext<PersistentEpisodePlayerContextValue>(fallbackContextValue);
+const PersistentMediaPlayerContext =
+  createContext<PersistentMediaPlayerContextValue>(fallbackContextValue);
 
-function safelyReleasePlayer(
-  action: () => void,
-  ignoredMessage: string,
-) {
+function safelyReleasePlayer(action: () => void, ignoredMessage: string) {
   try {
     action();
   } catch (error) {
     if (
       error instanceof Error &&
-      error.message.includes("AppContextLost")
+      (error.message.includes("AppContextLost") ||
+        error.message.includes("NativeSharedObjectNotFoundException"))
     ) {
       return;
     }
@@ -82,63 +120,201 @@ function safelyReleasePlayer(
   }
 }
 
-export function PersistentEpisodePlayerProvider({
+function clampTime(seconds: number, durationSeconds: number) {
+  if (durationSeconds <= 0) {
+    return Math.max(0, seconds);
+  }
+
+  return Math.max(0, Math.min(durationSeconds, seconds));
+}
+
+function shouldHideMiniPlayerForSegments(segments: readonly string[]) {
+  return segments[0] === "player";
+}
+
+export function PersistentMediaPlayerProvider({
   children,
 }: PropsWithChildren) {
-  const [activeTrack, setActiveTrack] = useState<EpisodeTrack | null>(null);
-  const [player, setPlayer] = useState(() =>
+  const [activeSession, setActiveSession] = useState<ActiveMediaSession | null>(null);
+  const [videoState, setVideoState] = useState<VideoPlaybackState>({
+    currentTimeSeconds: 0,
+    durationSeconds: 0,
+    isBuffering: false,
+    isPlaying: false,
+    playbackError: null,
+  });
+  const activeSessionRef = useRef<ActiveMediaSession | null>(null);
+  const router = useRouter();
+  const [audioPlayer, setAudioPlayer] = useState(() =>
     createAudioPlayer(null, { updateInterval: 250 }),
   );
-  const status = useAudioPlayerStatus(player);
-  const activeTrackRef = useRef<EpisodeTrack | null>(null);
+  const audioStatus = useAudioPlayerStatus(audioPlayer);
+  const hostedVideoSession =
+    activeSession?.kind === "hostedVideo"
+      ? {
+          uri: activeSession.playbackUrl,
+          metadata: {
+            artwork: activeSession.artworkUrl,
+            title: activeSession.title,
+          },
+        }
+      : null;
+  const videoPlayer = useVideoPlayer(hostedVideoSession);
 
   useEffect(() => {
-    void setAudioModeAsync({
-      playsInSilentMode: true,
-      shouldPlayInBackground: true,
-    });
+    void setAudioModeAsync(audioModeConfig);
   }, []);
 
   useEffect(() => {
-    if (!activeTrack) {
-      safelyReleasePlayer(() => player.pause(), "Failed to pause audio player");
+    activeSessionRef.current = activeSession;
+  }, [activeSession]);
+
+  useEffect(() => {
+    if (activeSession?.kind !== "hostedVideo") {
+      setVideoState({
+        currentTimeSeconds: 0,
+        durationSeconds: 0,
+        isBuffering: false,
+        isPlaying: false,
+        playbackError: null,
+      });
       return;
     }
-  }, [activeTrack, player]);
+
+    videoPlayer.timeUpdateEventInterval = 0.25;
+    videoPlayer.staysActiveInBackground = true;
+    videoPlayer.showNowPlayingNotification = true;
+  }, [activeSession, videoPlayer]);
+
+  useEventListener(videoPlayer, "playingChange", ({ isPlaying }) => {
+    if (activeSessionRef.current?.kind !== "hostedVideo") {
+      return;
+    }
+
+    setVideoState((current) => ({ ...current, isPlaying }));
+  });
+
+  useEventListener(videoPlayer, "timeUpdate", ({ currentTime }) => {
+    if (activeSessionRef.current?.kind !== "hostedVideo") {
+      return;
+    }
+
+    setVideoState((current) => ({
+      ...current,
+      currentTimeSeconds: currentTime,
+    }));
+  });
+
+  useEventListener(videoPlayer, "sourceLoad", (payload: { duration?: number }) => {
+    if (activeSessionRef.current?.kind !== "hostedVideo") {
+      return;
+    }
+
+    setVideoState((current) => ({
+      ...current,
+      durationSeconds:
+        payload.duration ?? activeSessionRef.current?.durationSeconds ?? 0,
+    }));
+  });
+
+  useEventListener(
+    videoPlayer,
+    "statusChange",
+    (payload: { error?: { message?: string }; status: string }) => {
+      if (activeSessionRef.current?.kind !== "hostedVideo") {
+        return;
+      }
+
+      setVideoState((current) => ({
+        ...current,
+        isBuffering: payload.status === "loading",
+        playbackError: payload.error?.message ?? null,
+      }));
+    },
+  );
+
+  useEventListener(videoPlayer, "playToEnd", () => {
+    if (activeSessionRef.current?.kind !== "hostedVideo") {
+      return;
+    }
+
+    setVideoState((current) => ({
+      ...current,
+      currentTimeSeconds: current.durationSeconds,
+      isPlaying: false,
+    }));
+  });
+
+  const activeTrack =
+    activeSession?.kind === "episode"
+      ? {
+          audioUrl: activeSession.audioUrl,
+          artworkUrl: activeSession.artworkUrl,
+          contentId: activeSession.contentId,
+          durationSeconds: activeSession.durationSeconds,
+          title: activeSession.title,
+        }
+      : null;
+  const currentTimeSeconds =
+    activeSession?.kind === "hostedVideo"
+      ? videoState.currentTimeSeconds
+      : audioStatus.currentTime || 0;
+  const durationSeconds =
+    activeSession?.kind === "hostedVideo"
+      ? videoState.durationSeconds || activeSession.durationSeconds || 0
+      : audioStatus.duration || activeTrack?.durationSeconds || 0;
+  const isBuffering =
+    activeSession?.kind === "hostedVideo"
+      ? videoState.isBuffering
+      : audioStatus.isBuffering;
+  const isPlaying =
+    activeSession?.kind === "hostedVideo"
+      ? videoState.isPlaying
+      : audioStatus.playing;
+  const playbackError =
+    activeSession?.kind === "hostedVideo"
+      ? videoState.playbackError
+      : audioStatus.error;
+  const hasFinished =
+    Boolean(audioStatus.didJustFinish) ||
+    (durationSeconds > 0 && currentTimeSeconds >= durationSeconds);
+
+  const disableAudioLockScreen = () => {};
 
   useEffect(() => {
     return () => {
       safelyReleasePlayer(
-        () => player.remove(),
+        () => audioPlayer.remove(),
         "Failed to release audio player",
       );
     };
-  }, [player]);
+  }, [audioPlayer]);
 
-  useEffect(() => {
-    activeTrackRef.current = activeTrack;
-  }, [activeTrack]);
-
-  const currentTimeSeconds = status.currentTime || 0;
-  const durationSeconds = status.duration || activeTrack?.durationSeconds || 0;
-  const hasFinished =
-    Boolean(status.didJustFinish) ||
-    (durationSeconds > 0 && currentTimeSeconds >= durationSeconds);
-
-  const playTrack = async (track: EpisodeTrack) => {
+  const playEpisode = async (track: EpisodeTrack) => {
     const isSameTrack =
-      activeTrackRef.current?.contentId === track.contentId &&
-      activeTrackRef.current?.audioUrl === track.audioUrl;
+      activeSessionRef.current?.kind === "episode" &&
+      activeSessionRef.current.contentId === track.contentId &&
+      activeSessionRef.current.audioUrl === track.audioUrl;
 
     if (!isSameTrack) {
+      safelyReleasePlayer(
+        () => videoPlayer.pause(),
+        "Failed to pause hosted video player",
+      );
+
+      // Build the player with the source already attached so it loads at
+      // construction, then play immediately. This is the proven pattern; a
+      // null player + replace() does not reliably load on iOS.
       const nextPlayer = createAudioPlayer(
         { uri: track.audioUrl },
         { updateInterval: 250 },
       );
       nextPlayer.play();
-      activeTrackRef.current = track;
-      setActiveTrack(track);
-      setPlayer((currentPlayer) => {
+
+      const nextSession: ActiveMediaSession = { kind: "episode", ...track };
+      activeSessionRef.current = nextSession;
+      setActiveSession(nextSession);
+      setAudioPlayer((currentPlayer) => {
         safelyReleasePlayer(
           () => currentPlayer.pause(),
           "Failed to pause previous audio player",
@@ -153,121 +329,225 @@ export function PersistentEpisodePlayerProvider({
     }
 
     if (hasFinished) {
-      await player.seekTo(0);
+      await audioPlayer.seekTo(0);
     }
 
-    player.play();
+    audioPlayer.play();
   };
 
-  const togglePlayback = async () => {
-    if (!activeTrack) {
-      return;
-    }
+  const playHostedVideo = async (track: HostedVideoTrack) => {
+    const isSameTrack =
+      activeSessionRef.current?.kind === "hostedVideo" &&
+      activeSessionRef.current.contentId === track.contentId &&
+      activeSessionRef.current.playbackUrl === track.playbackUrl;
 
-    if (status.playing) {
-      player.pause();
+    if (!isSameTrack) {
+      safelyReleasePlayer(() => audioPlayer.pause(), "Failed to pause audio player");
+      disableAudioLockScreen();
+
+      const nextSession: ActiveMediaSession = { kind: "hostedVideo", ...track };
+      activeSessionRef.current = nextSession;
+      setActiveSession(nextSession);
+      setVideoState({
+        currentTimeSeconds: 0,
+        durationSeconds: track.durationSeconds || 0,
+        isBuffering: true,
+        isPlaying: true,
+        playbackError: null,
+      });
       return;
     }
 
     if (hasFinished) {
-      await player.seekTo(0);
+      (videoPlayer as { currentTime?: number }).currentTime = 0;
     }
 
-    player.play();
+    videoPlayer.play();
   };
 
-  const seekBy = async (deltaSeconds: number) => {
-    if (!activeTrack) {
+  useEffect(() => {
+    if (activeSession?.kind === "hostedVideo") {
+      videoPlayer.play();
+    }
+  }, [activeSession, videoPlayer]);
+
+  const togglePlayback = async () => {
+    if (!activeSession) {
       return;
     }
 
-    const nextTime = Math.max(
-      0,
-      Math.min(
-        durationSeconds || currentTimeSeconds + deltaSeconds,
-        currentTimeSeconds + deltaSeconds,
-      ),
-    );
-    await player.seekTo(nextTime);
+    if (activeSession.kind === "hostedVideo") {
+      if (videoState.isPlaying) {
+        videoPlayer.pause();
+        return;
+      }
+
+      if (hasFinished) {
+        (videoPlayer as { currentTime?: number }).currentTime = 0;
+      }
+
+      videoPlayer.play();
+      return;
+    }
+
+    if (audioStatus.playing) {
+      audioPlayer.pause();
+      return;
+    }
+
+    if (hasFinished) {
+      await audioPlayer.seekTo(0);
+    }
+
+    audioPlayer.play();
+  };
+
+  const seekBy = async (deltaSeconds: number) => {
+    if (!activeSession) {
+      return;
+    }
+
+    const nextTime = clampTime(currentTimeSeconds + deltaSeconds, durationSeconds);
+
+    if (activeSession.kind === "hostedVideo") {
+      (videoPlayer as { currentTime?: number }).currentTime = nextTime;
+      setVideoState((current) => ({ ...current, currentTimeSeconds: nextTime }));
+      return;
+    }
+
+    await audioPlayer.seekTo(nextTime);
+  };
+
+  const seekTo = async (seconds: number) => {
+    if (!activeSession) {
+      return;
+    }
+
+    const nextTime = clampTime(seconds, durationSeconds);
+
+    if (activeSession.kind === "hostedVideo") {
+      (videoPlayer as { currentTime?: number }).currentTime = nextTime;
+      setVideoState((current) => ({ ...current, currentTimeSeconds: nextTime }));
+      return;
+    }
+
+    await audioPlayer.seekTo(nextTime);
   };
 
   const closePlayer = () => {
-    safelyReleasePlayer(() => player.pause(), "Failed to pause audio player");
-    activeTrackRef.current = null;
-    setActiveTrack(null);
+    if (activeSessionRef.current?.kind === "hostedVideo") {
+      safelyReleasePlayer(
+        () => videoPlayer.pause(),
+        "Failed to pause hosted video player",
+      );
+    } else {
+      safelyReleasePlayer(() => audioPlayer.pause(), "Failed to pause audio player");
+      disableAudioLockScreen();
+    }
+
+    activeSessionRef.current = null;
+    setActiveSession(null);
   };
 
-  const value: PersistentEpisodePlayerContextValue = {
+  const openPlayer = () => {
+    if (!activeSessionRef.current) {
+      return;
+    }
+
+    router.push(`/player/${activeSessionRef.current.contentId}` as never);
+  };
+
+  const value: PersistentMediaPlayerContextValue = {
+    activeSession,
     activeTrack,
     currentTimeSeconds,
     durationSeconds,
-    isBuffering: status.isBuffering,
-    isPlaying: status.playing,
+    isBuffering,
+    isPlaying,
     hasFinished,
-    playbackError: status.error,
-    playTrack,
+    playbackError,
+    videoPlayer,
+    playEpisode,
+    playHostedVideo,
+    playTrack: playEpisode,
     togglePlayback,
     seekBy,
+    seekTo,
     closePlayer,
+    openPlayer,
   };
 
   return (
-    <PersistentEpisodePlayerContext.Provider value={value}>
+    <PersistentMediaPlayerContext.Provider value={value}>
       {children}
-    </PersistentEpisodePlayerContext.Provider>
+    </PersistentMediaPlayerContext.Provider>
   );
 }
 
-export function usePersistentEpisodePlayer() {
-  return useContext(PersistentEpisodePlayerContext);
+export function usePersistentMediaPlayer() {
+  return useContext(PersistentMediaPlayerContext);
 }
 
-export function usePersistentEpisodePlayerSpace() {
-  const { activeTrack } = usePersistentEpisodePlayer();
+export function usePersistentMediaPlayerSpace() {
+  const { activeSession } = usePersistentMediaPlayer();
+  const segments = useSegments();
 
-  return activeTrack
-    ? PERSISTENT_EPISODE_PLAYER_HEIGHT + PERSISTENT_EPISODE_PLAYER_GAP
+  return activeSession && !shouldHideMiniPlayerForSegments(segments)
+    ? PERSISTENT_MEDIA_PLAYER_HEIGHT + PERSISTENT_MEDIA_PLAYER_GAP
     : 0;
 }
 
-export function PersistentEpisodeMiniPlayer() {
-  const { t } = useTranslation("episode");
+export function PersistentMediaMiniPlayer() {
+  const { t: tEpisode } = useTranslation("episode");
+  const { t: tVideo } = useTranslation("video");
   const { theme } = useAppTheme();
   const { scaleFont } = useResponsive();
   const insets = useSafeAreaInsets();
   const tabBarSpace = useTabBarSpace();
   const segments = useSegments();
-  const router = useRouter();
   const {
-    activeTrack,
+    activeSession,
     currentTimeSeconds,
     durationSeconds,
     hasFinished,
     isPlaying,
-    togglePlayback,
     closePlayer,
-  } = usePersistentEpisodePlayer();
+    openPlayer,
+    togglePlayback,
+  } = usePersistentMediaPlayer();
 
-  if (!activeTrack) {
+  if (!activeSession) {
+    return null;
+  }
+
+  if (shouldHideMiniPlayerForSegments(segments)) {
     return null;
   }
 
   const bottomOffset =
     segments[0] === "(app)"
-      ? tabBarSpace + PERSISTENT_EPISODE_PLAYER_GAP
-      : Math.max(insets.bottom, PERSISTENT_EPISODE_PLAYER_GAP);
+      ? tabBarSpace - PERSISTENT_MEDIA_PLAYER_GAP
+      : Math.max(insets.bottom, PERSISTENT_MEDIA_PLAYER_GAP);
+  const kicker =
+    activeSession.kind === "episode" ? tEpisode("playerLabel") : tVideo("playVideo");
+  const progressRatio =
+    durationSeconds > 0
+      ? Math.min(currentTimeSeconds / durationSeconds, 1)
+      : 0;
+  const playButtonLabel = hasFinished ? tEpisode("replay") : isPlaying ? tEpisode("pause") : tEpisode("play");
 
   return (
     <View
       pointerEvents="box-none"
       style={[styles.overlay, { bottom: bottomOffset }]}
+      testID="media-mini-player"
     >
       <View
         style={[
           styles.card,
           {
-            height: PERSISTENT_EPISODE_PLAYER_HEIGHT,
-            borderRadius: theme.radii.xl,
+            minHeight: PERSISTENT_MEDIA_PLAYER_HEIGHT,
+            borderRadius: 14,
             backgroundColor: theme.colors.surface,
             borderColor: theme.colors.border,
             shadowColor: theme.colors.heading,
@@ -276,31 +556,47 @@ export function PersistentEpisodeMiniPlayer() {
       >
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.push(`/episode/${activeTrack.contentId}` as never)}
+          onPress={openPlayer}
           style={styles.metaBlock}
         >
           <Text
             numberOfLines={1}
             style={[
               styles.kicker,
-              { color: theme.colors.accent, fontSize: 11 * scaleFont },
+              { color: theme.colors.accent, fontSize: 10 * scaleFont },
             ]}
           >
-            {t("playerLabel")}
+            {kicker}
           </Text>
           <Text
             numberOfLines={1}
             style={[
               styles.title,
-              { color: theme.colors.heading, fontSize: 15 * scaleFont },
+              { color: theme.colors.heading, fontSize: 14 * scaleFont },
             ]}
           >
-            {activeTrack.title}
+            {activeSession.title}
           </Text>
+          <View
+            style={[
+              styles.progressTrack,
+              { backgroundColor: theme.colors.accentSoft },
+            ]}
+          >
+            <View
+              style={[
+                styles.progressFill,
+                {
+                  width: `${progressRatio * 100}%`,
+                  backgroundColor: theme.colors.accent,
+                },
+              ]}
+            />
+          </View>
           <Text
             style={[
               styles.time,
-              { color: theme.colors.textMuted, fontSize: 11 * scaleFont },
+              { color: theme.colors.textMuted, fontSize: 10 * scaleFont },
             ]}
           >
             {formatMediaClock(currentTimeSeconds)} · {formatMediaClock(durationSeconds)}
@@ -314,7 +610,7 @@ export function PersistentEpisodeMiniPlayer() {
             style={({ pressed }) => [
               styles.playButton,
               {
-                borderRadius: theme.radii.pill,
+                borderRadius: 10,
                 backgroundColor: theme.colors.accent,
               },
               pressed && styles.pressed,
@@ -323,10 +619,10 @@ export function PersistentEpisodeMiniPlayer() {
             <Text
               style={[
                 styles.playButtonText,
-                { color: theme.colors.accentContrast, fontSize: 13 * scaleFont },
+                { color: theme.colors.accentContrast, fontSize: 11 * scaleFont },
               ]}
             >
-              {hasFinished ? t("replay") : isPlaying ? t("pause") : t("play")}
+              {playButtonLabel}
             </Text>
           </Pressable>
           <Pressable
@@ -359,60 +655,72 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
     borderWidth: StyleSheet.hairlineWidth,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.14,
-    shadowRadius: 24,
-    elevation: 14,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    elevation: 10,
   },
   metaBlock: {
     flex: 1,
-    gap: 3,
+    gap: 2,
   },
   kicker: {
     fontFamily: fontFamilies.mono,
-    fontSize: 11,
-    letterSpacing: 1.2,
+    letterSpacing: 1.1,
     textTransform: "uppercase",
   },
   title: {
     fontFamily: fontFamilies.bodySemiBold,
-    fontSize: 15,
   },
   time: {
     fontFamily: fontFamilies.mono,
-    fontSize: 11,
     letterSpacing: 0.3,
+  },
+  progressTrack: {
+    height: 4,
+    borderRadius: 2,
+    marginTop: 4,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 2,
   },
   actions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
   },
   playButton: {
-    minWidth: 74,
-    minHeight: 42,
+    minWidth: 44,
+    minHeight: 40,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 14,
+    paddingHorizontal: 10,
   },
   playButtonText: {
     fontFamily: fontFamilies.bodySemiBold,
-    fontSize: 13,
+    lineHeight: 16,
   },
   closeButton: {
-    width: 32,
-    height: 32,
+    width: 28,
+    height: 28,
     alignItems: "center",
     justifyContent: "center",
   },
   closeButtonText: {
     fontFamily: fontFamilies.body,
-    fontSize: 18,
     lineHeight: 20,
   },
   pressed: {
     opacity: 0.84,
   },
 });
+
+export const PersistentEpisodePlayerProvider = PersistentMediaPlayerProvider;
+export const PersistentEpisodeMiniPlayer = PersistentMediaMiniPlayer;
+export const usePersistentEpisodePlayer = usePersistentMediaPlayer;
+export const usePersistentEpisodePlayerSpace = usePersistentMediaPlayerSpace;

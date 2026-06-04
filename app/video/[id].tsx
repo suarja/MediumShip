@@ -1,7 +1,7 @@
-import { StyleSheet, Text } from "react-native";
+import { Pressable, StyleSheet, Text } from "react-native";
 
 import { useQuery } from "convex/react";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
@@ -9,7 +9,7 @@ import { ContentDetailShell } from "../../src/components/content/content-detail-
 import { DetailHeader } from "../../src/components/content/detail-header";
 import { DetailHero } from "../../src/components/content/detail-hero";
 import { VideoPlayerCard } from "../../src/components/media/video-player-card";
-import { usePersistentEpisodePlayer } from "../../src/features/media/persistent-episode-player";
+import { usePersistentMediaPlayer } from "../../src/features/media/persistent-media-player";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
@@ -23,7 +23,8 @@ export default function VideoDetailScreen() {
   const { theme } = useAppTheme();
   const { scaleSpace } = useResponsive();
   const { state: networkState } = useNetworkStatus();
-  const { closePlayer } = usePersistentEpisodePlayer();
+  const router = useRouter();
+  const { activeSession, closePlayer } = usePersistentMediaPlayer();
 
   const content = useQuery(
     api.content.queries.getPublishedById,
@@ -62,7 +63,7 @@ export default function VideoDetailScreen() {
       notFoundBody={t("notFoundBody")}
       hero={
         content ? (
-          source ? (
+          source?.kind === "youtube" ? (
             <VideoPlayerCard
               coverImageUrl={coverImageUrl}
               onPlaybackIntent={closePlayer}
@@ -70,7 +71,9 @@ export default function VideoDetailScreen() {
             />
           ) : (
             <DetailHero
+              key={content._id}
               coverImageUrl={coverImageUrl}
+              mediaKey={content._id}
               watermarkGlyph="▶"
               height={200 * scaleSpace}
               playGlyph="▶"
@@ -89,6 +92,26 @@ export default function VideoDetailScreen() {
             lede={content.summary}
             premium={content.isPremium}
           />
+          {source?.kind === "hosted" && activeSession?.contentId !== content._id ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                router.push(`/player/${content._id}` as never);
+              }}
+              style={({ pressed }) => [
+                styles.cta,
+                {
+                  backgroundColor: theme.colors.accent,
+                  borderRadius: 12,
+                },
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={[styles.ctaLabel, { color: theme.colors.accentContrast }]}>
+                {t("playVideo")}
+              </Text>
+            </Pressable>
+          ) : null}
           {!source ? (
             <Text style={[styles.unavailable, { color: theme.colors.textMuted }]}>
               {t("unavailable")}
@@ -101,5 +124,21 @@ export default function VideoDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  cta: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 52,
+    marginTop: 4,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+  },
+  ctaLabel: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: 15,
+    lineHeight: 18,
+  },
+  pressed: {
+    opacity: 0.84,
+  },
   unavailable: { fontFamily: fontFamilies.body, fontSize: 14, lineHeight: 20, marginTop: 4 },
 });

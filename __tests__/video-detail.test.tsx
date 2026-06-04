@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
-import { fireEvent, render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react-native";
 
 import * as WebBrowser from "expo-web-browser";
 import VideoDetailScreen from "../app/video/[id]";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
 const mockUseQuery = jest.fn();
-const mockClosePlayer = jest.fn();
 const mockUseEventListener = jest.fn();
+const mockPush = jest.fn();
 
 jest.mock("convex/react", () => ({
   useQuery: (...args: unknown[]) => mockUseQuery(...args),
@@ -16,15 +16,19 @@ jest.mock("convex/react", () => ({
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: ReactNode }) => children,
   useLocalSearchParams: () => ({ id: "video_1" }),
+  useRouter: () => ({ push: mockPush }),
 }));
 
 jest.mock("../src/features/network/use-network-status", () => ({
   useNetworkStatus: () => ({ state: "online" }),
 }));
 
-jest.mock("../src/features/media/persistent-episode-player", () => ({
-  usePersistentEpisodePlayer: () => ({ closePlayer: mockClosePlayer }),
-  usePersistentEpisodePlayerSpace: () => 0,
+jest.mock("../src/features/media/persistent-media-player", () => ({
+  usePersistentMediaPlayer: () => ({
+    activeSession: null,
+    closePlayer: jest.fn(),
+  }),
+  usePersistentMediaPlayerSpace: () => 0,
 }));
 
 jest.mock("expo", () => ({
@@ -38,7 +42,7 @@ describe("video detail", () => {
 
   beforeEach(async () => {
     await changeAppLanguage("en");
-    mockClosePlayer.mockClear();
+    mockPush.mockClear();
     mockUseEventListener.mockReset();
   });
 
@@ -64,17 +68,16 @@ describe("video detail", () => {
     render(<VideoDetailScreen />);
 
     expect(screen.getByText("Play video")).toBeTruthy();
-    expect(mockClosePlayer).not.toHaveBeenCalled();
     expect(screen.getByText("Open on YouTube")).toBeTruthy();
 
     fireEvent.press(screen.getByTestId("video-start-button"));
 
-    expect(mockClosePlayer).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId("youtube-player")).toBeTruthy();
+    expect(mockPush).not.toHaveBeenCalled();
     expect(WebBrowser.openBrowserAsync).not.toHaveBeenCalled();
   });
 
-  it("renders a Picture in Picture action for hosted videos", () => {
+  it("opens the dedicated player route for hosted videos", async () => {
     mockUseQuery.mockReturnValue({
       _id: "video_2",
       tenantSlug: "demo-media",
@@ -97,10 +100,10 @@ describe("video detail", () => {
 
     expect(screen.getByText("Play video")).toBeTruthy();
 
-    fireEvent.press(screen.getByTestId("video-start-button"));
+    fireEvent.press(screen.getByText("Play video"));
 
-    expect(screen.getByTestId("hosted-video-player")).toBeTruthy();
-    expect(screen.getByText("Picture in Picture")).toBeTruthy();
-    expect(mockClosePlayer).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/player/video_2");
+    });
   });
 });

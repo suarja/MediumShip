@@ -1,15 +1,27 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type GestureResponderEvent,
+} from "react-native";
 
+import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 
-import { usePersistentEpisodePlayer } from "../../features/media/persistent-episode-player";
+import { usePersistentMediaPlayer } from "../../features/media/persistent-media-player";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 import { formatMediaClock } from "../../features/media/format-media-clock";
+import { getScrubTimeFromPress } from "../../features/media/scrubbing";
 
 type EpisodeAudioPlayerProps = {
   audioUrl: string;
+  artworkUrl?: string;
   contentId: string;
   durationSeconds?: number;
   title: string;
@@ -17,6 +29,7 @@ type EpisodeAudioPlayerProps = {
 
 export function EpisodeAudioPlayer({
   audioUrl,
+  artworkUrl,
   contentId,
   durationSeconds: fallbackDurationSeconds,
   title,
@@ -24,6 +37,8 @@ export function EpisodeAudioPlayer({
   const { t } = useTranslation("episode");
   const { theme } = useAppTheme();
   const { scaleFont } = useResponsive();
+  const router = useRouter();
+  const [progressTrackWidth, setProgressTrackWidth] = useState(0);
   const {
     activeTrack,
     currentTimeSeconds,
@@ -34,8 +49,9 @@ export function EpisodeAudioPlayer({
     playbackError,
     playTrack,
     seekBy,
+    seekTo,
     togglePlayback,
-  } = usePersistentEpisodePlayer();
+  } = usePersistentMediaPlayer();
 
   const isActive =
     activeTrack?.contentId === contentId && activeTrack.audioUrl === audioUrl;
@@ -54,8 +70,10 @@ export function EpisodeAudioPlayer({
         contentId,
         title,
         audioUrl,
+        artworkUrl,
         durationSeconds: fallbackDurationSeconds,
       });
+      router.push(`/player/${contentId}` as never);
       return;
     }
 
@@ -70,6 +88,20 @@ export function EpisodeAudioPlayer({
     await seekBy(deltaSeconds);
   };
 
+  const handleScrub = async (event: GestureResponderEvent) => {
+    if (!isActive || resolvedDurationSeconds <= 0) {
+      return;
+    }
+
+    await seekTo(
+      getScrubTimeFromPress(
+        event.nativeEvent.locationX,
+        progressTrackWidth,
+        resolvedDurationSeconds,
+      ),
+    );
+  };
+
   return (
     <View
       style={[
@@ -77,28 +109,52 @@ export function EpisodeAudioPlayer({
         {
           backgroundColor: theme.colors.surface,
           borderColor: theme.colors.border,
-          borderRadius: theme.radii.xl,
+          borderRadius: 16,
         },
       ]}
     >
-      <Text style={[styles.label, { color: theme.colors.accent, fontSize: 11 * scaleFont }]}>
-        {t("playerLabel")}
-      </Text>
-      <Text
-        numberOfLines={2}
-        style={[
-          styles.title,
-          {
-            color: theme.colors.heading,
-            fontSize: 18 * scaleFont,
-            lineHeight: 24 * scaleFont,
-          },
-        ]}
-      >
-        {title}
-      </Text>
+      <View style={styles.headerRow}>
+        {artworkUrl ? (
+          <Image source={{ uri: artworkUrl }} style={styles.artwork} />
+        ) : (
+          <View
+            style={[
+              styles.artworkFallback,
+              { backgroundColor: theme.colors.accentSoft },
+            ]}
+          >
+            <Text style={[styles.artworkGlyph, { color: theme.colors.accent }]}>▷</Text>
+          </View>
+        )}
+        <View style={styles.headerContent}>
+          <Text style={[styles.label, { color: theme.colors.accent, fontSize: 11 * scaleFont }]}>
+            {t("playerLabel")}
+          </Text>
+          <Text
+            numberOfLines={2}
+            style={[
+              styles.title,
+              {
+                color: theme.colors.heading,
+                fontSize: 18 * scaleFont,
+                lineHeight: 24 * scaleFont,
+              },
+            ]}
+          >
+            {title}
+          </Text>
+        </View>
+      </View>
 
-      <View style={[styles.progressTrack, { backgroundColor: theme.colors.accentSoft }]}>
+      <Pressable
+        accessibilityRole="adjustable"
+        hitSlop={6}
+        onLayout={(event) => {
+          setProgressTrackWidth(event.nativeEvent.layout.width);
+        }}
+        onPress={(event) => void handleScrub(event)}
+        style={[styles.progressTrack, { backgroundColor: theme.colors.accentSoft }]}
+      >
         <View
           style={[
             styles.progressFill,
@@ -108,7 +164,7 @@ export function EpisodeAudioPlayer({
             },
           ]}
         />
-      </View>
+      </Pressable>
 
       <View style={styles.metaRow}>
         <Text style={[styles.meta, { color: theme.colors.textMuted, fontSize: 12 * scaleFont }]}>
@@ -131,74 +187,109 @@ export function EpisodeAudioPlayer({
       </View>
 
       <View style={styles.controls}>
-        <Pressable
-          accessibilityRole="button"
-          disabled={!isActive}
-          onPress={() => void handleSeekBy(-15)}
-          style={({ pressed }) => [
-            styles.secondaryButton,
-            {
-              backgroundColor: theme.colors.surfaceMuted,
-              borderColor: theme.colors.border,
-              borderRadius: theme.radii.pill,
-              opacity: !isActive ? 0.45 : 1,
-            },
-            pressed && isActive && styles.pressed,
-          ]}
-        >
-          <Text style={[styles.secondaryButtonText, { color: theme.colors.text }]}>
-            {t("skipBack")}
-          </Text>
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => void handleTogglePlayback()}
-          style={({ pressed }) => [
-            styles.primaryButton,
-            {
-              backgroundColor: theme.colors.accent,
-              borderRadius: theme.radii.pill,
-            },
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text
-            style={[
-              styles.primaryButtonText,
+        <View style={styles.transportGroup}>
+          <Pressable
+            accessibilityRole="button"
+            disabled={!isActive}
+            onPress={() => void handleSeekBy(-15)}
+            style={({ pressed }) => [
+              styles.transportButton,
               {
-                color: theme.colors.accentContrast,
-                fontSize: 15 * scaleFont,
+                backgroundColor: theme.colors.surfaceMuted,
+                borderColor: theme.colors.border,
+                opacity: !isActive ? 0.45 : 1,
               },
+              pressed && isActive && styles.pressed,
             ]}
           >
-            {!isActive
-              ? t("play")
-              : hasFinished
-                ? t("replay")
-                : isPlaying
-                  ? t("pause")
-                  : t("play")}
-          </Text>
-        </Pressable>
-
+            <Text
+              style={[
+                styles.transportButtonText,
+                { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
+              ]}
+            >
+              -15
+            </Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => void handleTogglePlayback()}
+            style={({ pressed }) => [
+              styles.primaryButton,
+              {
+                backgroundColor: theme.colors.accent,
+                borderRadius: 12,
+              },
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text
+              style={[
+                styles.primaryGlyph,
+                { color: theme.colors.accentContrast, fontSize: 17 * scaleFont },
+              ]}
+            >
+              {!isActive || hasFinished ? "▶" : isPlaying ? "❚❚" : "▶"}
+            </Text>
+            <Text
+              style={[
+                styles.primaryButtonText,
+                {
+                  color: theme.colors.accentContrast,
+                  fontSize: 13 * scaleFont,
+                },
+              ]}
+            >
+              {!isActive
+                ? t("play")
+                : hasFinished
+                  ? t("replay")
+                  : isPlaying
+                    ? t("pause")
+                    : t("play")}
+            </Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            disabled={!isActive}
+            onPress={() => void handleSeekBy(30)}
+            style={({ pressed }) => [
+              styles.transportButton,
+              {
+                backgroundColor: theme.colors.surfaceMuted,
+                borderColor: theme.colors.border,
+                opacity: !isActive ? 0.45 : 1,
+              },
+              pressed && isActive && styles.pressed,
+            ]}
+          >
+            <Text
+              style={[
+                styles.transportButtonText,
+                { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
+              ]}
+            >
+              +30
+            </Text>
+          </Pressable>
+        </View>
         <Pressable
           accessibilityRole="button"
           disabled={!isActive}
-          onPress={() => void handleSeekBy(30)}
+          onPress={() => router.push(`/player/${contentId}` as never)}
           style={({ pressed }) => [
             styles.secondaryButton,
             {
               backgroundColor: theme.colors.surfaceMuted,
               borderColor: theme.colors.border,
-              borderRadius: theme.radii.pill,
+              borderRadius: 12,
               opacity: !isActive ? 0.45 : 1,
             },
             pressed && isActive && styles.pressed,
           ]}
         >
           <Text style={[styles.secondaryButtonText, { color: theme.colors.text }]}>
-            {t("skipForward")}
+            {t("playerLabel")}
           </Text>
         </Pressable>
       </View>
@@ -218,6 +309,31 @@ const styles = StyleSheet.create({
     padding: 18,
     borderWidth: 1,
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  headerContent: {
+    flex: 1,
+    gap: 4,
+  },
+  artwork: {
+    width: 72,
+    height: 72,
+    borderRadius: 12,
+  },
+  artworkFallback: {
+    width: 72,
+    height: 72,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  artworkGlyph: {
+    fontFamily: fontFamilies.displayBold,
+    fontSize: 22,
+  },
   label: {
     fontFamily: fontFamilies.mono,
     fontSize: 11,
@@ -231,13 +347,14 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     width: "100%",
-    height: 8,
-    borderRadius: 999,
+    height: 6,
+    borderRadius: 3,
     overflow: "hidden",
+    justifyContent: "center",
   },
   progressFill: {
     height: "100%",
-    borderRadius: 999,
+    borderRadius: 3,
   },
   metaRow: {
     flexDirection: "row",
@@ -256,21 +373,41 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   controls: {
+    gap: 12,
+  },
+  transportGroup: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     gap: 10,
   },
   primaryButton: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 50,
+    flexDirection: "row",
+    gap: 10,
+    minHeight: 48,
     paddingHorizontal: 18,
   },
+  transportButton: {
+    minWidth: 56,
+    minHeight: 48,
+    borderWidth: 1,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 10,
+  },
+  transportButtonText: {
+    fontFamily: fontFamilies.mono,
+    letterSpacing: 0.3,
+  },
+  primaryGlyph: {
+    fontFamily: fontFamilies.bodySemiBold,
+    lineHeight: 18,
+  },
   secondaryButton: {
-    minWidth: 88,
-    minHeight: 50,
+    minHeight: 46,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 16,
@@ -278,7 +415,7 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     fontFamily: fontFamilies.bodySemiBold,
-    fontSize: 15,
+    fontSize: 13,
   },
   secondaryButtonText: {
     fontFamily: fontFamilies.mono,

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 
 import { PREMIUM_ON_FILL } from "../../features/content/card-presentation";
@@ -18,6 +19,7 @@ export function DetailHero({
   premiumLabel,
   durationLabel,
   playGlyph,
+  mediaKey,
 }: {
   coverImageUrl?: string;
   watermarkGlyph: string;
@@ -25,19 +27,29 @@ export function DetailHero({
   premiumLabel?: string;
   durationLabel?: string;
   playGlyph?: string;
+  mediaKey?: string;
 }) {
   const { theme } = useAppTheme();
   const { scaleFont } = useResponsive();
+  const [imageFailed, setImageFailed] = useState(false);
 
   const heroBg = theme.isDark ? theme.colors.canvasAccent : theme.colors.heading;
   const onHero = theme.isDark ? theme.colors.heading : theme.colors.canvas;
+  const canRenderImage = Boolean(coverImageUrl) && !imageFailed;
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [coverImageUrl, mediaKey]);
 
   return (
     <View style={[styles.hero, { height, backgroundColor: heroBg }]}>
-      {coverImageUrl ? (
+      {canRenderImage ? (
         <Image
           accessibilityLabel="cover"
-          source={{ uri: coverImageUrl }}
+          key={mediaKey ? `${mediaKey}:${coverImageUrl}` : coverImageUrl}
+          onError={() => setImageFailed(true)}
+          resizeMode="cover"
+          source={{ uri: coverImageUrl, cache: "reload" }}
           style={styles.cover}
         />
       ) : (

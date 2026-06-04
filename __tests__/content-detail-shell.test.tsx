@@ -21,6 +21,7 @@ jest.mock("expo-router", () => ({
 
     return children;
   },
+  useSegments: () => ["(app)"],
 }));
 
 describe("ContentDetailShell", () => {

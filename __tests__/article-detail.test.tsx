@@ -11,6 +11,7 @@ jest.mock("convex/react", () => ({
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: ReactNode }) => children,
   useLocalSearchParams: () => ({ id: "article_1" }),
+  useSegments: () => ["(app)"],
 }));
 
 jest.mock("../src/features/network/use-network-status", () => ({

@@ -10,13 +10,20 @@ jest.mock("expo-audio", () => ({
     play: jest.fn(),
     pause: jest.fn(),
     seekTo: jest.fn().mockResolvedValue(undefined),
+    setActiveForLockScreen: jest.fn(),
+    updateLockScreenMetadata: jest.fn(),
+    clearLockScreenControls: jest.fn(),
   }),
+  setIsAudioActiveAsync: jest.fn().mockResolvedValue(undefined),
   setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
   useAudioPlayer: () => ({
     replace: jest.fn(),
     play: jest.fn(),
     pause: jest.fn(),
     seekTo: jest.fn().mockResolvedValue(undefined),
+    setActiveForLockScreen: jest.fn(),
+    updateLockScreenMetadata: jest.fn(),
+    clearLockScreenControls: jest.fn(),
   }),
   useAudioPlayerStatus: () => ({
     currentTime: 0,
@@ -52,12 +59,19 @@ jest.mock("expo", () => {
 jest.mock("expo-video", () => {
   const React = require("react");
   const { View } = require("react-native");
+  const mockVideoPlayer = {
+    play: jest.fn(),
+    pause: jest.fn(),
+    currentTime: 0,
+    showNowPlayingNotification: false,
+    staysActiveInBackground: false,
+    timeUpdateEventInterval: 0,
+    startPictureInPicture: jest.fn().mockResolvedValue(undefined),
+  };
 
   return {
     isPictureInPictureSupported: () => true,
-    useVideoPlayer: () => ({
-      play: jest.fn(),
-    }),
+    useVideoPlayer: () => mockVideoPlayer,
     VideoView: React.forwardRef(
       ({ testID }: { testID?: string }, ref: React.Ref<{ startPictureInPicture: () => Promise<void> }>) => {
         React.useImperativeHandle(ref, () => ({

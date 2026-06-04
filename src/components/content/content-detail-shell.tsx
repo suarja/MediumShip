@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Link } from "expo-router";
 
 import { DegradedBanner } from "./degraded-banner";
-import { usePersistentEpisodePlayerSpace } from "../../features/media/persistent-episode-player";
+import { usePersistentMediaPlayerSpace } from "../../features/media/persistent-media-player";
 import type { NetworkState } from "../../features/network/use-network-status";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
@@ -53,7 +53,7 @@ export function ContentDetailShell({
 }: ContentDetailShellProps) {
   const { theme } = useAppTheme();
   const { scaleSpace, scaleFont, contentMaxWidth } = useResponsive();
-  const persistentPlayerSpace = usePersistentEpisodePlayerSpace();
+  const persistentPlayerSpace = usePersistentMediaPlayerSpace();
 
   const heroLayout = state === "ready" && hero;
 

@@ -11,9 +11,9 @@ import { StatusBar } from "expo-status-bar";
 import { env } from "../src/lib/env";
 import { useStableAuth } from "../src/features/auth/use-stable-auth";
 import {
-  PersistentEpisodeMiniPlayer,
-  PersistentEpisodePlayerProvider,
-} from "../src/features/media/persistent-episode-player";
+  PersistentMediaMiniPlayer,
+  PersistentMediaPlayerProvider,
+} from "../src/features/media/persistent-media-player";
 import { NetworkStatusDebugProvider } from "../src/features/network/use-network-status";
 import { AppThemeProvider } from "../src/features/theme/theme-provider";
 import { useAppFonts } from "../src/features/theme/use-app-fonts";
@@ -78,13 +78,13 @@ export default function RootLayout() {
         <ConvexProviderWithClerk client={convex} useAuth={useStableAuth}>
           <NetworkStatusDebugProvider>
             <AppThemeProvider>
-              <PersistentEpisodePlayerProvider>
+              <PersistentMediaPlayerProvider>
                 <StatusBar style="auto" />
                 <View style={styles.appFrame}>
                   <Stack key={languageKey} screenOptions={{ headerShown: false }} />
-                  <PersistentEpisodeMiniPlayer />
+                  <PersistentMediaMiniPlayer />
                 </View>
-              </PersistentEpisodePlayerProvider>
+              </PersistentMediaPlayerProvider>
             </AppThemeProvider>
           </NetworkStatusDebugProvider>
         </ConvexProviderWithClerk>

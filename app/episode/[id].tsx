@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
+import { BookmarkActionBar } from "../../src/components/content/bookmark-action-bar";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
 import { DetailHeader } from "../../src/components/content/detail-header";
 import { DetailHero } from "../../src/components/content/detail-hero";
@@ -72,6 +73,7 @@ export default function EpisodeDetailScreen() {
           />
         ) : undefined
       }
+      actions={content ? <BookmarkActionBar contentId={content._id} /> : undefined}
     >
       {content ? (
         <>

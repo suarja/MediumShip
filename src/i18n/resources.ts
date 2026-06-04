@@ -3,6 +3,7 @@ import authEn from "./locales/en/auth";
 import commonEn from "./locales/en/common";
 import episodeEn from "./locales/en/episode";
 import homeEn from "./locales/en/home";
+import libraryEn from "./locales/en/library";
 import navigationEn from "./locales/en/navigation";
 import networkEn from "./locales/en/network";
 import premiumEn from "./locales/en/premium";
@@ -14,6 +15,7 @@ import authFr from "./locales/fr/auth";
 import commonFr from "./locales/fr/common";
 import episodeFr from "./locales/fr/episode";
 import homeFr from "./locales/fr/home";
+import libraryFr from "./locales/fr/library";
 import navigationFr from "./locales/fr/navigation";
 import networkFr from "./locales/fr/network";
 import premiumFr from "./locales/fr/premium";
@@ -26,6 +28,7 @@ export const resources = {
     common: commonEn,
     auth: authEn,
     home: homeEn,
+    library: libraryEn,
     navigation: navigationEn,
     profile: profileEn,
     premium: premiumEn,
@@ -39,6 +42,7 @@ export const resources = {
     common: commonFr,
     auth: authFr,
     home: homeFr,
+    library: libraryFr,
     navigation: navigationFr,
     profile: profileFr,
     premium: premiumFr,

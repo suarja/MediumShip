@@ -8,6 +8,9 @@
  * @module
  */
 
+import type * as bookmarks_model from "../bookmarks/model.js";
+import type * as bookmarks_mutations from "../bookmarks/mutations.js";
+import type * as bookmarks_queries from "../bookmarks/queries.js";
 import type * as cms_authz from "../cms/authz.js";
 import type * as cms_mutations from "../cms/mutations.js";
 import type * as cms_queries from "../cms/queries.js";
@@ -35,6 +38,9 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "bookmarks/model": typeof bookmarks_model;
+  "bookmarks/mutations": typeof bookmarks_mutations;
+  "bookmarks/queries": typeof bookmarks_queries;
   "cms/authz": typeof cms_authz;
   "cms/mutations": typeof cms_mutations;
   "cms/queries": typeof cms_queries;

@@ -7,11 +7,12 @@ import { changeAppLanguage, initI18n } from "../src/i18n";
 jest.mock("convex/react", () => ({
   useConvexAuth: () => ({ isAuthenticated: false }),
   useMutation: () => jest.fn(),
-  useQuery: () => undefined,
+  useQuery: () => null,
 }));
 
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: ReactNode }) => children,
+  useRouter: () => ({ push: jest.fn() }),
 }));
 
 jest.mock("../src/features/auth/use-clerk-auth", () => ({
@@ -24,6 +25,14 @@ jest.mock("../src/features/auth/use-clerk-auth", () => ({
     fullName: null,
     signOut: jest.fn(),
   }),
+}));
+
+jest.mock("../src/components/navigation/app-tab-bar", () => ({
+  useTabBarSpace: () => 96,
+}));
+
+jest.mock("../src/features/media/persistent-media-player", () => ({
+  usePersistentMediaPlayerSpace: () => 0,
 }));
 
 describe("guest profile", () => {
@@ -39,6 +48,7 @@ describe("guest profile", () => {
     render(<ProfileScreen />);
 
     expect(screen.getByText("Create an account")).toBeTruthy();
+    expect(screen.getByText("Saved")).toBeTruthy();
     expect(screen.queryByText(/Stored in Convex/i)).toBeNull();
   });
 });

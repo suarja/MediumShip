@@ -119,4 +119,11 @@ export default defineSchema({
   })
     .index("by_tokenIdentifier", ["tokenIdentifier"])
     .index("by_clerkId", ["clerkId"]),
+  bookmarks: defineTable({
+    tokenIdentifier: v.string(),
+    contentId: v.id("contents"),
+    createdAt: v.number(),
+  })
+    .index("by_tokenIdentifier_and_contentId", ["tokenIdentifier", "contentId"])
+    .index("by_tokenIdentifier_and_createdAt", ["tokenIdentifier", "createdAt"]),
 });

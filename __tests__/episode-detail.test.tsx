@@ -8,6 +8,8 @@ const mockUseQuery = jest.fn();
 const mockPush = jest.fn();
 
 jest.mock("convex/react", () => ({
+  useConvexAuth: () => ({ isAuthenticated: false }),
+  useMutation: () => jest.fn(),
   useQuery: (...args: unknown[]) => mockUseQuery(...args),
 }));
 
@@ -33,6 +35,18 @@ jest.mock("expo-router", () => ({
 
 jest.mock("../src/features/network/use-network-status", () => ({
   useNetworkStatus: () => ({ state: "offline" }),
+}));
+
+jest.mock("../src/features/auth/use-clerk-auth", () => ({
+  useClerkAuth: () => ({
+    isLoaded: true,
+    isSignedIn: false,
+    userId: null,
+    user: null,
+    email: null,
+    fullName: null,
+    signOut: jest.fn(),
+  }),
 }));
 
 jest.mock("../src/features/media/persistent-media-player", () => ({
@@ -80,6 +94,7 @@ describe("episode detail", () => {
     expect(screen.getByText("You are offline")).toBeTruthy();
     expect(screen.getByText(/Members-only episode/)).toBeTruthy();
     expect(screen.getByText(/Become a member/)).toBeTruthy();
+    expect(screen.getByText("Sign in to save")).toBeTruthy();
   });
 
   it("renders a simple playback CTA for free episodes with an audio url", () => {

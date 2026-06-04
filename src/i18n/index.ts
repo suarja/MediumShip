@@ -47,6 +47,7 @@ export function initI18n(): Promise<typeof i18n> {
         "common",
         "auth",
         "home",
+        "library",
         "profile",
         "premium",
         "settings",

@@ -42,7 +42,7 @@ describe("video detail", () => {
     mockUseEventListener.mockReset();
   });
 
-  it("launches youtube externally and stops the episode player", () => {
+  it("launches youtube inline and keeps an external fallback", () => {
     mockUseQuery.mockReturnValue({
       _id: "video_1",
       tenantSlug: "demo-media",
@@ -63,16 +63,15 @@ describe("video detail", () => {
 
     render(<VideoDetailScreen />);
 
-    expect(screen.getByText("Open on YouTube")).toBeTruthy();
+    expect(screen.getByText("Play video")).toBeTruthy();
     expect(mockClosePlayer).not.toHaveBeenCalled();
     expect(screen.getByText("Open on YouTube")).toBeTruthy();
 
     fireEvent.press(screen.getByTestId("video-start-button"));
 
     expect(mockClosePlayer).toHaveBeenCalledTimes(1);
-    expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(
-      "https://www.youtube.com/watch?v=dQw4w9WgXcQ&autoplay=1",
-    );
+    expect(screen.getByTestId("youtube-player")).toBeTruthy();
+    expect(WebBrowser.openBrowserAsync).not.toHaveBeenCalled();
   });
 
   it("renders a Picture in Picture action for hosted videos", () => {

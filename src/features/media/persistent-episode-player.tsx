@@ -64,6 +64,24 @@ const fallbackContextValue: PersistentEpisodePlayerContextValue = {
 const PersistentEpisodePlayerContext =
   createContext<PersistentEpisodePlayerContextValue>(fallbackContextValue);
 
+function safelyReleasePlayer(
+  action: () => void,
+  ignoredMessage: string,
+) {
+  try {
+    action();
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes("AppContextLost")
+    ) {
+      return;
+    }
+
+    console.warn(ignoredMessage, error);
+  }
+}
+
 export function PersistentEpisodePlayerProvider({
   children,
 }: PropsWithChildren) {
@@ -83,14 +101,17 @@ export function PersistentEpisodePlayerProvider({
 
   useEffect(() => {
     if (!activeTrack) {
-      player.pause();
+      safelyReleasePlayer(() => player.pause(), "Failed to pause audio player");
       return;
     }
   }, [activeTrack, player]);
 
   useEffect(() => {
     return () => {
-      player.remove();
+      safelyReleasePlayer(
+        () => player.remove(),
+        "Failed to release audio player",
+      );
     };
   }, [player]);
 
@@ -118,8 +139,14 @@ export function PersistentEpisodePlayerProvider({
       activeTrackRef.current = track;
       setActiveTrack(track);
       setPlayer((currentPlayer) => {
-        currentPlayer.pause();
-        currentPlayer.remove();
+        safelyReleasePlayer(
+          () => currentPlayer.pause(),
+          "Failed to pause previous audio player",
+        );
+        safelyReleasePlayer(
+          () => currentPlayer.remove(),
+          "Failed to release previous audio player",
+        );
         return nextPlayer;
       });
       return;
@@ -165,7 +192,7 @@ export function PersistentEpisodePlayerProvider({
   };
 
   const closePlayer = () => {
-    player.pause();
+    safelyReleasePlayer(() => player.pause(), "Failed to pause audio player");
     activeTrackRef.current = null;
     setActiveTrack(null);
   };

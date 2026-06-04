@@ -30,6 +30,7 @@
     "convex-youtube-cache": "^1.0.1",
     "expo": "~56.0.8",
     "expo-audio": "~56.0.11",
+    "expo-file-system": "~56.0.7",
     "expo-font": "~56.0.5",
     "expo-linking": "~56.0.13",
     "expo-localization": "~56.0.6",

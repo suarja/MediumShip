@@ -15,6 +15,7 @@ import { api } from "../../convex/_generated/api";
 import { MemberGateCard } from "../../src/components/auth/member-gate-card";
 import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
+import { DownloadedContentSection } from "../../src/components/profile/downloaded-content-section";
 import { SavedContentSection } from "../../src/components/profile/saved-content-section";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
@@ -65,6 +66,7 @@ export default function ProfileScreen() {
               ctaLabel={t("profile:createAccount")}
             />
             <SavedContentSection />
+            <DownloadedContentSection />
           </View>
         </ScrollView>
       </Screen>
@@ -177,6 +179,7 @@ function AuthenticatedProfileContent({
           </View>
 
           <SavedContentSection />
+          <DownloadedContentSection />
 
           <Pressable
             onPress={() => void signOut()}

@@ -344,6 +344,11 @@ export function PersistentMediaPlayerProvider({
     Boolean(audioStatus.didJustFinish) ||
     (durationSeconds > 0 && currentTimeSeconds >= durationSeconds);
 
+  // Settled play state, read (after a short defer) when PiP stops to tell a
+  // restore (still playing -> back to the player) from a close/pause.
+  const playingStateRef = useRef(isPlaying);
+  playingStateRef.current = isPlaying;
+
   const disableAudioLockScreen = () => {
     safelyReleasePlayer(
       () => audioPlayer.clearLockScreenControls(),
@@ -600,44 +605,60 @@ export function PersistentMediaPlayerProvider({
   // user returns to the player. Driving it from a screen's own VideoView fails:
   // that view is torn down on navigation, and stopping PiP on a different view
   // than the one that owns it is a no-op.
+  //
+  // Model (decided with the user): PiP mirrors "playing while away from the
+  // player". You only get a floating window when you leave the player WHILE
+  // PLAYING. Pausing (in the player or via the PiP controls) dismisses PiP, so
+  // there is no "close a paused PiP" case and no navigation loop.
   const onPlayerRoute = segments[0] === "player";
+  const hostedVideoActive = activeSession?.kind === "hostedVideo";
+
+  // Returning to the player: cancel PiP, then re-assert play across iOS's
+  // transition pause if the user's intent is to play. Keyed on the route only,
+  // so it does not re-run on every play/pause tick.
   useEffect(() => {
-    if (activeSessionRef.current?.kind !== "hostedVideo") {
+    if (!hostedVideoActive || !onPlayerRoute) {
       return;
     }
 
-    if (onPlayerRoute) {
-      // Back on the player: the inline surface shows the video, cancel PiP. iOS
-      // pauses as part of the PiP-stop transition, so if the user's intent is to
-      // play, re-assert it across the transition (a couple of attempts, since
-      // the transition pause can land after the first one).
-      void pipHostRef.current?.stopPictureInPicture().catch(() => {});
-      if (!playIntentRef.current) {
-        return;
-      }
-
-      const replay = () => {
-        try {
-          videoPlayer.play();
-        } catch {
-          // player may be mid-teardown; ignore
-        }
-      };
-      replay();
-      const t1 = setTimeout(replay, 60);
-      const t2 = setTimeout(replay, 180);
-      return () => {
-        clearTimeout(t1);
-        clearTimeout(t2);
-      };
+    void pipHostRef.current?.stopPictureInPicture().catch(() => {});
+    if (!playIntentRef.current) {
+      return;
     }
 
-    // Left the player: float the video.
-    const timer = setTimeout(() => {
-      void pipHostRef.current?.startPictureInPicture().catch(() => {});
-    }, 120);
-    return () => clearTimeout(timer);
-  }, [activeSession, onPlayerRoute]);
+    const replay = () => {
+      try {
+        videoPlayer.play();
+      } catch {
+        // player may be mid-teardown; ignore
+      }
+    };
+    replay();
+    const t1 = setTimeout(replay, 60);
+    const t2 = setTimeout(replay, 180);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [hostedVideoActive, onPlayerRoute, videoPlayer]);
+
+  // Away from the player: float while playing, dismiss when paused. Pausing
+  // away from the player is recorded as intent so returning keeps it paused.
+  useEffect(() => {
+    if (!hostedVideoActive || onPlayerRoute) {
+      return;
+    }
+
+    if (isPlaying) {
+      const timer = setTimeout(() => {
+        void pipHostRef.current?.startPictureInPicture().catch(() => {});
+      }, 120);
+      return () => clearTimeout(timer);
+    }
+
+    playIntentRef.current = false;
+    void pipHostRef.current?.stopPictureInPicture().catch(() => {});
+  }, [hostedVideoActive, onPlayerRoute, isPlaying]);
 
   const togglePlayback = async () => {
     if (!activeSession) {
@@ -783,13 +804,19 @@ export function PersistentMediaPlayerProvider({
             contentFit="contain"
             nativeControls={false}
             onPictureInPictureStop={() => {
-              // Fired by BOTH the restore control and the close (X); expo-video
-              // does not expose iOS's restore-only callback. We bring the user
-              // back to the player on stop (openPlayer is route-guarded, so the
-              // programmatic stop on the player screen is a no-op). NOTE: tapping
-              // close (X) therefore also returns to the player — a known
-              // expo-video limitation without a native patch.
-              openPlayer();
+              // Fired by the restore control, the close (X), a pause-driven
+              // dismiss, AND our own programmatic stops. expo-video does not
+              // expose iOS's restore-only callback, so we distinguish by the
+              // settled play state: only a RESTORE leaves the video playing.
+              // Defer so the close/pause has settled into the play state first.
+              // (Restore => back to the player. Close/pause => stay put, no loop.
+              // openPlayer is route-guarded, so the stop we trigger on return is
+              // a no-op.)
+              setTimeout(() => {
+                if (playingStateRef.current) {
+                  openPlayer();
+                }
+              }, 100);
             }}
             player={videoPlayer}
             ref={pipHostRef}

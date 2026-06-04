@@ -5,13 +5,14 @@ import { useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
-import { BookmarkActionBar } from "../../src/components/content/bookmark-action-bar";
+import { ContentActionsBar } from "../../src/components/content/content-actions-bar";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
 import { DetailHeader } from "../../src/components/content/detail-header";
 import { DetailHero } from "../../src/components/content/detail-hero";
 import { PremiumPaywall } from "../../src/components/content/premium-paywall";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
+import { useDownloads } from "../../src/features/downloads/use-downloads";
 import { resolvePremiumGate } from "../../src/features/membership/premium-gate";
 import { useIsMember } from "../../src/features/membership/use-is-member";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
@@ -31,22 +32,26 @@ export default function ArticleDetailScreen() {
     api.content.queries.getPublishedById,
     id ? { id: id as never } : "skip",
   ) as ContentDoc | null | undefined;
+  const { downloadedItem } = useDownloads({ contentId: id, enabled: isMember });
+  const resolvedContent = content ?? downloadedItem?.content ?? null;
 
-  const premiumGate = content
-    ? resolvePremiumGate({ isPremium: content.isPremium, isMember })
+  const premiumGate = resolvedContent
+    ? resolvePremiumGate({ isPremium: resolvedContent.isPremium, isMember })
     : "open";
 
   const state =
-    content && content.kind === "article"
+    resolvedContent && resolvedContent.kind === "article"
       ? "ready"
       : content === undefined && networkState === "offline"
         ? "offline"
-        : content === undefined
+      : content === undefined
       ? "loading"
-      : content === null || content.kind !== "article"
+      : resolvedContent === null || resolvedContent.kind !== "article"
         ? "notFound"
         : "ready";
-  const coverImageUrl = content ? getContentCoverImageUrl(content) : undefined;
+  const coverImageUrl =
+    downloadedItem?.localCoverImagePath ??
+    (resolvedContent ? getContentCoverImageUrl(resolvedContent) : undefined);
 
   return (
     <ContentDetailShell
@@ -59,29 +64,31 @@ export default function ArticleDetailScreen() {
       notFoundTitle={t("notFoundTitle")}
       notFoundBody={t("notFoundBody")}
       hero={
-        content ? (
+        resolvedContent ? (
           <DetailHero
             coverImageUrl={coverImageUrl}
             watermarkGlyph="✎"
             height={200 * scaleSpace}
-            premiumLabel={content.isPremium ? t("premiumTag") : undefined}
+            premiumLabel={resolvedContent.isPremium ? t("premiumTag") : undefined}
           />
         ) : undefined
       }
-      actions={content ? <BookmarkActionBar contentId={content._id} /> : undefined}
+      actions={
+        resolvedContent ? <ContentActionsBar content={resolvedContent} /> : undefined
+      }
     >
-      {content ? (
+      {resolvedContent ? (
         <>
           <DetailHeader
-            kicker={content.category || t("kicker")}
-            title={content.title}
+            kicker={resolvedContent.category || t("kicker")}
+            title={resolvedContent.title}
             meta={
-              content.readingTimeMinutes
-                ? t("readingTime", { minutes: content.readingTimeMinutes })
+              resolvedContent.readingTimeMinutes
+                ? t("readingTime", { minutes: resolvedContent.readingTimeMinutes })
                 : undefined
             }
-            lede={content.summary}
-            premium={content.isPremium}
+            lede={resolvedContent.summary}
+            premium={resolvedContent.isPremium}
           />
           {premiumGate === "locked" ? (
             <PremiumPaywall
@@ -89,14 +96,14 @@ export default function ArticleDetailScreen() {
               description={t("premiumBody")}
               ctaLabel={t("premiumCta")}
             />
-          ) : content.articleBody ? (
+          ) : resolvedContent.articleBody ? (
             <Text
               style={[
                 styles.body,
                 { color: theme.colors.text, fontSize: 16 * scaleFont, lineHeight: 26 * scaleFont },
               ]}
             >
-              {content.articleBody}
+              {resolvedContent.articleBody}
             </Text>
           ) : null}
         </>

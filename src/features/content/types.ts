@@ -41,9 +41,15 @@ export type ContentCardModel = {
   id: string;
   kind: ContentKind;
   kindLabel: string;
+  /** Editorial category from the CMS (e.g. "Analyse"); used as the card kicker. */
+  category: string;
   title: string;
   summary: string;
   metaLabel: string;
+  /** Reading time in minutes for articles, when known. */
+  readingTimeMinutes?: number;
+  /** Playback length in whole minutes for episodes/videos, when known. */
+  durationMinutes?: number;
   href: string;
   isPremium: boolean;
   coverImageUrl?: string;

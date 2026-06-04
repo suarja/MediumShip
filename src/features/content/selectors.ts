@@ -115,15 +115,23 @@ export function getContentCoverImageUrl(
 export function toContentCardModel(content: ContentDoc): ContentCardModel {
   const metaParts: string[] = [];
 
-  if (content.kind === "article" && content.readingTimeMinutes) {
-    metaParts.push(`${content.readingTimeMinutes} min read`);
-  }
+  const readingTimeMinutes =
+    content.kind === "article" && content.readingTimeMinutes
+      ? content.readingTimeMinutes
+      : undefined;
 
-  if (
+  const durationMinutes =
     (content.kind === "episode" || content.kind === "video") &&
     content.durationSeconds
-  ) {
-    metaParts.push(`${Math.round(content.durationSeconds / 60)} min`);
+      ? Math.round(content.durationSeconds / 60)
+      : undefined;
+
+  if (readingTimeMinutes) {
+    metaParts.push(`${readingTimeMinutes} min read`);
+  }
+
+  if (durationMinutes) {
+    metaParts.push(`${durationMinutes} min`);
   }
 
   if (content.isPremium) {
@@ -134,9 +142,12 @@ export function toContentCardModel(content: ContentDoc): ContentCardModel {
     id: content._id,
     kind: content.kind,
     kindLabel: KIND_LABELS[content.kind],
+    category: content.category,
     title: content.title,
     summary: content.summary,
     metaLabel: metaParts.join(" · "),
+    readingTimeMinutes,
+    durationMinutes,
     href: `/${content.kind}/${content._id}`,
     isPremium: content.isPremium,
     coverImageUrl: getContentCoverImageUrl(content),

@@ -9,6 +9,9 @@ export const fontFamilies = {
   // Editorial serif for titles/headings.
   display: "Newsreader_600SemiBold",
   displayBold: "Newsreader_700Bold",
+  // Italic serif for the brand wordmark and editorial emphasis.
+  displayItalic: "Newsreader_600SemiBold_Italic",
+  displayBoldItalic: "Newsreader_700Bold_Italic",
   // Grotesk body text.
   body: "HankenGrotesk_400Regular",
   bodyMedium: "HankenGrotesk_500Medium",

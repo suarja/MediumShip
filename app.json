@@ -4,7 +4,7 @@
     "slug": "mediumship",
     "version": "1.0.0",
     "scheme": "mediumship",
-    "orientation": "portrait",
+    "orientation": "default",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,

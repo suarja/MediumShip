@@ -13,6 +13,7 @@ export default {
   hostedProvider: "Hébergée",
   playVideo: "Lancer la vidéo",
   enterPictureInPicture: "Picture in Picture",
+  fullscreen: "Plein écran",
   openExternal: "Ouvrir sur YouTube",
   premiumTitle: "Vidéo réservée aux membres",
   premiumBody:

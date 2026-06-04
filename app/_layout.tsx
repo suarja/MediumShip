@@ -3,6 +3,7 @@ import { ClerkProvider } from "@clerk/clerk-expo";
 import { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Stack } from "expo-router";
+import * as ScreenOrientation from "expo-screen-orientation";
 import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View, StyleSheet } from "react-native";
@@ -53,6 +54,15 @@ export default function RootLayout() {
     return () => {
       mounted = false;
     };
+  }, []);
+
+  // The app config allows all orientations (so the native video fullscreen can
+  // rotate to landscape on iOS), but the app itself stays portrait everywhere —
+  // only the player screen unlocks rotation while it is focused.
+  useEffect(() => {
+    void ScreenOrientation.lockAsync(
+      ScreenOrientation.OrientationLock.PORTRAIT_UP,
+    ).catch(() => {});
   }, []);
 
   useEffect(() => {

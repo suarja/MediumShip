@@ -107,6 +107,21 @@ jest.mock("expo-web-browser", () => ({
   openBrowserAsync: jest.fn().mockResolvedValue({ type: "opened" }),
 }));
 
+jest.mock("expo-screen-orientation", () => ({
+  lockAsync: jest.fn().mockResolvedValue(undefined),
+  unlockAsync: jest.fn().mockResolvedValue(undefined),
+  addOrientationChangeListener: jest.fn(() => ({ remove: jest.fn() })),
+  removeOrientationChangeListener: jest.fn(),
+  Orientation: {
+    PORTRAIT_UP: 1,
+    LANDSCAPE_LEFT: 3,
+    LANDSCAPE_RIGHT: 4,
+  },
+  OrientationLock: {
+    PORTRAIT_UP: 2,
+  },
+}));
+
 jest.mock("react-native-webview", () => {
   const React = require("react");
   const { View } = require("react-native");

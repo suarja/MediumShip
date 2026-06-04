@@ -16,6 +16,8 @@ jest.mock("expo-router", () => ({
   },
   useLocalSearchParams: () => ({ id: "content_1" }),
   useRouter: () => ({ back: jest.fn(), push: jest.fn() }),
+  // No-op in tests — the focus-driven PiP / orientation behaviour is device-only.
+  useFocusEffect: () => {},
 }));
 
 jest.mock("../src/features/network/use-network-status", () => ({

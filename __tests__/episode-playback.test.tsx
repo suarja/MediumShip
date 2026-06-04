@@ -17,6 +17,9 @@ type CreatedPlayer = {
   pause: jest.Mock;
   remove: jest.Mock;
   seekTo: jest.Mock;
+  setActiveForLockScreen: jest.Mock;
+  clearLockScreenControls: jest.Mock;
+  updateLockScreenMetadata: jest.Mock;
 };
 
 const createdPlayers: CreatedPlayer[] = [];
@@ -31,6 +34,9 @@ jest.mock("expo-audio", () => ({
       pause: jest.fn(),
       remove: jest.fn(),
       seekTo: jest.fn().mockResolvedValue(undefined),
+      setActiveForLockScreen: jest.fn(),
+      clearLockScreenControls: jest.fn(),
+      updateLockScreenMetadata: jest.fn(),
     };
     createdPlayers.push(player);
     return player;
@@ -97,5 +103,30 @@ describe("episode playback", () => {
     expect(trackPlayer).toBeDefined();
     // ...and plays it right away, without waiting on an isLoaded signal.
     expect(trackPlayer?.play).toHaveBeenCalled();
+  });
+
+  it("activates native Now Playing controls for the episode", async () => {
+    render(
+      <PersistentMediaPlayerProvider>
+        <Harness />
+      </PersistentMediaPlayerProvider>,
+    );
+
+    await act(async () => {
+      fireEvent.press(screen.getByText("play episode"));
+    });
+
+    const trackPlayer = createdPlayers.find(
+      (player) =>
+        typeof player.source === "object" &&
+        player.source !== null &&
+        (player.source as { uri?: string }).uri ===
+          "https://cdn.example.com/episode.mp3",
+    );
+    expect(trackPlayer?.setActiveForLockScreen).toHaveBeenCalledWith(
+      true,
+      expect.objectContaining({ title: "Episode one" }),
+      expect.any(Object),
+    );
   });
 });

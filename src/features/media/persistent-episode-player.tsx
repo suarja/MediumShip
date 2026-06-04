@@ -32,6 +32,19 @@ const audioModeConfig = {
   playsInSilentMode: true,
   shouldPlayInBackground: true,
 };
+// Lock screen / Dynamic Island controls require interruptionMode "doNotMix"
+// (set above) so the OS associates the Now Playing session with our player.
+const audioLockScreenOptions = {
+  showSeekForward: true,
+  showSeekBackward: true,
+};
+
+function buildAudioMetadata(track: EpisodeTrack) {
+  return {
+    title: track.title,
+    artworkUrl: track.artworkUrl,
+  };
+}
 
 export type EpisodeTrack = {
   contentId: string;
@@ -279,7 +292,12 @@ export function PersistentMediaPlayerProvider({
     Boolean(audioStatus.didJustFinish) ||
     (durationSeconds > 0 && currentTimeSeconds >= durationSeconds);
 
-  const disableAudioLockScreen = () => {};
+  const disableAudioLockScreen = () => {
+    safelyReleasePlayer(
+      () => audioPlayer.clearLockScreenControls(),
+      "Failed to clear lock screen controls",
+    );
+  };
 
   useEffect(() => {
     return () => {
@@ -310,6 +328,17 @@ export function PersistentMediaPlayerProvider({
         { updateInterval: 250 },
       );
       nextPlayer.play();
+      // Surface native Now Playing controls (lock screen, Dynamic Island,
+      // Control Center). The OS drives play/pause/seek directly on this player.
+      safelyReleasePlayer(
+        () =>
+          nextPlayer.setActiveForLockScreen(
+            true,
+            buildAudioMetadata(track),
+            audioLockScreenOptions,
+          ),
+        "Failed to enable lock screen controls",
+      );
 
       const nextSession: ActiveMediaSession = { kind: "episode", ...track };
       activeSessionRef.current = nextSession;

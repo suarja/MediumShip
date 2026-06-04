@@ -13,16 +13,22 @@ import { useAppTheme } from "../../features/theme/theme-provider";
  * deliberately light. Tenant name and all colours come from the resolved theme.
  */
 export function BrandHeader() {
-  const { brandLogoUrl, theme, tenantName } = useAppTheme();
+  const { appIconUrl, brandLogoUrl, theme, tenantName } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
   const iconSize = 34 * scaleSpace;
   const [logoFailed, setLogoFailed] = useState(false);
+  const [appIconFailed, setAppIconFailed] = useState(false);
 
   useEffect(() => {
     setLogoFailed(false);
   }, [brandLogoUrl]);
 
+  useEffect(() => {
+    setAppIconFailed(false);
+  }, [appIconUrl]);
+
   const showBrandLogo = Boolean(brandLogoUrl) && !logoFailed;
+  const showAppIcon = Boolean(appIconUrl) && !appIconFailed;
 
   return (
     <View style={[styles.row, { marginBottom: theme.spacing.lg * scaleSpace }]}>
@@ -64,9 +70,20 @@ export function BrandHeader() {
             pressed && styles.pressed,
           ]}
         >
-          <Text style={[styles.icon, { color: theme.colors.heading, fontSize: 15 * scaleFont }]}>
-            ⚙
-          </Text>
+          {showAppIcon ? (
+            <Image
+              accessibilityLabel={`${tenantName} app icon`}
+              onError={() => setAppIconFailed(true)}
+              source={{ uri: appIconUrl }}
+              style={styles.appIcon}
+            />
+          ) : (
+            <Text
+              style={[styles.icon, { color: theme.colors.heading, fontSize: 15 * scaleFont }]}
+            >
+              ⚙
+            </Text>
+          )}
         </Pressable>
       </Link>
     </View>
@@ -81,13 +98,15 @@ const styles = StyleSheet.create({
   },
   brand: { flexDirection: "row", alignItems: "flex-end", flexShrink: 1 },
   logo: { fontFamily: fontFamilies.displayBoldItalic, letterSpacing: -0.3 },
-  logoImage: { width: 132, height: 28 },
+  logoImage: { width: 132, height: 28, marginLeft: -6 },
   dot: { width: 6, height: 6, borderRadius: 999, marginLeft: 3, marginBottom: 6 },
   iconButton: {
     alignItems: "center",
     justifyContent: "center",
     borderWidth: StyleSheet.hairlineWidth,
+    overflow: "hidden",
   },
   pressed: { opacity: 0.7 },
   icon: { fontWeight: "700" },
+  appIcon: { width: "100%", height: "100%" },
 });

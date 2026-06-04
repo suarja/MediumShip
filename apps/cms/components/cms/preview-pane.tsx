@@ -112,7 +112,7 @@ function PreviewBrandLogo({
       alt={`${name} logo`}
       onError={() => setHasError(true)}
       src={logoUrl}
-      style={{ height: 24, maxWidth: 116, objectFit: "contain" }}
+      style={{ height: 24, maxWidth: 116, objectFit: "contain", marginLeft: -4 }}
     />
   );
 }

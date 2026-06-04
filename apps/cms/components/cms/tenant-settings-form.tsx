@@ -90,7 +90,7 @@ function PreviewBrandLogo({
       alt={`${name || "MediumShip"} logo`}
       onError={() => setHasError(true)}
       src={logoUrl}
-      style={{ height: 24, maxWidth: 112, objectFit: "contain" }}
+      style={{ height: 24, maxWidth: 112, objectFit: "contain", marginLeft: -4 }}
     />
   );
 }
@@ -395,6 +395,19 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
             style={{ marginTop: 10 }}
             value={logoUrl}
           />
+          <div className="field-actions">
+            <button
+              className="btn btn--surface btn--sm"
+              disabled={!logoUrl}
+              onClick={() => {
+                setLogoUrl("");
+                setSaveLabel("Enregistrer");
+              }}
+              type="button"
+            >
+              Retirer le logo
+            </button>
+          </div>
 
           <div className="upload" style={{ marginTop: 14 }}>
             <div
@@ -424,6 +437,19 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
             style={{ marginTop: 10 }}
             value={appIconUrl}
           />
+          <div className="field-actions">
+            <button
+              className="btn btn--surface btn--sm"
+              disabled={!appIconUrl}
+              onClick={() => {
+                setAppIconUrl("");
+                setSaveLabel("Enregistrer");
+              }}
+              type="button"
+            >
+              Retirer l’icône
+            </button>
+          </div>
         </section>
 
         <section className="tenant-section">

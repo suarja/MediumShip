@@ -1106,6 +1106,12 @@ a {
   min-width: 0;
 }
 
+.field-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
 .upload__t {
   font-family: var(--font-display);
   font-size: 14px;

@@ -5,6 +5,7 @@ import VideoDetailScreen from "../app/video/[id]";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
 const mockUseQuery = jest.fn();
+const mockClosePlayer = jest.fn();
 
 jest.mock("convex/react", () => ({
   useQuery: (...args: unknown[]) => mockUseQuery(...args),
@@ -19,6 +20,11 @@ jest.mock("../src/features/network/use-network-status", () => ({
   useNetworkStatus: () => ({ state: "online" }),
 }));
 
+jest.mock("../src/features/media/persistent-episode-player", () => ({
+  usePersistentEpisodePlayer: () => ({ closePlayer: mockClosePlayer }),
+  usePersistentEpisodePlayerSpace: () => 0,
+}));
+
 describe("video detail", () => {
   beforeAll(async () => {
     await initI18n();
@@ -26,6 +32,7 @@ describe("video detail", () => {
 
   beforeEach(async () => {
     await changeAppLanguage("en");
+    mockClosePlayer.mockClear();
   });
 
   it("renders an inline youtube player and keeps an external fallback", () => {
@@ -49,6 +56,7 @@ describe("video detail", () => {
 
     render(<VideoDetailScreen />);
 
+    expect(mockClosePlayer).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId("youtube-player")).toBeTruthy();
     expect(screen.getByText("Open on YouTube")).toBeTruthy();
   });

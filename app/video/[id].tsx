@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { useQuery } from "convex/react";
@@ -7,7 +8,10 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
 import { VideoPlayerCard } from "../../src/components/media/video-player-card";
-import { usePersistentEpisodePlayerSpace } from "../../src/features/media/persistent-episode-player";
+import {
+  usePersistentEpisodePlayer,
+  usePersistentEpisodePlayerSpace,
+} from "../../src/features/media/persistent-episode-player";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
@@ -21,7 +25,12 @@ export default function VideoDetailScreen() {
   const { theme } = useAppTheme();
   const { scaleSpace, scaleFont } = useResponsive();
   const { state: networkState } = useNetworkStatus();
+  const { closePlayer } = usePersistentEpisodePlayer();
   const persistentPlayerSpace = usePersistentEpisodePlayerSpace();
+
+  useEffect(() => {
+    closePlayer();
+  }, [id]);
 
   const content = useQuery(
     api.content.queries.getPublishedById,

@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   },
   brand: { flexDirection: "row", alignItems: "flex-end", flexShrink: 1 },
   logo: { fontFamily: fontFamilies.displayBoldItalic, letterSpacing: -0.3 },
-  logoImage: { width: 132, height: 28, marginLeft: -6 },
+  logoImage: { width: 132, height: 28, marginLeft: -12 },
   dot: { width: 6, height: 6, borderRadius: 999, marginLeft: 3, marginBottom: 6 },
   iconShell: {
     alignItems: "center",

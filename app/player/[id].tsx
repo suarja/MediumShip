@@ -28,6 +28,7 @@ import {
 } from "../../src/components/media/player-icons";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
+import { useDownloads } from "../../src/features/downloads/use-downloads";
 import { resolvePremiumGate } from "../../src/features/membership/premium-gate";
 import { useIsMember } from "../../src/features/membership/use-is-member";
 import { formatMediaClock } from "../../src/features/media/format-media-clock";
@@ -71,13 +72,17 @@ export default function PlayerScreen() {
     api.content.queries.getPublishedById,
     id ? { id: id as never } : "skip",
   ) as ContentDoc | null | undefined;
-  const coverImageUrl = content ? getContentCoverImageUrl(content) : undefined;
-  const isLocked = content
-    ? resolvePremiumGate({ isPremium: content.isPremium, isMember }) === "locked"
+  const { downloadedItem } = useDownloads({ contentId: id, enabled: isMember });
+  const resolvedContent = content ?? downloadedItem?.content ?? null;
+  const coverImageUrl =
+    downloadedItem?.localCoverImagePath ??
+    (resolvedContent ? getContentCoverImageUrl(resolvedContent) : undefined);
+  const isLocked = resolvedContent
+    ? resolvePremiumGate({ isPremium: resolvedContent.isPremium, isMember }) === "locked"
     : false;
 
   useEffect(() => {
-    if (!content) {
+    if (!resolvedContent) {
       return;
     }
 
@@ -85,52 +90,78 @@ export default function PlayerScreen() {
     // screen, which renders the themed paywall.
     if (isLocked) {
       router.replace(
-        (content.kind === "video"
-          ? `/video/${content._id}`
-          : `/episode/${content._id}`) as never,
+        (resolvedContent.kind === "video"
+          ? `/video/${resolvedContent._id}`
+          : `/episode/${resolvedContent._id}`) as never,
       );
       return;
     }
 
-    if (content.kind === "episode" && content.audioUrl) {
+    if (resolvedContent.kind === "episode") {
+      const audioUrl = downloadedItem?.localMediaPath ?? resolvedContent.audioUrl;
+
+      if (!audioUrl) {
+        return;
+      }
+
       const isSameSession =
         activeSession?.kind === "episode" &&
-        activeSession.contentId === content._id &&
-        activeSession.audioUrl === content.audioUrl;
+        activeSession.contentId === resolvedContent._id &&
+        activeSession.audioUrl === audioUrl;
 
       if (!isSameSession) {
         void playEpisode({
-          contentId: content._id,
-          title: content.title,
-          audioUrl: content.audioUrl,
+          contentId: resolvedContent._id,
+          title: resolvedContent.title,
+          audioUrl,
           artworkUrl: coverImageUrl,
-          durationSeconds: content.durationSeconds,
+          durationSeconds: resolvedContent.durationSeconds,
         });
       }
 
       return;
     }
 
-    if (content.kind === "video" && content.videoSource?.kind === "hosted") {
+    if (resolvedContent.kind === "video") {
+      const playbackUrl =
+        downloadedItem?.localMediaPath ??
+        (resolvedContent.videoSource?.kind === "hosted"
+          ? resolvedContent.videoSource.playbackUrl
+          : null);
+
+      if (!playbackUrl) {
+        return;
+      }
+
       const isSameSession =
         activeSession?.kind === "hostedVideo" &&
-        activeSession.contentId === content._id &&
-        activeSession.playbackUrl === content.videoSource.playbackUrl;
+        activeSession.contentId === resolvedContent._id &&
+        activeSession.playbackUrl === playbackUrl;
 
       if (!isSameSession) {
         void playHostedVideo({
-          contentId: content._id,
-          title: content.title,
-          playbackUrl: content.videoSource.playbackUrl,
+          contentId: resolvedContent._id,
+          title: resolvedContent.title,
+          playbackUrl,
           artworkUrl: coverImageUrl,
-          durationSeconds: content.durationSeconds,
+          durationSeconds: resolvedContent.durationSeconds,
         });
       }
     }
-  }, [activeSession, content, coverImageUrl, isLocked, playEpisode, playHostedVideo, router]);
+  }, [
+    activeSession,
+    coverImageUrl,
+    downloadedItem?.localMediaPath,
+    isLocked,
+    playEpisode,
+    playHostedVideo,
+    resolvedContent,
+    router,
+  ]);
 
   const isHostedVideo =
-    content?.kind === "video" && content.videoSource?.kind === "hosted";
+    resolvedContent?.kind === "video" &&
+    (resolvedContent.videoSource?.kind === "hosted" || Boolean(downloadedItem?.localMediaPath));
   // Fullscreen is driven purely by the screen's own dimensions: while on the
   // player screen orientation is unlocked, so a physical rotation rotates the
   // screen and flips this — landscape => fullscreen video, portrait => normal.
@@ -161,41 +192,43 @@ export default function PlayerScreen() {
   );
 
   const state =
-    content &&
-    (content.kind === "episode"
-      ? Boolean(content.audioUrl)
-      : content.kind === "video"
-        ? content.videoSource?.kind === "hosted"
+    resolvedContent &&
+    (resolvedContent.kind === "episode"
+      ? Boolean(downloadedItem?.localMediaPath || resolvedContent.audioUrl)
+      : resolvedContent.kind === "video"
+        ? Boolean(
+            downloadedItem?.localMediaPath || resolvedContent.videoSource?.kind === "hosted",
+          )
         : false)
       ? "ready"
       : content === undefined && networkState === "offline"
         ? "offline"
-        : content === undefined
+      : content === undefined
           ? "loading"
           : "notFound";
 
-  if (state !== "ready" || !content) {
+  if (state !== "ready" || !resolvedContent) {
     return (
       <ContentDetailShell
         state={state}
         networkState={networkState}
-        backLabel={content?.kind === "video" ? tVideo("back") : tEpisode("back")}
-        loadingLabel={content?.kind === "video" ? tVideo("loading") : tEpisode("loading")}
+        backLabel={resolvedContent?.kind === "video" ? tVideo("back") : tEpisode("back")}
+        loadingLabel={resolvedContent?.kind === "video" ? tVideo("loading") : tEpisode("loading")}
         offlineTitle={
-          content?.kind === "video"
+          resolvedContent?.kind === "video"
             ? tVideo("offlineTitle")
             : tEpisode("offlineTitle")
         }
         offlineBody={
-          content?.kind === "video" ? tVideo("offlineBody") : tEpisode("offlineBody")
+          resolvedContent?.kind === "video" ? tVideo("offlineBody") : tEpisode("offlineBody")
         }
         notFoundTitle={
-          content?.kind === "video"
+          resolvedContent?.kind === "video"
             ? tVideo("notFoundTitle")
             : tEpisode("notFoundTitle")
         }
         notFoundBody={
-          content?.kind === "video"
+          resolvedContent?.kind === "video"
             ? tVideo("notFoundBody")
             : tEpisode("notFoundBody")
         }
@@ -208,30 +241,30 @@ export default function PlayerScreen() {
       <ContentDetailShell
         state="ready"
         networkState={networkState}
-        backLabel={content.kind === "video" ? tVideo("back") : tEpisode("back")}
-        loadingLabel={content.kind === "video" ? tVideo("loading") : tEpisode("loading")}
+        backLabel={resolvedContent.kind === "video" ? tVideo("back") : tEpisode("back")}
+        loadingLabel={resolvedContent.kind === "video" ? tVideo("loading") : tEpisode("loading")}
         offlineTitle={
-          content.kind === "video" ? tVideo("offlineTitle") : tEpisode("offlineTitle")
+          resolvedContent.kind === "video" ? tVideo("offlineTitle") : tEpisode("offlineTitle")
         }
         offlineBody={
-          content.kind === "video" ? tVideo("offlineBody") : tEpisode("offlineBody")
+          resolvedContent.kind === "video" ? tVideo("offlineBody") : tEpisode("offlineBody")
         }
         notFoundTitle={
-          content.kind === "video" ? tVideo("notFoundTitle") : tEpisode("notFoundTitle")
+          resolvedContent.kind === "video" ? tVideo("notFoundTitle") : tEpisode("notFoundTitle")
         }
         notFoundBody={
-          content.kind === "video" ? tVideo("notFoundBody") : tEpisode("notFoundBody")
+          resolvedContent.kind === "video" ? tVideo("notFoundBody") : tEpisode("notFoundBody")
         }
         hero={
           <DetailHero
-            key={content._id}
+            key={resolvedContent._id}
             coverImageUrl={coverImageUrl}
-            mediaKey={content._id}
-            watermarkGlyph={content.kind === "video" ? "▶" : "▷"}
-            height={content.kind === "video" ? 200 * scaleSpace : 210 * scaleSpace}
-            playGlyph={content.kind === "video" ? "▶" : undefined}
+            mediaKey={resolvedContent._id}
+            watermarkGlyph={resolvedContent.kind === "video" ? "▶" : "▷"}
+            height={resolvedContent.kind === "video" ? 200 * scaleSpace : 210 * scaleSpace}
+            playGlyph={resolvedContent.kind === "video" ? "▶" : undefined}
             premiumLabel={
-              content.kind === "video"
+              resolvedContent.kind === "video"
                 ? tVideo("premiumTag")
                 : tEpisode("premiumTag")
             }
@@ -240,45 +273,45 @@ export default function PlayerScreen() {
       >
         <DetailHeader
           kicker={
-            content.category ||
-            (content.kind === "video" ? tVideo("kicker") : tEpisode("kicker"))
+            resolvedContent.category ||
+            (resolvedContent.kind === "video" ? tVideo("kicker") : tEpisode("kicker"))
           }
-          title={content.title}
+          title={resolvedContent.title}
           meta={
-            content.kind === "episode"
-              ? content.durationSeconds
+            resolvedContent.kind === "episode"
+              ? resolvedContent.durationSeconds
                 ? tEpisode("duration", {
-                    minutes: Math.round(content.durationSeconds / 60),
+                    minutes: Math.round(resolvedContent.durationSeconds / 60),
                   })
                 : undefined
               : tVideo("providerLabel", { provider: tVideo("hostedProvider") })
           }
-          lede={content.summary}
+          lede={resolvedContent.summary}
           premium
         />
         <PremiumPaywall
           title={
-            content.kind === "video"
+            resolvedContent.kind === "video"
               ? tVideo("premiumTitle")
               : tEpisode("premiumTitle")
           }
           description={
-            content.kind === "video"
+            resolvedContent.kind === "video"
               ? tVideo("premiumBody")
               : tEpisode("premiumBody")
           }
           ctaLabel={
-            content.kind === "video" ? tVideo("premiumCta") : tEpisode("premiumCta")
+            resolvedContent.kind === "video" ? tVideo("premiumCta") : tEpisode("premiumCta")
           }
         />
       </ContentDetailShell>
     );
   }
 
-  const title = content.title;
+  const title = resolvedContent.title;
   const subtitle =
-    content.kind === "episode"
-      ? `${content.category || tEpisode("kicker")} · ${tEpisode("playerLabel")}`
+    resolvedContent.kind === "episode"
+      ? `${resolvedContent.category || tEpisode("kicker")} · ${tEpisode("playerLabel")}`
       : tVideo("providerLabel", { provider: tVideo("hostedProvider") });
   const playLabel = hasFinished
     ? tEpisode("replay")
@@ -359,7 +392,7 @@ export default function PlayerScreen() {
             { fontSize: 10 * scaleFont, color: withAlpha(fg, 0.56) },
           ]}
         >
-          {content.kind === "episode" ? "LECTURE EN COURS" : "VIDEO EN COURS"}
+          {resolvedContent.kind === "episode" ? "LECTURE EN COURS" : "VIDEO EN COURS"}
         </Text>
         <Pressable
           accessibilityRole="button"
@@ -379,7 +412,7 @@ export default function PlayerScreen() {
           },
         ]}
       >
-        {content.kind === "episode" ? (
+        {resolvedContent.kind === "episode" ? (
           <>
             <View
               style={[
@@ -457,7 +490,7 @@ export default function PlayerScreen() {
           </View>
         )}
 
-        {content.kind === "video" ? (
+        {resolvedContent.kind === "video" ? (
           <>
             <Text
               style={[
@@ -483,7 +516,7 @@ export default function PlayerScreen() {
             { fontSize: 13 * scaleFont, color: withAlpha(fg, 0.62) },
           ]}
         >
-          {content.summary}
+          {resolvedContent.summary}
         </Text>
 
         <View style={styles.progressWrap}>
@@ -569,7 +602,7 @@ export default function PlayerScreen() {
           </Pressable>
         </View>
 
-        {content.kind === "video" && videoPlayer ? (
+        {resolvedContent.kind === "video" && videoPlayer ? (
           <Text
             style={[styles.rotateHint, { color: withAlpha(fg, 0.5) }]}
           >

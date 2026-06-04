@@ -14,6 +14,7 @@ import { VideoPlayerCard } from "../../src/components/media/video-player-card";
 import { usePersistentMediaPlayer } from "../../src/features/media/persistent-media-player";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
+import { useDownloads } from "../../src/features/downloads/use-downloads";
 import { resolvePremiumGate } from "../../src/features/membership/premium-gate";
 import { useIsMember } from "../../src/features/membership/use-is-member";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
@@ -35,24 +36,28 @@ export default function VideoDetailScreen() {
     api.content.queries.getPublishedById,
     id ? { id: id as never } : "skip",
   ) as ContentDoc | null | undefined;
+  const { downloadedItem } = useDownloads({ contentId: id, enabled: isMember });
+  const resolvedContent = content ?? downloadedItem?.content ?? null;
 
-  const premiumGate = content
-    ? resolvePremiumGate({ isPremium: content.isPremium, isMember })
+  const premiumGate = resolvedContent
+    ? resolvePremiumGate({ isPremium: resolvedContent.isPremium, isMember })
     : "open";
 
   const state =
-    content && content.kind === "video"
+    resolvedContent && resolvedContent.kind === "video"
       ? "ready"
       : content === undefined && networkState === "offline"
         ? "offline"
-        : content === undefined
+      : content === undefined
       ? "loading"
-      : content === null || content.kind !== "video"
+      : resolvedContent === null || resolvedContent.kind !== "video"
         ? "notFound"
         : "ready";
 
-  const source = content?.videoSource;
-  const coverImageUrl = content ? getContentCoverImageUrl(content) : undefined;
+  const source = resolvedContent?.videoSource;
+  const coverImageUrl =
+    downloadedItem?.localCoverImagePath ??
+    (resolvedContent ? getContentCoverImageUrl(resolvedContent) : undefined);
   const providerLabel =
     source?.kind === "youtube"
       ? t("youtubeProvider")
@@ -71,12 +76,12 @@ export default function VideoDetailScreen() {
       notFoundTitle={t("notFoundTitle")}
       notFoundBody={t("notFoundBody")}
       hero={
-        content ? (
+        resolvedContent ? (
           premiumGate === "locked" ? (
             <DetailHero
-              key={content._id}
+              key={resolvedContent._id}
               coverImageUrl={coverImageUrl}
-              mediaKey={content._id}
+              mediaKey={resolvedContent._id}
               watermarkGlyph="▶"
               height={200 * scaleSpace}
               playGlyph="▶"
@@ -90,9 +95,9 @@ export default function VideoDetailScreen() {
             />
           ) : (
             <DetailHero
-              key={content._id}
+              key={resolvedContent._id}
               coverImageUrl={coverImageUrl}
-              mediaKey={content._id}
+              mediaKey={resolvedContent._id}
               watermarkGlyph="▶"
               height={200 * scaleSpace}
               playGlyph="▶"
@@ -100,16 +105,18 @@ export default function VideoDetailScreen() {
           )
         ) : undefined
       }
-      actions={content ? <ContentActionsBar content={content} /> : undefined}
+      actions={
+        resolvedContent ? <ContentActionsBar content={resolvedContent} /> : undefined
+      }
     >
-      {content ? (
+      {resolvedContent ? (
         <>
           <DetailHeader
-            kicker={content.category || t("kicker")}
-            title={content.title}
+            kicker={resolvedContent.category || t("kicker")}
+            title={resolvedContent.title}
             meta={providerLabel ? t("providerLabel", { provider: providerLabel }) : undefined}
-            lede={content.summary}
-            premium={content.isPremium}
+            lede={resolvedContent.summary}
+            premium={resolvedContent.isPremium}
           />
           {premiumGate === "locked" ? (
             <PremiumPaywall
@@ -117,11 +124,11 @@ export default function VideoDetailScreen() {
               description={t("premiumBody")}
               ctaLabel={t("premiumCta")}
             />
-          ) : source?.kind === "hosted" ? (
+          ) : source?.kind === "hosted" || downloadedItem?.localMediaPath ? (
             <Pressable
               accessibilityRole="button"
               onPress={() => {
-                router.push(`/player/${content._id}` as never);
+                router.push(`/player/${resolvedContent._id}` as never);
               }}
               style={({ pressed }) => [
                 styles.cta,
@@ -133,7 +140,7 @@ export default function VideoDetailScreen() {
               ]}
             >
               <Text style={[styles.ctaLabel, { color: theme.colors.accentContrast }]}>
-                {activeSession?.contentId === content._id
+                {activeSession?.contentId === resolvedContent._id
                   ? t("resumeVideo")
                   : t("playVideo")}
               </Text>

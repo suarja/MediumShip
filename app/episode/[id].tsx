@@ -12,6 +12,7 @@ import { DetailHero } from "../../src/components/content/detail-hero";
 import { PremiumPaywall } from "../../src/components/content/premium-paywall";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
+import { useDownloads } from "../../src/features/downloads/use-downloads";
 import { resolvePremiumGate } from "../../src/features/membership/premium-gate";
 import { useIsMember } from "../../src/features/membership/use-is-member";
 import { usePersistentMediaPlayer } from "../../src/features/media/persistent-media-player";
@@ -34,22 +35,26 @@ export default function EpisodeDetailScreen() {
     api.content.queries.getPublishedById,
     id ? { id: id as never } : "skip",
   ) as ContentDoc | null | undefined;
+  const { downloadedItem } = useDownloads({ contentId: id, enabled: isMember });
+  const resolvedContent = content ?? downloadedItem?.content ?? null;
 
-  const premiumGate = content
-    ? resolvePremiumGate({ isPremium: content.isPremium, isMember })
+  const premiumGate = resolvedContent
+    ? resolvePremiumGate({ isPremium: resolvedContent.isPremium, isMember })
     : "open";
 
   const state =
-    content && content.kind === "episode"
+    resolvedContent && resolvedContent.kind === "episode"
       ? "ready"
       : content === undefined && networkState === "offline"
         ? "offline"
-        : content === undefined
+      : content === undefined
       ? "loading"
-      : content === null || content.kind !== "episode"
+      : resolvedContent === null || resolvedContent.kind !== "episode"
         ? "notFound"
         : "ready";
-  const coverImageUrl = content ? getContentCoverImageUrl(content) : undefined;
+  const coverImageUrl =
+    downloadedItem?.localCoverImagePath ??
+    (resolvedContent ? getContentCoverImageUrl(resolvedContent) : undefined);
 
   return (
     <ContentDetailShell
@@ -62,31 +67,33 @@ export default function EpisodeDetailScreen() {
       notFoundTitle={t("notFoundTitle")}
       notFoundBody={t("notFoundBody")}
       hero={
-        content ? (
+        resolvedContent ? (
           <DetailHero
-            key={content._id}
+            key={resolvedContent._id}
             coverImageUrl={coverImageUrl}
-            mediaKey={content._id}
+            mediaKey={resolvedContent._id}
             watermarkGlyph="▷"
             height={210 * scaleSpace}
-            premiumLabel={content.isPremium ? t("premiumTag") : undefined}
+            premiumLabel={resolvedContent.isPremium ? t("premiumTag") : undefined}
           />
         ) : undefined
       }
-      actions={content ? <ContentActionsBar content={content} /> : undefined}
+      actions={
+        resolvedContent ? <ContentActionsBar content={resolvedContent} /> : undefined
+      }
     >
-      {content ? (
+      {resolvedContent ? (
         <>
           <DetailHeader
-            kicker={content.category || t("kicker")}
-            title={content.title}
+            kicker={resolvedContent.category || t("kicker")}
+            title={resolvedContent.title}
             meta={
-              content.durationSeconds
-                ? t("duration", { minutes: Math.round(content.durationSeconds / 60) })
+              resolvedContent.durationSeconds
+                ? t("duration", { minutes: Math.round(resolvedContent.durationSeconds / 60) })
                 : undefined
             }
-            lede={content.summary}
-            premium={content.isPremium}
+            lede={resolvedContent.summary}
+            premium={resolvedContent.isPremium}
           />
 
           {premiumGate === "locked" ? (
@@ -95,12 +102,12 @@ export default function EpisodeDetailScreen() {
               description={t("premiumBody")}
               ctaLabel={t("premiumCta")}
             />
-          ) : content.audioUrl ? (
-            activeSession?.contentId === content._id ? null : (
+          ) : resolvedContent.audioUrl || downloadedItem?.localMediaPath ? (
+            activeSession?.contentId === resolvedContent._id ? null : (
             <Pressable
               accessibilityRole="button"
               onPress={() => {
-                router.push(`/player/${content._id}` as never);
+                router.push(`/player/${resolvedContent._id}` as never);
               }}
               style={({ pressed }) => [
                 styles.playbackButton,

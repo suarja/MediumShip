@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
+import { DetailHeader } from "../../src/components/content/detail-header";
 import { DetailHero } from "../../src/components/content/detail-hero";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
@@ -37,7 +38,6 @@ export default function ArticleDetailScreen() {
         ? "notFound"
         : "ready";
   const coverImageUrl = content ? getContentCoverImageUrl(content) : undefined;
-  const accentTone = content?.isPremium ? theme.colors.premium : theme.colors.accent;
 
   return (
     <ContentDetailShell
@@ -62,37 +62,17 @@ export default function ArticleDetailScreen() {
     >
       {content ? (
         <>
-          <Text style={[styles.kicker, { color: accentTone, fontSize: 11 * scaleFont }]}>
-            {content.category || t("kicker")}
-          </Text>
-          <Text
-            style={[
-              styles.title,
-              { color: theme.colors.heading, fontSize: 28 * scaleFont, lineHeight: 32 * scaleFont },
-            ]}
-          >
-            {content.title}
-          </Text>
-          {content.readingTimeMinutes ? (
-            <Text style={[styles.meta, { color: theme.colors.textMuted, fontSize: 11 * scaleFont }]}>
-              {t("readingTime", { minutes: content.readingTimeMinutes })}
-            </Text>
-          ) : null}
-          <Text
-            style={[
-              styles.lede,
-              {
-                color: theme.colors.text,
-                borderTopColor: theme.colors.border,
-                fontSize: 18 * scaleFont,
-                lineHeight: 27 * scaleFont,
-                paddingTop: theme.spacing.md * scaleSpace,
-                marginTop: theme.spacing.xs * scaleSpace,
-              },
-            ]}
-          >
-            {content.summary}
-          </Text>
+          <DetailHeader
+            kicker={content.category || t("kicker")}
+            title={content.title}
+            meta={
+              content.readingTimeMinutes
+                ? t("readingTime", { minutes: content.readingTimeMinutes })
+                : undefined
+            }
+            lede={content.summary}
+            premium={content.isPremium}
+          />
           {content.articleBody ? (
             <Text
               style={[
@@ -110,16 +90,5 @@ export default function ArticleDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  kicker: {
-    fontFamily: fontFamilies.mono,
-    textTransform: "uppercase",
-    letterSpacing: 1.6,
-  },
-  title: { fontFamily: fontFamilies.displayBoldItalic, letterSpacing: -0.4 },
-  meta: { fontFamily: fontFamilies.mono, letterSpacing: 0.4 },
-  lede: {
-    fontFamily: fontFamilies.display,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
   body: { fontFamily: fontFamilies.body },
 });

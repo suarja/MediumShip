@@ -1,4 +1,4 @@
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useQuery } from "convex/react";
 import { Link, useLocalSearchParams } from "expo-router";
@@ -6,6 +6,8 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
+import { DetailHeader } from "../../src/components/content/detail-header";
+import { DetailHero } from "../../src/components/content/detail-hero";
 import { EpisodeAudioPlayer } from "../../src/components/media/episode-audio-player";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
@@ -18,7 +20,7 @@ export default function EpisodeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation("episode");
   const { theme } = useAppTheme();
-  const { scaleSpace, scaleFont } = useResponsive();
+  const { scaleSpace } = useResponsive();
   const { state: networkState } = useNetworkStatus();
 
   const content = useQuery(
@@ -48,59 +50,30 @@ export default function EpisodeDetailScreen() {
       offlineBody={t("offlineBody")}
       notFoundTitle={t("notFoundTitle")}
       notFoundBody={t("notFoundBody")}
+      hero={
+        content ? (
+          <DetailHero
+            coverImageUrl={coverImageUrl}
+            watermarkGlyph="▷"
+            height={210 * scaleSpace}
+            premiumLabel={content.isPremium ? t("premiumTag") : undefined}
+          />
+        ) : undefined
+      }
     >
       {content ? (
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          showsVerticalScrollIndicator={false}
-        >
-          {coverImageUrl ? (
-            <Image
-              accessibilityLabel={`${content.title} cover`}
-              source={{ uri: coverImageUrl }}
-              style={[styles.cover, { height: 160 * scaleSpace }]}
-            />
-          ) : (
-            <View
-              style={[
-                styles.cover,
-                { backgroundColor: theme.colors.accent, height: 160 * scaleSpace },
-              ]}
-            >
-              <View style={styles.coverGlow} />
-            </View>
-          )}
-          <Text
-            style={[
-              styles.kicker,
-              {
-                color: content.isPremium ? theme.colors.premium : theme.colors.accent,
-                fontSize: 11 * scaleFont,
-              },
-            ]}
-          >
-            {content.category || t("kicker")}
-          </Text>
-          <Text
-            style={[
-              styles.title,
-              { color: theme.colors.heading, fontSize: 28 * scaleFont, lineHeight: 34 * scaleFont },
-            ]}
-          >
-            {content.title}
-          </Text>
-          {content.durationSeconds ? (
-            <Text style={[styles.meta, { color: theme.colors.textMuted, fontSize: 11 * scaleFont }]}>
-              {t("duration", {
-                minutes: Math.round(content.durationSeconds / 60),
-              })}
-            </Text>
-          ) : null}
-          <Text
-            style={[styles.summary, { color: theme.colors.text, fontSize: 16 * scaleFont, lineHeight: 24 * scaleFont }]}
-          >
-            {content.summary}
-          </Text>
+        <>
+          <DetailHeader
+            kicker={content.category || t("kicker")}
+            title={content.title}
+            meta={
+              content.durationSeconds
+                ? t("duration", { minutes: Math.round(content.durationSeconds / 60) })
+                : undefined
+            }
+            lede={content.summary}
+            premium={content.isPremium}
+          />
 
           {content.isPremium ? (
             <View
@@ -122,10 +95,7 @@ export default function EpisodeDetailScreen() {
               <Link href="/sign-in" asChild>
                 <Pressable
                   accessibilityRole="link"
-                  style={{
-                    alignSelf: "flex-start",
-                    paddingTop: 4,
-                  }}
+                  style={{ alignSelf: "flex-start", paddingTop: 4 }}
                 >
                   <Text style={[styles.premiumCta, { color: theme.colors.premium }]}>
                     {t("premiumCta")} →
@@ -140,50 +110,21 @@ export default function EpisodeDetailScreen() {
               {t("audioNote")}
             </Text>
           )}
-        </ScrollView>
+        </>
       ) : null}
     </ContentDetailShell>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { gap: 10, paddingBottom: 32 },
-  cover: {
-    width: "100%",
-    height: 160,
-    borderRadius: 18,
-    marginBottom: 6,
-    overflow: "hidden",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  coverGlow: {
-    width: 200,
-    height: 200,
-    borderRadius: 200,
-    backgroundColor: "rgba(0, 0, 0, 0.16)",
-  },
-  kicker: {
-    fontFamily: fontFamilies.mono,
-    fontSize: 11,
-    textTransform: "uppercase",
-    letterSpacing: 1.6,
-  },
-  title: { fontFamily: fontFamilies.display, fontSize: 28, lineHeight: 34 },
-  meta: { fontFamily: fontFamilies.mono, fontSize: 11, letterSpacing: 0.4 },
-  summary: { fontFamily: fontFamilies.body, fontSize: 16, lineHeight: 24 },
   premiumCard: {
     gap: 8,
     padding: 18,
-    marginTop: 8,
+    marginTop: 4,
     borderWidth: 1,
   },
   premiumTitle: { fontFamily: fontFamilies.displayBold, fontSize: 17 },
   premiumBody: { fontFamily: fontFamilies.body, fontSize: 15, lineHeight: 22 },
-  premiumCta: {
-    fontFamily: fontFamilies.mono,
-    fontSize: 13,
-    letterSpacing: 0.5,
-  },
+  premiumCta: { fontFamily: fontFamilies.mono, fontSize: 13, letterSpacing: 0.5 },
   audioNote: { fontFamily: fontFamilies.body, fontSize: 14, lineHeight: 20, marginTop: 4 },
 });

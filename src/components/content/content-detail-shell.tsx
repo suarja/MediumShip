@@ -87,7 +87,10 @@ export function ContentDetailShell({
               accessibilityRole="link"
               accessibilityLabel={backLabel}
               hitSlop={10}
-              style={[styles.floatingBack, { top: theme.spacing.sm * scaleSpace }]}
+              style={StyleSheet.flatten([
+                styles.floatingBack,
+                { top: theme.spacing.sm * scaleSpace },
+              ])}
             >
               <Text style={styles.floatingBackGlyph}>‹</Text>
             </Pressable>

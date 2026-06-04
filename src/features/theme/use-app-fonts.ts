@@ -8,7 +8,9 @@ import { JetBrainsMono_500Medium } from "@expo-google-fonts/jetbrains-mono";
 import {
   Newsreader_400Regular,
   Newsreader_600SemiBold,
+  Newsreader_600SemiBold_Italic,
   Newsreader_700Bold,
+  Newsreader_700Bold_Italic,
 } from "@expo-google-fonts/newsreader";
 import { useFonts } from "expo-font";
 
@@ -21,7 +23,9 @@ export function useAppFonts(): boolean {
   const [loaded] = useFonts({
     Newsreader_400Regular,
     Newsreader_600SemiBold,
+    Newsreader_600SemiBold_Italic,
     Newsreader_700Bold,
+    Newsreader_700Bold_Italic,
     HankenGrotesk_400Regular,
     HankenGrotesk_500Medium,
     HankenGrotesk_600SemiBold,

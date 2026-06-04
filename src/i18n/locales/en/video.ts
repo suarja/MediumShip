@@ -6,6 +6,7 @@ export default {
   notFoundTitle: "Video unavailable",
   notFoundBody: "This video is not published or no longer exists.",
   kicker: "Video",
+  premiumTag: "Premium",
   duration: "{{minutes}} min watch",
   providerLabel: "Source: {{provider}}",
   youtubeProvider: "YouTube",

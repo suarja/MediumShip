@@ -1,4 +1,4 @@
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text } from "react-native";
 
 import { useQuery } from "convex/react";
 import { useLocalSearchParams } from "expo-router";
@@ -6,7 +6,8 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
-import { usePersistentEpisodePlayerSpace } from "../../src/features/media/persistent-episode-player";
+import { DetailHeader } from "../../src/components/content/detail-header";
+import { DetailHero } from "../../src/components/content/detail-hero";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
@@ -20,7 +21,6 @@ export default function ArticleDetailScreen() {
   const { theme } = useAppTheme();
   const { scaleSpace, scaleFont } = useResponsive();
   const { state: networkState } = useNetworkStatus();
-  const persistentPlayerSpace = usePersistentEpisodePlayerSpace();
 
   const content = useQuery(
     api.content.queries.getPublishedById,
@@ -49,82 +49,46 @@ export default function ArticleDetailScreen() {
       offlineBody={t("offlineBody")}
       notFoundTitle={t("notFoundTitle")}
       notFoundBody={t("notFoundBody")}
+      hero={
+        content ? (
+          <DetailHero
+            coverImageUrl={coverImageUrl}
+            watermarkGlyph="✎"
+            height={200 * scaleSpace}
+            premiumLabel={content.isPremium ? t("premiumTag") : undefined}
+          />
+        ) : undefined
+      }
     >
       {content ? (
-        <ScrollView
-          contentContainerStyle={[
-            styles.scroll,
-            { paddingBottom: 32 + persistentPlayerSpace },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
-          {coverImageUrl ? (
-            <Image
-              accessibilityLabel={`${content.title} cover`}
-              source={{ uri: coverImageUrl }}
-              style={[styles.cover, { height: 160 * scaleSpace }]}
-            />
-          ) : (
-            <View
-              style={[
-                styles.cover,
-                { backgroundColor: theme.colors.accent, height: 160 * scaleSpace },
-              ]}
-            />
-          )}
-          <Text
-            style={[
-              styles.kicker,
-              {
-                color: content.isPremium ? theme.colors.premium : theme.colors.accent,
-                fontSize: 11 * scaleFont,
-              },
-            ]}
-          >
-            {content.category || t("kicker")}
-          </Text>
-          <Text
-            style={[
-              styles.title,
-              { color: theme.colors.heading, fontSize: 28 * scaleFont, lineHeight: 34 * scaleFont },
-            ]}
-          >
-            {content.title}
-          </Text>
-          {content.readingTimeMinutes ? (
-            <Text style={[styles.meta, { color: theme.colors.textMuted, fontSize: 11 * scaleFont }]}>
-              {t("readingTime", { minutes: content.readingTimeMinutes })}
-            </Text>
-          ) : null}
-          <Text
-            style={[styles.summary, { color: theme.colors.text, fontSize: 16 * scaleFont, lineHeight: 24 * scaleFont }]}
-          >
-            {content.summary}
-          </Text>
+        <>
+          <DetailHeader
+            kicker={content.category || t("kicker")}
+            title={content.title}
+            meta={
+              content.readingTimeMinutes
+                ? t("readingTime", { minutes: content.readingTimeMinutes })
+                : undefined
+            }
+            lede={content.summary}
+            premium={content.isPremium}
+          />
           {content.articleBody ? (
             <Text
-              style={[styles.body, { color: theme.colors.text, fontSize: 16 * scaleFont, lineHeight: 26 * scaleFont }]}
+              style={[
+                styles.body,
+                { color: theme.colors.text, fontSize: 16 * scaleFont, lineHeight: 26 * scaleFont },
+              ]}
             >
               {content.articleBody}
             </Text>
           ) : null}
-        </ScrollView>
+        </>
       ) : null}
     </ContentDetailShell>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { gap: 10 },
-  cover: { width: "100%", height: 160, borderRadius: 18, marginBottom: 6 },
-  kicker: {
-    fontFamily: fontFamilies.mono,
-    fontSize: 11,
-    textTransform: "uppercase",
-    letterSpacing: 1.6,
-  },
-  title: { fontFamily: fontFamilies.display, fontSize: 28, lineHeight: 34 },
-  meta: { fontFamily: fontFamilies.mono, fontSize: 11, letterSpacing: 0.4 },
-  summary: { fontFamily: fontFamilies.bodySemiBold, fontSize: 16, lineHeight: 24 },
-  body: { fontFamily: fontFamilies.body, fontSize: 16, lineHeight: 26 },
+  body: { fontFamily: fontFamilies.body },
 });

@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { useQuery } from "convex/react";
@@ -5,17 +6,34 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import { DegradedBanner } from "../../src/components/content/degraded-banner";
-import { FeedCard } from "../../src/components/content/feed-card";
+import {
+  FeedFilterChips,
+  type FeedFilter,
+  type FeedFilterChip,
+} from "../../src/components/content/feed-filter-chips";
+import { FeedHeroCard } from "../../src/components/content/feed-hero-card";
+import { FeedRow } from "../../src/components/content/feed-row";
 import { Screen } from "../../src/components/layout/screen";
+import { BrandHeader } from "../../src/components/navigation/brand-header";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
+import { cardKicker, cardMeta } from "../../src/features/content/card-presentation";
 import { usePersistentEpisodePlayerSpace } from "../../src/features/media/persistent-episode-player";
-import { filterAndOrderFeedContent } from "../../src/features/tenant/public-config";
 import { toContentCardModel } from "../../src/features/content/selectors";
-import type { ContentDoc } from "../../src/features/content/types";
+import type { ContentDoc, ContentKind } from "../../src/features/content/types";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
+import {
+  filterAndOrderFeedContent,
+  moduleToContentKind,
+} from "../../src/features/tenant/public-config";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
+
+const CHIP_LABEL_KEY: Record<ContentKind, string> = {
+  article: "chipArticles",
+  episode: "chipEpisodes",
+  video: "chipVideos",
+};
 
 export default function HomeFeedScreen() {
   const { t } = useTranslation("home");
@@ -24,91 +42,101 @@ export default function HomeFeedScreen() {
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentEpisodePlayerSpace();
   const { state: networkState } = useNetworkStatus();
+  const [filter, setFilter] = useState<FeedFilter>("all");
 
   const contents = useQuery(api.content.queries.listPublishedFeed, {
     tenantSlug,
   }) as ContentDoc[] | undefined;
 
-  const items = filterAndOrderFeedContent(
-    contents ?? [],
-    enabledModules,
-    feedSections,
-  ).map(toContentCardModel);
+  const allItems = useMemo(
+    () =>
+      filterAndOrderFeedContent(contents ?? [], enabledModules, feedSections).map(
+        toContentCardModel,
+      ),
+    [contents, enabledModules, feedSections],
+  );
+
+  const chips = useMemo<FeedFilterChip[]>(() => {
+    const formatChips = enabledModules
+      .filter((module): module is Exclude<typeof module, "premium"> => module !== "premium")
+      .map((module) => {
+        const kind = moduleToContentKind(module);
+        return { key: kind, label: t(CHIP_LABEL_KEY[kind]) } satisfies FeedFilterChip;
+      });
+    return [{ key: "all", label: t("chipAll") }, ...formatChips];
+  }, [enabledModules, t]);
+
+  const visibleItems =
+    filter === "all" ? allItems : allItems.filter((item) => item.kind === filter);
+  const [featured, ...rest] = visibleItems;
+
   const isLoading = contents === undefined;
-  const [featured, ...rest] = items;
+  const sectionTitle =
+    filter === "all"
+      ? t("sectionFeed")
+      : (chips.find((chip) => chip.key === filter)?.label ?? t("sectionFeed"));
 
   return (
     <Screen>
       <DegradedBanner state={networkState} />
-      <View
-        style={[
-          styles.header,
-          { gap: theme.spacing.xs * scaleSpace, marginBottom: theme.spacing.xl * scaleSpace },
-        ]}
-      >
-        <Text
-          style={[styles.eyebrow, { color: theme.colors.accent, fontSize: 11 * scaleFont }]}
-        >
-          {t("eyebrow")}
-        </Text>
-        <Text
-          style={[
-            styles.title,
-            { color: theme.colors.heading, fontSize: 30 * scaleFont, lineHeight: 35 * scaleFont },
-          ]}
-        >
-          {t("feedTitle")}
-        </Text>
-        <Text
-          style={[styles.subtitle, { color: theme.colors.textMuted, fontSize: 15 * scaleFont }]}
-        >
-          {t("feedSubtitle")}
-        </Text>
+      <BrandHeader />
+      <View style={{ marginBottom: theme.spacing.lg * scaleSpace }}>
+        <FeedFilterChips chips={chips} active={filter} onSelect={setFilter} />
       </View>
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[
-          styles.list,
-          {
-            gap: theme.spacing.sm * scaleSpace,
-            paddingBottom: tabBarSpace + persistentPlayerSpace,
-          },
-        ]}
+        contentContainerStyle={{ paddingBottom: tabBarSpace + persistentPlayerSpace }}
         showsVerticalScrollIndicator={false}
       >
-        {items.length === 0 ? (
-          <View
-            style={[
-              styles.empty,
-              {
-                borderRadius: theme.radii.lg,
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.emptyTitle, { color: theme.colors.heading }]}>
-              {isLoading
-                ? networkState === "offline"
-                  ? t("offlineTitle")
-                  : t("loadingTitle")
-                : t("emptyTitle")}
-            </Text>
-            <Text style={[styles.emptyBody, { color: theme.colors.textMuted }]}>
-              {isLoading
-                ? networkState === "offline"
-                  ? t("offlineBody")
-                  : t("loadingBody")
-                : t("emptyBody")}
-            </Text>
-          </View>
+        {visibleItems.length === 0 ? (
+          <EmptyState
+            isLoading={isLoading}
+            isOffline={networkState === "offline"}
+            hasAnyContent={allItems.length > 0}
+          />
         ) : (
           <>
-            {featured ? <FeedCard item={featured} featured /> : null}
-            {rest.map((item) => (
-              <FeedCard key={item.id} item={item} />
-            ))}
+            {featured ? (
+              <FeedHeroCard
+                item={featured}
+                kicker={cardKicker(featured, t)}
+                meta={cardMeta(featured, t)}
+              />
+            ) : null}
+
+            {rest.length > 0 ? (
+              <>
+                <View
+                  style={[
+                    styles.sectionHeader,
+                    {
+                      marginTop: theme.spacing.xl * scaleSpace,
+                      marginBottom: theme.spacing.xs * scaleSpace,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.sectionTitle,
+                      { color: theme.colors.heading, fontSize: 18 * scaleFont },
+                    ]}
+                  >
+                    {sectionTitle}
+                  </Text>
+                </View>
+
+                {rest.map((item, index) => (
+                  <FeedRow
+                    key={item.id}
+                    item={item}
+                    kicker={cardKicker(item, t)}
+                    meta={cardMeta(item, t)}
+                    divider={index > 0}
+                  />
+                ))}
+              </>
+            ) : null}
           </>
         )}
       </ScrollView>
@@ -116,18 +144,58 @@ export default function HomeFeedScreen() {
   );
 }
 
+function EmptyState({
+  isLoading,
+  isOffline,
+  hasAnyContent,
+}: {
+  isLoading: boolean;
+  isOffline: boolean;
+  hasAnyContent: boolean;
+}) {
+  const { t } = useTranslation("home");
+  const { theme } = useAppTheme();
+
+  const titleKey = isLoading
+    ? isOffline
+      ? "offlineTitle"
+      : "loadingTitle"
+    : hasAnyContent
+      ? "filterEmptyTitle"
+      : "emptyTitle";
+  const bodyKey = isLoading
+    ? isOffline
+      ? "offlineBody"
+      : "loadingBody"
+    : hasAnyContent
+      ? "filterEmptyBody"
+      : "emptyBody";
+
+  return (
+    <View
+      style={[
+        styles.empty,
+        {
+          borderRadius: theme.radii.lg,
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.border,
+        },
+      ]}
+    >
+      <Text style={[styles.emptyTitle, { color: theme.colors.heading }]}>{t(titleKey)}</Text>
+      <Text style={[styles.emptyBody, { color: theme.colors.textMuted }]}>{t(bodyKey)}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  header: { gap: 6, marginBottom: 16 },
-  eyebrow: {
-    fontFamily: fontFamilies.mono,
-    fontSize: 11,
-    textTransform: "uppercase",
-    letterSpacing: 1.6,
-  },
-  title: { fontFamily: fontFamilies.display, fontSize: 30, lineHeight: 35 },
-  subtitle: { fontFamily: fontFamilies.body, fontSize: 15, lineHeight: 21 },
   scroll: { flex: 1 },
-  list: { gap: 12, paddingBottom: 24 },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+  },
+  sectionTitle: { fontFamily: fontFamilies.display, letterSpacing: -0.2 },
   empty: { gap: 8, padding: 20, borderWidth: StyleSheet.hairlineWidth },
   emptyTitle: { fontFamily: fontFamilies.display, fontSize: 18 },
   emptyBody: { fontFamily: fontFamilies.body, fontSize: 15, lineHeight: 22 },

@@ -17,6 +17,7 @@ import { Link, router } from "expo-router";
 import * as Linking from "expo-linking";
 import { useTranslation } from "react-i18next";
 import * as WebBrowser from "expo-web-browser";
+import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 // Completes any pending OAuth web-browser session on return to the app.
@@ -293,17 +294,18 @@ const styles = StyleSheet.create({
   content: { width: "100%", maxWidth: 480, alignSelf: "center", gap: 24 },
   header: { gap: 8 },
   eyebrow: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontFamily: fontFamilies.mono,
+    fontSize: 11,
+    letterSpacing: 1.6,
     textTransform: "uppercase",
   },
-  title: { fontSize: 32, fontWeight: "700" },
-  subtitle: { fontSize: 16, lineHeight: 24 },
+  title: { fontFamily: fontFamilies.display, fontSize: 32, letterSpacing: -0.4 },
+  subtitle: { fontFamily: fontFamilies.body, fontSize: 16, lineHeight: 24 },
   errorBox: {
     borderWidth: 1,
     padding: 12,
   },
-  errorText: { fontSize: 14, textAlign: "center" },
+  errorText: { fontFamily: fontFamilies.body, fontSize: 14, textAlign: "center" },
   providers: { gap: 12 },
   providerButton: {
     height: 52,
@@ -311,17 +313,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  providerText: { fontSize: 16, fontWeight: "600" },
+  providerText: { fontFamily: fontFamilies.bodySemiBold, fontSize: 16 },
   divider: { flexDirection: "row", alignItems: "center", gap: 12 },
   dividerLine: { flex: 1, height: 1 },
-  dividerText: { fontSize: 13 },
+  dividerText: {
+    fontFamily: fontFamilies.mono,
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
   form: { gap: 8 },
-  label: { fontSize: 14, fontWeight: "500", marginTop: 8 },
+  label: { fontFamily: fontFamilies.bodyMedium, fontSize: 14, marginTop: 8 },
   input: {
     height: 48,
     borderWidth: 1,
     paddingHorizontal: 14,
     fontSize: 16,
+    fontFamily: fontFamilies.body,
   },
   submit: {
     height: 52,
@@ -329,15 +337,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 12,
   },
-  submitText: { fontSize: 16, fontWeight: "700" },
+  submitText: { fontFamily: fontFamilies.bodySemiBold, fontSize: 16 },
   footer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     gap: 8,
   },
-  footerText: { fontSize: 14 },
-  footerLink: { fontSize: 14, fontWeight: "700" },
+  footerText: { fontFamily: fontFamilies.body, fontSize: 14 },
+  footerLink: { fontFamily: fontFamilies.bodySemiBold, fontSize: 14 },
   pressed: { opacity: 0.85 },
   disabled: { opacity: 0.5 },
 });

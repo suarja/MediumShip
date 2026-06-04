@@ -6,6 +6,7 @@ export default {
   notFoundTitle: "Épisode indisponible",
   notFoundBody: "Cet épisode n'est pas publié ou n'existe plus.",
   kicker: "Épisode",
+  premiumTag: "Premium",
   duration: "{{minutes}} min d'écoute",
   audioNote: "Cet épisode n'a pas encore de source audio lisible.",
   playerLabel: "Écouter maintenant",

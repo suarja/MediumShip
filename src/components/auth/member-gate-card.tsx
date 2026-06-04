@@ -1,6 +1,7 @@
 import { Link } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 type MemberGateCardProps = {
@@ -60,10 +61,12 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   title: {
+    fontFamily: fontFamilies.displayBold,
     fontSize: 18,
-    fontWeight: "700",
+    letterSpacing: -0.2,
   },
   description: {
+    fontFamily: fontFamilies.body,
     fontSize: 15,
     lineHeight: 22,
   },
@@ -76,7 +79,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   buttonText: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: 15,
-    fontWeight: "700",
   },
 });

@@ -171,6 +171,7 @@ export function PersistentMediaPlayerProvider({
   );
   const lastSavedProgressRef = useRef(0);
   const router = useRouter();
+  const segments = useSegments();
   const [audioPlayer, setAudioPlayer] = useState(() =>
     createAudioPlayer(null, { updateInterval: 250 }),
   );
@@ -576,6 +577,13 @@ export function PersistentMediaPlayerProvider({
       return;
     }
 
+    // Idempotent: if we are already on the player route, don't stack another.
+    // This makes it safe to call from PiP-stop (the restore button), navigation,
+    // and the mini-player tap without producing duplicate routes.
+    if (segments[0] === "player") {
+      return;
+    }
+
     router.push(`/player/${activeSessionRef.current.contentId}` as never);
   };
 
@@ -708,7 +716,14 @@ export function PersistentMediaMiniPlayer() {
             contentFit="cover"
             nativeControls={false}
             onPictureInPictureStart={() => setIsPipActive(true)}
-            onPictureInPictureStop={() => setIsPipActive(false)}
+            onPictureInPictureStop={() => {
+              setIsPipActive(false);
+              // Tapping the PiP window's restore control should bring the user
+              // back to the full player, not just drop the floating window.
+              // Guarded + idempotent, so the programmatic stops (returning to the
+              // player, closing) are no-ops here.
+              openPlayer();
+            }}
             player={videoPlayer}
             ref={pipVideoRef}
             startsPictureInPictureAutomatically

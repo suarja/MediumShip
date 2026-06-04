@@ -14,6 +14,7 @@ export default {
   playVideo: "Play video",
   enterPictureInPicture: "Picture in Picture",
   fullscreen: "Fullscreen",
+  rotateForFullscreen: "Rotate for fullscreen",
   openExternal: "Open on YouTube",
   premiumTitle: "Members-only video",
   premiumBody:

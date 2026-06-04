@@ -4,6 +4,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -62,6 +63,7 @@ export default function PlayerScreen() {
   const hostedVideoRef = useRef<VideoView>(null);
   const [progressTrackWidth, setProgressTrackWidth] = useState(0);
   const [scrubPreviewTime, setScrubPreviewTime] = useState<number | null>(null);
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
 
   const { isMember } = useIsMember();
 
@@ -129,11 +131,17 @@ export default function PlayerScreen() {
 
   const isHostedVideo =
     content?.kind === "video" && content.videoSource?.kind === "hosted";
+  // Fullscreen is driven purely by the screen's own dimensions: while on the
+  // player screen orientation is unlocked, so a physical rotation rotates the
+  // screen and flips this — landscape => fullscreen video, portrait => normal.
+  // This makes "rotate back to portrait exits fullscreen" reliable, unlike the
+  // native fullscreen modal which would not report the reverse rotation.
+  const isLandscapeVideo = isHostedVideo && windowWidth > windowHeight;
 
   // Navigation drives PiP: the always-mounted mini-player starts PiP when you
   // leave the player. Coming back onto the player screen, the inline surface
   // shows the video, so we cancel any active PiP — seeing the floating window
-  // on top of the full player would be odd.
+  // on top of the full player would be odd. Stopping PiP does not pause.
   useFocusEffect(
     useCallback(() => {
       if (isHostedVideo) {
@@ -142,11 +150,9 @@ export default function PlayerScreen() {
     }, [isHostedVideo]),
   );
 
-  // "Rotate to fullscreen", YouTube-style, while keeping the app in portrait
-  // elsewhere: unlock orientation only on the player screen so physical rotation
-  // is detected — landscape enters the native fullscreen player, portrait exits
-  // it. Portrait is re-locked on leave; the explicit Fullscreen button is the
-  // always-reliable path.
+  // Keep the app portrait everywhere, but unlock rotation while the player is
+  // focused so the device can drive the fullscreen flip above. Portrait is
+  // re-locked on leave.
   useFocusEffect(
     useCallback(() => {
       if (!isHostedVideo) {
@@ -154,25 +160,7 @@ export default function PlayerScreen() {
       }
 
       void ScreenOrientation.unlockAsync().catch(() => {});
-      const subscription = ScreenOrientation.addOrientationChangeListener(
-        ({ orientationInfo }) => {
-          const { orientation } = orientationInfo;
-          if (
-            orientation === ScreenOrientation.Orientation.LANDSCAPE_LEFT ||
-            orientation === ScreenOrientation.Orientation.LANDSCAPE_RIGHT
-          ) {
-            void hostedVideoRef.current?.enterFullscreen().catch(() => {});
-          } else if (
-            orientation === ScreenOrientation.Orientation.PORTRAIT_UP ||
-            orientation === ScreenOrientation.Orientation.PORTRAIT_DOWN
-          ) {
-            void hostedVideoRef.current?.exitFullscreen().catch(() => {});
-          }
-        },
-      );
-
       return () => {
-        subscription.remove();
         void ScreenOrientation.lockAsync(
           ScreenOrientation.OrientationLock.PORTRAIT_UP,
         ).catch(() => {});
@@ -314,6 +302,30 @@ export default function PlayerScreen() {
   // foreground is the palette's canvas color, which moves opposite to heading
   // across every palette (including midnight).
   const fg = theme.colors.canvas;
+
+  // Landscape rotation => full-bleed video with its native controls. Rotating
+  // back to portrait drops out of this branch automatically (dimensions flip).
+  if (isLandscapeVideo) {
+    return (
+      <View
+        style={[styles.fullscreen, { backgroundColor: theme.colors.heading }]}
+        testID="player-screen-fullscreen"
+      >
+        <Stack.Screen options={{ gestureEnabled: false }} />
+        {videoPlayer ? (
+          <VideoView
+            allowsPictureInPicture
+            contentFit="contain"
+            nativeControls
+            player={videoPlayer}
+            ref={hostedVideoRef}
+            startsPictureInPictureAutomatically
+            style={StyleSheet.absoluteFill}
+          />
+        ) : null}
+      </View>
+    );
+  }
 
   const getScrubTime = (locationX: number) => {
     if (durationSeconds <= 0) {
@@ -566,18 +578,11 @@ export default function PlayerScreen() {
         </View>
 
         {content.kind === "video" && videoPlayer ? (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => void hostedVideoRef.current?.enterFullscreen()}
-            style={[
-              styles.videoAction,
-              { borderColor: withAlpha(fg, 0.14), borderRadius: 12 },
-            ]}
+          <Text
+            style={[styles.rotateHint, { color: withAlpha(fg, 0.5) }]}
           >
-            <Text style={[styles.videoActionText, { color: fg }]}>
-              {tVideo("fullscreen")}
-            </Text>
-          </Pressable>
+            {tVideo("rotateForFullscreen")}
+          </Text>
         ) : null}
       </View>
     </SafeAreaView>
@@ -716,16 +721,16 @@ const styles = StyleSheet.create({
   controlPressed: {
     opacity: 0.7,
   },
-  videoAction: {
+  fullscreen: {
+    flex: 1,
     alignItems: "center",
-    borderWidth: StyleSheet.hairlineWidth,
     justifyContent: "center",
-    marginTop: 4,
-    minHeight: 46,
-    paddingHorizontal: 18,
   },
-  videoActionText: {
-    fontFamily: fontFamilies.bodySemiBold,
-    fontSize: 14,
+  rotateHint: {
+    fontFamily: fontFamilies.mono,
+    fontSize: 11,
+    letterSpacing: 0.6,
+    marginTop: 8,
+    textAlign: "center",
   },
 });

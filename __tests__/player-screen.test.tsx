@@ -120,6 +120,6 @@ describe("PlayerScreen", () => {
     render(<PlayerScreen />);
 
     expect(screen.getByTestId("player-screen-video")).toBeTruthy();
-    expect(screen.getByText("Fullscreen")).toBeTruthy();
+    expect(screen.getByText("Rotate for fullscreen")).toBeTruthy();
   });
 });

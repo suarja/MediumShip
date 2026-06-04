@@ -68,10 +68,12 @@ export function PersistentEpisodePlayerProvider({
   children,
 }: PropsWithChildren) {
   const [activeTrack, setActiveTrack] = useState<EpisodeTrack | null>(null);
-  const player = useAudioPlayer(null, { updateInterval: 250 });
+  const player = useAudioPlayer(
+    activeTrack ? { uri: activeTrack.audioUrl } : null,
+    { updateInterval: 250 },
+  );
   const status = useAudioPlayerStatus(player);
   const pendingPlayRef = useRef(false);
-  const loadedTrackKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     void setAudioModeAsync({
@@ -81,24 +83,17 @@ export function PersistentEpisodePlayerProvider({
 
   useEffect(() => {
     if (!activeTrack) {
-      loadedTrackKeyRef.current = null;
       player.pause();
-      return;
+      pendingPlayRef.current = false;
     }
+  }, [activeTrack, player]);
 
-    const trackKey = `${activeTrack.contentId}:${activeTrack.audioUrl}`;
-    if (loadedTrackKeyRef.current === trackKey) {
-      return;
-    }
-
-    loadedTrackKeyRef.current = trackKey;
-    player.replace({ uri: activeTrack.audioUrl });
-
-    if (pendingPlayRef.current) {
+  useEffect(() => {
+    if (activeTrack && pendingPlayRef.current && status.isLoaded) {
       pendingPlayRef.current = false;
       player.play();
     }
-  }, [activeTrack, player]);
+  }, [activeTrack, player, status.isLoaded]);
 
   const currentTimeSeconds = status.currentTime || 0;
   const durationSeconds = status.duration || activeTrack?.durationSeconds || 0;

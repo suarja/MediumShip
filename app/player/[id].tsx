@@ -64,6 +64,10 @@ export default function PlayerScreen() {
   const [progressTrackWidth, setProgressTrackWidth] = useState(0);
   const [scrubPreviewTime, setScrubPreviewTime] = useState<number | null>(null);
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  // Latest known play state, read on focus to restore playback after a PiP
+  // hand-off without forcing play when the user had paused.
+  const wasPlayingRef = useRef(isPlaying);
+  wasPlayingRef.current = isPlaying;
 
   const { isMember } = useIsMember();
 
@@ -141,13 +145,22 @@ export default function PlayerScreen() {
   // Navigation drives PiP: the always-mounted mini-player starts PiP when you
   // leave the player. Coming back onto the player screen, the inline surface
   // shows the video, so we cancel any active PiP — seeing the floating window
-  // on top of the full player would be odd. Stopping PiP does not pause.
+  // on top of the full player would be odd.
   useFocusEffect(
     useCallback(() => {
-      if (isHostedVideo) {
-        void hostedVideoRef.current?.stopPictureInPicture().catch(() => {});
+      if (!isHostedVideo) {
+        return;
       }
-    }, [isHostedVideo]),
+
+      void hostedVideoRef.current?.stopPictureInPicture().catch(() => {});
+
+      // Preserve the play/pause state across the PiP -> inline handoff: if it
+      // was playing when we returned, keep it playing (re-attaching the view can
+      // otherwise pause it); if it was paused, leave it paused.
+      if (wasPlayingRef.current) {
+        videoPlayer?.play();
+      }
+    }, [isHostedVideo, videoPlayer]),
   );
 
   // Keep the app portrait everywhere, but unlock rotation while the player is

@@ -705,10 +705,17 @@ export function PersistentMediaMiniPlayer() {
           contentFit="contain"
           nativeControls={false}
           onPictureInPictureStop={() => {
-            // Tapping the PiP window's restore control returns to the full
-            // player. openPlayer is idempotent + route-guarded, so programmatic
-            // stops (returning to the player, closing) are no-ops here.
-            openPlayer();
+            // expo-video fires this for BOTH the restore control and the close
+            // (X), and does not forward iOS's dedicated restore callback. Tell
+            // them apart by playback state: iOS keeps playing on restore and
+            // pauses on close. Restore => back to the full player; close => end
+            // the session. (openPlayer is idempotent + route-guarded, so a
+            // programmatic stop while already on the player is a no-op.)
+            if (videoPlayer?.playing) {
+              openPlayer();
+            } else {
+              closePlayer();
+            }
           }}
           player={videoPlayer}
           ref={pipVideoRef}

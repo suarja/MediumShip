@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Link } from "expo-router";
 
 import { DegradedBanner } from "./degraded-banner";
+import { usePersistentEpisodePlayerSpace } from "../../features/media/persistent-episode-player";
 import type { NetworkState } from "../../features/network/use-network-status";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
@@ -52,6 +53,7 @@ export function ContentDetailShell({
 }: ContentDetailShellProps) {
   const { theme } = useAppTheme();
   const { scaleSpace, scaleFont, contentMaxWidth } = useResponsive();
+  const persistentPlayerSpace = usePersistentEpisodePlayerSpace();
 
   const heroLayout = state === "ready" && hero;
 
@@ -66,7 +68,8 @@ export function ContentDetailShell({
         <View style={[styles.heroColumn, { maxWidth: contentMaxWidth }]}>
           <ScrollView
             contentContainerStyle={{
-              paddingBottom: (actions ? 96 : theme.spacing.xxl) * scaleSpace,
+              paddingBottom:
+                (actions ? 96 : theme.spacing.xxl) * scaleSpace + persistentPlayerSpace,
             }}
             showsVerticalScrollIndicator={false}
           >

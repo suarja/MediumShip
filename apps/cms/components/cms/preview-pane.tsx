@@ -104,11 +104,16 @@ export function PreviewPane({ selectedId }: PreviewPaneProps) {
         ) : null}
 
         {preview.content.kind === "episode" ? (
-          <div className="preview-inline-note">
-            {preview.content.durationSeconds
-              ? `${Math.round(preview.content.durationSeconds / 60)} min audio`
-              : "Episode duration missing"}
-          </div>
+          <>
+            <div className="preview-inline-note">
+              {preview.content.durationSeconds
+                ? `${Math.round(preview.content.durationSeconds / 60)} min audio`
+                : "Episode duration missing"}
+            </div>
+            <div className="preview-inline-note">
+              {preview.content.audioUrl ?? "No audio URL configured"}
+            </div>
+          </>
         ) : null}
 
         {preview.content.kind === "video" ? (

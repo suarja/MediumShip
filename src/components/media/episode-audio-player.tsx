@@ -1,79 +1,73 @@
-import { useEffect } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 
-import {
-  setAudioModeAsync,
-  useAudioPlayer,
-  useAudioPlayerStatus,
-} from "expo-audio";
 import { useTranslation } from "react-i18next";
 
+import { usePersistentEpisodePlayer } from "../../features/media/persistent-episode-player";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
-
-function formatMediaClock(seconds: number) {
-  const totalSeconds = Math.max(0, Math.floor(seconds));
-  const minutes = Math.floor(totalSeconds / 60);
-  const remainingSeconds = totalSeconds % 60;
-
-  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-}
+import { formatMediaClock } from "../../features/media/format-media-clock";
 
 type EpisodeAudioPlayerProps = {
   audioUrl: string;
+  contentId: string;
+  durationSeconds?: number;
   title: string;
 };
 
 export function EpisodeAudioPlayer({
   audioUrl,
+  contentId,
+  durationSeconds: fallbackDurationSeconds,
   title,
 }: EpisodeAudioPlayerProps) {
   const { t } = useTranslation("episode");
   const { theme } = useAppTheme();
   const { scaleFont } = useResponsive();
-  const player = useAudioPlayer({ uri: audioUrl }, { updateInterval: 250 });
-  const status = useAudioPlayerStatus(player);
+  const {
+    activeTrack,
+    currentTimeSeconds,
+    durationSeconds,
+    hasFinished,
+    isBuffering,
+    isPlaying,
+    playbackError,
+    playTrack,
+    seekBy,
+    togglePlayback,
+  } = usePersistentEpisodePlayer();
 
-  useEffect(() => {
-    void setAudioModeAsync({
-      playsInSilentMode: true,
-    });
-  }, []);
-
-  const durationSeconds = status.duration || 0;
-  const currentTimeSeconds = Math.min(status.currentTime || 0, durationSeconds || Number.MAX_SAFE_INTEGER);
+  const isActive =
+    activeTrack?.contentId === contentId && activeTrack.audioUrl === audioUrl;
+  const resolvedCurrentTimeSeconds = isActive ? currentTimeSeconds : 0;
+  const resolvedDurationSeconds = isActive
+    ? durationSeconds || fallbackDurationSeconds || 0
+    : fallbackDurationSeconds || 0;
   const progressRatio =
-    durationSeconds > 0 ? Math.min(currentTimeSeconds / durationSeconds, 1) : 0;
-  const hasFinished = Boolean(status.didJustFinish) || (
-    durationSeconds > 0 && currentTimeSeconds >= durationSeconds
-  );
+    resolvedDurationSeconds > 0
+      ? Math.min(resolvedCurrentTimeSeconds / resolvedDurationSeconds, 1)
+      : 0;
 
   const handleTogglePlayback = async () => {
-    if (status.playing) {
-      player.pause();
+    if (!isActive) {
+      await playTrack({
+        contentId,
+        title,
+        audioUrl,
+        durationSeconds: fallbackDurationSeconds,
+      });
       return;
     }
 
-    if (hasFinished) {
-      await player.seekTo(0);
-    }
-
-    player.play();
+    await togglePlayback();
   };
 
-  const seekBy = async (deltaSeconds: number) => {
-    const nextTime = Math.max(
-      0,
-      Math.min(durationSeconds || currentTimeSeconds + deltaSeconds, currentTimeSeconds + deltaSeconds),
-    );
-    await player.seekTo(nextTime);
+  const handleSeekBy = async (deltaSeconds: number) => {
+    if (!isActive) {
+      return;
+    }
+
+    await seekBy(deltaSeconds);
   };
 
   return (
@@ -118,9 +112,9 @@ export function EpisodeAudioPlayer({
 
       <View style={styles.metaRow}>
         <Text style={[styles.meta, { color: theme.colors.textMuted, fontSize: 12 * scaleFont }]}>
-          {formatMediaClock(currentTimeSeconds)}
+          {formatMediaClock(resolvedCurrentTimeSeconds)}
         </Text>
-        {status.isBuffering && !status.playing ? (
+        {isActive && isBuffering && !isPlaying ? (
           <View style={styles.bufferingRow}>
             <ActivityIndicator color={theme.colors.accent} size="small" />
             <Text
@@ -131,7 +125,7 @@ export function EpisodeAudioPlayer({
           </View>
         ) : (
           <Text style={[styles.meta, { color: theme.colors.textMuted, fontSize: 12 * scaleFont }]}>
-            {formatMediaClock(durationSeconds)}
+            {formatMediaClock(resolvedDurationSeconds)}
           </Text>
         )}
       </View>
@@ -139,15 +133,17 @@ export function EpisodeAudioPlayer({
       <View style={styles.controls}>
         <Pressable
           accessibilityRole="button"
-          onPress={() => void seekBy(-15)}
+          disabled={!isActive}
+          onPress={() => void handleSeekBy(-15)}
           style={({ pressed }) => [
             styles.secondaryButton,
             {
               backgroundColor: theme.colors.surfaceMuted,
               borderColor: theme.colors.border,
               borderRadius: theme.radii.pill,
+              opacity: !isActive ? 0.45 : 1,
             },
-            pressed && styles.pressed,
+            pressed && isActive && styles.pressed,
           ]}
         >
           <Text style={[styles.secondaryButtonText, { color: theme.colors.text }]}>
@@ -176,21 +172,29 @@ export function EpisodeAudioPlayer({
               },
             ]}
           >
-            {hasFinished ? t("replay") : status.playing ? t("pause") : t("play")}
+            {!isActive
+              ? t("play")
+              : hasFinished
+                ? t("replay")
+                : isPlaying
+                  ? t("pause")
+                  : t("play")}
           </Text>
         </Pressable>
 
         <Pressable
           accessibilityRole="button"
-          onPress={() => void seekBy(30)}
+          disabled={!isActive}
+          onPress={() => void handleSeekBy(30)}
           style={({ pressed }) => [
             styles.secondaryButton,
             {
               backgroundColor: theme.colors.surfaceMuted,
               borderColor: theme.colors.border,
               borderRadius: theme.radii.pill,
+              opacity: !isActive ? 0.45 : 1,
             },
-            pressed && styles.pressed,
+            pressed && isActive && styles.pressed,
           ]}
         >
           <Text style={[styles.secondaryButtonText, { color: theme.colors.text }]}>
@@ -199,7 +203,7 @@ export function EpisodeAudioPlayer({
         </Pressable>
       </View>
 
-      {status.error ? (
+      {isActive && playbackError ? (
         <Text style={[styles.error, { color: theme.colors.danger, fontSize: 13 * scaleFont }]}>
           {t("playbackUnavailable")}
         </Text>

@@ -9,6 +9,7 @@ import { ContentDetailShell } from "../../src/components/content/content-detail-
 import { DetailHeader } from "../../src/components/content/detail-header";
 import { DetailHero } from "../../src/components/content/detail-hero";
 import { VideoPlayerCard } from "../../src/components/media/video-player-card";
+import { usePersistentEpisodePlayer } from "../../src/features/media/persistent-episode-player";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
@@ -22,6 +23,7 @@ export default function VideoDetailScreen() {
   const { theme } = useAppTheme();
   const { scaleSpace } = useResponsive();
   const { state: networkState } = useNetworkStatus();
+  const { closePlayer } = usePersistentEpisodePlayer();
 
   const content = useQuery(
     api.content.queries.getPublishedById,
@@ -61,7 +63,11 @@ export default function VideoDetailScreen() {
       hero={
         content ? (
           source ? (
-            <VideoPlayerCard source={source} />
+            <VideoPlayerCard
+              coverImageUrl={coverImageUrl}
+              onPlaybackIntent={closePlayer}
+              source={source}
+            />
           ) : (
             <DetailHero
               coverImageUrl={coverImageUrl}

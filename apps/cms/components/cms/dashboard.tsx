@@ -71,14 +71,14 @@ export function Dashboard() {
                   />
                 </div>
                 <div id="editor">
-                  <ContentForm selectedId={selectedId} />
+                  <ContentForm key={selectedId ?? "none"} selectedId={selectedId} />
                 </div>
                 <div className="side-column">
                   <div id="settings">
                     <TenantSettingsForm tenant={tenant} />
                   </div>
                   <div id="preview">
-                    <PreviewPane selectedId={selectedId} />
+                    <PreviewPane key={selectedId ?? "none"} selectedId={selectedId} />
                   </div>
                 </div>
               </div>

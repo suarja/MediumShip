@@ -1,6 +1,19 @@
+process.env.EXPO_PUBLIC_CONVEX_URL ??= "https://example.convex.cloud";
+process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ??= "pk_test_mock";
+process.env.EXPO_PUBLIC_CONVEX_SITE_URL ??= "https://example.convex.site";
+process.env.EXPO_PUBLIC_EMBED_REFERER_URL ??= "https://example.mediumship.app";
+
 jest.mock("expo-audio", () => ({
+  createAudioPlayer: () => ({
+    remove: jest.fn(),
+    replace: jest.fn(),
+    play: jest.fn(),
+    pause: jest.fn(),
+    seekTo: jest.fn().mockResolvedValue(undefined),
+  }),
   setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
   useAudioPlayer: () => ({
+    replace: jest.fn(),
     play: jest.fn(),
     pause: jest.fn(),
     seekTo: jest.fn().mockResolvedValue(undefined),
@@ -27,14 +40,33 @@ jest.mock("expo-audio", () => ({
   }),
 }));
 
+jest.mock("expo", () => {
+  const actualExpo = jest.requireActual("expo");
+
+  return {
+    ...actualExpo,
+    useEventListener: jest.fn(),
+  };
+});
+
 jest.mock("expo-video", () => {
   const React = require("react");
   const { View } = require("react-native");
 
   return {
-    useVideoPlayer: () => ({}),
-    VideoView: ({ testID }: { testID?: string }) =>
-      React.createElement(View, { testID }),
+    isPictureInPictureSupported: () => true,
+    useVideoPlayer: () => ({
+      play: jest.fn(),
+    }),
+    VideoView: React.forwardRef(
+      ({ testID }: { testID?: string }, ref: React.Ref<{ startPictureInPicture: () => Promise<void> }>) => {
+        React.useImperativeHandle(ref, () => ({
+          startPictureInPicture: jest.fn().mockResolvedValue(undefined),
+        }));
+
+        return React.createElement(View, { testID });
+      },
+    ),
   };
 });
 

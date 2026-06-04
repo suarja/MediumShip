@@ -104,7 +104,12 @@ export default function EpisodeDetailScreen() {
               </Link>
             </View>
           ) : content.audioUrl ? (
-            <EpisodeAudioPlayer audioUrl={content.audioUrl} title={content.title} />
+            <EpisodeAudioPlayer
+              audioUrl={content.audioUrl}
+              contentId={content._id}
+              durationSeconds={content.durationSeconds}
+              title={content.title}
+            />
           ) : (
             <Text style={[styles.audioNote, { color: theme.colors.textMuted }]}>
               {t("audioNote")}

@@ -96,4 +96,27 @@ export default defineSchema({
     .index("by_tenant_and_kind", ["tenantSlug", "kind"])
     .index("by_tenantSlug", ["tenantSlug"])
     .index("by_tenantSlug_and_slug", ["tenantSlug", "slug"]),
+  // Single source of truth for the member ("Pro") entitlement. Provider-agnostic
+  // on purpose: today only the manual admin grant writes it, but later a
+  // RevenueCat / Stripe webhook will upsert the SAME row (matching on
+  // tokenIdentifier / clerkId) with a different `source`. The read path
+  // (getMyEntitlement / requireMember) must not change when that happens.
+  entitlements: defineTable({
+    // Canonical stable identifier from the Clerk JWT, mirrored from `users`.
+    // The read path matches the signed-in identity on this first.
+    tokenIdentifier: v.string(),
+    // Raw Clerk user id — the join key a webhook can resolve without a JWT.
+    clerkId: v.string(),
+    isPro: v.boolean(),
+    source: v.union(
+      v.literal("manual"),
+      v.literal("revenuecat"),
+      v.literal("stripe"),
+    ),
+    // For manual grants: the `users._id` of the admin who toggled it.
+    grantedBy: v.optional(v.id("users")),
+    updatedAt: v.number(),
+  })
+    .index("by_tokenIdentifier", ["tokenIdentifier"])
+    .index("by_clerkId", ["clerkId"]),
 });

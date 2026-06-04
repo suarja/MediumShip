@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { startTransition } from "react";
 
-export const CMS_TABS = ["contents", "tenant", "preview"] as const;
+export const CMS_TABS = ["contents", "tenant", "users", "preview"] as const;
 
 export type CmsTab = (typeof CMS_TABS)[number];
 
@@ -14,6 +14,7 @@ const NAV_ITEMS: ReadonlyArray<{
 }> = [
   { icon: "◇", label: "Contenus", value: "contents" },
   { icon: "⚙", label: "Tenant", value: "tenant" },
+  { icon: "◉", label: "Membres", value: "users" },
   { icon: "▶", label: "Preview", value: "preview" },
 ];
 

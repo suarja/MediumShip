@@ -37,6 +37,39 @@ export const listContents = query({
   },
 });
 
+// Admin-only roster for the CMS Users tab: every known user joined with their
+// current member entitlement, so the tab can render a grant/revoke toggle.
+export const listUsers = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireCmsAdmin(ctx);
+
+    const users = await ctx.db.query("users").order("desc").take(200);
+
+    return await Promise.all(
+      users.map(async (user) => {
+        const entitlement = await ctx.db
+          .query("entitlements")
+          .withIndex("by_tokenIdentifier", (q) =>
+            q.eq("tokenIdentifier", user.tokenIdentifier),
+          )
+          .unique();
+
+        return {
+          _id: user._id,
+          email: user.email ?? null,
+          name: user.name ?? null,
+          clerkId: user.clerkId,
+          isAdmin: user.cmsRole === "admin",
+          isDeleted: user.deletedAt !== undefined,
+          isPro: entitlement?.isPro ?? false,
+          entitlementSource: entitlement?.source ?? null,
+        };
+      }),
+    );
+  },
+});
+
 export const getContent = query({
   args: { id: v.id("contents") },
   handler: async (ctx, args) => {

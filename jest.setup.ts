@@ -3,6 +3,21 @@ process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ??= "pk_test_mock";
 process.env.EXPO_PUBLIC_CONVEX_SITE_URL ??= "https://example.convex.site";
 process.env.EXPO_PUBLIC_EMBED_REFERER_URL ??= "https://example.mediumship.app";
 
+// Default Clerk auth state for component tests: a guest. Screens/components that
+// read auth (e.g. the premium paywall) get a sane default here; tests that need
+// a signed-in user override this module locally with their own jest.mock.
+jest.mock("./src/features/auth/use-clerk-auth", () => ({
+  useClerkAuth: () => ({
+    isLoaded: true,
+    isSignedIn: false,
+    userId: null,
+    user: null,
+    email: null,
+    fullName: null,
+    signOut: jest.fn(),
+  }),
+}));
+
 jest.mock("expo-audio", () => ({
   createAudioPlayer: () => ({
     remove: jest.fn(),

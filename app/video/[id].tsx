@@ -8,11 +8,13 @@ import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
 import { DetailHeader } from "../../src/components/content/detail-header";
 import { DetailHero } from "../../src/components/content/detail-hero";
-import { PremiumAccessBanner } from "../../src/components/content/premium-access-banner";
+import { PremiumPaywall } from "../../src/components/content/premium-paywall";
 import { VideoPlayerCard } from "../../src/components/media/video-player-card";
 import { usePersistentMediaPlayer } from "../../src/features/media/persistent-media-player";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
+import { resolvePremiumGate } from "../../src/features/membership/premium-gate";
+import { useIsMember } from "../../src/features/membership/use-is-member";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { fontFamilies } from "../../src/features/theme/fonts";
@@ -26,11 +28,16 @@ export default function VideoDetailScreen() {
   const { state: networkState } = useNetworkStatus();
   const router = useRouter();
   const { activeSession, closePlayer } = usePersistentMediaPlayer();
+  const { isMember } = useIsMember();
 
   const content = useQuery(
     api.content.queries.getPublishedById,
     id ? { id: id as never } : "skip",
   ) as ContentDoc | null | undefined;
+
+  const premiumGate = content
+    ? resolvePremiumGate({ isPremium: content.isPremium, isMember })
+    : "open";
 
   const state =
     content && content.kind === "video"
@@ -64,7 +71,7 @@ export default function VideoDetailScreen() {
       notFoundBody={t("notFoundBody")}
       hero={
         content ? (
-          content.isPremium ? (
+          premiumGate === "locked" ? (
             <DetailHero
               key={content._id}
               coverImageUrl={coverImageUrl}
@@ -102,8 +109,8 @@ export default function VideoDetailScreen() {
             lede={content.summary}
             premium={content.isPremium}
           />
-          {content.isPremium ? (
-            <PremiumAccessBanner
+          {premiumGate === "locked" ? (
+            <PremiumPaywall
               title={t("premiumTitle")}
               description={t("premiumBody")}
               ctaLabel={t("premiumCta")}

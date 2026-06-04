@@ -7,7 +7,9 @@ type PageProps = {
 };
 
 function resolveInitialTab(tab: string | undefined) {
-  return tab === "tenant" || tab === "preview" ? tab : "contents";
+  return tab === "tenant" || tab === "preview" || tab === "users"
+    ? tab
+    : "contents";
 }
 
 export default async function Page({ searchParams }: PageProps) {

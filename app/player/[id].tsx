@@ -142,21 +142,17 @@ export default function PlayerScreen() {
   // native fullscreen modal which would not report the reverse rotation.
   const isLandscapeVideo = isHostedVideo && windowWidth > windowHeight;
 
-  // Navigation drives PiP: the always-mounted mini-player starts PiP when you
-  // leave the player. Coming back onto the player screen, the inline surface
-  // shows the video, so we cancel any active PiP — seeing the floating window
-  // on top of the full player would be odd.
+  // PiP is started/cancelled by the provider based on the active route, so
+  // returning here cancels it automatically. We only preserve the play/pause
+  // state across the PiP -> inline handoff: if it was playing on return, keep it
+  // playing (re-attaching the view can otherwise pause it); leave it paused
+  // otherwise.
   useFocusEffect(
     useCallback(() => {
       if (!isHostedVideo) {
         return;
       }
 
-      void hostedVideoRef.current?.stopPictureInPicture().catch(() => {});
-
-      // Preserve the play/pause state across the PiP -> inline handoff: if it
-      // was playing when we returned, keep it playing (re-attaching the view can
-      // otherwise pause it); if it was paused, leave it paused.
       if (wasPlayingRef.current) {
         videoPlayer?.play();
       }

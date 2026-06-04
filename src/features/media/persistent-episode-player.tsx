@@ -170,6 +170,7 @@ export function PersistentMediaPlayerProvider({
     null,
   );
   const lastSavedProgressRef = useRef(0);
+  const pipHostRef = useRef<VideoView>(null);
   const router = useRouter();
   const segments = useSegments();
   const [audioPlayer, setAudioPlayer] = useState(() =>
@@ -482,6 +483,30 @@ export function PersistentMediaPlayerProvider({
     }
   }, [activeSession, videoPlayer]);
 
+  // Picture-in-Picture is driven here, from the always-mounted offscreen host
+  // (rendered below), so it survives navigation AND can be cancelled when the
+  // user returns to the player. Driving it from a screen's own VideoView fails:
+  // that view is torn down on navigation, and stopping PiP on a different view
+  // than the one that owns it is a no-op.
+  const onPlayerRoute = segments[0] === "player";
+  useEffect(() => {
+    if (activeSessionRef.current?.kind !== "hostedVideo") {
+      return;
+    }
+
+    if (onPlayerRoute) {
+      // Back on the player: the inline surface shows the video, cancel PiP.
+      void pipHostRef.current?.stopPictureInPicture().catch(() => {});
+      return;
+    }
+
+    // Left the player: float the video.
+    const timer = setTimeout(() => {
+      void pipHostRef.current?.startPictureInPicture().catch(() => {});
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [activeSession, onPlayerRoute]);
+
   const togglePlayback = async () => {
     if (!activeSession) {
       return;
@@ -610,6 +635,27 @@ export function PersistentMediaPlayerProvider({
   return (
     <PersistentMediaPlayerContext.Provider value={value}>
       {children}
+      {activeSession?.kind === "hostedVideo" && videoPlayer ? (
+        <View pointerEvents="none" style={styles.pipHostOffscreen}>
+          <VideoView
+            allowsPictureInPicture
+            contentFit="contain"
+            nativeControls={false}
+            onPictureInPictureStop={() => {
+              // Fired by BOTH the restore control and the close (X); expo-video
+              // does not expose iOS's restore-only callback. We bring the user
+              // back to the player on stop (openPlayer is route-guarded, so the
+              // programmatic stop on the player screen is a no-op). NOTE: tapping
+              // close (X) therefore also returns to the player — a known
+              // expo-video limitation without a native patch.
+              openPlayer();
+            }}
+            player={videoPlayer}
+            ref={pipHostRef}
+            style={StyleSheet.absoluteFill}
+          />
+        </View>
+      ) : null}
     </PersistentMediaPlayerContext.Provider>
   );
 }
@@ -644,35 +690,12 @@ export function PersistentMediaMiniPlayer() {
     durationSeconds,
     hasFinished,
     isPlaying,
-    videoPlayer,
     closePlayer,
     openPlayer,
     togglePlayback,
   } = usePersistentMediaPlayer();
-  const pipVideoRef = useRef<VideoView>(null);
-
   const isHostedVideo = activeSession?.kind === "hostedVideo";
   const onPlayerScreen = shouldHideMiniPlayerForSegments(segments);
-  const shouldHost = Boolean(activeSession) && isHostedVideo && !onPlayerScreen;
-
-  // The mini-player is always mounted at the app root, so it is the stable
-  // surface that holds Picture-in-Picture across navigation. When it appears for
-  // a hosted video (i.e. you have left the player screen), start PiP; when it
-  // unmounts (you return to the player, or close), PiP stops with it. This is
-  // why PiP must NOT be driven from the player screen's own VideoView, which is
-  // torn down the moment you navigate away. The surface stays mounted (just
-  // offscreen) so the restore callback keeps firing.
-  useEffect(() => {
-    if (!shouldHost) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      void pipVideoRef.current?.startPictureInPicture().catch(() => {});
-    }, 200);
-
-    return () => clearTimeout(timer);
-  }, [shouldHost]);
 
   if (!activeSession) {
     return null;
@@ -682,49 +705,17 @@ export function PersistentMediaMiniPlayer() {
     return null;
   }
 
+  // Hosted video has no mini-player card — the system PiP window (driven by the
+  // provider's always-mounted offscreen host) is its only floating UI. A card
+  // would be a redundant, out-of-sync second floating player.
+  if (isHostedVideo) {
+    return null;
+  }
+
   const bottomOffset =
     segments[0] === "(app)"
       ? tabBarSpace - PERSISTENT_MEDIA_PLAYER_GAP
       : Math.max(insets.bottom, PERSISTENT_MEDIA_PLAYER_GAP);
-
-  // Hosted video off the player screen: the system Picture-in-Picture window is
-  // the only floating UI — no mini-player card (it would be a redundant,
-  // out-of-sync second floating player). The surface that hosts PiP stays
-  // mounted but offscreen, so PiP keeps running across navigation AND its
-  // restore callback still fires (a display:none view is detached natively and
-  // never reports the restore tap).
-  if (isHostedVideo) {
-    return videoPlayer ? (
-      <View
-        pointerEvents="none"
-        style={styles.pipHostOffscreen}
-        testID="media-pip-host"
-      >
-        <VideoView
-          allowsPictureInPicture
-          contentFit="contain"
-          nativeControls={false}
-          onPictureInPictureStop={() => {
-            // expo-video fires this for BOTH the restore control and the close
-            // (X), and does not forward iOS's dedicated restore callback. Tell
-            // them apart by playback state: iOS keeps playing on restore and
-            // pauses on close. Restore => back to the full player; close => end
-            // the session. (openPlayer is idempotent + route-guarded, so a
-            // programmatic stop while already on the player is a no-op.)
-            if (videoPlayer?.playing) {
-              openPlayer();
-            } else {
-              closePlayer();
-            }
-          }}
-          player={videoPlayer}
-          ref={pipVideoRef}
-          startsPictureInPictureAutomatically
-          style={StyleSheet.absoluteFill}
-        />
-      </View>
-    ) : null;
-  }
 
   const kicker =
     activeSession.kind === "episode" ? tEpisode("playerLabel") : tVideo("playVideo");

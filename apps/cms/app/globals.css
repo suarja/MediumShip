@@ -124,6 +124,10 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 12px;
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
 }
 
 .brand__mark {

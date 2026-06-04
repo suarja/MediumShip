@@ -1,5 +1,16 @@
 import { Dashboard } from "../components/cms/dashboard";
 
-export default function Page() {
-  return <Dashboard />;
+type PageProps = {
+  searchParams?: Promise<{
+    tab?: string;
+  }>;
+};
+
+function resolveInitialTab(tab: string | undefined) {
+  return tab === "tenant" || tab === "preview" ? tab : "contents";
+}
+
+export default async function Page({ searchParams }: PageProps) {
+  const params = searchParams ? await searchParams : undefined;
+  return <Dashboard initialTab={resolveInitialTab(params?.tab)} />;
 }

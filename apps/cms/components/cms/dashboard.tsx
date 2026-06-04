@@ -6,16 +6,16 @@ import { useEffect, useState } from "react";
 
 import { api } from "../../../../convex/_generated/api";
 import { AdminLoginShell } from "./admin-login-shell";
-import { AdminShell } from "./admin-shell";
-import { ContentForm } from "./content-form";
-import { EditorialList } from "./editorial-list";
-import { PreviewPane } from "./preview-pane";
-import { TenantSettingsForm } from "./tenant-settings-form";
+import { AdminShell, isCmsTab, type CmsTab } from "./admin-shell";
+import { ContentsTab } from "./contents-tab";
+import { PreviewTab } from "./preview-tab";
+import { TenantTab } from "./tenant-tab";
 
-export function Dashboard() {
+export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
   const viewer = useQuery(api.cms.queries.getViewer, {});
   const bootstrapAdmin = useMutation(api.cms.mutations.bootstrapAdmin);
   const createContent = useMutation(api.cms.mutations.createContent);
+  const [activeTab, setActiveTabState] = useState<CmsTab>(initialTab);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const isAdmin = viewer?.isAdmin ?? false;
@@ -27,6 +27,38 @@ export function Dashboard() {
       setSelectedId(contents[0]._id);
     }
   }, [contents, selectedId]);
+
+  useEffect(() => {
+    setActiveTabState(initialTab);
+  }, [initialTab]);
+
+  useEffect(() => {
+    const onPopState = () => {
+      const params = new URL(window.location.href).searchParams;
+      const candidate = params.get("tab");
+      setActiveTabState(isCmsTab(candidate) ? candidate : "contents");
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  const setActiveTab = (nextTab: CmsTab) => {
+    setActiveTabState(nextTab);
+
+    const url = new URL(window.location.href);
+    if (nextTab === "contents") {
+      url.searchParams.delete("tab");
+    } else {
+      url.searchParams.set("tab", nextTab);
+    }
+
+    window.history.pushState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+  };
 
   if (!viewer) {
     return <main className="admin-login-root">Loading CMS…</main>;
@@ -49,43 +81,35 @@ export function Dashboard() {
 
       <SignedIn>
         {viewer.isAdmin ? (
-          <AdminShell email={viewer.email} name={viewer.name}>
-            <section className="hero-strip">
-              <p className="eyebrow">Milestone 2</p>
-              <h1>Operable CMS</h1>
-              <p className="topbar-copy">
-                Premier socle mono-tenant: auth admin, CRUD editorial, config mobile et preview relies au modele public.
-              </p>
-            </section>
+          <AdminShell
+            activeTab={activeTab}
+            brandName={tenant?.name ?? "MediumShip"}
+            email={viewer.email}
+            name={viewer.name}
+            onTabChange={setActiveTab}
+          >
             {contents && tenant ? (
-              <div className="cms-grid">
-                <div id="content">
-                  <EditorialList
-                    items={contents}
-                    selectedId={selectedId}
-                    onSelect={setSelectedId}
-                    onCreate={async (kind) => {
-                      const id = await createContent({ kind });
-                      setSelectedId(id);
-                    }}
-                  />
-                </div>
-                <div id="editor">
-                  <ContentForm key={selectedId ?? "none"} selectedId={selectedId} />
-                </div>
-                <div className="side-column">
-                  <div id="settings">
-                    <TenantSettingsForm tenant={tenant} />
-                  </div>
-                  <div id="preview">
-                    <PreviewPane key={selectedId ?? "none"} selectedId={selectedId} />
-                  </div>
-                </div>
-              </div>
+              activeTab === "contents" ? (
+                <ContentsTab
+                  items={contents}
+                  onCreate={async (kind) => {
+                    const id = await createContent({ kind });
+                    setSelectedId(id);
+                  }}
+                  onSelect={setSelectedId}
+                  selectedId={selectedId}
+                />
+              ) : activeTab === "tenant" ? (
+                <TenantTab tenant={tenant} />
+              ) : (
+                <PreviewTab selectedId={selectedId} />
+              )
             ) : (
-              <section className="panel">
-                <p className="empty-copy">Loading protected CMS data…</p>
-              </section>
+              <main className="page">
+                <section className="panel">
+                  <p className="empty-copy">Loading protected CMS data…</p>
+                </section>
+              </main>
             )}
           </AdminShell>
         ) : viewer.canBootstrapAdmin ? (

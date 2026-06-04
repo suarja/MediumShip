@@ -1,67 +1,99 @@
 "use client";
 
-import { UserButton } from "@clerk/nextjs";
 import type { ReactNode } from "react";
+import { startTransition } from "react";
 
-const NAV_ITEMS = [
-  { href: "#content", label: "Contenus" },
-  { href: "#settings", label: "Tenant" },
-  { href: "#preview", label: "Preview" },
-] as const;
+export const CMS_TABS = ["contents", "tenant", "preview"] as const;
+
+export type CmsTab = (typeof CMS_TABS)[number];
+
+const NAV_ITEMS: ReadonlyArray<{
+  icon: string;
+  label: string;
+  value: CmsTab;
+}> = [
+  { icon: "◇", label: "Contenus", value: "contents" },
+  { icon: "⚙", label: "Tenant", value: "tenant" },
+  { icon: "▶", label: "Preview", value: "preview" },
+];
+
+export function isCmsTab(value: string | null | undefined): value is CmsTab {
+  return (CMS_TABS as readonly string[]).includes(value ?? "");
+}
+
+function getViewerInitial(name: string | null, email: string | null) {
+  const seed = name?.trim() || email?.trim() || "M";
+  return seed.charAt(0).toUpperCase();
+}
 
 export function AdminShell({
+  activeTab,
+  brandName,
   email,
   name,
+  onTabChange,
   children,
 }: {
+  activeTab: CmsTab;
+  brandName: string;
   email: string | null;
   name: string | null;
+  onTabChange: (tab: CmsTab) => void;
   children: ReactNode;
 }) {
   return (
-    <div className="admin-root">
-      <header className="admin-header">
-        <div className="admin-header-inner">
-          <div className="admin-brand">
-            <div aria-hidden="true" className="admin-brand-mark">
-              <svg width={12} height={12} viewBox="0 0 20 20" fill="none">
-                <path
-                  d="M10 3l1.3 3.7L15 8l-3.7 1.3L10 13l-1.3-3.7L5 8l3.7-1.3L10 3z"
-                  fill="white"
-                />
-              </svg>
-            </div>
-            <div className="admin-brand-copy">
-              <span>MediumShip</span>
-              <span>CMS</span>
-            </div>
+    <div className="app">
+      <header className="topbar">
+        <button
+          className="brand"
+          onClick={() => {
+            if (activeTab === "contents") {
+              return;
+            }
+
+            startTransition(() => onTabChange("contents"));
+          }}
+          type="button"
+        >
+          <span className="brand__mark">M</span>
+          <div>
+            <span className="brand__name">{brandName}</span>
+            <span className="brand__kind">CMS</span>
           </div>
+          <span className="tag-interne">Interne</span>
+        </button>
 
-          <div className="admin-badge">Interne</div>
-        </div>
+        <nav aria-label="CMS tabs" className="tabs">
+          {NAV_ITEMS.map((item) => (
+            <button
+              aria-current={activeTab === item.value ? "page" : undefined}
+              className={`tab ${activeTab === item.value ? "on" : ""}`}
+              key={item.value}
+              onClick={() => {
+                if (activeTab === item.value) {
+                  return;
+                }
 
-        <div className="admin-header-inner admin-nav-row">
-          <nav aria-label="CMS">
-            <div className="admin-nav">
-              {NAV_ITEMS.map((item) => (
-                <a key={item.href} className="admin-nav-link" href={item.href}>
-                  {item.label}
-                </a>
-              ))}
-            </div>
-          </nav>
+                startTransition(() => onTabChange(item.value));
+              }}
+              type="button"
+            >
+              <span className="ic">{item.icon}</span>
+              {item.label}
+            </button>
+          ))}
+        </nav>
 
-          <div className="admin-user">
-            <div>
-              <strong>{name ?? "Admin"}</strong>
-              <p>{email ?? "Signed in"}</p>
-            </div>
-            <UserButton />
+        <div className="user">
+          <div className="user__info">
+            <div className="nm">{name ?? "Admin CMS"}</div>
+            <div className="em">{email ?? "Session interne"}</div>
           </div>
+          <span className="user__av">{getViewerInitial(name, email)}</span>
         </div>
       </header>
 
-      <main className="admin-main">{children}</main>
+      {children}
     </div>
   );
 }

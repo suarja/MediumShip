@@ -14,10 +14,10 @@ import { VideoView } from "expo-video";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
-import { MemberGateCard } from "../../src/components/auth/member-gate-card";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
 import { DetailHeader } from "../../src/components/content/detail-header";
 import { DetailHero } from "../../src/components/content/detail-hero";
+import { PremiumAccessBanner } from "../../src/components/content/premium-access-banner";
 import {
   PauseGlyph,
   PlayGlyph,
@@ -213,7 +213,7 @@ export default function PlayerScreen() {
           lede={content.summary}
           premium
         />
-        <MemberGateCard
+        <PremiumAccessBanner
           title={
             content.kind === "video"
               ? tVideo("premiumTitle")

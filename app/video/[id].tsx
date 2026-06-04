@@ -5,10 +5,10 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
-import { MemberGateCard } from "../../src/components/auth/member-gate-card";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
 import { DetailHeader } from "../../src/components/content/detail-header";
 import { DetailHero } from "../../src/components/content/detail-hero";
+import { PremiumAccessBanner } from "../../src/components/content/premium-access-banner";
 import { VideoPlayerCard } from "../../src/components/media/video-player-card";
 import { usePersistentMediaPlayer } from "../../src/features/media/persistent-media-player";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
@@ -103,7 +103,7 @@ export default function VideoDetailScreen() {
             premium={content.isPremium}
           />
           {content.isPremium ? (
-            <MemberGateCard
+            <PremiumAccessBanner
               title={t("premiumTitle")}
               description={t("premiumBody")}
               ctaLabel={t("premiumCta")}

@@ -8,4 +8,8 @@ export default {
   kicker: "Article",
   readingTime: "{{minutes}} min de lecture",
   premiumTag: "Premium",
+  premiumTitle: "Article réservé aux membres",
+  premiumBody:
+    "Cet article fait partie du catalogue premium. Connectez-vous pour le lire.",
+  premiumCta: "Devenir membre",
 } as const;

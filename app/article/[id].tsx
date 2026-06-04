@@ -8,6 +8,7 @@ import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
 import { DetailHeader } from "../../src/components/content/detail-header";
 import { DetailHero } from "../../src/components/content/detail-hero";
+import { PremiumAccessBanner } from "../../src/components/content/premium-access-banner";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
@@ -73,7 +74,13 @@ export default function ArticleDetailScreen() {
             lede={content.summary}
             premium={content.isPremium}
           />
-          {content.articleBody ? (
+          {content.isPremium ? (
+            <PremiumAccessBanner
+              title={t("premiumTitle")}
+              description={t("premiumBody")}
+              ctaLabel={t("premiumCta")}
+            />
+          ) : content.articleBody ? (
             <Text
               style={[
                 styles.body,

@@ -1,13 +1,14 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text } from "react-native";
 
 import { useQuery } from "convex/react";
-import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
 import { DetailHeader } from "../../src/components/content/detail-header";
 import { DetailHero } from "../../src/components/content/detail-hero";
+import { PremiumAccessBanner } from "../../src/components/content/premium-access-banner";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { usePersistentMediaPlayer } from "../../src/features/media/persistent-media-player";
@@ -80,33 +81,11 @@ export default function EpisodeDetailScreen() {
           />
 
           {content.isPremium ? (
-            <View
-              style={[
-                styles.premiumCard,
-                {
-                  borderRadius: theme.radii.lg,
-                  backgroundColor: theme.colors.premiumSoft,
-                  borderColor: theme.colors.premium,
-                },
-              ]}
-            >
-              <Text style={[styles.premiumTitle, { color: theme.colors.heading }]}>
-                ★ {t("premiumTitle")}
-              </Text>
-              <Text style={[styles.premiumBody, { color: theme.colors.text }]}>
-                {t("premiumBody")}
-              </Text>
-              <Link href="/sign-in" asChild>
-                <Pressable
-                  accessibilityRole="link"
-                  style={{ alignSelf: "flex-start", paddingTop: 4 }}
-                >
-                  <Text style={[styles.premiumCta, { color: theme.colors.premium }]}>
-                    {t("premiumCta")} →
-                  </Text>
-                </Pressable>
-              </Link>
-            </View>
+            <PremiumAccessBanner
+              title={t("premiumTitle")}
+              description={t("premiumBody")}
+              ctaLabel={t("premiumCta")}
+            />
           ) : content.audioUrl ? (
             activeSession?.contentId === content._id ? null : (
             <Pressable
@@ -140,15 +119,6 @@ export default function EpisodeDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  premiumCard: {
-    gap: 8,
-    padding: 18,
-    marginTop: 4,
-    borderWidth: 1,
-  },
-  premiumTitle: { fontFamily: fontFamilies.displayBold, fontSize: 17 },
-  premiumBody: { fontFamily: fontFamilies.body, fontSize: 15, lineHeight: 22 },
-  premiumCta: { fontFamily: fontFamilies.mono, fontSize: 13, letterSpacing: 0.5 },
   playbackButton: {
     minHeight: 52,
     marginTop: 4,

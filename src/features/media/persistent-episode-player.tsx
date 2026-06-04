@@ -72,34 +72,31 @@ export function PersistentEpisodePlayerProvider({
     createAudioPlayer(null, { updateInterval: 250 }),
   );
   const status = useAudioPlayerStatus(player);
-  const pendingPlayRef = useRef(false);
+  const activeTrackRef = useRef<EpisodeTrack | null>(null);
 
   useEffect(() => {
     void setAudioModeAsync({
       playsInSilentMode: true,
+      shouldPlayInBackground: true,
     });
   }, []);
 
   useEffect(() => {
     if (!activeTrack) {
       player.pause();
-      pendingPlayRef.current = false;
       return;
     }
   }, [activeTrack, player]);
-
-  useEffect(() => {
-    if (activeTrack && pendingPlayRef.current && status.isLoaded) {
-      pendingPlayRef.current = false;
-      player.play();
-    }
-  }, [activeTrack, player, status.isLoaded]);
 
   useEffect(() => {
     return () => {
       player.remove();
     };
   }, [player]);
+
+  useEffect(() => {
+    activeTrackRef.current = activeTrack;
+  }, [activeTrack]);
 
   const currentTimeSeconds = status.currentTime || 0;
   const durationSeconds = status.duration || activeTrack?.durationSeconds || 0;
@@ -109,20 +106,22 @@ export function PersistentEpisodePlayerProvider({
 
   const playTrack = async (track: EpisodeTrack) => {
     const isSameTrack =
-      activeTrack?.contentId === track.contentId &&
-      activeTrack.audioUrl === track.audioUrl;
+      activeTrackRef.current?.contentId === track.contentId &&
+      activeTrackRef.current?.audioUrl === track.audioUrl;
 
     if (!isSameTrack) {
-      pendingPlayRef.current = true;
+      const nextPlayer = createAudioPlayer(
+        { uri: track.audioUrl },
+        { updateInterval: 250 },
+      );
+      nextPlayer.play();
+      activeTrackRef.current = track;
+      setActiveTrack(track);
       setPlayer((currentPlayer) => {
         currentPlayer.pause();
         currentPlayer.remove();
-        return createAudioPlayer(
-          { uri: track.audioUrl },
-          { updateInterval: 250 },
-        );
+        return nextPlayer;
       });
-      setActiveTrack(track);
       return;
     }
 
@@ -166,8 +165,8 @@ export function PersistentEpisodePlayerProvider({
   };
 
   const closePlayer = () => {
-    pendingPlayRef.current = false;
     player.pause();
+    activeTrackRef.current = null;
     setActiveTrack(null);
   };
 

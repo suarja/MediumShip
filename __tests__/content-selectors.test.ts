@@ -3,6 +3,7 @@ import { describe, expect, it } from "@jest/globals";
 import {
   getContentCoverImageUrl,
   getYoutubeEmbedUrl,
+  getYoutubeLaunchUrl,
   getYoutubeVideoId,
   normalizeRemoteImageUrl,
   toContentCardModel,
@@ -98,5 +99,14 @@ describe("toContentCardModel", () => {
     ).toBe(
       "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?playsinline=1&rel=0&modestbranding=1",
     );
+  });
+
+  it("builds an autoplay launch url for external youtube playback", () => {
+    expect(
+      getYoutubeLaunchUrl({
+        youtubeUrl: "https://youtu.be/dQw4w9WgXcQ?si=abc",
+        youtubeVideoId: "stale-id",
+      }),
+    ).toBe("https://www.youtube.com/watch?v=dQw4w9WgXcQ&autoplay=1");
   });
 });

@@ -94,6 +94,23 @@ export function getYoutubeEmbedUrl(
   return embedUrl.toString();
 }
 
+export function getYoutubeLaunchUrl(
+  source:
+    | Pick<Extract<NonNullable<ContentDoc["videoSource"]>, { kind: "youtube" }>, "youtubeUrl" | "youtubeVideoId">
+    | undefined,
+) {
+  const youtubeVideoId = getYoutubeVideoId(source);
+  if (!youtubeVideoId) {
+    return undefined;
+  }
+
+  const watchUrl = new URL("https://www.youtube.com/watch");
+  watchUrl.searchParams.set("v", youtubeVideoId);
+  watchUrl.searchParams.set("autoplay", "1");
+
+  return watchUrl.toString();
+}
+
 export function getContentCoverImageUrl(
   content: Pick<ContentDoc, "heroImageUrl" | "kind" | "videoSource">,
 ) {

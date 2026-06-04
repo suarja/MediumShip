@@ -70,12 +70,6 @@ jest.mock("expo-video", () => {
   };
 });
 
-jest.mock("react-native-webview", () => {
-  const React = require("react");
-  const { View } = require("react-native");
-
-  return {
-    WebView: ({ testID }: { testID?: string }) =>
-      React.createElement(View, { testID }),
-  };
-});
+jest.mock("expo-web-browser", () => ({
+  openBrowserAsync: jest.fn().mockResolvedValue({ type: "opened" }),
+}));

@@ -22,45 +22,45 @@ const demoContents = [
     status: "published" as const,
     slug: "lea-bardin-entretien",
     kind: "episode" as const,
-    title: "Avec Lea Bardin",
-    summary: "Entretien long format sur le travail invisible.",
+    title: "West Texas Boom Report",
+    summary: "Reportage radio sur le boom pétrolier au Texas.",
     category: "Podcast",
     tags: ["podcast"],
     isPremium: true,
     publishedAt: "2026-06-03T09:00:00.000Z",
     durationSeconds: 3240,
     audioUrl:
-      "https://d3ctxlq1ktw2nl.cloudfront.net/staging/2020-11-30/141758914-44100-2-fc5d22f01b785193.mp3",
+      "https://stateimpact.npr.org/texas/files/2012/01/MIDLAND-FEATURE-MP3-3.mp3",
   },
   {
     tenantSlug: defaultTenant.slug,
     status: "published" as const,
     slug: "monde-dapres-episode-2",
     kind: "episode" as const,
-    title: "Monde d'apres · Episode 2",
-    summary: "Conversation sur le care, les institutions et l'apres-crise.",
+    title: "Valencia Tuition Report",
+    summary: "Reportage radio sur la hausse des frais de scolarité en Floride.",
     category: "Podcast",
-    tags: ["podcast", "care"],
+    tags: ["podcast", "education"],
     isPremium: false,
     publishedAt: "2026-06-03T09:30:00.000Z",
     durationSeconds: 3120,
     audioUrl:
-      "https://d3ctxlq1ktw2nl.cloudfront.net/staging/2020-11-30/141758893-44100-2-0e99e327fd0086f3.mp3",
+      "https://stateimpact.npr.org/florida/files/2012/07/ValenciaTuition.mp3",
   },
   {
     tenantSlug: defaultTenant.slug,
     status: "published" as const,
     slug: "monde-dapres-episode-3",
     kind: "episode" as const,
-    title: "Monde d'apres · Episode 3",
-    summary: "Long format sur les formes de solidarite qui tiennent encore.",
+    title: "Oklahoma Cannabis Report",
+    summary: "Reportage radio sur l'économie du cannabis en Oklahoma.",
     category: "Podcast",
-    tags: ["podcast", "solidarite"],
+    tags: ["podcast", "economy"],
     isPremium: false,
     publishedAt: "2026-06-03T09:45:00.000Z",
     durationSeconds: 2980,
     audioUrl:
-      "https://d3ctxlq1ktw2nl.cloudfront.net/staging/2020-11-30/141758850-44100-2-c3873faffdf20e90.mp3",
+      "https://stateimpact.npr.org/oklahoma/files/2022/04/Clip_1.mp3",
   },
   {
     tenantSlug: defaultTenant.slug,
@@ -114,6 +114,12 @@ const demoContents = [
   },
 ];
 
+const transitionalEpisodeSlugs = [
+  "west-texas-boom-report",
+  "valencia-tuition-report",
+  "oklahoma-cannabis-report",
+];
+
 export const seedDemoContent = mutation({
   args: {},
   handler: async (ctx) => {
@@ -136,6 +142,21 @@ export const seedDemoContent = mutation({
       });
     }
 
+    for (const slug of transitionalEpisodeSlugs) {
+      const transitionalContent = await ctx.db
+        .query("contents")
+        .withIndex("by_tenantSlug_and_slug", (q) =>
+          q.eq("tenantSlug", defaultTenant.slug).eq("slug", slug),
+        )
+        .unique();
+
+      if (transitionalContent?.status === "published") {
+        await ctx.db.patch(transitionalContent._id, {
+          status: "archived",
+        });
+      }
+    }
+
     for (const content of demoContents) {
       const existingContent = await ctx.db
         .query("contents")
@@ -146,13 +167,16 @@ export const seedDemoContent = mutation({
 
       if (!existingContent) {
         await ctx.db.insert("contents", content);
-      } else if (
-        content.kind === "episode" &&
-        (!existingContent.audioUrl ||
-          existingContent.audioUrl.includes("example.com/audio/") ||
-          existingContent.audioUrl !== content.audioUrl)
-      ) {
+      } else if (content.kind === "episode") {
         await ctx.db.patch(existingContent._id, {
+          status: content.status,
+          title: content.title,
+          summary: content.summary,
+          category: content.category,
+          tags: content.tags,
+          isPremium: content.isPremium,
+          publishedAt: content.publishedAt,
+          durationSeconds: content.durationSeconds,
           audioUrl: content.audioUrl,
         });
       }

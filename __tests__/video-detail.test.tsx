@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { fireEvent, render, screen } from "@testing-library/react-native";
 
+import * as WebBrowser from "expo-web-browser";
 import VideoDetailScreen from "../app/video/[id]";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
@@ -41,7 +42,7 @@ describe("video detail", () => {
     mockUseEventListener.mockReset();
   });
 
-  it("renders an inline youtube player and keeps an external fallback", () => {
+  it("launches youtube externally and stops the episode player", () => {
     mockUseQuery.mockReturnValue({
       _id: "video_1",
       tenantSlug: "demo-media",
@@ -62,14 +63,16 @@ describe("video detail", () => {
 
     render(<VideoDetailScreen />);
 
-    expect(screen.getByText("Play video")).toBeTruthy();
+    expect(screen.getByText("Open on YouTube")).toBeTruthy();
     expect(mockClosePlayer).not.toHaveBeenCalled();
     expect(screen.getByText("Open on YouTube")).toBeTruthy();
 
     fireEvent.press(screen.getByTestId("video-start-button"));
 
-    expect(screen.getByTestId("youtube-player")).toBeTruthy();
     expect(mockClosePlayer).toHaveBeenCalledTimes(1);
+    expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith(
+      "https://www.youtube.com/watch?v=dQw4w9WgXcQ&autoplay=1",
+    );
   });
 
   it("renders a Picture in Picture action for hosted videos", () => {

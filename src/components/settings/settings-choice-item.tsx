@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 
+import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 import { SettingsRow } from "./settings-row";
 
@@ -187,10 +188,12 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   sheetTitle: {
+    fontFamily: fontFamilies.displayBold,
     fontSize: 22,
-    fontWeight: "700",
+    letterSpacing: -0.3,
   },
   sheetSubtitle: {
+    fontFamily: fontFamilies.body,
     fontSize: 14,
     lineHeight: 20,
   },
@@ -221,10 +224,11 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   optionText: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: 15,
-    fontWeight: "600",
   },
   optionDescription: {
+    fontFamily: fontFamilies.body,
     fontSize: 13,
     lineHeight: 18,
   },

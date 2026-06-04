@@ -1,6 +1,7 @@
 import { PropsWithChildren, ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 type SettingsRowProps = PropsWithChildren<{
@@ -107,10 +108,11 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   label: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: 15,
-    fontWeight: "600",
   },
   description: {
+    fontFamily: fontFamilies.body,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -120,8 +122,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   value: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: 14,
-    fontWeight: "500",
   },
   chevron: {
     fontSize: 18,

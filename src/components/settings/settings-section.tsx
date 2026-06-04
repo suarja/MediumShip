@@ -1,6 +1,7 @@
 import { PropsWithChildren } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
+import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 type SettingsSectionProps = PropsWithChildren<{
@@ -34,8 +35,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   title: {
+    fontFamily: fontFamilies.display,
     fontSize: 18,
-    fontWeight: "700",
+    letterSpacing: -0.2,
   },
   card: {
     overflow: "hidden",

@@ -12,6 +12,7 @@ import { ThemePaletteItem } from "../../src/components/settings/theme-palette-it
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
+import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 export default function SettingsScreen() {
@@ -104,15 +105,18 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   eyebrow: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontFamily: fontFamilies.mono,
+    fontSize: 11,
+    letterSpacing: 1.6,
     textTransform: "uppercase",
   },
   title: {
+    fontFamily: fontFamilies.display,
     fontSize: 32,
-    fontWeight: "700",
+    letterSpacing: -0.4,
   },
   subtitle: {
+    fontFamily: fontFamilies.body,
     fontSize: 16,
     lineHeight: 24,
     maxWidth: 560,

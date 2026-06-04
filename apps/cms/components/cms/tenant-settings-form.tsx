@@ -74,7 +74,7 @@ function MobilePhonePreview({
   const visibleSections = feedSections.filter((section) =>
     enabledModules.includes(contentKindToModule(section.kind)),
   );
-  const sections = visibleSections.length > 0 ? visibleSections : feedSections;
+  const sections = visibleSections;
   const hero = sections[0];
   const rest = sections.slice(1, 4);
 
@@ -111,11 +111,15 @@ function MobilePhonePreview({
           </div>
 
           <div className="mfeed__tabs">
-            {sections.slice(0, 4).map((section, index) => (
-              <span className={index === 0 ? "on" : ""} key={`${section.kind}-${section.title}`}>
-                {section.title}
-              </span>
-            ))}
+            {sections.length > 0 ? (
+              sections.slice(0, 4).map((section, index) => (
+                <span className={index === 0 ? "on" : ""} key={`${section.kind}-${section.title}`}>
+                  {section.title}
+                </span>
+              ))
+            ) : (
+              <span className="on">Aucun module actif</span>
+            )}
           </div>
 
           {hero ? (
@@ -127,7 +131,16 @@ function MobilePhonePreview({
                 <span>{MODULE_LABELS[contentKindToModule(hero.kind)]}</span>
               </span>
             </div>
-          ) : null}
+          ) : (
+            <div className="mfeed__hero">
+              <span className="k">◉ CONFIG</span>
+              <span className="t">Activez au moins un module public.</span>
+              <span className="m">
+                <span className="pl">•</span>
+                <span>Feed vide</span>
+              </span>
+            </div>
+          )}
 
           <div className="mfeed__list">
             {rest.map((section, index) => (

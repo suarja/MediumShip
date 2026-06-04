@@ -33,11 +33,13 @@ export function isEnabledModule(value: string): value is EnabledModule {
 export function normalizeEnabledModules(
   modules: readonly string[] | undefined,
 ): EnabledModule[] {
+  if (modules === undefined) {
+    return [...PUBLIC_CONTENT_MODULES, ...OPTIONAL_PUBLIC_MODULES];
+  }
+
   const normalized = (modules ?? []).filter(isEnabledModule);
 
-  return normalized.length > 0
-    ? normalized
-    : [...PUBLIC_CONTENT_MODULES, ...OPTIONAL_PUBLIC_MODULES];
+  return normalized;
 }
 
 export function normalizeFeedSections(
@@ -50,12 +52,8 @@ export function normalizeFeedSections(
       .map((module) => moduleToContentKind(module)),
   );
 
-  const normalized = (sections ?? []).filter((section) =>
-    enabledKinds.has(section.kind),
-  );
-
-  if (normalized.length > 0) {
-    return normalized;
+  if (sections !== undefined) {
+    return sections.filter((section) => enabledKinds.has(section.kind));
   }
 
   return DEFAULT_FEED_SECTIONS.filter((section) => enabledKinds.has(section.kind));
@@ -87,6 +85,7 @@ export function filterAndOrderFeedContent(
 
   return [...contents]
     .filter((content) => sectionOrder.has(content.kind))
+    .filter((content) => enabledModules.includes("premium") || !content.isPremium)
     .sort((left, right) => {
       const leftOrder = sectionOrder.get(left.kind) ?? Number.MAX_SAFE_INTEGER;
       const rightOrder = sectionOrder.get(right.kind) ?? Number.MAX_SAFE_INTEGER;

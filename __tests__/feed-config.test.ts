@@ -1,6 +1,9 @@
 import { describe, expect, it } from "@jest/globals";
 
-import { filterAndOrderFeedContent } from "../src/features/tenant/public-config";
+import {
+  filterAndOrderFeedContent,
+  normalizeEnabledModules,
+} from "../src/features/tenant/public-config";
 import type { ContentDoc } from "../src/features/content/types";
 
 const contents: ContentDoc[] = [
@@ -67,5 +70,25 @@ describe("filterAndOrderFeedContent", () => {
     );
 
     expect(result.map((item) => item._id)).toEqual(["article-1"]);
+  });
+
+  it("filters out premium content when the premium module is disabled", () => {
+    const result = filterAndOrderFeedContent(
+      contents,
+      ["articles", "episodes", "videos"],
+      [
+        { kind: "article", title: "Read now" },
+        { kind: "episode", title: "Listen now" },
+        { kind: "video", title: "Watch now" },
+      ],
+    );
+
+    expect(result.map((item) => item._id)).toEqual(["article-1", "video-1"]);
+  });
+});
+
+describe("normalizeEnabledModules", () => {
+  it("keeps an explicit empty module selection instead of restoring defaults", () => {
+    expect(normalizeEnabledModules([])).toEqual([]);
   });
 });

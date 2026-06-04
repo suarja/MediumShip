@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
 
 import { api } from "../../../../convex/_generated/api";
@@ -30,11 +30,33 @@ type EditorState = {
   playbackUrl: string;
 };
 
+const CATEGORY_OPTIONS = [
+  "Actualités",
+  "Analyses",
+  "Podcasts",
+  "Agenda",
+  "Bibliothèque",
+  "Économie",
+  "Culture",
+];
+
+const KIND_LABEL: Record<Doc<"contents">["kind"], string> = {
+  article: "Article",
+  episode: "Épisode",
+  video: "Vidéo",
+};
+
+const STATUS_PILL: Record<Doc<"contents">["status"], string> = {
+  draft: "pill--draft",
+  published: "pill--published",
+  archived: "pill--archived",
+};
+
 const emptyState: EditorState = {
   slug: "",
   title: "",
   summary: "",
-  category: "",
+  category: CATEGORY_OPTIONS[1],
   tags: "",
   isPremium: false,
   heroImageUrl: "",
@@ -48,9 +70,7 @@ const emptyState: EditorState = {
   playbackUrl: "",
 };
 
-function toEditorState(
-  content: Doc<"contents"> | null | undefined,
-): EditorState {
+function toEditorState(content: Doc<"contents"> | null | undefined): EditorState {
   if (!content) {
     return emptyState;
   }
@@ -59,7 +79,7 @@ function toEditorState(
     slug: content.slug,
     title: content.title,
     summary: content.summary,
-    category: content.category,
+    category: content.category || CATEGORY_OPTIONS[1],
     tags: content.tags.join(", "),
     isPremium: content.isPremium,
     heroImageUrl: content.heroImageUrl ?? "",
@@ -77,12 +97,101 @@ function toEditorState(
         ? content.videoSource.youtubeUrl
         : "",
     uploadKey:
-      content.videoSource?.kind === "hosted" ? content.videoSource.uploadKey : "",
+      content.videoSource?.kind === "hosted"
+        ? content.videoSource.uploadKey
+        : "",
     playbackUrl:
       content.videoSource?.kind === "hosted"
         ? content.videoSource.playbackUrl
         : "",
   };
+}
+
+function slugify(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function formatTimestamp(value: number | string | undefined) {
+  if (!value) {
+    return "Date inconnue";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "Date inconnue";
+  }
+
+  return new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+function Field({
+  children,
+  label,
+  optional,
+  wide,
+}: {
+  children: ReactNode;
+  label: string;
+  optional?: boolean;
+  wide?: boolean;
+}) {
+  return (
+    <div className={`field ${wide ? "field--wide" : ""}`}>
+      <span className="field__lbl">
+        {label}
+        {optional ? <span className="opt">facultatif</span> : null}
+      </span>
+      {children}
+    </div>
+  );
+}
+
+function ImageUploadCard({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const thumbStyle: CSSProperties | undefined = value
+    ? {
+        backgroundImage: `url("${value}")`,
+        backgroundPosition: "center",
+        backgroundSize: "cover",
+      }
+    : undefined;
+
+  return (
+    <div className="field field--wide">
+      <span className="field__lbl">Cover URL</span>
+      <div className="upload">
+        <div className="upload__thumb" style={thumbStyle} />
+        <div className="upload__meta">
+          <h5 className="upload__t">
+            {value || "Coller l’URL distante de la cover"}
+          </h5>
+          <div className="upload__d">
+            Pas de file storage dans ce scope · image distante uniquement
+          </div>
+        </div>
+      </div>
+      <input
+        className="input input--mono"
+        onChange={(event) => onChange(event.currentTarget.value)}
+        placeholder="https://…/cover.jpg"
+        value={value}
+      />
+    </div>
+  );
 }
 
 export function ContentForm({ selectedId }: ContentFormProps) {
@@ -93,61 +202,66 @@ export function ContentForm({ selectedId }: ContentFormProps) {
   const updateContent = useMutation(api.cms.mutations.updateContent);
   const setContentStatus = useMutation(api.cms.mutations.setContentStatus);
   const [state, setState] = useState<EditorState>(emptyState);
-  const [saveLabel, setSaveLabel] = useState("Save");
-  const [metadataOpen, setMetadataOpen] = useState(false);
+  const [saveLabel, setSaveLabel] = useState("Enregistrer");
 
   useEffect(() => {
     if (content) {
       setState(toEditorState(content));
-      setSaveLabel("Save");
-      setMetadataOpen(false);
+      setSaveLabel("Enregistrer");
     }
   }, [content]);
 
   if (!selectedId) {
     return (
-      <section className="panel">
-        <div className="panel-header">
-          <div>
-            <p className="eyebrow">Editor</p>
-            <h2>Select content</h2>
-          </div>
+      <section className="editor">
+        <div className="empty">
+          <h3 className="empty__t">Sélectionne un contenu</h3>
+          <p className="empty__sub">
+            Choisis un item à gauche ou crée un nouvel Article, Épisode ou Vidéo.
+          </p>
         </div>
-        <p className="empty-copy">
-          Pick a content item on the left, or create a new draft to start the first CMS slice.
-        </p>
       </section>
     );
   }
 
   if (content === undefined) {
     return (
-      <section className="panel">
-        <p className="empty-copy">Loading editor…</p>
+      <section className="editor">
+        <div className="empty">
+          <h3 className="empty__t">Chargement de l’éditeur</h3>
+          <p className="empty__sub">Convex récupère la fiche éditoriale sélectionnée.</p>
+        </div>
       </section>
     );
   }
 
   if (!content) {
     return (
-      <section className="panel">
-        <p className="empty-copy">This content item no longer exists.</p>
+      <section className="editor">
+        <div className="empty">
+          <h3 className="empty__t">Contenu introuvable</h3>
+          <p className="empty__sub">
+            L’item n’existe plus ou a été supprimé côté backend.
+          </p>
+        </div>
       </section>
     );
   }
 
-  const onChange =
+  const onTextChange =
     (key: keyof EditorState) =>
     (
       event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
     ) => {
-      const value =
-        event.currentTarget instanceof HTMLInputElement &&
-        event.currentTarget.type === "checkbox"
-          ? event.currentTarget.checked
-          : event.currentTarget.value;
+      const value = event.currentTarget.value;
       setState((current) => ({ ...current, [key]: value }));
-      setSaveLabel("Save");
+      setSaveLabel("Enregistrer");
+    };
+
+  const onBooleanChange =
+    (key: keyof EditorState) => (event: ChangeEvent<HTMLInputElement>) => {
+      setState((current) => ({ ...current, [key]: event.currentTarget.checked }));
+      setSaveLabel("Enregistrer");
     };
 
   const save = async () => {
@@ -171,38 +285,26 @@ export function ContentForm({ selectedId }: ContentFormProps) {
       }
     }
 
-    const fallbackSlug =
-      state.title
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "") || `draft-${content.kind}`;
-    const fallbackCategory =
-      state.category.trim() ||
-      (content.kind === "article"
-        ? "Analysis"
-        : content.kind === "episode"
-          ? "Podcast"
-          : "Video");
     const articleWordCount = state.articleBody
       .trim()
       .split(/\s+/)
       .filter(Boolean).length;
     const estimatedReadingTime =
       articleWordCount > 0 ? Math.max(1, Math.ceil(articleWordCount / 220)) : null;
+    const normalizedSlug = state.slug.trim() || slugify(state.title) || `draft-${content.kind}`;
 
     await updateContent({
       id: content._id,
-      slug: state.slug.trim() || fallbackSlug,
-      title: state.title,
-      summary: state.summary,
-      category: fallbackCategory,
+      slug: normalizedSlug,
+      title: state.title.trim() || "Sans titre",
+      summary: state.summary.trim(),
+      category: state.category.trim() || CATEGORY_OPTIONS[1],
       tags: state.tags
         .split(",")
         .map((tag) => tag.trim())
         .filter(Boolean),
       isPremium: state.isPremium,
-      heroImageUrl: state.heroImageUrl || null,
+      heroImageUrl: state.heroImageUrl.trim() || null,
       readingTimeMinutes:
         content.kind === "article"
           ? state.readingTimeMinutes
@@ -210,11 +312,12 @@ export function ContentForm({ selectedId }: ContentFormProps) {
             : estimatedReadingTime
           : null,
       articleBody: content.kind === "article" ? state.articleBody || null : null,
-      audioUrl: content.kind === "episode" ? state.audioUrl || null : null,
+      audioUrl: content.kind === "episode" ? state.audioUrl.trim() || null : null,
       durationSeconds:
-        (content.kind === "episode" || content.kind === "video") &&
-        state.durationSeconds
-          ? Number(state.durationSeconds)
+        content.kind === "episode" || content.kind === "video"
+          ? state.durationSeconds
+            ? Number(state.durationSeconds)
+            : null
           : null,
       videoSource:
         content.kind !== "video" || !state.videoSourceKind
@@ -223,16 +326,16 @@ export function ContentForm({ selectedId }: ContentFormProps) {
             ? {
                 kind: "youtube",
                 youtubeVideoId: "",
-                youtubeUrl: state.youtubeUrl,
+                youtubeUrl: state.youtubeUrl.trim(),
               }
             : {
                 kind: "hosted",
-                uploadKey: state.uploadKey,
-                playbackUrl: state.playbackUrl,
+                uploadKey: state.uploadKey.trim(),
+                playbackUrl: state.playbackUrl.trim(),
               },
     });
 
-    setSaveLabel("Saved");
+    setSaveLabel("Enregistré");
   };
 
   const changeStatus = async (status: "draft" | "published" | "archived") => {
@@ -240,163 +343,236 @@ export function ContentForm({ selectedId }: ContentFormProps) {
   };
 
   return (
-    <section className="panel">
-      <div className="panel-header">
-        <div>
-          <p className="eyebrow">Editor</p>
-          <h2>{content.title}</h2>
-        </div>
-        <div className="stack-actions">
-          <button className="ghost-button" onClick={() => changeStatus("draft")} type="button">
-            Draft
-          </button>
-          <button className="ghost-button" onClick={() => changeStatus("published")} type="button">
-            Publish
-          </button>
-          <button className="ghost-button" onClick={() => changeStatus("archived")} type="button">
-            Archive
-          </button>
-        </div>
-      </div>
-
-      <div className="form-grid">
-        <label className="field-wide">
-          <span>Title</span>
-          <input value={state.title} onChange={onChange("title")} />
-        </label>
-        <label className="field-wide">
-          <span>Summary</span>
-          <textarea value={state.summary} onChange={onChange("summary")} rows={3} />
-        </label>
-        <label className="field-wide">
-          <span>Tags</span>
-          <input
-            value={state.tags}
-            onChange={onChange("tags")}
-            placeholder="policy, podcast, culture"
-          />
-        </label>
-
-        {content.kind === "article" ? (
-          <>
-            <label className="field-wide">
-              <span>Body</span>
-              <textarea value={state.articleBody} onChange={onChange("articleBody")} rows={10} />
-            </label>
-          </>
-        ) : null}
-
-        {content.kind === "episode" ? (
-          <>
-            <label className="field-wide">
-              <span>Audio URL</span>
-              <input value={state.audioUrl} onChange={onChange("audioUrl")} />
-            </label>
-          </>
-        ) : null}
-
-        {content.kind === "video" ? (
-          <>
-            <label>
-              <span>Video source</span>
-              <select value={state.videoSourceKind} onChange={onChange("videoSourceKind")}>
-                <option value="">None</option>
-                <option value="youtube">YouTube</option>
-                <option value="hosted">Hosted</option>
-              </select>
-            </label>
-            {state.videoSourceKind === "youtube" ? (
-              <label className="field-wide">
-                <span>YouTube URL</span>
-                <input value={state.youtubeUrl} onChange={onChange("youtubeUrl")} />
-              </label>
-            ) : null}
-            {state.videoSourceKind === "hosted" ? (
-              <>
-                <label className="field-wide">
-                  <span>Playback URL</span>
-                  <input value={state.playbackUrl} onChange={onChange("playbackUrl")} />
-                </label>
-                <label className="field-wide">
-                  <span>Upload key</span>
-                  <input value={state.uploadKey} onChange={onChange("uploadKey")} />
-                </label>
-              </>
-            ) : null}
-          </>
-        ) : null}
-      </div>
-
-      <details
-        className="advanced-fields"
-        open={metadataOpen}
-        onToggle={(event) =>
-          setMetadataOpen((event.currentTarget as HTMLDetailsElement).open)
-        }
-      >
-        <summary>Advanced metadata</summary>
-        <div className="form-grid">
-          <label>
-            <span>Slug</span>
+    <section className="editor">
+      <article className="editor__card">
+        <div className="editor__head">
+          <div>
+            <div className="editor__crumb">
+              <span>{KIND_LABEL[content.kind]}</span>
+              <span className="sep">·</span>
+              <span>{content.slug}</span>
+            </div>
             <input
+              className="editor__title-input"
+              onChange={onTextChange("title")}
+              placeholder="Sans titre"
+              value={state.title}
+            />
+          </div>
+
+          <div className="editor__status-row">
+            <button className="btn btn--surface btn--sm" onClick={() => changeStatus("draft")} type="button">
+              Draft
+            </button>
+            <button
+              className="btn btn--surface btn--sm"
+              onClick={() => changeStatus("published")}
+              type="button"
+            >
+              Published
+            </button>
+            <button
+              className="btn btn--surface btn--sm"
+              onClick={() => changeStatus("archived")}
+              type="button"
+            >
+              Archived
+            </button>
+            <span className={`pill ${STATUS_PILL[content.status]}`}>
+              {content.status.toUpperCase()}
+            </span>
+          </div>
+        </div>
+
+        <div className="fields-grid">
+          <Field label="Slug">
+            <input
+              className="input input--mono"
+              onChange={onTextChange("slug")}
+              placeholder="slug-du-contenu"
               value={state.slug}
-              onChange={onChange("slug")}
-              placeholder="Auto-generated from title if left blank"
             />
-          </label>
-          <label>
-            <span>Category</span>
-            <input
+          </Field>
+
+          <Field label="Catégorie">
+            <select
+              className="select"
+              onChange={onTextChange("category")}
               value={state.category}
-              onChange={onChange("category")}
-              placeholder="Defaults from content type"
+            >
+              {CATEGORY_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field label="Résumé" wide>
+            <textarea
+              className="textarea"
+              onChange={onTextChange("summary")}
+              placeholder="Une phrase ou deux, affichée dans le feed."
+              rows={3}
+              value={state.summary}
             />
-          </label>
-          <label className="field-wide">
-            <span>Hero image URL</span>
-            <input value={state.heroImageUrl} onChange={onChange("heroImageUrl")} />
-          </label>
-          <label className="field-wide checkbox-row">
+          </Field>
+
+          <Field label="Tags" wide>
             <input
-              checked={state.isPremium}
-              onChange={onChange("isPremium")}
-              type="checkbox"
+              className="input"
+              onChange={onTextChange("tags")}
+              placeholder="politique, culture, analyse"
+              value={state.tags}
             />
-            <span>Premium content</span>
-          </label>
+          </Field>
+
+          <ImageUploadCard
+            onChange={(value) => {
+              setState((current) => ({ ...current, heroImageUrl: value }));
+              setSaveLabel("Enregistrer");
+            }}
+            value={state.heroImageUrl}
+          />
 
           {content.kind === "article" ? (
-            <label>
-              <span>Reading time override (minutes)</span>
-              <input
-                value={state.readingTimeMinutes}
-                onChange={onChange("readingTimeMinutes")}
-                placeholder="Auto-estimated from body if left blank"
-                type="number"
-              />
-            </label>
+            <>
+              <Field label="Temps de lecture override" optional>
+                <input
+                  className="input input--mono"
+                  onChange={onTextChange("readingTimeMinutes")}
+                  placeholder="Auto"
+                  type="number"
+                  value={state.readingTimeMinutes}
+                />
+              </Field>
+
+              <Field label="Corps de l’article" wide>
+                <textarea
+                  className="textarea textarea--body"
+                  onChange={onTextChange("articleBody")}
+                  placeholder="Écrivez ici…"
+                  value={state.articleBody}
+                />
+              </Field>
+            </>
           ) : null}
 
-          {content.kind === "episode" || content.kind === "video" ? (
-            <label>
-              <span>Duration override (seconds)</span>
-              <input
-                value={state.durationSeconds}
-                onChange={onChange("durationSeconds")}
-                placeholder="Optional"
-                type="number"
-              />
-            </label>
+          {content.kind === "episode" ? (
+            <>
+              <Field label="Audio URL" wide>
+                <input
+                  className="input input--mono"
+                  onChange={onTextChange("audioUrl")}
+                  placeholder="https://…/episode.mp3"
+                  value={state.audioUrl}
+                />
+              </Field>
+
+              <Field label="Durée (secondes)" optional>
+                <input
+                  className="input input--mono"
+                  onChange={onTextChange("durationSeconds")}
+                  placeholder="ex. 3240"
+                  type="number"
+                  value={state.durationSeconds}
+                />
+              </Field>
+            </>
           ) : null}
+
+          {content.kind === "video" ? (
+            <>
+              <Field label="Source vidéo">
+                <select
+                  className="select"
+                  onChange={(event) => {
+                    const value = event.currentTarget.value as EditorState["videoSourceKind"];
+                    setState((current) => ({ ...current, videoSourceKind: value }));
+                    setSaveLabel("Enregistrer");
+                  }}
+                  value={state.videoSourceKind}
+                >
+                  <option value="">Choisir</option>
+                  <option value="youtube">YouTube</option>
+                  <option value="hosted">Hosted</option>
+                </select>
+              </Field>
+
+              <Field label="Durée (secondes)" optional>
+                <input
+                  className="input input--mono"
+                  onChange={onTextChange("durationSeconds")}
+                  placeholder="ex. 3840"
+                  type="number"
+                  value={state.durationSeconds}
+                />
+              </Field>
+
+              {state.videoSourceKind === "youtube" ? (
+                <Field label="YouTube URL" wide>
+                  <input
+                    className="input input--mono"
+                    onChange={onTextChange("youtubeUrl")}
+                    placeholder="https://youtube.com/watch?v=…"
+                    value={state.youtubeUrl}
+                  />
+                </Field>
+              ) : null}
+
+              {state.videoSourceKind === "hosted" ? (
+                <>
+                  <Field label="Playback URL" wide>
+                    <input
+                      className="input input--mono"
+                      onChange={onTextChange("playbackUrl")}
+                      placeholder="https://…/master.m3u8"
+                      value={state.playbackUrl}
+                    />
+                  </Field>
+
+                  <Field label="Upload key" wide>
+                    <input
+                      className="input input--mono"
+                      onChange={onTextChange("uploadKey")}
+                      placeholder="remote-upload-key"
+                      value={state.uploadKey}
+                    />
+                  </Field>
+                </>
+              ) : null}
+            </>
+          ) : null}
+
+          <div className="field field--wide">
+            <div className="premium-block">
+              <div className="premium-block__h">
+                <span className="premium-block__t">Contenu premium</span>
+                <label className="toggle">
+                  <input
+                    checked={state.isPremium}
+                    onChange={onBooleanChange("isPremium")}
+                    type="checkbox"
+                  />
+                  <span className="toggle__sw" />
+                </label>
+              </div>
+            </div>
+          </div>
         </div>
-      </details>
 
-      <div className="panel-footer">
-        <span className={`status-pill status-${content.status}`}>{content.status}</span>
-        <button className="primary-button" onClick={save} type="button">
-          {saveLabel}
-        </button>
-      </div>
+        <div className="editor__foot">
+          <div className="editor__foot-l">
+            <span>Créé · {formatTimestamp(content._creationTime)}</span>
+            <span>Publié · {formatTimestamp(content.publishedAt)}</span>
+          </div>
+          <div className="editor__foot-r">
+            <button className="btn btn--primary btn--lg" onClick={save} type="button">
+              {saveLabel}
+            </button>
+          </div>
+        </div>
+      </article>
     </section>
   );
 }

@@ -1,7 +1,8 @@
 import { mutation } from "../_generated/server";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
 
-const demoEpisodeAudioUrl = "https://samplelib.com/lib/preview/mp3/sample-12s.mp3";
+const demoEpisodeAudioUrl =
+  "https://d3ctxlq1ktw2nl.cloudfront.net/staging/2020-11-30/141758914-44100-2-fc5d22f01b785193.mp3";
 
 const demoContents = [
   {

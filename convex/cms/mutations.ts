@@ -69,6 +69,15 @@ function normalizeAudioUrl(value: string | null) {
       return undefined;
     }
 
+    if (parsed.hostname === "anchor.fm") {
+      const anchorSegments = parsed.pathname.split("/").filter(Boolean);
+      const encodedOriginUrl = anchorSegments.at(-1);
+
+      if (encodedOriginUrl?.startsWith("https%3A") || encodedOriginUrl?.startsWith("http%3A")) {
+        return normalizeAudioUrl(decodeURIComponent(encodedOriginUrl));
+      }
+    }
+
     if (parsed.protocol === "http:") {
       parsed.protocol = "https:";
     }

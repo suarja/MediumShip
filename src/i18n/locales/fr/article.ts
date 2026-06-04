@@ -7,4 +7,5 @@ export default {
   notFoundBody: "Cet article n'est pas publié ou n'existe plus.",
   kicker: "Article",
   readingTime: "{{minutes}} min de lecture",
+  premiumTag: "Premium",
 } as const;

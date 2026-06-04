@@ -1,4 +1,4 @@
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text } from "react-native";
 
 import { useQuery } from "convex/react";
 import { useLocalSearchParams } from "expo-router";
@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
+import { DetailHero } from "../../src/components/content/detail-hero";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
@@ -36,6 +37,7 @@ export default function ArticleDetailScreen() {
         ? "notFound"
         : "ready";
   const coverImageUrl = content ? getContentCoverImageUrl(content) : undefined;
+  const accentTone = content?.isPremium ? theme.colors.premium : theme.colors.accent;
 
   return (
     <ContentDetailShell
@@ -47,41 +49,26 @@ export default function ArticleDetailScreen() {
       offlineBody={t("offlineBody")}
       notFoundTitle={t("notFoundTitle")}
       notFoundBody={t("notFoundBody")}
+      hero={
+        content ? (
+          <DetailHero
+            coverImageUrl={coverImageUrl}
+            watermarkGlyph="✎"
+            height={200 * scaleSpace}
+            premiumLabel={content.isPremium ? t("premiumTag") : undefined}
+          />
+        ) : undefined
+      }
     >
       {content ? (
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          showsVerticalScrollIndicator={false}
-        >
-          {coverImageUrl ? (
-            <Image
-              accessibilityLabel={`${content.title} cover`}
-              source={{ uri: coverImageUrl }}
-              style={[styles.cover, { height: 160 * scaleSpace }]}
-            />
-          ) : (
-            <View
-              style={[
-                styles.cover,
-                { backgroundColor: theme.colors.accent, height: 160 * scaleSpace },
-              ]}
-            />
-          )}
-          <Text
-            style={[
-              styles.kicker,
-              {
-                color: content.isPremium ? theme.colors.premium : theme.colors.accent,
-                fontSize: 11 * scaleFont,
-              },
-            ]}
-          >
+        <>
+          <Text style={[styles.kicker, { color: accentTone, fontSize: 11 * scaleFont }]}>
             {content.category || t("kicker")}
           </Text>
           <Text
             style={[
               styles.title,
-              { color: theme.colors.heading, fontSize: 28 * scaleFont, lineHeight: 34 * scaleFont },
+              { color: theme.colors.heading, fontSize: 28 * scaleFont, lineHeight: 32 * scaleFont },
             ]}
           >
             {content.title}
@@ -92,34 +79,47 @@ export default function ArticleDetailScreen() {
             </Text>
           ) : null}
           <Text
-            style={[styles.summary, { color: theme.colors.text, fontSize: 16 * scaleFont, lineHeight: 24 * scaleFont }]}
+            style={[
+              styles.lede,
+              {
+                color: theme.colors.text,
+                borderTopColor: theme.colors.border,
+                fontSize: 18 * scaleFont,
+                lineHeight: 27 * scaleFont,
+                paddingTop: theme.spacing.md * scaleSpace,
+                marginTop: theme.spacing.xs * scaleSpace,
+              },
+            ]}
           >
             {content.summary}
           </Text>
           {content.articleBody ? (
             <Text
-              style={[styles.body, { color: theme.colors.text, fontSize: 16 * scaleFont, lineHeight: 26 * scaleFont }]}
+              style={[
+                styles.body,
+                { color: theme.colors.text, fontSize: 16 * scaleFont, lineHeight: 26 * scaleFont },
+              ]}
             >
               {content.articleBody}
             </Text>
           ) : null}
-        </ScrollView>
+        </>
       ) : null}
     </ContentDetailShell>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { gap: 10, paddingBottom: 32 },
-  cover: { width: "100%", height: 160, borderRadius: 18, marginBottom: 6 },
   kicker: {
     fontFamily: fontFamilies.mono,
-    fontSize: 11,
     textTransform: "uppercase",
     letterSpacing: 1.6,
   },
-  title: { fontFamily: fontFamilies.display, fontSize: 28, lineHeight: 34 },
-  meta: { fontFamily: fontFamilies.mono, fontSize: 11, letterSpacing: 0.4 },
-  summary: { fontFamily: fontFamilies.bodySemiBold, fontSize: 16, lineHeight: 24 },
-  body: { fontFamily: fontFamilies.body, fontSize: 16, lineHeight: 26 },
+  title: { fontFamily: fontFamilies.displayBoldItalic, letterSpacing: -0.4 },
+  meta: { fontFamily: fontFamilies.mono, letterSpacing: 0.4 },
+  lede: {
+    fontFamily: fontFamilies.display,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  body: { fontFamily: fontFamilies.body },
 });

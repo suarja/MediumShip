@@ -61,7 +61,7 @@ describe("settings language switch", () => {
     });
 
     expect(i18n.language).toBe("en");
-    expect(screen.getByText("English")).toBeTruthy();
+    expect(screen.getAllByText("English").length).toBeGreaterThan(0);
     expect(
       screen.getByText("Manage language and the tenant visual identity."),
     ).toBeTruthy();

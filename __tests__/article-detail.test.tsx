@@ -32,7 +32,9 @@ describe("article detail offline", () => {
 
     expect(screen.getByText("Article unavailable offline")).toBeTruthy();
     expect(
-      screen.getByText("Reconnect to load this article for the first time."),
+      screen.getByText(
+        "Reconnect to load this article for the first time, or open a downloaded copy.",
+      ),
     ).toBeTruthy();
   });
 });

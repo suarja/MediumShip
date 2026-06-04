@@ -91,7 +91,7 @@ describe("episode detail", () => {
   it("renders the premium episode CTA without crashing and shows the degraded banner", () => {
     render(<EpisodeDetailScreen />);
 
-    expect(screen.getByText("You are offline")).toBeTruthy();
+    expect(screen.getByText("You are offline — downloaded items still work")).toBeTruthy();
     expect(screen.getByText(/Members-only episode/)).toBeTruthy();
     expect(screen.getByText(/Become a member/)).toBeTruthy();
     expect(screen.getByText("Sign in to save or download")).toBeTruthy();

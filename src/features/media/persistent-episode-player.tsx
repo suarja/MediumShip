@@ -622,7 +622,10 @@ export function usePersistentMediaPlayerSpace() {
   const { activeSession } = usePersistentMediaPlayer();
   const segments = useSegments();
 
-  return activeSession && !shouldHideMiniPlayerForSegments(segments)
+  // Only the episode card occupies layout space the content must clear. Hosted
+  // video shows no card (just the PiP window), so it reserves nothing.
+  return activeSession?.kind === "episode" &&
+    !shouldHideMiniPlayerForSegments(segments)
     ? PERSISTENT_MEDIA_PLAYER_HEIGHT + PERSISTENT_MEDIA_PLAYER_GAP
     : 0;
 }
@@ -684,6 +687,46 @@ export function PersistentMediaMiniPlayer() {
     segments[0] === "(app)"
       ? tabBarSpace - PERSISTENT_MEDIA_PLAYER_GAP
       : Math.max(insets.bottom, PERSISTENT_MEDIA_PLAYER_GAP);
+
+  // Hosted video off the player screen: the system Picture-in-Picture window is
+  // the only floating UI. We do NOT render the mini-player card here — for video
+  // it would be a redundant, out-of-sync second floating player. We still mount a
+  // tiny surface (tap = back to player) that hands the video off to PiP, then
+  // hides once PiP is active.
+  if (isHostedVideo) {
+    return videoPlayer ? (
+      <View
+        pointerEvents="box-none"
+        style={[styles.pipHostOverlay, { bottom: bottomOffset }]}
+        testID="media-pip-host"
+      >
+        <Pressable
+          accessibilityRole="button"
+          onPress={openPlayer}
+          style={[styles.pipHost, isPipActive && styles.miniVideoHidden]}
+        >
+          <VideoView
+            allowsPictureInPicture
+            contentFit="cover"
+            nativeControls={false}
+            onPictureInPictureStart={() => setIsPipActive(true)}
+            onPictureInPictureStop={() => {
+              setIsPipActive(false);
+              // Tapping the PiP window's restore control returns to the full
+              // player. Guarded + idempotent, so programmatic stops (returning
+              // to the player, closing) are no-ops here.
+              openPlayer();
+            }}
+            player={videoPlayer}
+            ref={pipVideoRef}
+            startsPictureInPictureAutomatically
+            style={StyleSheet.absoluteFill}
+          />
+        </Pressable>
+      </View>
+    ) : null;
+  }
+
   const kicker =
     activeSession.kind === "episode" ? tEpisode("playerLabel") : tVideo("playVideo");
   const progressRatio =
@@ -710,31 +753,6 @@ export function PersistentMediaMiniPlayer() {
           },
         ]}
       >
-        {isHostedVideo && videoPlayer ? (
-          <VideoView
-            allowsPictureInPicture
-            contentFit="cover"
-            nativeControls={false}
-            onPictureInPictureStart={() => setIsPipActive(true)}
-            onPictureInPictureStop={() => {
-              setIsPipActive(false);
-              // Tapping the PiP window's restore control should bring the user
-              // back to the full player, not just drop the floating window.
-              // Guarded + idempotent, so the programmatic stops (returning to the
-              // player, closing) are no-ops here.
-              openPlayer();
-            }}
-            player={videoPlayer}
-            ref={pipVideoRef}
-            startsPictureInPictureAutomatically
-            style={[
-              styles.miniVideo,
-              { backgroundColor: theme.colors.canvasAccent },
-              isPipActive && styles.miniVideoHidden,
-            ]}
-          />
-        ) : null}
-
         <Pressable
           accessibilityRole="button"
           onPress={openPlayer}
@@ -841,10 +859,16 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     elevation: 10,
   },
-  miniVideo: {
-    width: 56,
-    height: 34,
-    borderRadius: 8,
+  pipHostOverlay: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    alignItems: "flex-end",
+  },
+  pipHost: {
+    width: 128,
+    height: 72,
+    borderRadius: 12,
     overflow: "hidden",
   },
   miniVideoHidden: {

@@ -50,6 +50,7 @@ export default function PlayerScreen() {
   const { state: networkState } = useNetworkStatus();
   const {
     activeSession,
+    closePlayer,
     currentTimeSeconds,
     durationSeconds,
     hasFinished,
@@ -396,7 +397,12 @@ export default function PlayerScreen() {
         </Text>
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.back()}
+          onPress={() => {
+            // Close (×) ends the session — no Picture-in-Picture. (↓ minimises:
+            // it just navigates back, so a playing video floats into PiP.)
+            closePlayer();
+            router.back();
+          }}
           style={styles.topAction}
         >
           <Text style={[styles.topActionText, { color: fg }]}>×</Text>

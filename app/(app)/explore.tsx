@@ -85,7 +85,7 @@ export default function ExploreScreen() {
               styles.searchIcon,
               {
                 color: theme.colors.accent,
-                fontSize: 16 * scaleFont,
+                fontSize: 19 * scaleFont,
               },
             ]}
           >
@@ -296,11 +296,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    minHeight: 38,
-    paddingHorizontal: 14,
+    minHeight: 42,
+    paddingHorizontal: 15,
   },
   searchIcon: {
-    fontFamily: fontFamilies.mono,
+    width: 18,
+    textAlign: "center",
+    lineHeight: 22,
   },
   searchLabel: {
     flex: 1,

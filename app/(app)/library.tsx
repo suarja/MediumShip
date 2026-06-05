@@ -1,4 +1,4 @@
-import { Link } from "expo-router";
+import { useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
@@ -14,32 +14,13 @@ import { useAppTheme } from "../../src/features/theme/theme-provider";
 const SECTION_KEYS = ["resume", "saved", "lists", "offline"] as const;
 
 export default function LibraryScreen() {
-  const { t } = useTranslation(["library", "common"]);
-  const { isLoaded, isSignedIn } = useClerkAuth();
+  const { t } = useTranslation("library");
+  const { isSignedIn } = useClerkAuth();
+  const router = useRouter();
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
-
-  if (!isLoaded) {
-    return (
-      <Screen>
-        <View style={styles.loading}>
-          <Text
-            style={[
-              styles.loadingLabel,
-              {
-                color: theme.colors.textMuted,
-                fontSize: 14 * scaleFont,
-              },
-            ]}
-          >
-            {t("common:status.loading")}
-          </Text>
-        </View>
-      </Screen>
-    );
-  }
 
   if (!isSignedIn) {
     return (
@@ -71,6 +52,7 @@ export default function LibraryScreen() {
             {
               paddingBottom: tabBarSpace + persistentPlayerSpace,
               paddingHorizontal: 32 * scaleSpace,
+              paddingTop: 120 * scaleSpace,
             },
           ]}
         >
@@ -119,58 +101,64 @@ export default function LibraryScreen() {
             {t("library:screen.guestBody")}
           </Text>
 
-          <View style={[styles.gateActions, { gap: theme.spacing.sm * scaleSpace }]}>
-            <Link href="/sign-in" asChild>
-              <Pressable
-                accessibilityRole="link"
-                style={({ pressed }) => [
-                  styles.primaryButton,
+          <View
+            style={[
+              styles.gateActions,
+              {
+                gap: theme.spacing.sm * scaleSpace,
+                marginTop: theme.spacing.xs * scaleSpace,
+              },
+            ]}
+          >
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push("/sign-in")}
+              style={({ pressed }) => [
+                styles.primaryButton,
+                {
+                  borderRadius: theme.radii.pill,
+                  backgroundColor: theme.colors.heading,
+                },
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.primaryButtonLabel,
                   {
-                    borderRadius: theme.radii.pill,
-                    backgroundColor: theme.colors.heading,
+                    color: theme.colors.canvas,
+                    fontSize: 15 * scaleFont,
                   },
-                  pressed && styles.buttonPressed,
                 ]}
               >
-                <Text
-                  style={[
-                    styles.primaryButtonLabel,
-                    {
-                      color: theme.colors.canvas,
-                      fontSize: 15 * scaleFont,
-                    },
-                  ]}
-                >
-                  {t("library:actions.signInCta")}
-                </Text>
-              </Pressable>
-            </Link>
+                {t("library:actions.signInCta")}
+              </Text>
+            </Pressable>
 
-            <Link href="/home" asChild>
-              <Pressable
-                accessibilityRole="link"
-                style={({ pressed }) => [
-                  styles.secondaryButton,
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push("/home")}
+              style={({ pressed }) => [
+                styles.secondaryButton,
+                {
+                  borderRadius: theme.radii.pill,
+                  borderColor: withAlpha(theme.colors.heading, theme.isDark ? 0.2 : 0.12),
+                },
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.secondaryButtonLabel,
                   {
-                    borderRadius: theme.radii.pill,
-                    borderColor: withAlpha(theme.colors.heading, theme.isDark ? 0.2 : 0.12),
+                    color: theme.colors.heading,
+                    fontSize: 14 * scaleFont,
                   },
-                  pressed && styles.buttonPressed,
                 ]}
               >
-                <Text
-                  style={[
-                    styles.secondaryButtonLabel,
-                    {
-                      color: theme.colors.heading,
-                      fontSize: 14 * scaleFont,
-                    },
-                  ]}
-                >
-                  {t("library:screen.guestContinueCta")}
-                </Text>
-              </Pressable>
-            </Link>
+                {t("library:screen.guestContinueCta")}
+              </Text>
+            </Pressable>
           </View>
         </View>
       </Screen>
@@ -499,18 +487,10 @@ const styles = StyleSheet.create({
     textAlignVertical: "center",
     fontFamily: fontFamilies.bodyMedium,
   },
-  loading: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  loadingLabel: {
-    fontFamily: fontFamilies.body,
-  },
   gateScreen: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     gap: 8,
   },
   crest: {
@@ -539,6 +519,7 @@ const styles = StyleSheet.create({
   },
   gateActions: {
     width: "100%",
+    maxWidth: 280,
   },
   primaryButton: {
     width: "100%",
@@ -553,7 +534,7 @@ const styles = StyleSheet.create({
   secondaryButton: {
     width: "100%",
     minHeight: 42,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 16,

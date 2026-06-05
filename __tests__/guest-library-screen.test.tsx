@@ -6,6 +6,7 @@ import { changeAppLanguage, initI18n } from "../src/i18n";
 
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: ReactNode }) => children,
+  useRouter: () => ({ push: jest.fn() }),
 }));
 
 jest.mock("../src/features/auth/use-clerk-auth", () => ({

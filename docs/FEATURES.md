@@ -285,3 +285,78 @@ Donc le trio le plus intelligent maintenant :
 3. **Notifications**
 
 Avec ça, tu passes de “app qui affiche du contenu” à **plateforme média propriétaire**.
+
+
+Tu connais déjà la maquette mobile actuelle puisque c’est toi qui l’as conçue. Je veux maintenant que tu la fasses évoluer, sans repartir de zéro.
+
+Objectif :
+améliorer l’architecture UX et le design de l’app pour mieux intégrer les fonctionnalités réelles et les futurs modules activables depuis le CMS, avec la possibilité de rendre certaines features premium ou non selon le client.
+
+Contexte produit à prendre en compte :
+- app média mobile white-label
+- approche guest-first
+- lecture publique sans auth
+- auth réservée surtout aux fonctions membres : premium, bookmarks, téléchargements offline, sync, personnalisation
+- contenus multi-format : articles, épisodes audio, vidéos YouTube, vidéos hébergées
+- certains modules doivent pouvoir être activés ou désactivés depuis le CMS selon le tenant
+- la navigation, le home feed et certaines pages doivent rester configurables côté CMS
+- l’onglet/page Premium fixe n’a pas forcément de sens pour tous les tenants
+
+Nouveau point important :
+le CMS ne doit pas seulement permettre d’activer ou désactiver des modules, mais aussi de définir si certaines features sont gratuites ou premium pour l’utilisateur final.
+
+Il faut donc penser un système simple permettant au client CMS de décider, feature par feature, ce qui est :
+- gratuit
+- réservé aux membres / premium
+
+Exemples à considérer :
+- bookmarks : plutôt gratuit par défaut
+- téléchargements offline : premium probable
+- reprise / progression sync : potentiellement premium ou member-only
+- création de listes personnelles : potentiellement premium
+- création de collections personnelles / séries personnelles : potentiellement premium
+- collections / séries éditoriales créées par l’application : distinctes des collections créées par l’utilisateur final
+- agenda / événements : accès libre ou premium selon le tenant
+- CTA communautaires / communauté : parfois libre, parfois réservé aux membres
+
+Point de design important :
+il faut bien distinguer :
+- collections éditoriales créées par l’équipe / l’application
+- collections, listes ou séries créées par l’utilisateur final
+- contenu premium
+- feature premium
+- module activé/désactivé au niveau tenant
+
+Sujets à résoudre dans la maquette :
+- mieux intégrer l’écran Profil avec bookmarks, téléchargements, statut membre, progression/reprise, et éventuellement les listes ou collections personnelles
+- définir comment intégrer Agenda / Events
+- définir comment intégrer Collections / Series éditoriales
+- définir comment intégrer les collections / listes personnelles utilisateur
+- voir où placer Search + filtres
+- clarifier les pages catégories / pages thématiques
+- intégrer les CTA communautaires
+- repenser la place de Premium dans les parcours et la navigation
+- distinguer ce qui doit être fixe dans l’app vs configurable depuis le CMS
+- distinguer ce qui peut être premium ou non via CMS sans rendre l’expérience trop complexe
+
+Ce que j’attends :
+1. une recommandation claire de navigation mobile
+2. une architecture d’information plus cohérente
+3. une proposition de home feed modulaire pilotable depuis le CMS
+4. une proposition concrète pour Profil, Agenda, Collections éditoriales, collections personnelles, Search, Category pages, Community CTA et Premium
+5. une proposition simple de modèle CMS pour activer/désactiver une feature et la marquer premium ou non
+6. une recommandation sur quelles features devraient être gratuites vs premium par défaut
+7. ce qu’il faut changer en priorité dans la maquette actuelle
+8. les anti-patterns à éviter
+
+Contraintes :
+- rester simple, modulaire et CMS-friendly
+- éviter un système de règles trop complexe
+- éviter de surcharger la navigation avec trop d’entrées fixes
+- partir de la maquette actuelle, pas d’un concept abstrait
+- ne code rien
+
+Format :
+- sois concret, concis et structuré
+- donne une recommandation claire, pas seulement des options
+- si tu proposes un système premium feature-by-feature, garde-le minimal et lisible côté CMS

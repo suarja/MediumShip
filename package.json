@@ -10,7 +10,8 @@
     "web": "expo start --web",
     "convex:dev": "convex dev",
     "convex:seed": "convex run tenants/seed:seedDemoContent",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "patch-package"
   },
   "jest": {
     "preset": "jest-expo",
@@ -61,6 +62,7 @@
     "babel-preset-expo": "~56.0.4",
     "jest": "^29.7.0",
     "jest-expo": "~56.0.4",
+    "patch-package": "^8.0.1",
     "react-test-renderer": "^19.2.3",
     "typescript": "~6.0.3"
   }

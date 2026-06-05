@@ -800,21 +800,11 @@ export function PersistentMediaPlayerProvider({
             allowsPictureInPicture
             contentFit="contain"
             nativeControls={false}
-            onPictureInPictureStop={() => {
-              // Fired by the restore control, the close (X), AND our own
-              // programmatic stop on return. expo-video does not expose iOS's
-              // restore-only callback, so we distinguish by the settled play
-              // state: only a RESTORE leaves the video playing. Defer so the
-              // close transition has settled into the native state first.
-              // (Restore => back to the player; close => stay put, no loop;
-              // openPlayer is route-guarded, so the stop we trigger on return is
-              // a no-op.)
-              setTimeout(() => {
-                if (videoPlayer?.playing) {
-                  openPlayer();
-                }
-              }, 150);
-            }}
+            // Restore-only callback (our expo-video patch): the user tapped the
+            // PiP "back to app" control → return to the full player. The close
+            // (X) does NOT fire this, so it just stops PiP without navigating —
+            // no loop. (openPlayer is route-guarded.)
+            onPictureInPictureRestore={() => openPlayer()}
             player={videoPlayer}
             ref={pipHostRef}
             style={StyleSheet.absoluteFill}

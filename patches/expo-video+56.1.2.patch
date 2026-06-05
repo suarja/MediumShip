@@ -1,0 +1,79 @@
+diff --git a/node_modules/expo-video/build/VideoView.types.d.ts b/node_modules/expo-video/build/VideoView.types.d.ts
+index 1e9cdeb..6182324 100644
+--- a/node_modules/expo-video/build/VideoView.types.d.ts
++++ b/node_modules/expo-video/build/VideoView.types.d.ts
+@@ -86,6 +86,13 @@ export interface VideoViewProps extends ViewProps {
+      * @platform web
+      */
+     onPictureInPictureStop?: () => void;
++    /**
++     * (expo-video patch) Fires only when the user taps the PiP "restore" control
++     * to return to the app — never on the close (X) button. Lets us bring the
++     * user back to the player on restore without doing so on close.
++     * @platform ios
++     */
++    onPictureInPictureRestore?: () => void;
+     /**
+      * Determines whether the player allows Picture in Picture (PiP) mode.
+      * > **Note:** The `supportsPictureInPicture` property of the [config plugin](#configuration-in-app-config)
+diff --git a/node_modules/expo-video/ios/OrientationAVPlayerViewController.swift b/node_modules/expo-video/ios/OrientationAVPlayerViewController.swift
+index 5aaba06..4ab44ee 100644
+--- a/node_modules/expo-video/ios/OrientationAVPlayerViewController.swift
++++ b/node_modules/expo-video/ios/OrientationAVPlayerViewController.swift
+@@ -12,6 +12,9 @@ internal class OrientationAVPlayerViewController: AVPlayerViewController, AVPlay
+   var fullscreenOrientation: UIInterfaceOrientationMask = UIDevice.current.userInterfaceIdiom == .phone ? .allButUpsideDown : .all
+   #endif
+   var autoExitOnRotate: Bool = false
++  // Called when the user taps the PiP "restore" control (NOT the close button).
++  // expo-video patch: lets JS distinguish restore from close.
++  var onUserRestoreFromPiP: (() -> Void)?
+ 
+   // Used to determine whether the user has rotated the device to the target orientation. Useful for auto-exit for example:
+   // Device portrait, fullscreenOrientation - landscape
+@@ -214,6 +217,9 @@ internal class OrientationAVPlayerViewController: AVPlayerViewController, AVPlay
+     _ playerViewController: AVPlayerViewController,
+     restoreUserInterfaceForPictureInPictureStopWithCompletionHandler completionHandler: @escaping (Bool) -> Void
+   ) {
++    // expo-video patch: this delegate fires ONLY when the user taps the PiP
++    // restore control, never on close — surface it to JS.
++    onUserRestoreFromPiP?()
+     if keepFullscreenOnPiPStop.shouldRestore(pipWasAutoEntered: pipWasAutoEntered) && wasInFullscreenWhenPiPStarted {
+       pendingPiPCompletionHandler = completionHandler
+       self.enterFullscreen(selectorUnsupportedFallback: { [weak self] in
+diff --git a/node_modules/expo-video/ios/VideoModule.swift b/node_modules/expo-video/ios/VideoModule.swift
+index 2bf2f75..be47bcd 100644
+--- a/node_modules/expo-video/ios/VideoModule.swift
++++ b/node_modules/expo-video/ios/VideoModule.swift
+@@ -31,6 +31,7 @@ public final class VideoModule: Module {
+       Events(
+         "onPictureInPictureStart",
+         "onPictureInPictureStop",
++        "onPictureInPictureRestore",
+         "onFullscreenEnter",
+         "onFullscreenExit",
+         "onFirstFrameRender"
+diff --git a/node_modules/expo-video/ios/VideoView.swift b/node_modules/expo-video/ios/VideoView.swift
+index 3f285fb..8059e07 100644
+--- a/node_modules/expo-video/ios/VideoView.swift
++++ b/node_modules/expo-video/ios/VideoView.swift
+@@ -34,6 +34,8 @@ public final class VideoView: ExpoView, AVPlayerViewControllerDelegate {
+ 
+   let onPictureInPictureStart = EventDispatcher()
+   let onPictureInPictureStop = EventDispatcher()
++  // expo-video patch: fires only when the user taps the PiP restore control.
++  let onPictureInPictureRestore = EventDispatcher()
+   let onFullscreenEnter = EventDispatcher()
+   let onFullscreenExit = EventDispatcher()
+   let onFirstFrameRender = EventDispatcher()
+@@ -51,6 +53,11 @@ public final class VideoView: ExpoView, AVPlayerViewControllerDelegate {
+ 
+     VideoManager.shared.register(videoView: self)
+ 
++    // expo-video patch: bridge the native restore-only callback to a JS event.
++    playerViewController.onUserRestoreFromPiP = { [weak self] in
++      self?.onPictureInPictureRestore()
++    }
++
+     clipsToBounds = true
+     playerViewController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+     playerViewController.view.backgroundColor = .clear

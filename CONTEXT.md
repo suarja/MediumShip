@@ -147,6 +147,10 @@ _Avoid_: Asset only, blob
 Représentation technique d'une source média lisible pour l'audio ou la vidéo.
 _Avoid_: File, URL
 
+**PipHost**:
+Surface technique qui maintient la lecture d'une `HostedVideo` en Picture-in-Picture à travers la navigation, et décide, sur arrêt du PiP, s'il faut revenir au player. Possède la règle restore/close (un arrêt utilisateur ramène au player ; un arrêt programmatique est ignoré).
+_Avoid_: Floating player, mini video, overlay
+
 ### Accès Et Monétisation
 
 **PremiumContent**:

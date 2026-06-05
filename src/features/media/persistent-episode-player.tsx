@@ -16,7 +16,7 @@ import {
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { useEventListener } from "expo";
 import { useRouter, useSegments } from "expo-router";
-import { useVideoPlayer, VideoView, type VideoPlayer } from "expo-video";
+import { useVideoPlayer, type VideoPlayer } from "expo-video";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
@@ -28,6 +28,7 @@ import { useResponsive } from "../responsive/use-responsive";
 import { fontFamilies } from "../theme/fonts";
 import { useAppTheme } from "../theme/theme-provider";
 import { formatMediaClock } from "./format-media-clock";
+import { VideoPipHost } from "./video-pip-host";
 import {
   clearPlaybackProgress,
   loadPlaybackProgress,
@@ -177,17 +178,9 @@ export function PersistentMediaPlayerProvider({
     null,
   );
   const lastSavedProgressRef = useRef(0);
-  const pipHostRef = useRef<VideoView>(null);
-  // Set right before we stop PiP ourselves (returning to the player). Lets the
-  // onPictureInPictureStop handler ignore our own programmatic stops and only
-  // react to the user's restore/close taps.
-  const programmaticPipStopRef = useRef(false);
-  // Whether a PiP window is currently live. Driven by the START/STOP events so
-  // we only arm the programmatic flag when stopping PiP will truly emit a STOP.
-  const pipActiveRef = useRef(false);
   // User's *intent* to play, toggled only by explicit play/pause actions — not
-  // by iOS's transient pauses during the PiP-stop transition. Used to restore
-  // playback when returning to the player.
+  // by iOS's transient pauses during the PiP-stop transition. Read by
+  // <VideoPipHost> to re-assert playback when returning to the player.
   const playIntentRef = useRef(true);
   const router = useRouter();
   const segments = useSegments();
@@ -602,69 +595,10 @@ export function PersistentMediaPlayerProvider({
     }
   }, [activeSession, videoPlayer]);
 
-  // Picture-in-Picture is driven here, from the always-mounted offscreen host
-  // (rendered below), so it survives navigation AND can be cancelled when the
-  // user returns to the player. Driving it from a screen's own VideoView fails:
-  // that view is torn down on navigation, and stopping PiP on a different view
-  // than the one that owns it is a no-op.
-  //
-  // Model (decided with the user): PiP mirrors "playing while away from the
-  // player". You only get a floating window when you leave the player WHILE
-  // PLAYING. Pausing (in the player or via the PiP controls) dismisses PiP, so
-  // there is no "close a paused PiP" case and no navigation loop.
-  const onPlayerRoute = segments[0] === "player";
+  // Picture-in-Picture for hosted video is owned by <VideoPipHost> (rendered
+  // below): it survives navigation and decides restore/close via
+  // resolvePipStopAction. The provider only supplies the player and intent.
   const hostedVideoActive = activeSession?.kind === "hostedVideo";
-
-  // Returning to the player: cancel PiP, then re-assert play across iOS's
-  // transition pause if the user's intent is to play. Keyed on the route only,
-  // so it does not re-run on every play/pause tick.
-  useEffect(() => {
-    if (!hostedVideoActive || !onPlayerRoute) {
-      return;
-    }
-
-    // We are stopping PiP ourselves — tell onPictureInPictureStop to ignore
-    // this one so it doesn't mistake it for a user restore/close tap. Only arm
-    // the flag when PiP is actually live, otherwise stopPictureInPicture is a
-    // no-op (no STOP follows) and the flag would wrongly stick to the next tap.
-    if (pipActiveRef.current) {
-      programmaticPipStopRef.current = true;
-    }
-    void pipHostRef.current?.stopPictureInPicture().catch(() => {});
-    if (!playIntentRef.current) {
-      return;
-    }
-
-    const replay = () => {
-      try {
-        videoPlayer.play();
-      } catch {
-        // player may be mid-teardown; ignore
-      }
-    };
-    replay();
-    const t1 = setTimeout(replay, 60);
-    const t2 = setTimeout(replay, 180);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-  }, [hostedVideoActive, onPlayerRoute, videoPlayer]);
-
-  // Away from the player: float the video only if we left WHILE PLAYING.
-  // Leaving paused starts nothing. We deliberately do NOT auto-dismiss on
-  // pause — pausing should keep the PiP window (standard behaviour), and a
-  // transient pause during the restore transition must not cancel the restore.
-  useEffect(() => {
-    if (!hostedVideoActive || onPlayerRoute || !isPlaying) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      void pipHostRef.current?.startPictureInPicture().catch(() => {});
-    }, 120);
-    return () => clearTimeout(timer);
-  }, [hostedVideoActive, onPlayerRoute, isPlaying]);
 
   const togglePlayback = async () => {
     if (!activeSession) {
@@ -803,50 +737,13 @@ export function PersistentMediaPlayerProvider({
   return (
     <PersistentMediaPlayerContext.Provider value={value}>
       {children}
-      {/* PiP host: always mounted for a hosted-video session so PiP survives
-          navigation and can be stopped on return (effect 1). Two live views of
-          one player are fine on real devices; only the iOS simulator mis-renders
-          this (crossed-out "not playable"), which we accept since PiP itself is
-          device-only. */}
-      {activeSession?.kind === "hostedVideo" && videoPlayer ? (
-        <View pointerEvents="none" style={styles.pipHostOffscreen}>
-          <VideoView
-            allowsPictureInPicture
-            contentFit="contain"
-            nativeControls={false}
-            // iOS never calls the restore delegate here (the host stays mounted,
-            // so AVKit auto-restores to it invisibly). We distinguish the user's
-            // restore vs close taps by sampling playback after the PiP-stop
-            // transition settles: restore keeps playing, close pauses.
-            onPictureInPictureStart={() => {
-              pipActiveRef.current = true;
-              console.warn("[PiP] START");
-            }}
-            onPictureInPictureStop={() => {
-              pipActiveRef.current = false;
-              if (programmaticPipStopRef.current) {
-                programmaticPipStopRef.current = false;
-                console.warn("[PiP] STOP (programmatic, ignored)");
-                return;
-              }
-              setTimeout(() => {
-                const stillPlaying = videoPlayer.playing;
-                console.warn(
-                  `[PiP] STOP (user) playing=${stillPlaying} → ${stillPlaying ? "RESTORE/openPlayer" : "CLOSE/stop"}`,
-                );
-                if (stillPlaying) {
-                  openPlayer();
-                } else {
-                  closePlayer();
-                }
-              }, 500);
-            }}
-            player={videoPlayer}
-            ref={pipHostRef}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
-      ) : null}
+      <VideoPipHost
+        active={hostedVideoActive}
+        isPlaying={isPlaying}
+        onReturnToPlayer={openPlayer}
+        playIntentRef={playIntentRef}
+        player={videoPlayer}
+      />
     </PersistentMediaPlayerContext.Provider>
   );
 }
@@ -1039,15 +936,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 18,
     elevation: 10,
-  },
-  // Mounted (so PiP keeps running and the restore callback fires) but parked
-  // offscreen, since the system PiP window is the only floating UI for video.
-  pipHostOffscreen: {
-    position: "absolute",
-    left: -1000,
-    top: 0,
-    width: 200,
-    height: 112,
   },
   metaBlock: {
     flex: 1,

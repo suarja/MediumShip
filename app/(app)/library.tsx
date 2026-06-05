@@ -208,7 +208,7 @@ export default function LibraryScreen() {
           </Text>
         </View>
 
-        <View style={[styles.filters, { marginBottom: theme.spacing.lg * scaleSpace }]}>
+        <View style={[styles.filters, { marginBottom: theme.spacing.xl * scaleSpace }]}>
           {(["all", "articles", "podcasts", "offline"] as const).map((key, index) => (
             <View
               key={key}
@@ -578,16 +578,16 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   sectionBlockFirst: {
-    marginTop: 2,
+    marginTop: 8,
   },
   sectionBlock: {
-    marginTop: 12,
+    marginTop: 20,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingBottom: 12,
+    paddingBottom: 14,
   },
   sectionTitle: {
     fontFamily: fontFamilies.display,
@@ -601,6 +601,7 @@ const styles = StyleSheet.create({
   resumeCard: {
     paddingHorizontal: 13,
     paddingVertical: 12,
+    marginBottom: 2,
   },
   resumeKicker: {
     fontFamily: fontFamilies.mono,
@@ -654,6 +655,7 @@ const styles = StyleSheet.create({
   placeholderCard: {
     borderWidth: StyleSheet.hairlineWidth,
     padding: 14,
+    marginBottom: 2,
   },
   placeholderHead: {
     flexDirection: "row",

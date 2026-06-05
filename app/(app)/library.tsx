@@ -171,8 +171,8 @@ export default function LibraryScreen() {
         contentContainerStyle={[
           styles.content,
           {
-            gap: theme.spacing.lg * scaleSpace,
-            paddingBottom: tabBarSpace + persistentPlayerSpace,
+            paddingBottom:
+              tabBarSpace + persistentPlayerSpace + theme.spacing.xxl * scaleSpace,
           },
         ]}
         showsVerticalScrollIndicator={false}
@@ -208,7 +208,7 @@ export default function LibraryScreen() {
           </Text>
         </View>
 
-        <View style={[styles.filters, { marginBottom: 12 * scaleSpace }]}>
+        <View style={[styles.filters, { marginBottom: theme.spacing.lg * scaleSpace }]}>
           {(["all", "articles", "podcasts", "offline"] as const).map((key, index) => (
             <View
               key={key}
@@ -237,114 +237,131 @@ export default function LibraryScreen() {
           ))}
         </View>
 
-        <SectionHeader label={t("library:screen.sections.resume")} />
-        <View
-          style={[
-            styles.resumeCard,
-            {
-              borderRadius: theme.radii.lg,
-              backgroundColor: theme.colors.heading,
-            },
-          ]}
-        >
-          <Text
+        <View style={styles.sectionBlockFirst}>
+          <SectionHeader label={t("library:screen.sections.resume")} />
+          <View
             style={[
-              styles.resumeKicker,
+              styles.resumeCard,
               {
-                color: theme.colors.premium,
-                fontSize: 8 * scaleFont,
+                borderRadius: theme.radii.lg,
+                backgroundColor: theme.colors.heading,
               },
             ]}
           >
-            {t("library:screen.resumeKicker")}
-          </Text>
-          <View style={styles.resumeRow}>
-            <View
+            <Text
               style={[
-                styles.resumeCover,
+                styles.resumeKicker,
                 {
-                  borderRadius: theme.radii.md,
-                  backgroundColor: theme.colors.accent,
-                },
-              ]}
-            />
-            <View style={styles.resumeCopy}>
-              <Text
-                style={[
-                  styles.resumeTitle,
-                  {
-                    color: theme.colors.canvas,
-                    fontSize: 14 * scaleFont,
-                  },
-                ]}
-              >
-                {t("library:screen.resumeTitle")}
-              </Text>
-              <Text
-                style={[
-                  styles.resumeMeta,
-                  {
-                    color: withAlpha(theme.colors.canvas, 0.64),
-                    fontSize: 10 * scaleFont,
-                  },
-                ]}
-              >
-                {t("library:screen.resumeMeta")}
-              </Text>
-            </View>
-            <View
-              style={[
-                styles.resumePlay,
-                {
-                  backgroundColor: theme.colors.accent,
+                  color: theme.colors.premium,
+                  fontSize: 8 * scaleFont,
                 },
               ]}
             >
-              <Text
+              {t("library:screen.resumeKicker")}
+            </Text>
+            <View style={styles.resumeRow}>
+              <View
                 style={[
-                  styles.resumePlayLabel,
+                  styles.resumeCover,
                   {
-                    color: theme.colors.accentContrast,
-                    fontSize: 8 * scaleFont,
+                    borderRadius: theme.radii.md,
+                    backgroundColor: theme.colors.accent,
+                  },
+                ]}
+              />
+              <View style={styles.resumeCopy}>
+                <Text
+                  style={[
+                    styles.resumeTitle,
+                    {
+                      color: theme.colors.canvas,
+                      fontSize: 14 * scaleFont,
+                    },
+                  ]}
+                >
+                  {t("library:screen.resumeTitle")}
+                </Text>
+                <Text
+                  style={[
+                    styles.resumeMeta,
+                    {
+                      color: withAlpha(theme.colors.canvas, 0.64),
+                      fontSize: 10 * scaleFont,
+                    },
+                  ]}
+                >
+                  {t("library:screen.resumeMeta")}
+                </Text>
+              </View>
+              <View
+                style={[
+                  styles.resumePlay,
+                  {
+                    backgroundColor: theme.colors.accent,
                   },
                 ]}
               >
-                ▶
-              </Text>
+                <Text
+                  style={[
+                    styles.resumePlayLabel,
+                    {
+                      color: theme.colors.accentContrast,
+                      fontSize: 8 * scaleFont,
+                    },
+                  ]}
+                >
+                  ▶
+                </Text>
+              </View>
             </View>
-          </View>
-          <View
-            style={[
-              styles.resumeBar,
-              { backgroundColor: withAlpha(theme.colors.canvas, 0.16) },
-            ]}
-          >
             <View
               style={[
-                styles.resumeProgress,
-                { backgroundColor: theme.colors.accent },
+                styles.resumeBar,
+                { backgroundColor: withAlpha(theme.colors.canvas, 0.16) },
               ]}
-            />
+            >
+              <View
+                style={[
+                  styles.resumeProgress,
+                  { backgroundColor: theme.colors.accent },
+                ]}
+              />
+            </View>
           </View>
         </View>
 
-        <SectionHeader label={t("library:screen.sections.saved")} meta={t("library:screen.savedMeta")} />
-        <PlaceholderCard
-          body={t("library:saved.empty")}
-          title={t("library:saved.emptyTitle")}
-        />
+        <View style={styles.sectionBlock}>
+          <SectionHeader
+            label={t("library:screen.sections.saved")}
+            meta={t("library:screen.savedMeta")}
+          />
+          <PlaceholderCard
+            body={t("library:saved.empty")}
+            title={t("library:saved.emptyTitle")}
+          />
+        </View>
 
-        <SectionHeader label={t("library:screen.sections.lists")} meta={t("library:screen.listsMeta")} />
-        <PlaceholderCard
-          body={t("library:screen.signedInBody")}
-          title={t("library:screen.sections.lists")}
-        />
+        <View style={styles.sectionBlock}>
+          <SectionHeader
+            label={t("library:screen.sections.lists")}
+            meta={t("library:screen.listsMeta")}
+          />
+          <PlaceholderCard
+            body={t("library:screen.signedInBody")}
+            title={t("library:screen.sections.lists")}
+          />
+        </View>
 
-        <SectionHeader label={t("library:screen.sections.offline")} meta={t("library:downloads.badge")} />
-        <PlaceholderCard
-          body={t("library:screen.offlineBody")}
-          title={t("library:screen.offlineTitle")}
-        />
+        <View style={styles.sectionBlock}>
+          <SectionHeader
+            label={t("library:screen.sections.offline")}
+            meta={t("library:downloads.badge")}
+          />
+          <PlaceholderCard
+            body={t("library:screen.offlineBody")}
+            title={t("library:screen.offlineTitle")}
+          />
+        </View>
       </ScrollView>
     </Screen>
   );
@@ -462,7 +479,7 @@ function PlaceholderCard({
 
 const styles = StyleSheet.create({
   content: {
-    paddingBottom: 24,
+    paddingBottom: 0,
   },
   topBar: {
     flexDirection: "row",
@@ -560,11 +577,16 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: "uppercase",
   },
+  sectionBlockFirst: {
+    marginTop: 2,
+  },
+  sectionBlock: {
+    marginTop: 12,
+  },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: 18,
     paddingBottom: 12,
   },
   sectionTitle: {
@@ -579,7 +601,6 @@ const styles = StyleSheet.create({
   resumeCard: {
     paddingHorizontal: 13,
     paddingVertical: 12,
-    marginBottom: 2,
   },
   resumeKicker: {
     fontFamily: fontFamilies.mono,
@@ -633,7 +654,6 @@ const styles = StyleSheet.create({
   placeholderCard: {
     borderWidth: StyleSheet.hairlineWidth,
     padding: 14,
-    marginBottom: 2,
   },
   placeholderHead: {
     flexDirection: "row",

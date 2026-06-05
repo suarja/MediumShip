@@ -26,6 +26,7 @@ const TREND_KEYS = [
   "localDemocracy",
   "careEconomy",
   "purchasingPower",
+  "leaBardin",
 ] as const;
 
 export default function ExploreScreen() {
@@ -47,18 +48,25 @@ export default function ExploreScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
+        <View
+          style={[
+            styles.topBar,
+            { marginHorizontal: -(theme.spacing.lg * scaleSpace) },
+          ]}
+        >
+          <View style={styles.topBarSide} />
           <Text
             style={[
-              styles.title,
+              styles.topBarTitle,
               {
                 color: theme.colors.heading,
-                fontSize: 30 * scaleFont,
+                fontSize: 18 * scaleFont,
               },
             ]}
           >
             {t("title")}
           </Text>
+          <View style={styles.topBarSide} />
         </View>
 
         <Pressable
@@ -66,10 +74,9 @@ export default function ExploreScreen() {
           style={[
             styles.searchCard,
             {
-              borderRadius: theme.radii.xl,
+              borderRadius: theme.radii.pill,
               borderColor: theme.colors.border,
               backgroundColor: theme.colors.surface,
-              shadowColor: theme.colors.heading,
             },
           ]}
         >
@@ -97,8 +104,8 @@ export default function ExploreScreen() {
           </Text>
         </Pressable>
 
-        <SectionTitle label={t("categoriesTitle")} />
-        <View style={[styles.grid, { gap: theme.spacing.md * scaleSpace }]}>
+        <SectionHeader label={t("categoriesTitle")} />
+        <View style={styles.grid}>
           {CATEGORY_ITEMS.map((item) => (
             <FeatureCard
               key={item.key}
@@ -109,8 +116,8 @@ export default function ExploreScreen() {
           ))}
         </View>
 
-        <SectionTitle label={t("modulesTitle")} />
-        <View style={[styles.grid, { gap: theme.spacing.md * scaleSpace }]}>
+        <SectionHeader label={t("modulesTitle")} />
+        <View style={styles.grid}>
           {MODULE_ITEMS.map((item) => (
             <FeatureCard
               key={item.key}
@@ -122,7 +129,7 @@ export default function ExploreScreen() {
         </View>
 
         <View style={[styles.section, { gap: theme.spacing.sm * scaleSpace }]}>
-          <SectionTitle label={t("trendsTitle")} />
+          <SectionHeader label={t("trendsTitle")} italic />
           <View style={[styles.trendRow, { gap: theme.spacing.sm * scaleSpace }]}>
             {TREND_KEYS.map((key) => (
               <View
@@ -131,11 +138,8 @@ export default function ExploreScreen() {
                   styles.trendChip,
                   {
                     borderRadius: theme.radii.pill,
-                    borderColor: withAlpha(theme.colors.accent, theme.isDark ? 0.34 : 0.18),
-                    backgroundColor: withAlpha(
-                      theme.colors.accent,
-                      theme.isDark ? 0.14 : 0.08,
-                    ),
+                    borderColor: withAlpha(theme.colors.heading, theme.isDark ? 0.24 : 0.12),
+                    backgroundColor: "transparent",
                   },
                 ]}
               >
@@ -159,22 +163,37 @@ export default function ExploreScreen() {
   );
 }
 
-function SectionTitle({ label }: { label: string }) {
+function SectionHeader({
+  label,
+  italic = false,
+}: {
+  label: string;
+  italic?: boolean;
+}) {
   const { theme } = useAppTheme();
   const { scaleFont } = useResponsive();
 
   return (
-    <Text
-      style={[
-        styles.sectionTitle,
-        {
-          color: theme.colors.heading,
-          fontSize: 20 * scaleFont,
-        },
-      ]}
-    >
-      {label}
-    </Text>
+    <View style={styles.sectionHeader}>
+      <Text
+        style={[
+          styles.sectionTitle,
+          {
+            color: theme.colors.heading,
+            fontSize: 19 * scaleFont,
+          },
+        ]}
+      >
+        {italic ? (
+          <>
+            <Text>{label.split(" ")[0]} </Text>
+            <Text style={styles.sectionTitleItalic}>{label.slice(label.indexOf(" ") + 1)}</Text>
+          </>
+        ) : (
+          label
+        )}
+      </Text>
+    </View>
   );
 }
 
@@ -191,15 +210,14 @@ function FeatureCard({
   const { scaleFont, scaleSpace } = useResponsive();
 
   return (
-    <View
+    <Pressable
+      accessibilityRole="button"
       style={[
         styles.card,
         {
-          borderRadius: theme.radii.xl,
+          borderRadius: theme.radii.md,
           borderColor: theme.colors.border,
           backgroundColor: theme.colors.surface,
-          shadowColor: theme.colors.heading,
-          gap: theme.spacing.sm * scaleSpace,
         },
       ]}
     >
@@ -225,13 +243,13 @@ function FeatureCard({
         </Text>
       </View>
 
-      <View style={[styles.cardCopy, { gap: 4 * scaleSpace }]}>
+      <View style={[styles.cardCopy, { gap: 2 * scaleSpace }]}>
         <Text
           style={[
             styles.cardTitle,
             {
               color: theme.colors.heading,
-              fontSize: 16 * scaleFont,
+              fontSize: 15 * scaleFont,
             },
           ]}
         >
@@ -242,14 +260,14 @@ function FeatureCard({
             styles.cardMeta,
             {
               color: theme.colors.textMuted,
-              fontSize: 13 * scaleFont,
+              fontSize: 10 * scaleFont,
             },
           ]}
         >
           {meta}
         </Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -257,24 +275,29 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: 24,
   },
-  header: {
-    gap: 8,
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
   },
-  title: {
+  topBarSide: {
+    width: 34,
+    height: 34,
+  },
+  topBarTitle: {
     fontFamily: fontFamilies.display,
-    letterSpacing: -0.5,
+    letterSpacing: -0.2,
   },
   searchCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    elevation: 3,
+    minHeight: 38,
+    paddingHorizontal: 14,
   },
   searchIcon: {
     fontFamily: fontFamilies.mono,
@@ -284,24 +307,36 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.body,
   },
   section: {},
+  sectionHeader: {
+    paddingTop: 4,
+    paddingBottom: 12,
+  },
   sectionTitle: {
     fontFamily: fontFamilies.display,
     letterSpacing: -0.25,
   },
-  grid: {},
+  sectionTitleItalic: {
+    fontFamily: fontFamilies.displayItalic,
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    rowGap: 8,
+  },
   card: {
+    width: "48.5%",
     borderWidth: StyleSheet.hairlineWidth,
-    padding: 18,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.05,
-    shadowRadius: 18,
-    elevation: 2,
+    padding: 12,
+    gap: 2,
   },
   iconBadge: {
     alignSelf: "flex-start",
-    minWidth: 36,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
   },
   iconBadgeLabel: {
     fontFamily: fontFamilies.mono,
@@ -309,12 +344,14 @@ const styles = StyleSheet.create({
   },
   cardCopy: {},
   cardTitle: {
-    fontFamily: fontFamilies.displayBold,
+    fontFamily: fontFamilies.display,
     letterSpacing: -0.25,
   },
   cardMeta: {
-    fontFamily: fontFamilies.body,
-    lineHeight: 20,
+    fontFamily: fontFamilies.mono,
+    letterSpacing: 0.8,
+    lineHeight: 14,
+    textTransform: "uppercase",
   },
   trendRow: {
     flexDirection: "row",
@@ -322,12 +359,12 @@ const styles = StyleSheet.create({
   },
   trendChip: {
     borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   trendLabel: {
     fontFamily: fontFamilies.mono,
-    letterSpacing: 0.4,
+    letterSpacing: 0.8,
     textTransform: "uppercase",
   },
 });

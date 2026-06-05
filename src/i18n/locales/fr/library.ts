@@ -4,15 +4,29 @@ export default {
     guestTitle: "Votre bibliotheque, partout",
     guestBody:
       "Connectez-vous pour enregistrer des contenus, synchroniser la progression et reunir vos contenus hors ligne au meme endroit.",
+    guestContinueCta: "Continuer en invite",
     signedInTitle: "Bibliotheque",
     signedInBody:
       "Les enregistrements, la reprise, le hors ligne et les listes personnelles arrivent ici dans la prochaine slice.",
+    filters: {
+      all: "Tout",
+      articles: "Articles",
+      podcasts: "Podcasts",
+      offline: "Hors ligne",
+    },
     sections: {
       resume: "Reprendre",
       saved: "Enregistres",
       lists: "Listes",
       offline: "Hors ligne",
     },
+    resumeKicker: "Reprendre · synchronise",
+    resumeTitle: "L'economie du soin",
+    resumeMeta: "Episode · 22:48 restantes · 62%",
+    savedMeta: "Gratuit",
+    listsMeta: "Premium",
+    offlineTitle: "Telecharger pour ecouter sans reseau",
+    offlineBody: "Les copies hors ligne pour les formats pris en charge apparaissent ici dans la prochaine slice.",
   },
   kinds: {
     article: "Article",

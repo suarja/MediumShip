@@ -8,13 +8,14 @@ export function useClerkAuth() {
   const { isLoaded: authLoaded, isSignedIn, userId } = useAuth();
   const { user, isLoaded: userLoaded } = useUser();
   const { signOut } = useClerk();
+  const isGuestSession = (isSignedIn ?? false) === false;
 
   const fullName = user
     ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || null
     : null;
 
   return {
-    isLoaded: authLoaded && userLoaded,
+    isLoaded: authLoaded && (isGuestSession || userLoaded),
     isSignedIn: isSignedIn ?? false,
     userId,
     user,

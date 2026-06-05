@@ -1,7 +1,7 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Link } from "expo-router";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
-import { MemberGateCard } from "../../src/components/auth/member-gate-card";
 import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
@@ -41,6 +41,142 @@ export default function LibraryScreen() {
     );
   }
 
+  if (!isSignedIn) {
+    return (
+      <Screen>
+        <View
+          style={[
+            styles.topBar,
+            { marginHorizontal: -(theme.spacing.lg * scaleSpace) },
+          ]}
+        >
+          <View style={styles.topBarSide} />
+          <Text
+            style={[
+              styles.topBarTitle,
+              {
+                color: theme.colors.heading,
+                fontSize: 18 * scaleFont,
+              },
+            ]}
+          >
+            {t("library:screen.title")}
+          </Text>
+          <View style={styles.topBarSide} />
+        </View>
+
+        <View
+          style={[
+            styles.gateScreen,
+            {
+              paddingBottom: tabBarSpace + persistentPlayerSpace,
+              paddingHorizontal: 32 * scaleSpace,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.crest,
+              {
+                borderRadius: theme.radii.lg,
+                backgroundColor: theme.colors.accent,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.crestLabel,
+                {
+                  color: theme.colors.accentContrast,
+                  fontSize: 30 * scaleFont,
+                },
+              ]}
+            >
+              M
+            </Text>
+          </View>
+
+          <Text
+            style={[
+              styles.gateTitle,
+              {
+                color: theme.colors.heading,
+                fontSize: 26 * scaleFont,
+              },
+            ]}
+          >
+            {t("library:screen.guestTitle")}
+          </Text>
+          <Text
+            style={[
+              styles.gateBody,
+              {
+                color: theme.colors.textMuted,
+                fontSize: 13 * scaleFont,
+              },
+            ]}
+          >
+            {t("library:screen.guestBody")}
+          </Text>
+
+          <View style={[styles.gateActions, { gap: theme.spacing.sm * scaleSpace }]}>
+            <Link href="/sign-in" asChild>
+              <Pressable
+                accessibilityRole="link"
+                style={({ pressed }) => [
+                  styles.primaryButton,
+                  {
+                    borderRadius: theme.radii.pill,
+                    backgroundColor: theme.colors.heading,
+                  },
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.primaryButtonLabel,
+                    {
+                      color: theme.colors.canvas,
+                      fontSize: 15 * scaleFont,
+                    },
+                  ]}
+                >
+                  {t("library:actions.signInCta")}
+                </Text>
+              </Pressable>
+            </Link>
+
+            <Link href="/home" asChild>
+              <Pressable
+                accessibilityRole="link"
+                style={({ pressed }) => [
+                  styles.secondaryButton,
+                  {
+                    borderRadius: theme.radii.pill,
+                    borderColor: withAlpha(theme.colors.heading, theme.isDark ? 0.2 : 0.12),
+                  },
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.secondaryButtonLabel,
+                    {
+                      color: theme.colors.heading,
+                      fontSize: 14 * scaleFont,
+                    },
+                  ]}
+                >
+                  {t("library:screen.guestContinueCta")}
+                </Text>
+              </Pressable>
+            </Link>
+          </View>
+        </View>
+      </Screen>
+    );
+  }
+
   return (
     <Screen>
       <ScrollView
@@ -53,133 +189,286 @@ export default function LibraryScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
+        <View
+          style={[
+            styles.topBar,
+            { marginHorizontal: -(theme.spacing.lg * scaleSpace) },
+          ]}
+        >
+          <View style={styles.topBarSide} />
           <Text
             style={[
-              styles.title,
+              styles.topBarTitle,
               {
                 color: theme.colors.heading,
-                fontSize: 30 * scaleFont,
+                fontSize: 18 * scaleFont,
               },
             ]}
           >
             {t("library:screen.title")}
           </Text>
+          <Text
+            style={[
+              styles.topBarAction,
+              {
+                color: theme.colors.heading,
+                fontSize: 16 * scaleFont,
+              },
+            ]}
+          >
+            ⌕
+          </Text>
         </View>
 
-        {!isSignedIn ? (
-          <View style={[styles.guestStack, { gap: theme.spacing.md * scaleSpace }]}>
-            <MemberGateCard
-              ctaLabel={t("library:actions.signInCta")}
-              description={t("library:screen.guestBody")}
-              title={t("library:screen.guestTitle")}
-            />
-
+        <View style={[styles.filters, { marginBottom: 12 * scaleSpace }]}>
+          {(["all", "articles", "podcasts", "offline"] as const).map((key, index) => (
             <View
+              key={key}
               style={[
-                styles.guestNote,
+                styles.filterChip,
                 {
-                  borderRadius: theme.radii.xl,
-                  borderColor: theme.colors.border,
-                  backgroundColor: withAlpha(
-                    theme.colors.accent,
-                    theme.isDark ? 0.14 : 0.06,
-                  ),
+                  borderRadius: theme.radii.pill,
+                  borderColor:
+                    index === 0 ? theme.colors.heading : withAlpha(theme.colors.heading, 0.12),
+                  backgroundColor: index === 0 ? theme.colors.heading : "transparent",
                 },
               ]}
             >
               <Text
                 style={[
-                  styles.guestNoteTitle,
+                  styles.filterChipLabel,
                   {
-                    color: theme.colors.heading,
-                    fontSize: 16 * scaleFont,
+                    color: index === 0 ? theme.colors.canvas : theme.colors.textMuted,
+                    fontSize: 10 * scaleFont,
                   },
                 ]}
               >
-                {t("library:saved.guestTitle")}
+                {t(`library:screen.filters.${key}`)}
               </Text>
+            </View>
+          ))}
+        </View>
+
+        <SectionHeader label={t("library:screen.sections.resume")} />
+        <View
+          style={[
+            styles.resumeCard,
+            {
+              borderRadius: theme.radii.lg,
+              backgroundColor: theme.colors.heading,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.resumeKicker,
+              {
+                color: theme.colors.premium,
+                fontSize: 8 * scaleFont,
+              },
+            ]}
+          >
+            {t("library:screen.resumeKicker")}
+          </Text>
+          <View style={styles.resumeRow}>
+            <View
+              style={[
+                styles.resumeCover,
+                {
+                  borderRadius: theme.radii.md,
+                  backgroundColor: theme.colors.accent,
+                },
+              ]}
+            />
+            <View style={styles.resumeCopy}>
               <Text
                 style={[
-                  styles.guestNoteBody,
+                  styles.resumeTitle,
                   {
-                    color: theme.colors.textMuted,
+                    color: theme.colors.canvas,
                     fontSize: 14 * scaleFont,
                   },
                 ]}
               >
-                {t("library:saved.guestHint")}
+                {t("library:screen.resumeTitle")}
+              </Text>
+              <Text
+                style={[
+                  styles.resumeMeta,
+                  {
+                    color: withAlpha(theme.colors.canvas, 0.64),
+                    fontSize: 10 * scaleFont,
+                  },
+                ]}
+              >
+                {t("library:screen.resumeMeta")}
               </Text>
             </View>
-          </View>
-        ) : (
-          <>
             <View
               style={[
-                styles.introCard,
+                styles.resumePlay,
                 {
-                  borderRadius: theme.radii.xl,
-                  borderColor: theme.colors.border,
-                  backgroundColor: theme.colors.surface,
-                  gap: theme.spacing.sm * scaleSpace,
+                  backgroundColor: theme.colors.accent,
                 },
               ]}
             >
               <Text
                 style={[
-                  styles.introTitle,
+                  styles.resumePlayLabel,
                   {
-                    color: theme.colors.heading,
-                    fontSize: 20 * scaleFont,
+                    color: theme.colors.accentContrast,
+                    fontSize: 8 * scaleFont,
                   },
                 ]}
               >
-                {t("library:screen.signedInTitle")}
-              </Text>
-              <Text
-                style={[
-                  styles.introBody,
-                  {
-                    color: theme.colors.textMuted,
-                    fontSize: 15 * scaleFont,
-                  },
-                ]}
-              >
-                {t("library:screen.signedInBody")}
+                ▶
               </Text>
             </View>
+          </View>
+          <View
+            style={[
+              styles.resumeBar,
+              { backgroundColor: withAlpha(theme.colors.canvas, 0.16) },
+            ]}
+          >
+            <View
+              style={[
+                styles.resumeProgress,
+                { backgroundColor: theme.colors.accent },
+              ]}
+            />
+          </View>
+        </View>
 
-            <View style={[styles.sectionList, { gap: theme.spacing.md * scaleSpace }]}>
-              {SECTION_KEYS.map((key) => (
-                <View
-                  key={key}
-                  style={[
-                    styles.sectionCard,
-                    {
-                      borderRadius: theme.radii.xl,
-                      borderColor: theme.colors.border,
-                      backgroundColor: theme.colors.surface,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.sectionTitle,
-                      {
-                        color: theme.colors.heading,
-                        fontSize: 16 * scaleFont,
-                      },
-                    ]}
-                  >
-                    {t(`library:screen.sections.${key}`)}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </>
-        )}
+        <SectionHeader label={t("library:screen.sections.saved")} meta={t("library:screen.savedMeta")} />
+        <PlaceholderCard
+          body={t("library:saved.empty")}
+          title={t("library:saved.emptyTitle")}
+        />
+
+        <SectionHeader label={t("library:screen.sections.lists")} meta={t("library:screen.listsMeta")} />
+        <PlaceholderCard
+          body={t("library:screen.signedInBody")}
+          title={t("library:screen.sections.lists")}
+        />
+
+        <SectionHeader label={t("library:screen.sections.offline")} meta={t("library:downloads.badge")} />
+        <PlaceholderCard
+          body={t("library:screen.offlineBody")}
+          title={t("library:screen.offlineTitle")}
+        />
       </ScrollView>
     </Screen>
+  );
+}
+
+function SectionHeader({
+  label,
+  meta,
+}: {
+  label: string;
+  meta?: string;
+}) {
+  const { theme } = useAppTheme();
+  const { scaleFont } = useResponsive();
+
+  return (
+    <View style={styles.sectionHeader}>
+      <Text
+        style={[
+          styles.sectionTitle,
+          {
+            color: theme.colors.heading,
+            fontSize: 18 * scaleFont,
+          },
+        ]}
+      >
+        {label}
+      </Text>
+      {meta ? (
+        <Text
+          style={[
+            styles.sectionMeta,
+            {
+              color: theme.colors.textMuted,
+              fontSize: 10 * scaleFont,
+            },
+          ]}
+        >
+          {meta}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+function PlaceholderCard({
+  title,
+  body,
+}: {
+  title: string;
+  body: string;
+}) {
+  const { theme } = useAppTheme();
+  const { scaleFont } = useResponsive();
+
+  return (
+    <View
+      style={[
+        styles.placeholderCard,
+        {
+          borderRadius: theme.radii.lg,
+          borderColor: theme.colors.border,
+          backgroundColor: theme.colors.surface,
+        },
+      ]}
+    >
+      <View style={styles.placeholderHead}>
+        <Text
+          style={[
+            styles.placeholderTitle,
+            {
+              color: theme.colors.heading,
+              fontSize: 15 * scaleFont,
+            },
+          ]}
+        >
+          {title}
+        </Text>
+        <View
+          style={[
+            styles.placeholderIcon,
+            {
+              borderRadius: theme.radii.sm,
+              backgroundColor: withAlpha(theme.colors.accent, theme.isDark ? 0.22 : 0.12),
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.placeholderIconLabel,
+              {
+                color: theme.colors.accent,
+                fontSize: 12 * scaleFont,
+              },
+            ]}
+          >
+            ◆
+          </Text>
+        </View>
+      </View>
+      <Text
+        style={[
+          styles.placeholderBody,
+          {
+            color: theme.colors.textMuted,
+            fontSize: 11 * scaleFont,
+          },
+        ]}
+      >
+        {body}
+      </Text>
+    </View>
   );
 }
 
@@ -187,12 +476,28 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: 24,
   },
-  header: {
-    gap: 8,
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
   },
-  title: {
+  topBarSide: {
+    width: 34,
+    height: 34,
+  },
+  topBarTitle: {
     fontFamily: fontFamilies.display,
-    letterSpacing: -0.5,
+    letterSpacing: -0.2,
+  },
+  topBarAction: {
+    width: 34,
+    height: 34,
+    textAlign: "center",
+    textAlignVertical: "center",
+    fontFamily: fontFamilies.bodyMedium,
   },
   loading: {
     flex: 1,
@@ -202,38 +507,177 @@ const styles = StyleSheet.create({
   loadingLabel: {
     fontFamily: fontFamilies.body,
   },
-  guestStack: {},
-  guestNote: {
-    borderWidth: StyleSheet.hairlineWidth,
+  gateScreen: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
-    padding: 18,
   },
-  guestNoteTitle: {
-    fontFamily: fontFamilies.displayBold,
-    letterSpacing: -0.2,
+  crest: {
+    width: 56,
+    height: 56,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
   },
-  guestNoteBody: {
+  crestLabel: {
+    fontFamily: fontFamilies.displayItalic,
+  },
+  gateTitle: {
+    fontFamily: fontFamilies.display,
+    letterSpacing: -0.4,
+    lineHeight: 30,
+    textAlign: "center",
+  },
+  gateBody: {
+    maxWidth: 280,
     fontFamily: fontFamilies.body,
-    lineHeight: 21,
+    lineHeight: 20,
+    textAlign: "center",
+    marginTop: 4,
+    marginBottom: 16,
   },
-  introCard: {
+  gateActions: {
+    width: "100%",
+  },
+  primaryButton: {
+    width: "100%",
+    minHeight: 46,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+  primaryButtonLabel: {
+    fontFamily: fontFamilies.bodySemiBold,
+  },
+  secondaryButton: {
+    width: "100%",
+    minHeight: 42,
     borderWidth: StyleSheet.hairlineWidth,
-    padding: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
   },
-  introTitle: {
-    fontFamily: fontFamilies.displayBold,
-    letterSpacing: -0.3,
+  secondaryButtonLabel: {
+    fontFamily: fontFamilies.bodyMedium,
   },
-  introBody: {
-    fontFamily: fontFamilies.body,
-    lineHeight: 22,
+  buttonPressed: {
+    opacity: 0.88,
   },
-  sectionList: {},
-  sectionCard: {
+  filters: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  filterChip: {
     borderWidth: StyleSheet.hairlineWidth,
-    padding: 18,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  filterChipLabel: {
+    fontFamily: fontFamilies.mono,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: 18,
+    paddingBottom: 12,
   },
   sectionTitle: {
-    fontFamily: fontFamilies.bodySemiBold,
+    fontFamily: fontFamilies.display,
+    letterSpacing: -0.2,
+  },
+  sectionMeta: {
+    fontFamily: fontFamilies.mono,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+  },
+  resumeCard: {
+    paddingHorizontal: 13,
+    paddingVertical: 12,
+    marginBottom: 2,
+  },
+  resumeKicker: {
+    fontFamily: fontFamilies.mono,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginBottom: 8,
+  },
+  resumeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  resumeCover: {
+    width: 40,
+    height: 40,
+  },
+  resumeCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  resumeTitle: {
+    fontFamily: fontFamilies.display,
+    lineHeight: 16,
+  },
+  resumeMeta: {
+    fontFamily: fontFamilies.body,
+    lineHeight: 14,
+    marginTop: 2,
+  },
+  resumePlay: {
+    width: 24,
+    height: 24,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  resumePlayLabel: {
+    fontFamily: fontFamilies.bodyBold,
+  },
+  resumeBar: {
+    height: 3,
+    borderRadius: 999,
+    marginTop: 10,
+    overflow: "hidden",
+  },
+  resumeProgress: {
+    width: "62%",
+    height: "100%",
+    borderRadius: 999,
+  },
+  placeholderCard: {
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 14,
+    marginBottom: 2,
+  },
+  placeholderHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  placeholderTitle: {
+    flex: 1,
+    minWidth: 0,
+    fontFamily: fontFamilies.display,
+    lineHeight: 18,
+    marginRight: 10,
+  },
+  placeholderIcon: {
+    width: 26,
+    height: 26,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  placeholderIconLabel: {
+    fontFamily: fontFamilies.mono,
+  },
+  placeholderBody: {
+    fontFamily: fontFamilies.body,
+    lineHeight: 16,
   },
 });

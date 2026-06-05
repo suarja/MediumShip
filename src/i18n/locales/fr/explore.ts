@@ -7,29 +7,29 @@ export default {
   categories: {
     analyses: {
       title: "Analyses",
-      meta: "Lectures longues et briefings editoriaux",
+      meta: "128 articles",
     },
     podcasts: {
       title: "Podcasts",
-      meta: "Entretiens, series et conversations",
+      meta: "64 episodes",
     },
     videos: {
       title: "Videos",
-      meta: "Debats, formats et decryptages",
+      meta: "42 debats",
     },
     agenda: {
       title: "Agenda",
-      meta: "Evenements et rendez-vous a venir",
+      meta: "12 a venir",
     },
   },
   modules: {
     collections: {
       title: "Collections",
-      meta: "Parcours editoriaux construits par la redaction",
+      meta: "Par la redaction",
     },
     community: {
       title: "Communaute",
-      meta: "Cercles externes, Discord et espaces membres",
+      meta: "Discord et cercles",
     },
   },
   trends: {
@@ -37,5 +37,6 @@ export default {
     localDemocracy: "Democratie locale",
     careEconomy: "Economie du soin",
     purchasingPower: "Pouvoir d'achat",
+    leaBardin: "Lea Bardin",
   },
 } as const;

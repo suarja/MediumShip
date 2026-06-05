@@ -4,15 +4,29 @@ export default {
     guestTitle: "Your library, everywhere",
     guestBody:
       "Sign in to save content, sync progress, and gather offline items in one place.",
+    guestContinueCta: "Continue as guest",
     signedInTitle: "Library",
     signedInBody:
       "Saved items, resume state, offline, and personal lists move here in the next slice.",
+    filters: {
+      all: "All",
+      articles: "Articles",
+      podcasts: "Podcasts",
+      offline: "Offline",
+    },
     sections: {
       resume: "Resume",
       saved: "Saved",
       lists: "Lists",
       offline: "Offline",
     },
+    resumeKicker: "Resume · synced",
+    resumeTitle: "The care economy",
+    resumeMeta: "Episode · 22:48 left · 62%",
+    savedMeta: "Free",
+    listsMeta: "Premium",
+    offlineTitle: "Download to listen without a network",
+    offlineBody: "Offline copies for supported formats appear here in the next slice.",
   },
   kinds: {
     article: "Article",

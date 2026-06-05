@@ -991,3 +991,104 @@ a { color: inherit; text-decoration: none; }
 .kv .k { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); }
 
 .ord-buttons { display: inline-flex; gap: 6px; }
+
+/* ============================================================
+   Modules & accès (feature gating)
+   ============================================================ */
+.mod-page { display: grid; grid-template-columns: 1fr 360px; gap: 24px; align-items: start; }
+@media (max-width: 1100px) { .mod-page { grid-template-columns: 1fr; } }
+
+.mod-col { display: flex; flex-direction: column; gap: 16px; }
+
+.mod-group {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.mod-group__h {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px 12px;
+}
+.mod-group__h .t { font-family: var(--font-display); font-size: 19px; letter-spacing: -.01em; white-space: nowrap; flex-shrink: 0; }
+.mod-group__h .c { font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; color: var(--ink-mute); text-transform: uppercase; }
+
+.mod-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 20px;
+  align-items: center;
+  padding: 14px 20px;
+  border-top: 1px solid var(--rule);
+}
+.mod-row.off { opacity: .55; }
+.mod-row__info { min-width: 0; }
+.mod-row__t {
+  font-family: var(--font-display);
+  font-size: 16px; line-height: 1.15;
+  display: flex; align-items: center; gap: 8px;
+  margin: 0 0 2px;
+}
+.mod-row__d { font-size: 12.5px; color: var(--ink-soft); margin: 0; line-height: 1.4; }
+.mod-row__lock {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: .1em;
+  color: var(--ink-mute); text-transform: uppercase;
+  border: 1px solid var(--rule-2); border-radius: 4px; padding: 2px 6px;
+}
+
+/* Segmented access control */
+.seg {
+  display: inline-flex;
+  background: var(--surface-2);
+  border: 1px solid var(--rule-2);
+  border-radius: 7px;
+  padding: 3px;
+  gap: 2px;
+}
+.seg button {
+  appearance: none; border: 0; background: transparent;
+  font-family: var(--font-body); font-size: 12px; font-weight: 500;
+  color: var(--ink-soft);
+  padding: 5px 11px; border-radius: 5px;
+  cursor: pointer; white-space: nowrap;
+  transition: background .12s, color .12s;
+}
+.seg button:hover:not(.on) { color: var(--ink); }
+.seg button.on { background: var(--ink); color: var(--bg); }
+.seg button.on.free { background: #2F7A4D; color: #fff; }
+.seg button.on.member { background: var(--accent); color: #fff; }
+.seg button.on.premium { background: var(--premium); color: #1A1A1A; }
+.seg[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+.seg--fixed {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink-soft);
+  border: 1px dashed var(--rule-2); border-radius: 6px;
+  padding: 7px 12px; background: transparent;
+}
+
+.mod-toggle-cell { display: inline-flex; align-items: center; gap: 8px; }
+.mod-toggle-cell .lbl { font-family: var(--font-mono); font-size: 9px; letter-spacing: .08em; color: var(--ink-mute); text-transform: uppercase; }
+
+/* Right rail summary */
+.mod-summary { position: sticky; top: 96px; display: flex; flex-direction: column; gap: 16px; }
+.mod-summary__card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  padding: 20px 22px;
+}
+.mod-summary__card .h {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 14px;
+}
+.mod-stat { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--rule); }
+.mod-stat:first-of-type { border-top: 0; }
+.mod-stat .k { font-size: 13px; color: var(--ink-2); }
+.mod-stat .v { font-family: var(--font-display); font-size: 20px; }
+.mod-legend { display: flex; flex-direction: column; gap: 8px; }
+.mod-legend .row { display: flex; gap: 10px; align-items: flex-start; font-size: 12.5px; color: var(--ink-2); line-height: 1.4; }
+.mod-legend .dot { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; margin-top: 3px; }
+.mod-legend .dot.free { background: #2F7A4D; }
+.mod-legend .dot.member { background: var(--accent); }
+.mod-legend .dot.premium { background: var(--premium); }
+.mod-note { font-size: 12px; color: var(--ink-soft); line-height: 1.5; margin: 0; }

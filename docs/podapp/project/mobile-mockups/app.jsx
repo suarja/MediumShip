@@ -2,6 +2,7 @@
    Onboarding1, Onboarding2, HomeFeed, ArticleDetail, PodcastDetail, AudioPlayer,
    VideoDetail, Library, Agenda, Community, Premium, Notifications, Profile, Search,
    Category, UserFlow, WhiteLabelMatrix, VariationHead, VariantHome, VariantLabel, VARIANTS,
+   EditorialCollections, PersonalCollections, PaywallSheet, CommunityV2, RecoPlate,
    useTweaks, TweaksPanel, TweakSection, TweakRadio, TweakColor */
 
 // app.jsx — Civica mobile mockups planche
@@ -159,26 +160,35 @@ function App() {
           </DCArtboard>
         </DCSection>
 
-        {/* 02 · User flow */}
+        {/* 02 · Recommandation UX v2 */}
+        <DCSection id="reco"
+          title="02 · Recommandation UX (v2)"
+          subtitle="Guest-first, navigation à 4 onglets, premium contextuel, gating piloté par le CMS.">
+          <DCArtboard id="reco-plate" label="Architecture & gating" width={1280} height={920}>
+            <RecoPlate />
+          </DCArtboard>
+        </DCSection>
+
+        {/* 03 · User flow */}
         <DCSection id="flow"
-          title="02 · User flow"
+          title="03 · User flow"
           subtitle="Le parcours utilisateur, d'abord onboarding puis engagement membre.">
           <DCArtboard id="userflow" label="Parcours utilisateur — 7 étapes" width={1820} height={720}>
             <UserFlow />
           </DCArtboard>
         </DCSection>
 
-        {/* 03 · Onboarding */}
+        {/* 04 · Onboarding */}
         <DCSection id="onb"
-          title="03 · Onboarding"
+          title="04 · Onboarding"
           subtitle="Première impression et présentation des piliers du produit.">
           <DCArtboard id="onb-1" label="01 · Promesse" width={PH_W} height={PH_H}><Onboarding1 /></DCArtboard>
           <DCArtboard id="onb-2" label="02 · Piliers" width={PH_W} height={PH_H}><Onboarding2 /></DCArtboard>
         </DCSection>
 
-        {/* 04 · Core consumption */}
+        {/* 05 · Core consumption */}
         <DCSection id="core"
-          title="04 · Découvrir & consommer"
+          title="05 · Découvrir & consommer"
           subtitle="Le cœur de l'application : feed, contenus, player, recherche.">
           <DCArtboard id="home" label="03 · Home / Feed" width={PH_W} height={PH_H}><HomeFeed /></DCArtboard>
           <DCArtboard id="article" label="04 · Article" width={PH_W} height={PH_H}><ArticleDetail /></DCArtboard>
@@ -189,30 +199,32 @@ function App() {
           <DCArtboard id="category" label="15 · Catégorie" width={PH_W} height={PH_H}><Category /></DCArtboard>
         </DCSection>
 
-        {/* 05 · Members & utility */}
+        {/* 06 · Membres, collections & premium */}
         <DCSection id="util"
-          title="05 · Membres & utilitaires"
-          subtitle="Bibliothèque, agenda, communauté, abonnement, notifications, profil.">
-          <DCArtboard id="library" label="08 · Bibliothèque" width={PH_W} height={PH_H}><Library /></DCArtboard>
-          <DCArtboard id="agenda" label="09 · Agenda" width={PH_W} height={PH_H}><Agenda /></DCArtboard>
-          <DCArtboard id="community" label="10 · Communauté" width={PH_W} height={PH_H}><Community /></DCArtboard>
-          <DCArtboard id="premium" label="11 · Premium" width={PH_W} height={PH_H}><Premium /></DCArtboard>
-          <DCArtboard id="notif" label="12 · Notifications" width={PH_W} height={PH_H}><Notifications /></DCArtboard>
-          <DCArtboard id="profile" label="13 · Profil" width={PH_W} height={PH_H}><Profile /></DCArtboard>
+          title="06 · Membres, collections & premium"
+          subtitle="Profil unifié, bibliothèque, collections éditoriales vs personnelles, premium contextuel.">
+          <DCArtboard id="profile" label="Profil unifié" width={PH_W} height={PH_H}><Profile /></DCArtboard>
+          <DCArtboard id="library" label="Bibliothèque" width={PH_W} height={PH_H}><Library /></DCArtboard>
+          <DCArtboard id="ecoll" label="Collections éditoriales (rédaction)" width={PH_W} height={PH_H}><EditorialCollections /></DCArtboard>
+          <DCArtboard id="pcoll" label="Listes personnelles (utilisateur)" width={PH_W} height={PH_H}><PersonalCollections /></DCArtboard>
+          <DCArtboard id="paywall" label="Paywall contextuel (sheet)" width={PH_W} height={PH_H}><PaywallSheet /></DCArtboard>
+          <DCArtboard id="agenda" label="Agenda / événements" width={PH_W} height={PH_H}><Agenda /></DCArtboard>
+          <DCArtboard id="community" label="Communauté (CTA + gating)" width={PH_W} height={PH_H}><CommunityV2 /></DCArtboard>
+          <DCArtboard id="notif" label="Notifications" width={PH_W} height={PH_H}><Notifications /></DCArtboard>
         </DCSection>
 
-        {/* 06 · White-label customization */}
+        {/* 07 · White-label customization */}
         <DCSection id="wl"
-          title="06 · White-label customization"
+          title="07 · White-label customization"
           subtitle="Ce qui se personnalise, ce qui reste le socle stable.">
           <DCArtboard id="wl-matrix" label="Matrice de personnalisation" width={1200} height={680}>
             <WhiteLabelMatrix />
           </DCArtboard>
         </DCSection>
 
-        {/* 07 · Client variations (themes inline — pas affectés par les tweaks) */}
+        {/* 08 · Client variations (themes inline — pas affectés par les tweaks) */}
         <DCSection id="var"
-          title="07 · Client variation example"
+          title="08 · Client variation example"
           subtitle="Le même socle, décliné pour trois verticales différentes. Marques figées (non affectées par les Tweaks).">
           <DCArtboard id="var-head" label="Démonstration" width={1200} height={260}>
             <VariationHead />

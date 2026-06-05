@@ -1,0 +1,184 @@
+/* ============================================================
+   Prototype — interactive demo shell
+   Reuses styles.css (screen classes). This file adds the
+   navigable phone frame, transitions, demo panel.
+   ============================================================ */
+
+.proto-page {
+  margin: 0; min-height: 100vh;
+  background:
+    radial-gradient(1200px 600px at 70% -10%, #E7E2D6, transparent 70%),
+    #DED9CC;
+  color: #1A1A1A;
+  font-family: "Hanken Grotesk", system-ui, sans-serif;
+  display: flex; align-items: flex-start; justify-content: center;
+  gap: clamp(20px, 4vw, 64px);
+  padding: clamp(20px, 4vh, 56px) clamp(16px, 4vw, 48px);
+}
+
+/* Stage: phone + demo panel */
+.proto-stage { display: flex; align-items: flex-start; gap: clamp(24px, 4vw, 60px); }
+@media (max-width: 880px) { .proto-page { flex-direction: column; align-items: center; } .proto-stage { flex-direction: column; align-items: center; } }
+
+/* Fit-to-height wrapper (JS sets --proto-scale) */
+.proto-fit { transform: scale(var(--proto-scale, 1)); transform-origin: top center; }
+
+/* ---------- Phone frame ---------- */
+.proto-phone {
+  width: 360px; height: 760px;
+  background: #1B1B1D;
+  border-radius: 52px;
+  padding: 12px;
+  position: relative; flex-shrink: 0;
+  box-shadow:
+    0 0 0 2px #2c2c2e,
+    0 40px 80px -30px rgba(0,0,0,.55),
+    0 80px 140px -50px rgba(0,0,0,.4);
+}
+.proto-screen {
+  width: 100%; height: 100%;
+  border-radius: 40px; overflow: hidden;
+  background: var(--brand-bg, #EFECE5);
+  position: relative;
+  display: flex; flex-direction: column;
+  font-family: var(--font-body);
+}
+.proto-notch { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 112px; height: 30px; background: #0b0b0b; border-radius: 999px; z-index: 30; }
+.proto-home { position: absolute; bottom: 9px; left: 50%; transform: translateX(-50%); width: 132px; height: 5px; border-radius: 999px; background: rgba(0,0,0,.32); z-index: 30; }
+.proto-screen.dark .proto-home { background: rgba(255,255,255,.4); }
+
+/* Status bar (reuses .sb sizing from styles.css but a touch taller) */
+.proto-sb { height: 46px; padding: 0 26px 0 30px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 600; font-family: -apple-system, "SF Pro Text", system-ui, sans-serif; color: var(--brand-ink, #1A1A1A); flex-shrink: 0; z-index: 6; }
+.proto-screen.dark .proto-sb { color: #F4F1E8; }
+
+/* Scroll viewport */
+.proto-view { flex: 1; overflow-y: auto; overflow-x: hidden; position: relative; -webkit-overflow-scrolling: touch; }
+.proto-view::-webkit-scrollbar { width: 0; }
+.proto-pad { padding: 0 18px 18px; }
+
+/* Let reused screen bodies flow & scroll instead of clipping */
+.proto-view .scr { overflow: visible; }
+.proto-view .scr__body { overflow: visible; }
+
+/* Screen enter animation — transform-only (no opacity gate, so static
+   DOM-capture/screenshot tools never freeze content at opacity:0). */
+@keyframes proto-push { from { transform: translateX(16px); } to { transform: none; } }
+@keyframes proto-fade { from { transform: translateY(5px); } to { transform: none; } }
+.proto-anim-push, .proto-anim-fade { opacity: 1; }
+.proto-anim-push { animation: proto-push .26s cubic-bezier(.2,.7,.3,1); }
+.proto-anim-fade { animation: proto-fade .2s ease; }
+
+/* Top bar (back) */
+.proto-top { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px 12px; flex-shrink: 0; }
+.proto-top__back, .proto-top__act { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 999px; cursor: pointer; color: var(--brand-ink); font-size: 16px; transition: background .12s; }
+.proto-screen.dark .proto-top__back, .proto-screen.dark .proto-top__act { color: #F4F1E8; }
+.proto-top__back:active { background: var(--brand-accent-soft); }
+.proto-top__title { font-family: var(--font-display); font-size: 16px; letter-spacing: -.01em; }
+
+/* Tappable rows/cards */
+.tap { cursor: pointer; transition: transform .1s ease, opacity .12s ease; -webkit-tap-highlight-color: transparent; }
+.tap:active { transform: scale(.985); opacity: .9; }
+.tabbar .tab { cursor: pointer; }
+
+/* Locked content hint (premium) */
+.lockchip {
+  position: absolute; top: 8px; right: 8px; z-index: 3;
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(20,17,14,.78); color: #F4D9A8;
+  font-family: var(--font-mono); font-size: 8px; letter-spacing: .1em; text-transform: uppercase;
+  padding: 3px 7px; border-radius: 999px; backdrop-filter: blur(4px);
+}
+.lockchip::before { content: "★"; font-size: 8px; }
+
+/* Toast */
+.proto-toast {
+  position: absolute; left: 50%; bottom: 86px; transform: translateX(-50%);
+  background: var(--brand-ink); color: var(--brand-bg);
+  font-size: 12.5px; padding: 9px 16px; border-radius: 999px;
+  z-index: 40; white-space: nowrap; box-shadow: 0 8px 24px -10px rgba(0,0,0,.5);
+  animation: proto-fade .2s ease;
+}
+
+/* Mini player (above tab bar) */
+.miniplayer {
+  display: grid; grid-template-columns: 36px 1fr auto; gap: 10px; align-items: center;
+  margin: 0 10px 6px; padding: 8px 10px;
+  background: var(--brand-ink); color: var(--brand-bg);
+  border-radius: 12px; cursor: pointer;
+}
+.miniplayer .cov { width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, var(--brand-accent), #6B2417); }
+.miniplayer .t { font-family: var(--font-display); font-size: 12.5px; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.miniplayer .s { font-size: 9px; color: rgba(244,241,232,.6); margin-top: 1px; }
+.miniplayer .pp { width: 26px; height: 26px; border-radius: 999px; background: var(--brand-accent); color: #fff; display: grid; place-items: center; font-size: 9px; }
+
+/* Sheet overlay (paywall / login) — animated */
+.proto-sheetwrap { position: absolute; inset: 0; z-index: 25; }
+.proto-sheetwrap .dim { position: absolute; inset: 0; background: rgba(20,17,14,.5); animation: proto-fade .2s ease; }
+@keyframes proto-sheet-up { from { transform: translateY(100%); } to { transform: none; } }
+.proto-sheetwrap .sheet { position: absolute; left: 0; right: 0; bottom: 0; animation: proto-sheet-up .3s cubic-bezier(.2,.8,.25,1); }
+.sheet .tap { display: block; }
+
+/* Login gate (guest) */
+.gate-screen { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 0 32px; gap: 8px; }
+.gate-screen .crest { width: 56px; height: 56px; border-radius: 14px; background: var(--brand-accent); color: #fff; display: grid; place-items: center; font-family: var(--font-display); font-style: italic; font-size: 30px; margin-bottom: 10px; }
+.gate-screen h3 { font-family: var(--font-display); font-size: 24px; line-height: 1.08; letter-spacing: -.015em; margin: 0; }
+.gate-screen h3 i { font-style: italic; }
+.gate-screen p { font-size: 13px; color: var(--brand-ink-soft); line-height: 1.5; max-width: 28ch; margin: 4px 0 16px; }
+.gate-screen .btn { width: 100%; }
+
+/* ============================================================
+   Demo control panel
+   ============================================================ */
+.demo {
+  width: 308px; flex-shrink: 0;
+  background: rgba(255,255,255,.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(26,26,26,.1);
+  border-radius: 20px;
+  padding: 22px 22px 20px;
+  display: flex; flex-direction: column; gap: 20px;
+  font-family: "Hanken Grotesk", system-ui, sans-serif;
+}
+.demo__brandline { display: flex; align-items: center; gap: 10px; }
+.demo__logo { width: 34px; height: 34px; border-radius: 8px; background: #1A1A1A; color: #fff; display: grid; place-items: center; font-family: "Newsreader", serif; font-style: italic; font-size: 18px; }
+.demo__title { font-family: "Newsreader", Georgia, serif; font-size: 19px; letter-spacing: -.01em; line-height: 1; }
+.demo__sub { font-family: "JetBrains Mono", monospace; font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: #6B6B66; margin-top: 3px; }
+
+.demo__sec { display: flex; flex-direction: column; gap: 10px; }
+.demo__h { font-family: "JetBrains Mono", monospace; font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: #8A857A; }
+
+/* Brand presets */
+.demo__brands { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.demo-brand {
+  display: flex; flex-direction: column; gap: 8px;
+  background: #fff; border: 1.5px solid rgba(26,26,26,.1);
+  border-radius: 12px; padding: 11px 12px; cursor: pointer; text-align: left;
+  transition: border-color .12s;
+}
+.demo-brand:hover { border-color: rgba(26,26,26,.3); }
+.demo-brand.on { border-color: #1A1A1A; }
+.demo-brand__top { display: flex; align-items: center; gap: 8px; }
+.demo-brand__mark { width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; font-family: "Newsreader", serif; font-size: 14px; color: #fff; }
+.demo-brand__nm { font-family: "Newsreader", Georgia, serif; font-size: 15px; line-height: 1; }
+.demo-brand__sw { display: flex; gap: 3px; }
+.demo-brand__sw span { width: 14px; height: 14px; border-radius: 999px; border: 1px solid rgba(0,0,0,.06); }
+.demo-brand__kind { font-size: 10px; color: #8A857A; }
+
+/* Segmented (member state) */
+.demo-seg { display: flex; background: #fff; border: 1.5px solid rgba(26,26,26,.12); border-radius: 10px; padding: 3px; gap: 2px; }
+.demo-seg button { flex: 1; appearance: none; border: 0; background: transparent; font-family: inherit; font-size: 12.5px; font-weight: 500; color: #6B6B66; padding: 8px 6px; border-radius: 7px; cursor: pointer; transition: background .12s, color .12s; }
+.demo-seg button.on { background: #1A1A1A; color: #fff; }
+.demo-seg button.on.premium { background: #C8964A; color: #1A1A1A; }
+.demo-seg button.on.member { background: #B14424; color: #fff; }
+.demo__note { font-size: 11.5px; color: #6B6B66; line-height: 1.5; margin: 0; }
+.demo__note b { color: #1A1A1A; }
+
+/* Quick scenarios */
+.demo__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.demo-chip { appearance: none; border: 1px solid rgba(26,26,26,.16); background: #fff; border-radius: 999px; padding: 7px 12px; font-family: inherit; font-size: 12px; color: #1A1A1A; cursor: pointer; transition: background .12s, color .12s; }
+.demo-chip:hover { background: #1A1A1A; color: #fff; border-color: #1A1A1A; }
+
+.demo__foot { display: flex; gap: 8px; }
+.demo__foot .btn2 { flex: 1; appearance: none; border: 1px solid rgba(26,26,26,.16); background: transparent; border-radius: 999px; padding: 9px; font-family: inherit; font-size: 12.5px; cursor: pointer; color: #1A1A1A; }
+.demo__foot .btn2:hover { background: #1A1A1A; color: #fff; }
+.demo__hint { font-family: "JetBrains Mono", monospace; font-size: 9px; letter-spacing: .06em; color: #A9A498; text-align: center; }

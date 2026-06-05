@@ -1,5 +1,5 @@
-/* global React, ReactDOM, ContentsPage, TenantPage, PreviewPage,
-   initialItems, initialTenant */
+/* global React, ReactDOM, ContentsPage, TenantPage, PreviewPage, ModulesPage,
+   initialItems, initialTenant, initialModules */
 
 // app.jsx — CMS shell with working tab routing
 
@@ -7,7 +7,7 @@ const { useState, useEffect } = React;
 
 function readTab() {
   const h = (location.hash || '').replace(/^#/, '');
-  return ['contents', 'tenant', 'preview'].includes(h) ? h : 'contents';
+  return ['contents', 'tenant', 'modules', 'preview'].includes(h) ? h : 'contents';
 }
 
 function App() {
@@ -15,6 +15,7 @@ function App() {
   const [items, setItems] = useState(initialItems);
   const [selected, setSelected] = useState(initialItems[0].id);
   const [tenant, setTenant] = useState(initialTenant);
+  const [modules, setModules] = useState(initialModules);
 
   // Hash routing — keeps tab on refresh + supports browser back/forward
   useEffect(() => {
@@ -45,6 +46,9 @@ function App() {
           <button className={`tab ${tab === 'tenant' ? 'on' : ''}`} onClick={() => setTab('tenant')}>
             <span className="ic">⚙</span>Tenant
           </button>
+          <button className={`tab ${tab === 'modules' ? 'on' : ''}`} onClick={() => setTab('modules')}>
+            <span className="ic">▤</span>Modules
+          </button>
           <button className={`tab ${tab === 'preview' ? 'on' : ''}`} onClick={() => setTab('preview')}>
             <span className="ic">▶</span>Preview
           </button>
@@ -64,6 +68,9 @@ function App() {
       )}
       {tab === 'tenant' && (
         <TenantPage tenant={tenant} setTenant={setTenant} items={items} />
+      )}
+      {tab === 'modules' && (
+        <ModulesPage modules={modules} setModules={setModules} />
       )}
       {tab === 'preview' && (
         <PreviewPage tenant={tenant} items={items} />

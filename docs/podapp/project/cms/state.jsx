@@ -155,7 +155,49 @@ function slugify(s) {
     .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 64);
 }
 
+/* ---------- Modules & feature-gating model ----------
+   enabled   : module ON/OFF for this tenant
+   access    : 'free' | 'member' | 'premium' (who can use it)
+   lockAccess: true = access level is fixed (not tenant-configurable)
+   lockModule: true = module can't be turned off (core)
+*/
+const MODULE_GROUPS = [
+  {
+    group: 'Lecture & contenu',
+    features: [
+      { key: 'publicRead', label: 'Lecture publique', desc: 'Articles, audio et vidéo accessibles sans compte.', enabled: true, access: 'free', lockModule: true, lockAccess: true },
+      { key: 'premiumContent', label: 'Contenus premium', desc: 'Verrouiller certains contenus marqués premium dans le CMS.', enabled: true, access: 'premium', lockAccess: true },
+      { key: 'editorialCollections', label: 'Collections éditoriales', desc: 'Séries et dossiers créés par la rédaction.', enabled: true, access: 'free' },
+    ],
+  },
+  {
+    group: 'Bibliothèque personnelle',
+    features: [
+      { key: 'bookmarks', label: 'Enregistrements', desc: 'Mettre des contenus de côté (bookmarks).', enabled: true, access: 'free' },
+      { key: 'offline', label: 'Téléchargements hors-ligne', desc: 'Écoute et lecture sans réseau.', enabled: true, access: 'premium' },
+      { key: 'progress', label: 'Progression / reprise sync', desc: 'Reprendre là où on s\u2019est arrêté, multi-appareils.', enabled: true, access: 'member' },
+      { key: 'personalLists', label: 'Listes personnelles', desc: 'Collections créées par l\u2019utilisateur final.', enabled: true, access: 'premium' },
+    ],
+  },
+  {
+    group: 'Engagement & communauté',
+    features: [
+      { key: 'agenda', label: 'Agenda / événements', desc: 'Lives, rencontres, événements locaux et en ligne.', enabled: true, access: 'free' },
+      { key: 'communityCta', label: 'CTA communauté', desc: 'Lien Discord / rejoindre la communauté.', enabled: true, access: 'free' },
+      { key: 'membersRoom', label: 'Salon membres', desc: 'Espace réservé : AMA, votes, coulisses.', enabled: false, access: 'premium' },
+      { key: 'push', label: 'Notifications push', desc: 'Alertes nouveaux contenus, lives, agenda.', enabled: true, access: 'free' },
+    ],
+  },
+];
+
+const ACCESS_LABEL = { free: 'Gratuit', member: 'Membre', premium: 'Premium' };
+
+function initialModules() {
+  // Deep clone so edits don't mutate the constant
+  return MODULE_GROUPS.map(g => ({ group: g.group, features: g.features.map(f => ({ ...f })) }));
+}
+
 Object.assign(window, {
-  PALETTES, TYPOS, CATEGORIES,
-  initialItems, initialTenant, templateFor, slugify,
+  PALETTES, TYPOS, CATEGORIES, MODULE_GROUPS, ACCESS_LABEL,
+  initialItems, initialTenant, initialModules, templateFor, slugify,
 });

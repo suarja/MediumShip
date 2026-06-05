@@ -45,11 +45,12 @@ const BrandHeader = ({ logo = "Civica", italicMark = true, av = true, action = '
   </div>
 );
 
+// Canonical 4-tab navigation (guest-first, no fixed Premium tab).
+// Premium = contextual paywall sheet. Agenda / Communauté = modules sous Explorer.
 const TAB_ITEMS = [
-  { i: '◉', l: 'Une' },
-  { i: '▷', l: 'Écouter' },
-  { i: '☷', l: 'Agenda' },
-  { i: '✦', l: 'Membres' },
+  { i: '◉', l: 'Accueil' },
+  { i: '⌕', l: 'Explorer' },
+  { i: '▤', l: 'Biblio' },
   { i: '○', l: 'Profil' },
 ];
 

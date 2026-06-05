@@ -277,13 +277,7 @@ const Library = () => (
         <ContentRow kicker="Vidéo · Débat" title="Démocratie locale, où en sommes-nous ?" meta="1 h 04 · ★ Premium" tint="br" />
         <ContentRow kicker="Analyse" title="L'économie du soin — nouvelle priorité" meta="18 min" tint="gr" />
       </div>
-      <TabBar active={3} items={[
-        { i: '◉', l: 'Une' },
-        { i: '▷', l: 'Écouter' },
-        { i: '☷', l: 'Agenda' },
-        { i: '♡', l: 'Library' },
-        { i: '○', l: 'Profil' },
-      ]} />
+      <TabBar active={2} />
     </div>
   </Phone>
 );
@@ -334,7 +328,7 @@ const Agenda = () => (
           </div>
         </div>
       </div>
-      <TabBar active={2} />
+      <TabBar active={1} />
     </div>
   </Phone>
 );
@@ -363,13 +357,7 @@ const Community = () => (
           <div className="stat"><span><b>84</b> cercles</span><span><b>Paris</b> · 320 membres</span></div>
         </div>
       </div>
-      <TabBar active={3} items={[
-        { i: '◉', l: 'Une' },
-        { i: '▷', l: 'Écouter' },
-        { i: '☷', l: 'Agenda' },
-        { i: '✦', l: 'Rejoindre' },
-        { i: '○', l: 'Profil' },
-      ]} />
+      <TabBar active={1} />
     </div>
   </Phone>
 );
@@ -467,7 +455,7 @@ const Notifications = () => (
           </div>
         </div>
       </div>
-      <TabBar active={4} />
+      <TabBar active={0} />
     </div>
   </Phone>
 );
@@ -477,35 +465,98 @@ const Profile = () => (
   <Phone>
     <StatusBar />
     <div className="scr">
-      <TopBar back="" title="Profil" action="⚙" />
-      <div className="scr__body">
-        <div className="prof__hero">
-          <span className="av"></span>
-          <div style={{ flex: 1 }}>
-            <h3 className="nm">Camille Renard</h3>
-            <span className="st">Membre bienfaiteur</span>
-            <span className="prof__since">Adhérente depuis mars 2024</span>
-          </div>
+      <div className="p2">
+        <div className="p2__top">
+          <span className="ttl serif">Profil</span>
+          <span className="ic">⚙</span>
         </div>
-
-        <div className="prof__sec">
-          <Kicker>— Abonnement</Kicker>
-          <div className="list">
-            <div className="list__row"><span className="ic">★</span><div className="meta"><h4 className="t">Plan Annuel · Bienfaiteur</h4><span className="d">Renouvellement le 14 mars 2027</span></div><span className="v">ACTIF</span></div>
-            <div className="list__row"><span className="ic">↓</span><div className="meta"><h4 className="t">Téléchargements hors-ligne</h4><span className="d">14 épisodes · 2.4 Go</span></div><span className="v">GÉRER</span></div>
+        <div className="p2__body">
+          <div className="p2__id">
+            <span className="p2__av"></span>
+            <div style={{ flex: 1 }}>
+              <h3 className="nm">Camille Renard</h3>
+              <span className="p2__status">Membre · Bienfaiteur</span>
+              <span className="p2__since">Synchro prête · adhérente depuis mars 2024</span>
+            </div>
           </div>
-        </div>
 
-        <div className="prof__sec">
-          <Kicker>— Préférences</Kicker>
-          <div className="list">
-            <div className="list__row"><span className="ic">🔔</span><div className="meta"><h4 className="t">Notifications</h4><span className="d">Lives, podcasts, agenda</span></div><span className="v">3 ACTIVES</span></div>
-            <div className="list__row"><span className="ic">☾</span><div className="meta"><h4 className="t">Thème de l'app</h4><span className="d">Système · auto</span></div><span className="v">AUTO</span></div>
-            <div className="list__row"><span className="ic">⎘</span><div className="meta"><h4 className="t">Cercle local rattaché</h4><span className="d">Paris · changer</span></div><span className="v">PARIS</span></div>
+          <div className="p2__resume">
+            <span className="k">◐ Reprendre · synchronisé</span>
+            <div className="row2">
+              <span className="cov"></span>
+              <div style={{ minWidth: 0 }}>
+                <div className="t">L'économie du soin</div>
+                <div className="sub">Épisode · 22:48 restant · 62 %</div>
+              </div>
+              <span className="play">▶</span>
+            </div>
+            <div className="bar"></div>
+          </div>
+
+          <div className="p2__stats">
+            <div className="p2__stat"><span className="ic">⌖</span><span className="n">12</span><span className="l">Enregistrés</span></div>
+            <div className="p2__stat"><span className="ic">↓</span><span className="n">4</span><span className="l">Hors-ligne</span></div>
+            <div className="p2__stat"><span className="ic">◷</span><span className="n">31</span><span className="l">Historique</span></div>
+          </div>
+
+          <div className="p2__sec">
+            <Kicker>— Ma bibliothèque</Kicker>
+            <div className="p2row">
+              <span className="ic">⌖</span>
+              <div className="meta">
+                <span className="t">Enregistrements <span className="gate gate--free">Gratuit</span></span>
+                <span className="d">12 contenus mis de côté</span>
+              </div>
+              <span className="chev">›</span>
+            </div>
+            <div className="p2row">
+              <span className="ic">↓</span>
+              <div className="meta">
+                <span className="t">Téléchargements <span className="gate gate--premium">Premium</span></span>
+                <span className="d">4 épisodes · 1.2 Go hors-ligne</span>
+              </div>
+              <span className="chev">›</span>
+            </div>
+            <div className="p2row">
+              <span className="ic">≣</span>
+              <div className="meta">
+                <span className="t">Mes listes <span className="gate gate--premium">Premium</span></span>
+                <span className="d">3 listes personnelles</span>
+              </div>
+              <span className="chev">›</span>
+            </div>
+            <div className="p2row">
+              <span className="ic">◷</span>
+              <div className="meta">
+                <span className="t">Historique &amp; progression <span className="gate gate--member">Membre</span></span>
+                <span className="d">Reprise synchronisée sur vos appareils</span>
+              </div>
+              <span className="chev">›</span>
+            </div>
+          </div>
+
+          <div className="p2__sec">
+            <Kicker>— Compte</Kicker>
+            <div className="p2row">
+              <span className="ic">★</span>
+              <div className="meta">
+                <span className="t">Abonnement · Annuel</span>
+                <span className="d">Renouvellement le 14 mars 2027</span>
+              </div>
+              <span className="chev">›</span>
+            </div>
+            <div className="p2row">
+              <span className="ic">⚙</span>
+              <div className="meta">
+                <span className="t">Préférences &amp; notifications</span>
+                <span className="d">Thème, langue, alertes push</span>
+              </div>
+              <span className="chev">›</span>
+            </div>
           </div>
         </div>
       </div>
-      <TabBar active={4} />
+      <TabBar active={3} />
     </div>
   </Phone>
 );
@@ -540,13 +591,7 @@ const Search = () => (
           <span className="chip">Léa Bardin</span>
         </div>
       </div>
-      <TabBar active={1} items={[
-        { i: '◉', l: 'Une' },
-        { i: '⌕', l: 'Explorer' },
-        { i: '☷', l: 'Agenda' },
-        { i: '✦', l: 'Membres' },
-        { i: '○', l: 'Profil' },
-      ]} />
+      <TabBar active={1} />
     </div>
   </Phone>
 );

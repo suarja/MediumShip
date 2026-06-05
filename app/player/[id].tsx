@@ -109,10 +109,13 @@ export default function PlayerScreen() {
         return;
       }
 
+      // Compare by content only: once a session is live for this content we
+      // must NOT relaunch it (which would reset the position to 0) just because
+      // the URL representation differs — e.g. returning to the player resolves a
+      // local downloaded path while the session launched from the remote one.
       const isSameSession =
         activeSession?.kind === "episode" &&
-        activeSession.contentId === resolvedContent._id &&
-        activeSession.audioUrl === audioUrl;
+        activeSession.contentId === resolvedContent._id;
 
       if (!isSameSession) {
         void playEpisode({
@@ -138,10 +141,12 @@ export default function PlayerScreen() {
         return;
       }
 
+      // Compare by content only (see the episode branch): returning to the
+      // player must not relaunch the video and reset it to 0 just because a
+      // downloaded local path now differs from the URL the session launched with.
       const isSameSession =
         activeSession?.kind === "hostedVideo" &&
-        activeSession.contentId === resolvedContent._id &&
-        activeSession.playbackUrl === playbackUrl;
+        activeSession.contentId === resolvedContent._id;
 
       if (!isSameSession) {
         void playHostedVideo({

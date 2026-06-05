@@ -155,8 +155,8 @@ export function PersistentMediaPlayerProvider({
   const pendingResumeRef = useRef<{ contentId: string; seconds: number } | null>(
     null,
   );
-  // Tracks the last resume target we already applied (keyed `contentId:target`)
-  // so we apply it once, yet re-apply if the remote value shifts it later.
+  // The contentId whose saved position we have already resumed, so resume is
+  // applied exactly once per open and never re-fires on return to the player.
   const appliedResumeRef = useRef<string | null>(null);
   // User's *intent* to play, toggled only by explicit play/pause actions — not
   // by iOS's transient pauses during the PiP-stop transition. Read by
@@ -355,38 +355,44 @@ export function PersistentMediaPlayerProvider({
     }
   }, [activeSession, audioPlayer, audioStatus.isLoaded]);
 
-  // Apply the resume target (from usePlaybackProgress) to whichever engine is
-  // active. It can change once the remote value settles, so we key on the
-  // target to apply each distinct value once. If the player has not loaded yet,
-  // pendingResumeRef hands off to the on-load handlers (audio: effect below;
-  // video: the sourceLoad listener).
+  // Apply the saved position ONCE per content, when it first becomes known.
+  // Resume is a launch concern: we must NOT re-seek when the user returns to the
+  // player or when a later progress save shifts the target — doing so would yank
+  // them back to a stale position. For members the hook waits for the remote
+  // value, so the first non-null target is already the merged local⊔remote one.
   useEffect(() => {
     if (!activeSession || preferredResumeSeconds === null) {
       return;
     }
+    if (appliedResumeRef.current === activeSession.contentId) {
+      return;
+    }
 
+    const { contentId, kind } = activeSession;
     const target = preferredResumeSeconds;
-    const key = `${activeSession.contentId}:${target}`;
-    pendingResumeRef.current = { contentId: activeSession.contentId, seconds: target };
 
-    if (appliedResumeRef.current === key) {
-      return;
-    }
+    // Already at/after the target — nothing to resume; mark this content handled.
     if (target <= currentTimeSeconds + 1) {
-      appliedResumeRef.current = key;
+      appliedResumeRef.current = contentId;
       return;
     }
 
-    if (activeSession.kind === "episode") {
-      if (audioStatus.isLoaded) {
-        appliedResumeRef.current = key;
-        pendingResumeRef.current = null;
-        void audioPlayer.seekTo(target);
+    if (kind === "episode") {
+      if (!audioStatus.isLoaded) {
+        // Not loaded yet — hand off to the on-load effect below.
+        pendingResumeRef.current = { contentId, seconds: target };
+        return;
       }
+      appliedResumeRef.current = contentId;
+      pendingResumeRef.current = null;
+      void audioPlayer.seekTo(target);
       return;
     }
 
-    appliedResumeRef.current = key;
+    // Hosted video: apply directly, leaving pendingResumeRef as a fallback for
+    // the sourceLoad listener in case the source has not finished loading.
+    appliedResumeRef.current = contentId;
+    pendingResumeRef.current = { contentId, seconds: target };
     (videoPlayer as { currentTime?: number }).currentTime = target;
     setVideoState((current) => ({ ...current, currentTimeSeconds: target }));
   }, [

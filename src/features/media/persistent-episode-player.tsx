@@ -178,6 +178,13 @@ export function PersistentMediaPlayerProvider({
   );
   const lastSavedProgressRef = useRef(0);
   const pipHostRef = useRef<VideoView>(null);
+  // Set right before we stop PiP ourselves (returning to the player). Lets the
+  // onPictureInPictureStop handler ignore our own programmatic stops and only
+  // react to the user's restore/close taps.
+  const programmaticPipStopRef = useRef(false);
+  // Whether a PiP window is currently live. Driven by the START/STOP events so
+  // we only arm the programmatic flag when stopping PiP will truly emit a STOP.
+  const pipActiveRef = useRef(false);
   // User's *intent* to play, toggled only by explicit play/pause actions — not
   // by iOS's transient pauses during the PiP-stop transition. Used to restore
   // playback when returning to the player.
@@ -616,6 +623,13 @@ export function PersistentMediaPlayerProvider({
       return;
     }
 
+    // We are stopping PiP ourselves — tell onPictureInPictureStop to ignore
+    // this one so it doesn't mistake it for a user restore/close tap. Only arm
+    // the flag when PiP is actually live, otherwise stopPictureInPicture is a
+    // no-op (no STOP follows) and the flag would wrongly stick to the next tap.
+    if (pipActiveRef.current) {
+      programmaticPipStopRef.current = true;
+    }
     void pipHostRef.current?.stopPictureInPicture().catch(() => {});
     if (!playIntentRef.current) {
       return;
@@ -800,11 +814,33 @@ export function PersistentMediaPlayerProvider({
             allowsPictureInPicture
             contentFit="contain"
             nativeControls={false}
-            // Restore-only callback (our expo-video patch): the user tapped the
-            // PiP "back to app" control → return to the full player. The close
-            // (X) does NOT fire this, so it just stops PiP without navigating —
-            // no loop. (openPlayer is route-guarded.)
-            onPictureInPictureRestore={() => openPlayer()}
+            // iOS never calls the restore delegate here (the host stays mounted,
+            // so AVKit auto-restores to it invisibly). We distinguish the user's
+            // restore vs close taps by sampling playback after the PiP-stop
+            // transition settles: restore keeps playing, close pauses.
+            onPictureInPictureStart={() => {
+              pipActiveRef.current = true;
+              console.warn("[PiP] START");
+            }}
+            onPictureInPictureStop={() => {
+              pipActiveRef.current = false;
+              if (programmaticPipStopRef.current) {
+                programmaticPipStopRef.current = false;
+                console.warn("[PiP] STOP (programmatic, ignored)");
+                return;
+              }
+              setTimeout(() => {
+                const stillPlaying = videoPlayer.playing;
+                console.warn(
+                  `[PiP] STOP (user) playing=${stillPlaying} → ${stillPlaying ? "RESTORE/openPlayer" : "CLOSE/stop"}`,
+                );
+                if (stillPlaying) {
+                  openPlayer();
+                } else {
+                  closePlayer();
+                }
+              }, 500);
+            }}
             player={videoPlayer}
             ref={pipHostRef}
             style={StyleSheet.absoluteFill}

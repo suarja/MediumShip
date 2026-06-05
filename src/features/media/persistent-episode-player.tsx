@@ -789,7 +789,11 @@ export function PersistentMediaPlayerProvider({
   return (
     <PersistentMediaPlayerContext.Provider value={value}>
       {children}
-      {activeSession?.kind === "hostedVideo" && videoPlayer ? (
+      {/* PiP host: mounted ONLY while away from the player, so it never competes
+          with the player screen's own inline VideoView for the shared player
+          (two live views of one player make one show a crossed-out "not
+          playable"). Unmounting it on return also stops PiP. */}
+      {!onPlayerRoute && activeSession?.kind === "hostedVideo" && videoPlayer ? (
         <View pointerEvents="none" style={styles.pipHostOffscreen}>
           <VideoView
             allowsPictureInPicture

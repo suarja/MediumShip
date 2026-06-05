@@ -28,6 +28,12 @@ import { useResponsive } from "../responsive/use-responsive";
 import { fontFamilies } from "../theme/fonts";
 import { useAppTheme } from "../theme/theme-provider";
 import { formatMediaClock } from "./format-media-clock";
+import {
+  createAudioPlaybackEngine,
+  createVideoPlaybackEngine,
+  NULL_PLAYBACK_ENGINE,
+  type VideoPlaybackState,
+} from "./playback-engine";
 import { VideoPipHost } from "./video-pip-host";
 import {
   clearPlaybackProgress,
@@ -79,14 +85,6 @@ export type HostedVideoTrack = {
 export type ActiveMediaSession =
   | ({ kind: "episode" } & EpisodeTrack)
   | ({ kind: "hostedVideo" } & HostedVideoTrack);
-
-type VideoPlaybackState = {
-  currentTimeSeconds: number;
-  durationSeconds: number;
-  isBuffering: boolean;
-  isPlaying: boolean;
-  playbackError: string | null;
-};
 
 type PersistentMediaPlayerContextValue = {
   activeSession: ActiveMediaSession | null;
@@ -320,28 +318,31 @@ export function PersistentMediaPlayerProvider({
           title: activeSession.title,
         }
       : null;
-  const currentTimeSeconds =
+  // One engine over the two backends: the provider reads/controls playback
+  // through this seam instead of forking on session kind everywhere.
+  const engine =
     activeSession?.kind === "hostedVideo"
-      ? videoState.currentTimeSeconds
-      : audioStatus.currentTime || 0;
-  const durationSeconds =
-    activeSession?.kind === "hostedVideo"
-      ? videoState.durationSeconds || activeSession.durationSeconds || 0
-      : audioStatus.duration || activeTrack?.durationSeconds || 0;
-  const isBuffering =
-    activeSession?.kind === "hostedVideo"
-      ? videoState.isBuffering
-      : audioStatus.isBuffering;
-  const isPlaying =
-    activeSession?.kind === "hostedVideo"
-      ? videoState.isPlaying
-      : audioStatus.playing;
-  const playbackError =
-    activeSession?.kind === "hostedVideo"
-      ? videoState.playbackError
-      : audioStatus.error;
+      ? createVideoPlaybackEngine({
+          player: videoPlayer,
+          state: videoState,
+          setState: setVideoState,
+          fallbackDuration: activeSession.durationSeconds ?? 0,
+        })
+      : activeSession?.kind === "episode"
+        ? createAudioPlaybackEngine({
+            player: audioPlayer,
+            status: audioStatus,
+            fallbackDuration: activeTrack?.durationSeconds ?? 0,
+          })
+        : NULL_PLAYBACK_ENGINE;
+
+  const currentTimeSeconds = engine.currentTime;
+  const durationSeconds = engine.duration;
+  const isBuffering = engine.isBuffering;
+  const isPlaying = engine.isPlaying;
+  const playbackError = engine.error;
   const hasFinished =
-    Boolean(audioStatus.didJustFinish) ||
+    engine.justFinished ||
     (durationSeconds > 0 && currentTimeSeconds >= durationSeconds);
 
   const disableAudioLockScreen = () => {
@@ -605,32 +606,20 @@ export function PersistentMediaPlayerProvider({
       return;
     }
 
-    if (activeSession.kind === "hostedVideo") {
-      if (videoState.isPlaying) {
-        playIntentRef.current = false;
-        videoPlayer.pause();
-        return;
-      }
-
-      if (hasFinished) {
-        (videoPlayer as { currentTime?: number }).currentTime = 0;
-      }
-
-      playIntentRef.current = true;
-      videoPlayer.play();
-      return;
-    }
-
-    if (audioStatus.playing) {
-      audioPlayer.pause();
+    if (engine.isPlaying) {
+      // Pausing is an explicit intent to stop; it must survive iOS's transient
+      // pauses during PiP transitions (only meaningful for hosted video).
+      playIntentRef.current = false;
+      engine.pause();
       return;
     }
 
     if (hasFinished) {
-      await audioPlayer.seekTo(0);
+      await engine.seekTo(0);
     }
 
-    audioPlayer.play();
+    playIntentRef.current = true;
+    engine.play();
   };
 
   const seekBy = async (deltaSeconds: number) => {
@@ -638,15 +627,7 @@ export function PersistentMediaPlayerProvider({
       return;
     }
 
-    const nextTime = clampTime(currentTimeSeconds + deltaSeconds, durationSeconds);
-
-    if (activeSession.kind === "hostedVideo") {
-      (videoPlayer as { currentTime?: number }).currentTime = nextTime;
-      setVideoState((current) => ({ ...current, currentTimeSeconds: nextTime }));
-      return;
-    }
-
-    await audioPlayer.seekTo(nextTime);
+    await engine.seekTo(clampTime(currentTimeSeconds + deltaSeconds, durationSeconds));
   };
 
   const seekTo = async (seconds: number) => {
@@ -654,27 +635,14 @@ export function PersistentMediaPlayerProvider({
       return;
     }
 
-    const nextTime = clampTime(seconds, durationSeconds);
-
-    if (activeSession.kind === "hostedVideo") {
-      (videoPlayer as { currentTime?: number }).currentTime = nextTime;
-      setVideoState((current) => ({ ...current, currentTimeSeconds: nextTime }));
-      return;
-    }
-
-    await audioPlayer.seekTo(nextTime);
+    await engine.seekTo(clampTime(seconds, durationSeconds));
   };
 
   const closePlayer = () => {
     const closing = activeSessionRef.current;
 
-    if (closing?.kind === "hostedVideo") {
-      safelyReleasePlayer(
-        () => videoPlayer.pause(),
-        "Failed to pause hosted video player",
-      );
-    } else if (closing) {
-      safelyReleasePlayer(() => audioPlayer.pause(), "Failed to pause audio player");
+    safelyReleasePlayer(() => engine.pause(), "Failed to pause player");
+    if (closing?.kind === "episode") {
       disableAudioLockScreen();
     }
 

@@ -39,7 +39,7 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
   const visibleRoutes = state.routes.filter((route) => {
     const href = (descriptors[route.key]?.options as { href?: string | null } | undefined)
       ?.href;
-    return href !== null;
+    return href !== null && route.name in TAB_META;
   });
 
   return (
@@ -64,7 +64,7 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
         {visibleRoutes.map((route) => {
           const isFocused =
             state.index === state.routes.findIndex((item) => item.key === route.key);
-          const meta = TAB_META[route.name] ?? { icon: "•", labelKey: route.name };
+          const meta = TAB_META[route.name];
 
           const onPress = () => {
             const event = navigation.emit({

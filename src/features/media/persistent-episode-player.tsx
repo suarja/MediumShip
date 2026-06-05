@@ -13,7 +13,7 @@ import {
   setAudioModeAsync,
   useAudioPlayerStatus,
 } from "expo-audio";
-import { useConvexAuth, useMutation, useQuery } from "convex/react";
+import { useConvexAuth } from "convex/react";
 import { useEventListener } from "expo";
 import { useRouter, useSegments } from "expo-router";
 import { useVideoPlayer, type VideoPlayer } from "expo-video";
@@ -22,7 +22,6 @@ import { useTranslation } from "react-i18next";
 
 import { PauseGlyph, PlayGlyph, ReplayGlyph } from "../../components/media/player-icons";
 import { useTabBarSpace } from "../../components/navigation/app-tab-bar";
-import { api } from "../../../convex/_generated/api";
 import { useIsMember } from "../membership/use-is-member";
 import { useResponsive } from "../responsive/use-responsive";
 import { fontFamilies } from "../theme/fonts";
@@ -34,16 +33,9 @@ import {
   NULL_PLAYBACK_ENGINE,
   type VideoPlaybackState,
 } from "./playback-engine";
+import { MIN_RESUMABLE_SECONDS } from "./playback-progress";
+import { usePlaybackProgress } from "./use-playback-progress";
 import { VideoPipHost } from "./video-pip-host";
-import {
-  clearPlaybackProgress,
-  loadPlaybackProgress,
-  MIN_RESUMABLE_SECONDS,
-  resolvePreferredProgress,
-  resolveProgressAction,
-  resolveResumeTarget,
-  savePlaybackProgress,
-} from "./playback-progress";
 
 export const PERSISTENT_MEDIA_PLAYER_HEIGHT = 64;
 const PERSISTENT_MEDIA_PLAYER_GAP = 8;
@@ -172,10 +164,9 @@ export function PersistentMediaPlayerProvider({
   const pendingResumeRef = useRef<{ contentId: string; seconds: number } | null>(
     null,
   );
-  const resumeSeedRef = useRef<{ contentId: string; seconds: number | null } | null>(
-    null,
-  );
-  const lastSavedProgressRef = useRef(0);
+  // Tracks the last resume target we already applied (keyed `contentId:target`)
+  // so we apply it once, yet re-apply if the remote value shifts it later.
+  const appliedResumeRef = useRef<string | null>(null);
   // User's *intent* to play, toggled only by explicit play/pause actions — not
   // by iOS's transient pauses during the PiP-stop transition. Read by
   // <VideoPipHost> to re-assert playback when returning to the player.
@@ -188,12 +179,6 @@ export function PersistentMediaPlayerProvider({
     createAudioPlayer(null, { updateInterval: 250 }),
   );
   const canSyncRemoteProgress = isAuthenticated && isMember;
-  const saveRemotePlaybackProgress = useMutation(
-    api.playbackProgress.mutations.saveMyPlaybackProgress,
-  );
-  const clearRemotePlaybackProgress = useMutation(
-    api.playbackProgress.mutations.clearMyPlaybackProgress,
-  );
   const audioStatus = useAudioPlayerStatus(audioPlayer);
   const hostedVideoSession =
     activeSession?.kind === "hostedVideo"
@@ -206,12 +191,6 @@ export function PersistentMediaPlayerProvider({
         }
       : null;
   const videoPlayer = useVideoPlayer(hostedVideoSession);
-  const remotePlaybackProgress = useQuery(
-    api.playbackProgress.queries.getMyPlaybackProgress,
-    canSyncRemoteProgress && activeSession
-      ? { contentId: activeSession.contentId as never }
-      : "skip",
-  );
 
   useEffect(() => {
     void setAudioModeAsync(audioModeConfig);
@@ -345,6 +324,16 @@ export function PersistentMediaPlayerProvider({
     engine.justFinished ||
     (durationSeconds > 0 && currentTimeSeconds >= durationSeconds);
 
+  // PlaybackProgress: reconciles local + remote into a resume target and
+  // persists progress. We only *apply* the target (below); the hook owns the
+  // data, never the players.
+  const { preferredResumeSeconds, saveFinal } = usePlaybackProgress({
+    contentId: activeSession?.contentId ?? null,
+    durationSeconds,
+    currentSeconds: currentTimeSeconds,
+    canSyncRemote: canSyncRemoteProgress,
+  });
+
   const disableAudioLockScreen = () => {
     safelyReleasePlayer(
       () => audioPlayer.clearLockScreenControls(),
@@ -375,102 +364,47 @@ export function PersistentMediaPlayerProvider({
     }
   }, [activeSession, audioPlayer, audioStatus.isLoaded]);
 
+  // Apply the resume target (from usePlaybackProgress) to whichever engine is
+  // active. It can change once the remote value settles, so we key on the
+  // target to apply each distinct value once. If the player has not loaded yet,
+  // pendingResumeRef hands off to the on-load handlers (audio: effect below;
+  // video: the sourceLoad listener).
   useEffect(() => {
-    if (!activeSession || !resumeSeedRef.current || remotePlaybackProgress === undefined) {
+    if (!activeSession || preferredResumeSeconds === null) {
       return;
     }
 
-    const currentSeed = resumeSeedRef.current;
-    if (currentSeed.contentId !== activeSession.contentId) {
+    const target = preferredResumeSeconds;
+    const key = `${activeSession.contentId}:${target}`;
+    pendingResumeRef.current = { contentId: activeSession.contentId, seconds: target };
+
+    if (appliedResumeRef.current === key) {
       return;
     }
-
-    const mergedSeconds = resolvePreferredProgress(
-      currentSeed.seconds,
-      remotePlaybackProgress?.seconds ?? null,
-    );
-    const nextResumeTarget = resolveResumeTarget(
-      mergedSeconds,
-      activeSession.durationSeconds,
-    );
-
-    if (nextResumeTarget === currentSeed.seconds) {
-      return;
-    }
-
-    resumeSeedRef.current = {
-      contentId: activeSession.contentId,
-      seconds: nextResumeTarget,
-    };
-    lastSavedProgressRef.current = nextResumeTarget ?? 0;
-    pendingResumeRef.current =
-      nextResumeTarget !== null
-        ? { contentId: activeSession.contentId, seconds: nextResumeTarget }
-        : null;
-
-    if (nextResumeTarget === null || nextResumeTarget <= currentTimeSeconds + 1) {
+    if (target <= currentTimeSeconds + 1) {
+      appliedResumeRef.current = key;
       return;
     }
 
     if (activeSession.kind === "episode") {
       if (audioStatus.isLoaded) {
+        appliedResumeRef.current = key;
         pendingResumeRef.current = null;
-        void audioPlayer.seekTo(nextResumeTarget);
+        void audioPlayer.seekTo(target);
       }
       return;
     }
 
-    (videoPlayer as { currentTime?: number }).currentTime = nextResumeTarget;
-    setVideoState((current) => ({
-      ...current,
-      currentTimeSeconds: nextResumeTarget,
-    }));
+    appliedResumeRef.current = key;
+    (videoPlayer as { currentTime?: number }).currentTime = target;
+    setVideoState((current) => ({ ...current, currentTimeSeconds: target }));
   }, [
     activeSession,
     audioPlayer,
     audioStatus.isLoaded,
     currentTimeSeconds,
-    remotePlaybackProgress,
+    preferredResumeSeconds,
     videoPlayer,
-  ]);
-
-  // Persist playback progress (throttled), and clear it near the end so a
-  // finished item starts over next time. Applies to both audio episodes and
-  // hosted video so each resumes where it was left off.
-  useEffect(() => {
-    if (!activeSession) {
-      return;
-    }
-
-    const { contentId } = activeSession;
-    const action = resolveProgressAction({
-      currentSeconds: currentTimeSeconds,
-      durationSeconds,
-      lastSavedSeconds: lastSavedProgressRef.current,
-    });
-
-    if (action.type === "clear") {
-      void clearPlaybackProgress(contentId);
-      if (canSyncRemoteProgress) {
-        void clearRemotePlaybackProgress({ contentId: contentId as never });
-      }
-    } else if (action.type === "save") {
-      lastSavedProgressRef.current = action.seconds;
-      void savePlaybackProgress(contentId, action.seconds);
-      if (canSyncRemoteProgress) {
-        void saveRemotePlaybackProgress({
-          contentId: contentId as never,
-          seconds: action.seconds,
-        });
-      }
-    }
-  }, [
-    activeSession,
-    canSyncRemoteProgress,
-    clearRemotePlaybackProgress,
-    currentTimeSeconds,
-    durationSeconds,
-    saveRemotePlaybackProgress,
   ]);
 
   const playEpisode = async (track: EpisodeTrack) => {
@@ -484,20 +418,6 @@ export function PersistentMediaPlayerProvider({
         () => videoPlayer.pause(),
         "Failed to pause hosted video player",
       );
-
-      // Resolve the saved listening position before building the player so we
-      // can resume once the source is loaded.
-      const savedSeconds = await loadPlaybackProgress(track.contentId);
-      const resumeTarget = resolveResumeTarget(savedSeconds, track.durationSeconds);
-      resumeSeedRef.current = {
-        contentId: track.contentId,
-        seconds: resumeTarget,
-      };
-      pendingResumeRef.current =
-        resumeTarget !== null
-          ? { contentId: track.contentId, seconds: resumeTarget }
-          : null;
-      lastSavedProgressRef.current = resumeTarget ?? 0;
 
       // Build the player with the source already attached so it loads at
       // construction, then play immediately. This is the proven pattern; a
@@ -555,20 +475,6 @@ export function PersistentMediaPlayerProvider({
     if (!isSameTrack) {
       safelyReleasePlayer(() => audioPlayer.pause(), "Failed to pause audio player");
       disableAudioLockScreen();
-
-      // Resolve the saved position before the source loads; applied on the
-      // `sourceLoad` event below (seeking earlier is unreliable on native).
-      const savedSeconds = await loadPlaybackProgress(track.contentId);
-      const resumeTarget = resolveResumeTarget(savedSeconds, track.durationSeconds);
-      resumeSeedRef.current = {
-        contentId: track.contentId,
-        seconds: resumeTarget,
-      };
-      pendingResumeRef.current =
-        resumeTarget !== null
-          ? { contentId: track.contentId, seconds: resumeTarget }
-          : null;
-      lastSavedProgressRef.current = resumeTarget ?? 0;
 
       const nextSession: ActiveMediaSession = { kind: "hostedVideo", ...track };
       activeSessionRef.current = nextSession;
@@ -648,22 +554,12 @@ export function PersistentMediaPlayerProvider({
 
     // Persist the final position so the next open resumes here — same rule for
     // audio and hosted video.
-    if (
-      closing &&
-      currentTimeSeconds >= MIN_RESUMABLE_SECONDS &&
-      !hasFinished
-    ) {
-      void savePlaybackProgress(closing.contentId, currentTimeSeconds);
-      if (canSyncRemoteProgress) {
-        void saveRemotePlaybackProgress({
-          contentId: closing.contentId as never,
-          seconds: currentTimeSeconds,
-        });
-      }
+    if (closing && currentTimeSeconds >= MIN_RESUMABLE_SECONDS && !hasFinished) {
+      saveFinal(currentTimeSeconds);
     }
 
     activeSessionRef.current = null;
-    resumeSeedRef.current = null;
+    appliedResumeRef.current = null;
     setActiveSession(null);
   };
 

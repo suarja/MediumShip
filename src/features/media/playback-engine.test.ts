@@ -1,3 +1,5 @@
+import type { Dispatch, SetStateAction } from "react";
+
 import {
   createAudioPlaybackEngine,
   createVideoPlaybackEngine,
@@ -59,14 +61,18 @@ describe("createVideoPlaybackEngine", () => {
       play: () => {},
       pause: () => {},
     };
-    let next: VideoPlaybackState | null = null;
+    let next: VideoPlaybackState | undefined;
+    const setState: Dispatch<SetStateAction<VideoPlaybackState>> = (updater) => {
+      next =
+        typeof updater === "function"
+          ? (updater as (c: VideoPlaybackState) => VideoPlaybackState)(state)
+          : updater;
+    };
 
     const engine = createVideoPlaybackEngine({
       player: player as never,
       state,
-      setState: ((fn: (c: VideoPlaybackState) => VideoPlaybackState) => {
-        next = fn(state);
-      }) as never,
+      setState,
       fallbackDuration: 120,
     });
 

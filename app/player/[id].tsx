@@ -66,6 +66,10 @@ export default function PlayerScreen() {
   const [progressTrackWidth, setProgressTrackWidth] = useState(0);
   const [scrubPreviewTime, setScrubPreviewTime] = useState<number | null>(null);
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  // Set when the user explicitly closes (×): clearing the session would
+  // otherwise re-trigger the autoplay effect below and resume playback while we
+  // navigate away.
+  const isClosingRef = useRef(false);
 
   const { isMember } = useIsMember();
 
@@ -83,7 +87,7 @@ export default function PlayerScreen() {
     : false;
 
   useEffect(() => {
-    if (!resolvedContent) {
+    if (!resolvedContent || isClosingRef.current) {
       return;
     }
 
@@ -399,7 +403,10 @@ export default function PlayerScreen() {
           accessibilityRole="button"
           onPress={() => {
             // Close (×) ends the session — no Picture-in-Picture. (↓ minimises:
-            // it just navigates back, so a playing video floats into PiP.)
+            // it just navigates back, so a playing video floats into PiP.) The
+            // closing flag stops the autoplay effect from resuming playback when
+            // the session is cleared while this screen is still mounted.
+            isClosingRef.current = true;
             closePlayer();
             router.back();
           }}

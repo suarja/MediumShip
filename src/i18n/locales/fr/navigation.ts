@@ -1,6 +1,6 @@
 export default {
   home: "Accueil",
-  premium: "Premium",
+  explore: "Explorer",
+  library: "Bibliotheque",
   profile: "Profil",
-  settings: "Réglages",
 } as const;

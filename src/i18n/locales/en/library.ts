@@ -1,4 +1,19 @@
 export default {
+  screen: {
+    title: "Library",
+    guestTitle: "Your library, everywhere",
+    guestBody:
+      "Sign in to save content, sync progress, and gather offline items in one place.",
+    signedInTitle: "Library",
+    signedInBody:
+      "Saved items, resume state, offline, and personal lists move here in the next slice.",
+    sections: {
+      resume: "Resume",
+      saved: "Saved",
+      lists: "Lists",
+      offline: "Offline",
+    },
+  },
   kinds: {
     article: "Article",
     episode: "Episode",

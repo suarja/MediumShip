@@ -1,4 +1,19 @@
 export default {
+  screen: {
+    title: "Bibliotheque",
+    guestTitle: "Votre bibliotheque, partout",
+    guestBody:
+      "Connectez-vous pour enregistrer des contenus, synchroniser la progression et reunir vos contenus hors ligne au meme endroit.",
+    signedInTitle: "Bibliotheque",
+    signedInBody:
+      "Les enregistrements, la reprise, le hors ligne et les listes personnelles arrivent ici dans la prochaine slice.",
+    sections: {
+      resume: "Reprendre",
+      saved: "Enregistres",
+      lists: "Listes",
+      offline: "Hors ligne",
+    },
+  },
   kinds: {
     article: "Article",
     episode: "Episode",

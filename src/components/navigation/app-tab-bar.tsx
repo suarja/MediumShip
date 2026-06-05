@@ -8,9 +8,9 @@ import { useAppTheme } from "../../features/theme/theme-provider";
 
 const TAB_META: Record<string, { icon: string; labelKey: string }> = {
   home: { icon: "◉", labelKey: "home" },
-  premium: { icon: "✦", labelKey: "premium" },
+  explore: { icon: "⌕", labelKey: "explore" },
+  library: { icon: "▤", labelKey: "library" },
   profile: { icon: "○", labelKey: "profile" },
-  settings: { icon: "☰", labelKey: "settings" },
 };
 
 const PILL_HEIGHT = 72;
@@ -36,6 +36,11 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
   const { t } = useTranslation("navigation");
   const { theme } = useAppTheme();
   const insets = useSafeAreaInsets();
+  const visibleRoutes = state.routes.filter((route) => {
+    const href = (descriptors[route.key]?.options as { href?: string | null } | undefined)
+      ?.href;
+    return href !== null;
+  });
 
   return (
     <View
@@ -56,8 +61,9 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
           },
         ]}
       >
-        {state.routes.map((route, index) => {
-          const isFocused = state.index === index;
+        {visibleRoutes.map((route) => {
+          const isFocused =
+            state.index === state.routes.findIndex((item) => item.key === route.key);
           const meta = TAB_META[route.name] ?? { icon: "•", labelKey: route.name };
 
           const onPress = () => {

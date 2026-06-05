@@ -789,11 +789,12 @@ export function PersistentMediaPlayerProvider({
   return (
     <PersistentMediaPlayerContext.Provider value={value}>
       {children}
-      {/* PiP host: mounted ONLY while away from the player, so it never competes
-          with the player screen's own inline VideoView for the shared player
-          (two live views of one player make one show a crossed-out "not
-          playable"). Unmounting it on return also stops PiP. */}
-      {!onPlayerRoute && activeSession?.kind === "hostedVideo" && videoPlayer ? (
+      {/* PiP host: always mounted for a hosted-video session so PiP survives
+          navigation and can be stopped on return (effect 1). Two live views of
+          one player are fine on real devices; only the iOS simulator mis-renders
+          this (crossed-out "not playable"), which we accept since PiP itself is
+          device-only. */}
+      {activeSession?.kind === "hostedVideo" && videoPlayer ? (
         <View pointerEvents="none" style={styles.pipHostOffscreen}>
           <VideoView
             allowsPictureInPicture

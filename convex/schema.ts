@@ -216,4 +216,40 @@ export default defineSchema({
   })
     .index("by_listId_and_position", ["listId", "position"])
     .index("by_listId_and_contentId", ["listId", "contentId"]),
+  contentInteractions: defineTable({
+    tokenIdentifier: v.string(),
+    tenantSlug: v.string(),
+    contentId: v.id("contents"),
+    type: v.union(
+      v.literal("view"),
+      v.literal("open"),
+      v.literal("skip"),
+      v.literal("like"),
+      v.literal("finish"),
+      v.literal("share"),
+      v.literal("hide"),
+    ),
+    createdAt: v.number(),
+  })
+    .index("by_tokenIdentifier_and_contentId", ["tokenIdentifier", "contentId"])
+    .index("by_tokenIdentifier_and_type", ["tokenIdentifier", "type"])
+    .index("by_contentId", ["contentId"]),
+  userPreferences: defineTable({
+    tokenIdentifier: v.string(),
+    tenantSlug: v.string(),
+    targetType: v.union(
+      v.literal("category"),
+      v.literal("tag"),
+      v.literal("contentType"),
+    ),
+    targetId: v.string(),
+    score: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_tokenIdentifier_and_target", [
+      "tokenIdentifier",
+      "targetType",
+      "targetId",
+    ])
+    .index("by_tokenIdentifier", ["tokenIdentifier"]),
 });

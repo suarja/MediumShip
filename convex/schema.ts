@@ -52,6 +52,7 @@ export default defineSchema({
         }),
       ),
     ),
+    discoverySeedCategories: v.optional(v.array(v.string())),
   }).index("by_slug", ["slug"]),
   contents: defineTable({
     tenantSlug: v.string(),
@@ -91,8 +92,18 @@ export default defineSchema({
         }),
       ),
     ),
+    source: v.optional(
+      v.union(v.literal("cms"), v.literal("wikipedia")),
+    ),
+    externalId: v.optional(v.string()),
+    canonicalUrl: v.optional(v.string()),
   })
     .index("by_tenant_and_status", ["tenantSlug", "status"])
+    .index("by_tenant_source_external", [
+      "tenantSlug",
+      "source",
+      "externalId",
+    ])
     .index("by_tenant_and_status_and_category", ["tenantSlug", "status", "category"])
     .index("by_tenant_and_kind", ["tenantSlug", "kind"])
     .index("by_tenantSlug", ["tenantSlug"])

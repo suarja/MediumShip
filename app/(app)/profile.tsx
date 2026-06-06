@@ -23,6 +23,7 @@ import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
 import { useBookmarks } from "../../src/features/bookmarks/use-bookmarks";
 import { useDownloads } from "../../src/features/downloads/use-downloads";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
+import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
@@ -60,6 +61,7 @@ function ProfileDashboard() {
   const me = useQuery(api.users.queries.getMe, isAuthenticated ? {} : "skip");
   const { bookmarks, isMember } = useBookmarks();
   const { downloads } = useDownloads({ enabled: isSignedIn && isMember });
+  const { openPaywall } = usePaywallSheet();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -115,6 +117,7 @@ function ProfileDashboard() {
               onSignOut={() => {
                 void signOut();
               }}
+              onGoPremium={() => openPaywall("support")}
             />
           </>
         ) : (
@@ -156,7 +159,7 @@ function ProfileDashboard() {
               <Text style={[styles.noteBody, { color: theme.colors.textMuted }]}>
                 {t("guestNote")}
               </Text>
-              <View style={styles.noteButtonWrap}>
+              <View style={[styles.noteButtonWrap, { gap: theme.spacing.sm * scaleSpace }]}>
                 <Link href="/sign-in" asChild>
                   <Pressable
                     accessibilityRole="link"
@@ -183,6 +186,31 @@ function ProfileDashboard() {
                     </View>
                   </Pressable>
                 </Link>
+                <Pressable
+                  testID="profile-discover-premium-button"
+                  accessibilityRole="button"
+                  onPress={() => openPaywall("support")}
+                  style={({ pressed }) => [pressed && styles.pressed]}
+                >
+                  <View
+                    style={[
+                      styles.noteButton,
+                      {
+                        borderRadius: theme.radii.pill,
+                        backgroundColor: theme.colors.premium,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.noteButtonLabel,
+                        { color: theme.colors.canvas },
+                      ]}
+                    >
+                      {t("discoverPremium")}
+                    </Text>
+                  </View>
+                </Pressable>
               </View>
             </View>
           </>

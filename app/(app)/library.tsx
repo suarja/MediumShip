@@ -9,6 +9,7 @@ import { SavedLibrarySection } from "../../src/components/library/saved-library-
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
+import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
@@ -24,6 +25,7 @@ export default function LibraryScreen() {
   const { scaleFont, scaleSpace } = useResponsive();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
+  const { openPaywall } = usePaywallSheet();
 
   if (!isSignedIn) {
     return (
@@ -255,10 +257,16 @@ export default function LibraryScreen() {
             label={t("library:screen.sections.lists")}
             meta={t("library:screen.listsMeta")}
           />
-          <PlaceholderCard
-            body={t("library:screen.listsBody")}
-            title={t("library:screen.listsTitle")}
-          />
+          <Pressable
+            onPress={() => openPaywall("lists")}
+            style={({ pressed }) => [pressed && styles.buttonPressed]}
+            accessibilityRole="button"
+          >
+            <PlaceholderCard
+              body={t("library:screen.listsBody")}
+              title={t("library:screen.listsTitle")}
+            />
+          </Pressable>
         </View>
 
         <View style={styles.sectionBlock}>

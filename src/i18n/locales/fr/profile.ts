@@ -19,6 +19,7 @@ export default {
   heroChipDownloaded_one: "{{count}} hors ligne",
   heroChipDownloaded_other: "{{count}} hors ligne",
   createAccount: "Creer un compte",
+  discoverPremium: "Decouvrir Premium",
   guestNote:
     "Votre profil se concentre maintenant sur l'identite, le statut du compte et les reglages. Les contenus enregistres et hors ligne vivent dans Bibliotheque.",
   status: {

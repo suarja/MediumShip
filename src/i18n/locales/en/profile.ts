@@ -19,6 +19,7 @@ export default {
   heroChipDownloaded_one: "{{count}} offline",
   heroChipDownloaded_other: "{{count}} offline",
   createAccount: "Create an account",
+  discoverPremium: "Discover Premium",
   guestNote:
     "Your profile now focuses on identity, account state, and settings. Saved items and offline copies live in Library.",
   status: {

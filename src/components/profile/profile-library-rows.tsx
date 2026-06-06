@@ -17,6 +17,7 @@ type ProfileLibraryRowsProps = {
   savedCount: number;
   downloadCount: number;
   onSignOut: () => void;
+  onGoPremium?: () => void;
 };
 
 /**
@@ -29,6 +30,7 @@ export function ProfileLibraryRows({
   savedCount,
   downloadCount,
   onSignOut,
+  onGoPremium,
 }: ProfileLibraryRowsProps) {
   const { t } = useTranslation("profile");
   const { theme } = useAppTheme();
@@ -91,7 +93,7 @@ export function ProfileLibraryRows({
             icon="star-outline"
             title={t("rows.goPremium.title")}
             subtitle={t("rows.goPremium.sub")}
-            onPress={() => router.push("/premium")}
+            onPress={onGoPremium ?? (() => router.push("/premium"))}
           />
         )}
         <ProfileRow

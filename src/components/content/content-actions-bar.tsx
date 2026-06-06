@@ -8,6 +8,7 @@ import type { ContentDoc } from "../../features/content/types";
 import { getDownloadSupport } from "../../features/downloads/model";
 import { useDownloads } from "../../features/downloads/use-downloads";
 import { useClerkAuth } from "../../features/auth/use-clerk-auth";
+import { usePaywallSheet } from "../../features/paywall/paywall-sheet-provider";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
@@ -34,6 +35,7 @@ export function ContentActionsBar({ content }: { content: ContentDoc }) {
     contentId: content._id,
     enabled: isSignedIn && isMember,
   });
+  const { openPaywall } = usePaywallSheet();
 
   const isSaved = bookmarks.some((bookmark) => bookmark.content._id === content._id);
   const downloadSupport = getDownloadSupport(content);
@@ -70,9 +72,22 @@ export function ContentActionsBar({ content }: { content: ContentDoc }) {
   );
 
   if (!isMember) {
+    const downloadSupport = getDownloadSupport(content);
+    const canDownload = downloadSupport.kind !== "unsupported";
     return (
       <View style={[styles.stack, { gap: theme.spacing.sm * scaleSpace }]}>
-        {bookmarkAction}
+        <View style={[styles.row, { gap: theme.spacing.sm * scaleSpace }]}>
+          {bookmarkAction}
+          {canDownload && (
+            <ActionCard
+              body={t("download.downloadHint")}
+              ctaLabel={t("download.downloadCta")}
+              iconName="download-outline"
+              onPress={() => openPaywall("offline")}
+              tone="accent"
+            />
+          )}
+        </View>
         <MembershipActionCard
           body={t("actions.memberHint")}
           ctaHref="/premium"

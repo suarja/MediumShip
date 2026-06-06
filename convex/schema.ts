@@ -139,6 +139,16 @@ export default defineSchema({
   })
     .index("by_tenant_and_status", ["tenantSlug", "status"])
     .index("by_tenantSlug_and_slug", ["tenantSlug", "slug"]),
+  categories: defineTable({
+    tenantSlug: v.string(),
+    label: v.string(),
+    slug: v.string(),
+    iconKey: v.string(),
+    sortOrder: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_tenantSlug", ["tenantSlug"])
+    .index("by_tenantSlug_and_slug", ["tenantSlug", "slug"]),
   collectionItems: defineTable({
     tenantSlug: v.string(),
     collectionId: v.id("collections"),

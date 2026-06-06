@@ -1,11 +1,30 @@
-const PRESENTATION_RULES = [
-  { normalizedKey: "analyses", matches: ["analyse", "analysis"], icon: "✎" },
-  { normalizedKey: "podcasts", matches: ["podcast", "episode", "audio"], icon: "▷" },
-  { normalizedKey: "videos", matches: ["video", "debat", "debate"], icon: "▶" },
-  { normalizedKey: "agenda", matches: ["agenda", "event"], icon: "☷" },
-  { normalizedKey: "collections", matches: ["collection", "serie", "series"], icon: "◆" },
-  { normalizedKey: "community", matches: ["community", "communaute", "discord"], icon: "✦" },
-] as const;
+import {
+  getCategoryIconGlyph,
+  type CategoryIconKey,
+} from "./category-icon-catalog";
+
+const PRESENTATION_RULES: ReadonlyArray<{
+  normalizedKey: CategoryIconKey;
+  matches: readonly string[];
+}> = [
+  { normalizedKey: "analyses", matches: ["analyse", "analysis"] },
+  { normalizedKey: "podcasts", matches: ["podcast", "episode", "audio"] },
+  { normalizedKey: "videos", matches: ["video", "debat", "debate"] },
+  { normalizedKey: "agenda", matches: ["agenda", "event"] },
+  { normalizedKey: "collections", matches: ["collection", "serie", "series"] },
+  { normalizedKey: "community", matches: ["community", "communaute", "discord"] },
+  { normalizedKey: "news", matches: ["actualite", "news"] },
+  { normalizedKey: "economy", matches: ["economie", "economy"] },
+  { normalizedKey: "culture", matches: ["culture"] },
+  { normalizedKey: "library", matches: ["bibliotheque", "library"] },
+  { normalizedKey: "debate", matches: ["debat", "debate"] },
+  { normalizedKey: "film", matches: ["film", "cinema"] },
+  { normalizedKey: "interview", matches: ["entretien", "interview"] },
+  { normalizedKey: "education", matches: ["education", "ecole", "school"] },
+  { normalizedKey: "politics", matches: ["politique", "politics"] },
+  { normalizedKey: "society", matches: ["societe", "society"] },
+  { normalizedKey: "science", matches: ["science", "recherche", "research"] },
+];
 
 export function normalizeCategoryKey(label: string): string {
   return label
@@ -28,6 +47,6 @@ export function getCategoryPresentation(label: string): {
 
   return {
     normalizedKey: rule?.normalizedKey ?? normalized,
-    icon: rule?.icon ?? "◉",
+    icon: getCategoryIconGlyph(rule?.normalizedKey ?? "default"),
   };
 }

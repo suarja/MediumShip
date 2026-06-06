@@ -5,6 +5,7 @@ import { startTransition } from "react";
 
 export const CMS_TABS = [
   "contents",
+  "categories",
   "collections",
   "events",
   "tenant",
@@ -20,6 +21,7 @@ const NAV_ITEMS: ReadonlyArray<{
   value: CmsTab;
 }> = [
   { icon: "◇", label: "Contenus", value: "contents" },
+  { icon: "◎", label: "Catégories", value: "categories" },
   { icon: "▣", label: "Collections", value: "collections" },
   { icon: "◷", label: "Agenda", value: "events" },
   { icon: "⚙", label: "Tenant", value: "tenant" },

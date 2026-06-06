@@ -68,23 +68,3 @@ export const listPublishedByCategory = query({
   },
 });
 
-export const listPublishedCategories = query({
-  args: { tenantSlug: v.string() },
-  handler: async (ctx, args) => {
-    const contents = await ctx.db
-      .query("contents")
-      .withIndex("by_tenant_and_status", (q) =>
-        q.eq("tenantSlug", args.tenantSlug).eq("status", "published"),
-      )
-      .collect();
-
-    const counts = new Map<string, number>();
-    for (const c of contents) {
-      counts.set(c.category, (counts.get(c.category) ?? 0) + 1);
-    }
-
-    return Array.from(counts.entries())
-      .map(([category, count]) => ({ category, count }))
-      .sort((a, b) => b.count - a.count);
-  },
-});

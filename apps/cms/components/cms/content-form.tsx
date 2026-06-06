@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import type { Doc } from "../../../../convex/_generated/dataModel";
 import { extractYoutubeVideoId } from "../../../../convex/youtube/helpers";
+import { defaultTenant } from "../../../../src/features/tenant/default-tenant";
 import { collectContentUrlWarnings } from "../../lib/content-url-warnings";
 import { R2UploadField } from "./r2-upload-field";
 
@@ -158,6 +159,13 @@ function Field({
 }
 
 export function ContentForm({ selectedId }: ContentFormProps) {
+  const categoryRows = useQuery(api.categories.queries.listCategoryOptions, {
+    tenantSlug: defaultTenant.slug,
+  });
+  const categoryOptions =
+    categoryRows && categoryRows.length > 0
+      ? categoryRows
+      : CATEGORY_OPTIONS.map((label) => ({ label, icon: "◉", iconKey: "default" }));
   const content = useQuery(
     api.cms.queries.getContent,
     selectedId ? { id: selectedId as never } : "skip",
@@ -413,9 +421,9 @@ export function ContentForm({ selectedId }: ContentFormProps) {
               onChange={onTextChange("category")}
               value={state.category}
             >
-              {CATEGORY_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
+              {categoryOptions.map((option) => (
+                <option key={option.label} value={option.label}>
+                  {option.label}
                 </option>
               ))}
             </select>

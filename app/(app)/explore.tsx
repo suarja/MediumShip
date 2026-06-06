@@ -1,5 +1,5 @@
 import { Link, useRouter } from "expo-router";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -15,7 +15,6 @@ import { useTranslation } from "react-i18next";
 import { FeedRow } from "../../src/components/content/feed-row";
 import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
-import { getCategoryPresentation } from "../../src/features/categories/category-presentation";
 import { useCategories } from "../../src/features/categories/use-categories";
 import type { ContentKind } from "../../src/features/content/types";
 import { toContentCardModel } from "../../src/features/content/selectors";
@@ -246,47 +245,49 @@ export default function ExploreScreen() {
           </View>
         ) : (
           <>
-            <SectionHeader label={t("categoriesTitle")} />
-            <View style={styles.grid}>
-              {categories.length > 0
-                ? categories.slice(0, 4).map((cat) => {
-                    const presentation = getCategoryPresentation(cat.category);
+            <ExploreSection>
+              <SectionHeader label={t("categoriesTitle")} />
+              <View style={styles.grid}>
+                {categories.length > 0
+                  ? categories.slice(0, 4).map((cat) => (
+                      <Pressable
+                        key={cat.category}
+                        style={({ pressed }) => [styles.gridCell, pressed && styles.pressed]}
+                        onPress={() =>
+                          router.push(`/category/${encodeURIComponent(cat.category)}` as never)
+                        }
+                        accessibilityRole="button"
+                      >
+                        <FeatureCard
+                          icon={cat.icon}
+                          meta={t("categoryCount_other", { count: cat.count }).toUpperCase()}
+                          title={cat.category}
+                        />
+                      </Pressable>
+                    ))
+                  : STATIC_CATEGORY_ITEMS.map((item) => (
+                      <Pressable
+                        key={item.key}
+                        style={({ pressed }) => [styles.gridCell, pressed && styles.pressed]}
+                        onPress={() =>
+                          router.push(
+                            `/category/${encodeURIComponent(t(`categories.${item.key}.title`))}` as never,
+                          )
+                        }
+                        accessibilityRole="button"
+                      >
+                        <FeatureCard
+                          icon={item.icon}
+                          meta={t(`categories.${item.key}.meta`)}
+                          title={t(`categories.${item.key}.title`)}
+                        />
+                      </Pressable>
+                    ))}
+              </View>
+            </ExploreSection>
 
-                    return (
-                    <Pressable
-                      key={cat.category}
-                      style={({ pressed }) => [styles.gridCell, pressed && styles.pressed]}
-                      onPress={() => router.push(`/category/${encodeURIComponent(cat.category)}` as never)}
-                      accessibilityRole="button"
-                    >
-                      <FeatureCard
-                        icon={presentation.icon}
-                        meta={t("categoryCount_other", { count: cat.count }).toUpperCase()}
-                        title={cat.category}
-                      />
-                    </Pressable>
-                    );
-                  })
-                : STATIC_CATEGORY_ITEMS.map((item) => (
-                    <Pressable
-                      key={item.key}
-                      style={({ pressed }) => [styles.gridCell, pressed && styles.pressed]}
-                      onPress={() =>
-                        router.push(`/category/${encodeURIComponent(t(`categories.${item.key}.title`))}` as never)
-                      }
-                      accessibilityRole="button"
-                    >
-                      <FeatureCard
-                        icon={item.icon}
-                        meta={t(`categories.${item.key}.meta`)}
-                        title={t(`categories.${item.key}.title`)}
-                      />
-                    </Pressable>
-                  ))}
-            </View>
-
-            {moduleItems.length > 0 && (
-              <>
+            {moduleItems.length > 0 ? (
+              <ExploreSection>
                 <SectionHeader label={t("modulesTitle")} />
                 <View style={styles.grid}>
                   {moduleItems.map((item) => (
@@ -304,10 +305,10 @@ export default function ExploreScreen() {
                     </Link>
                   ))}
                 </View>
-              </>
-            )}
+              </ExploreSection>
+            ) : null}
 
-            <View style={[styles.section, { gap: theme.spacing.sm * scaleSpace }]}>
+            <ExploreSection>
               <SectionHeader label={t("trendsTitle")} italic />
               <View style={[styles.trendRow, { gap: theme.spacing.sm * scaleSpace }]}>
                 {TREND_KEYS.map((key) => (
@@ -345,7 +346,7 @@ export default function ExploreScreen() {
                   </Pressable>
                 ))}
               </View>
-            </View>
+            </ExploreSection>
           </>
         )}
       </ScrollView>
@@ -358,6 +359,17 @@ const STATIC_CATEGORY_ITEMS = [
   { key: "podcasts", icon: "▷" },
   { key: "videos", icon: "▶" },
 ] as const;
+
+function ExploreSection({ children }: { children: ReactNode }) {
+  const { theme } = useAppTheme();
+  const { scaleSpace } = useResponsive();
+
+  return (
+    <View style={{ gap: (theme.spacing.sm / 2) * scaleSpace }}>
+      {children}
+    </View>
+  );
+}
 
 function SectionHeader({
   label,
@@ -535,10 +547,9 @@ const styles = StyleSheet.create({
   emptyLabel: {
     fontFamily: fontFamilies.body,
   },
-  section: {},
   sectionHeader: {
     paddingTop: 4,
-    paddingBottom: 12,
+    paddingBottom: 6,
   },
   sectionTitle: {
     fontFamily: fontFamilies.display,

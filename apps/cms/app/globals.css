@@ -2539,3 +2539,76 @@ a {
     grid-template-columns: 1fr;
   }
 }
+
+.sidebar__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.sidebar__title-row .sidebar__t {
+  margin-bottom: 0;
+}
+
+.btn--icon {
+  width: 34px;
+  min-width: 34px;
+  padding: 0;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.pill--kind {
+  min-width: 28px;
+  justify-content: center;
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.icon-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 8px;
+}
+
+.icon-picker__btn {
+  align-items: center;
+  background: var(--surface-2);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 8px;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.icon-picker__btn:hover,
+.icon-picker__btn.on {
+  background: #fffcf4;
+  border-color: var(--ink);
+}
+
+.icon-picker__glyph {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.icon-picker__label {
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.form-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 0 0 16px;
+}

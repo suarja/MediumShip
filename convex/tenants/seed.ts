@@ -261,6 +261,36 @@ export const seedDemoContent = mutation({
       }
     }
 
+    const demoCategories = [
+      { label: "Actualités", slug: "actualites", iconKey: "news", sortOrder: 0 },
+      { label: "Analyses", slug: "analyses", iconKey: "analyses", sortOrder: 1 },
+      { label: "Podcasts", slug: "podcasts", iconKey: "podcasts", sortOrder: 2 },
+      { label: "Agenda", slug: "agenda", iconKey: "agenda", sortOrder: 3 },
+      { label: "Bibliothèque", slug: "bibliotheque", iconKey: "library", sortOrder: 4 },
+      { label: "Économie", slug: "economie", iconKey: "economy", sortOrder: 5 },
+      { label: "Culture", slug: "culture", iconKey: "culture", sortOrder: 6 },
+    ] as const;
+
+    for (const category of demoCategories) {
+      const existingCategory = await ctx.db
+        .query("categories")
+        .withIndex("by_tenantSlug_and_slug", (q) =>
+          q.eq("tenantSlug", defaultTenant.slug).eq("slug", category.slug),
+        )
+        .unique();
+
+      if (!existingCategory) {
+        await ctx.db.insert("categories", {
+          tenantSlug: defaultTenant.slug,
+          label: category.label,
+          slug: category.slug,
+          iconKey: category.iconKey,
+          sortOrder: category.sortOrder,
+          updatedAt: Date.now(),
+        });
+      }
+    }
+
     // Seed demo collections + items
     for (const coll of demoCollections) {
       const existingColl = await ctx.db

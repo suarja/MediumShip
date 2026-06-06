@@ -300,8 +300,8 @@ function VideoControlBando({
 }: {
   onPrimaryPlay: () => void;
   playLabel: string;
-  scaleFont: (value: number) => number;
-  scaleSpace: (value: number) => number;
+  scaleFont: number;
+  scaleSpace: number;
   showPrimaryPlay: boolean;
 }) {
   const { theme } = useAppTheme();

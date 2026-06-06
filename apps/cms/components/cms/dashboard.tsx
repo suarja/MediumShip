@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import { AdminLoginShell } from "./admin-login-shell";
 import { AdminShell, isCmsTab, type CmsTab } from "./admin-shell";
+import { CategoriesTab } from "./categories-tab";
 import { CollectionsTab } from "./collections-tab";
 import { ContentsTab } from "./contents-tab";
 import { EventsTab } from "./events-tab";
@@ -18,10 +19,12 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
   const viewer = useQuery(api.cms.queries.getViewer, {});
   const bootstrapAdmin = useMutation(api.cms.mutations.bootstrapAdmin);
   const createContent = useMutation(api.cms.mutations.createContent);
+  const createCategory = useMutation(api.cms.categories.createCategory);
   const createCollection = useMutation(api.cms.collections.createCollection);
   const createEvent = useMutation(api.cms.events.createEvent);
   const [activeTab, setActiveTabState] = useState<CmsTab>(initialTab);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(
     null,
   );
@@ -29,6 +32,10 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
 
   const isAdmin = viewer?.isAdmin ?? false;
   const contents = useQuery(api.cms.queries.listContents, isAdmin ? {} : "skip");
+  const categories = useQuery(
+    api.cms.categories.listCmsCategories,
+    isAdmin ? {} : "skip",
+  );
   const collections = useQuery(
     api.cms.collections.listCmsCollections,
     isAdmin ? {} : "skip",
@@ -41,6 +48,12 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
       setSelectedId(contents[0]._id);
     }
   }, [contents, selectedId]);
+
+  useEffect(() => {
+    if (!selectedCategoryId && categories && categories.length > 0) {
+      setSelectedCategoryId(categories[0]._id);
+    }
+  }, [categories, selectedCategoryId]);
 
   useEffect(() => {
     if (!selectedCollectionId && collections && collections.length > 0) {
@@ -114,7 +127,7 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
             name={viewer.name}
             onTabChange={setActiveTab}
           >
-            {contents && collections && events && tenant ? (
+            {contents && categories && collections && events && tenant ? (
               activeTab === "contents" ? (
                 <ContentsTab
                   items={contents}
@@ -124,6 +137,20 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
                   }}
                   onSelect={setSelectedId}
                   selectedId={selectedId}
+                />
+              ) : activeTab === "categories" ? (
+                <CategoriesTab
+                  items={categories}
+                  onCreate={async () => {
+                    const id = await createCategory({
+                      label: "Sans titre",
+                      slug: "",
+                      iconKey: "default",
+                    });
+                    setSelectedCategoryId(id);
+                  }}
+                  onSelect={setSelectedCategoryId}
+                  selectedId={selectedCategoryId}
                 />
               ) : activeTab === "collections" ? (
                 <CollectionsTab

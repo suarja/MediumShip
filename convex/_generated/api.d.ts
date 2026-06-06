@@ -11,7 +11,10 @@
 import type * as bookmarks_model from "../bookmarks/model.js";
 import type * as bookmarks_mutations from "../bookmarks/mutations.js";
 import type * as bookmarks_queries from "../bookmarks/queries.js";
+import type * as categories_model from "../categories/model.js";
+import type * as categories_queries from "../categories/queries.js";
 import type * as cms_authz from "../cms/authz.js";
+import type * as cms_categories from "../cms/categories.js";
 import type * as cms_collections from "../cms/collections.js";
 import type * as cms_events from "../cms/events.js";
 import type * as cms_mutations from "../cms/mutations.js";
@@ -29,6 +32,7 @@ import type * as http from "../http.js";
 import type * as httpHandlers_clerkWebhook from "../httpHandlers/clerkWebhook.js";
 import type * as httpHandlers_svix from "../httpHandlers/svix.js";
 import type * as media_r2 from "../media/r2.js";
+import type * as personalLists_covers from "../personalLists/covers.js";
 import type * as personalLists_model from "../personalLists/model.js";
 import type * as personalLists_mutations from "../personalLists/mutations.js";
 import type * as personalLists_queries from "../personalLists/queries.js";
@@ -52,7 +56,10 @@ declare const fullApi: ApiFromModules<{
   "bookmarks/model": typeof bookmarks_model;
   "bookmarks/mutations": typeof bookmarks_mutations;
   "bookmarks/queries": typeof bookmarks_queries;
+  "categories/model": typeof categories_model;
+  "categories/queries": typeof categories_queries;
   "cms/authz": typeof cms_authz;
+  "cms/categories": typeof cms_categories;
   "cms/collections": typeof cms_collections;
   "cms/events": typeof cms_events;
   "cms/mutations": typeof cms_mutations;
@@ -70,6 +77,7 @@ declare const fullApi: ApiFromModules<{
   "httpHandlers/clerkWebhook": typeof httpHandlers_clerkWebhook;
   "httpHandlers/svix": typeof httpHandlers_svix;
   "media/r2": typeof media_r2;
+  "personalLists/covers": typeof personalLists_covers;
   "personalLists/model": typeof personalLists_model;
   "personalLists/mutations": typeof personalLists_mutations;
   "personalLists/queries": typeof personalLists_queries;

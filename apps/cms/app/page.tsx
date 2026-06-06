@@ -10,6 +10,7 @@ function resolveInitialTab(tab: string | undefined) {
   return tab === "tenant" ||
     tab === "preview" ||
     tab === "users" ||
+    tab === "categories" ||
     tab === "collections" ||
     tab === "events"
     ? tab

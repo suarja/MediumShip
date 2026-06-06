@@ -18,6 +18,16 @@ jest.mock("./src/features/auth/use-clerk-auth", () => ({
   }),
 }));
 
+// Default paywall sheet mock for component tests. Tests that want to assert on
+// openPaywall calls override this locally with their own jest.mock.
+jest.mock("./src/features/paywall/paywall-sheet-provider", () => ({
+  usePaywallSheet: () => ({
+    openPaywall: jest.fn(),
+    closePaywall: jest.fn(),
+  }),
+  PaywallSheetProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 jest.mock("expo-audio", () => ({
   createAudioPlayer: () => ({
     remove: jest.fn(),

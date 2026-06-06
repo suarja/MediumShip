@@ -1,11 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Keyboard,
-  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
@@ -65,17 +64,42 @@ export function ContentActionsSheet({
     api.content.queries.getPublishedById,
     visible && contentId ? { id: contentId } : "skip",
   );
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    if (!visible) {
+      setKeyboardHeight(0);
+      return;
+    }
+
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSub = Keyboard.addListener(showEvent, (event) => {
+      setKeyboardHeight(event.endCoordinates.height);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [visible]);
 
   if (!visible || !contentId) {
     return null;
   }
 
+  const sheetLift = keyboardHeight > 0 ? Math.max(0, keyboardHeight - insets.bottom) : 0;
+  const sheetPaddingBottom =
+    keyboardHeight > 0 ? 12 * scaleSpace : insets.bottom + 24 * scaleSpace;
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardRoot}
-      >
         <View style={[styles.backdrop, { backgroundColor: withAlpha(theme.colors.canvas, 0.72) }]}>
           <Pressable
             style={StyleSheet.absoluteFill}
@@ -90,7 +114,8 @@ export function ContentActionsSheet({
                 borderTopLeftRadius: theme.radii.xl,
                 borderTopRightRadius: theme.radii.xl,
                 borderColor: theme.colors.border,
-                paddingBottom: insets.bottom + 24 * scaleSpace,
+                marginBottom: sheetLift,
+                paddingBottom: sheetPaddingBottom,
                 alignSelf: "center",
                 width: maxWidth ?? "100%",
                 maxHeight: "78%",
@@ -144,7 +169,6 @@ export function ContentActionsSheet({
             </ScrollView>
           </View>
         </View>
-      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -570,10 +594,6 @@ function SheetActionRow({
 }
 
 const styles = StyleSheet.create({
-  keyboardRoot: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
   backdrop: {
     flex: 1,
     justifyContent: "flex-end",

@@ -1,4 +1,5 @@
 export default {
+  title: "Profile",
   eyebrow: "Your profile",
   guestTitle: "Create your profile.",
   guestName: "Guest reader",
@@ -20,9 +21,19 @@ export default {
   createAccount: "Create an account",
   guestNote:
     "Your profile now focuses on identity, account state, and settings. Saved items and offline copies live in Library.",
+  status: {
+    memberFree: "Member · Free",
+    memberPremium: "Member · Patron",
+  },
+  since: {
+    member: "Sync ready · since March 2024",
+    upgrade: "Free account · go Premium",
+  },
   stats: {
     savedLabel: "Saved",
     savedHint: "See Library",
+    offlineLabel: "Offline",
+    historyLabel: "History",
     downloadedLabel: "Downloaded",
     downloadedHint: "See Library",
     accessLabel: "Access",
@@ -33,9 +44,49 @@ export default {
     syncPending: "Local-only actions or guest session",
   },
   sections: {
+    myLibrary: "My library",
+    account: "Account",
     libraryTitle: "Saved library",
     librarySubtitle: "Quick access to the stories and episodes you want to keep close.",
     downloadsTitle: "Offline shelf",
     downloadsSubtitle: "Local copies with cover art, format context, and immediate offline access.",
+  },
+  rows: {
+    saved: {
+      title: "Saved items",
+      sub_one: "{{count}} item set aside",
+      sub_other: "{{count}} items set aside",
+    },
+    downloads: {
+      title: "Downloads",
+      subMember_one: "{{count}} episode offline",
+      subMember_other: "{{count}} episodes offline",
+      sub: "Members-only Premium",
+    },
+    lists: {
+      title: "My lists",
+      sub: "Unlimited with Premium",
+    },
+    history: {
+      title: "History & progress",
+      sub: "Resume synced across your devices",
+    },
+    subscription: {
+      title: "Subscription · Annual",
+      sub: "Renews 14 March 2027",
+    },
+    goPremium: {
+      title: "Go Premium",
+      sub: "Offline, unlimited lists, members lounge",
+    },
+    signOut: {
+      title: "Sign out",
+      sub: "Back to guest mode",
+    },
+  },
+  badges: {
+    free: "Free",
+    member: "Member",
+    premium: "Premium",
   },
 } as const;

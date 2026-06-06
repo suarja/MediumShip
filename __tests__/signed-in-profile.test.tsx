@@ -5,31 +5,31 @@ import ProfileScreen from "../app/(app)/profile";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
 jest.mock("convex/react", () => ({
-  useConvexAuth: () => ({ isAuthenticated: false }),
+  useConvexAuth: () => ({ isAuthenticated: true }),
   useMutation: () => jest.fn(),
-  useQuery: () => null,
+  useQuery: () => ({ name: "Camille Renard", avatarUrl: null }),
 }));
 
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: ReactNode }) => children,
-  useRouter: () => ({ push: jest.fn() }),
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
 }));
 
 jest.mock("../src/features/auth/use-clerk-auth", () => ({
   useClerkAuth: () => ({
     isLoaded: true,
-    isSignedIn: false,
-    userId: null,
-    user: null,
-    email: null,
-    fullName: null,
+    isSignedIn: true,
+    userId: "user_123",
+    user: { imageUrl: null },
+    email: "camille@example.com",
+    fullName: "Camille Renard",
     signOut: jest.fn(),
   }),
 }));
 
 jest.mock("../src/features/bookmarks/use-bookmarks", () => ({
   useBookmarks: () => ({
-    bookmarks: [],
+    bookmarks: [{ content: {}, createdAt: 1 }, { content: {}, createdAt: 2 }],
     isMember: false,
     isMembershipLoading: false,
   }),
@@ -47,7 +47,7 @@ jest.mock("../src/features/media/persistent-media-player", () => ({
   usePersistentMediaPlayerSpace: () => 0,
 }));
 
-describe("guest profile", () => {
+describe("signed-in profile", () => {
   beforeAll(async () => {
     await initI18n();
   });
@@ -56,16 +56,26 @@ describe("guest profile", () => {
     await changeAppLanguage("en");
   });
 
-  it("keeps the guest gate with the create-account CTA under a simple top bar", () => {
+  it("renders the identity, stat strip, and library rows from the mockup", () => {
     render(<ProfileScreen />);
 
+    // Top bar title + settings gear
     expect(screen.getByText("Profile")).toBeTruthy();
-    expect(screen.getAllByText("Create an account").length).toBeGreaterThan(0);
-    expect(screen.getByTestId("profile-create-account-button")).toBeTruthy();
+    expect(screen.getByTestId("profile-settings-button")).toBeTruthy();
 
-    // The banner-hero composition is gone for guests too.
+    // Identity name
+    expect(screen.getByText("Camille Renard")).toBeTruthy();
+
+    // Three compact stats
+    expect(screen.getByText("Saved")).toBeTruthy();
+    expect(screen.getByText("Offline")).toBeTruthy();
+    expect(screen.getByText("History")).toBeTruthy();
+
+    // "My library" nav rows
+    expect(screen.getByText("My library")).toBeTruthy();
+    expect(screen.getByText("Saved items")).toBeTruthy();
+
+    // The banner-hero composition is gone
     expect(screen.queryByText("Your profile")).toBeNull();
-    expect(screen.queryByText("Saved library")).toBeNull();
-    expect(screen.queryByText("Offline shelf")).toBeNull();
   });
 });

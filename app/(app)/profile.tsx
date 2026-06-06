@@ -14,14 +14,16 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import { Screen } from "../../src/components/layout/screen";
+import { ResumeCard } from "../../src/components/library/resume-card";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
-import { ProfileHero } from "../../src/components/profile/profile-hero";
-import { ProfileStatCards } from "../../src/components/profile/profile-stat-cards";
+import { ProfileIdentity } from "../../src/components/profile/profile-identity";
+import { ProfileLibraryRows } from "../../src/components/profile/profile-library-rows";
+import { ProfileStatStrip } from "../../src/components/profile/profile-stat-strip";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
 import { useBookmarks } from "../../src/features/bookmarks/use-bookmarks";
-import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import { useDownloads } from "../../src/features/downloads/use-downloads";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
+import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
@@ -48,14 +50,15 @@ export default function ProfileScreen() {
 
 function ProfileDashboard() {
   const { t } = useTranslation("profile");
-  const { isLoaded, isSignedIn, email, fullName, user } = useClerkAuth();
-  const { appIconUrl, tenantName, theme } = useAppTheme();
+  const { isSignedIn, email, fullName, user, signOut } = useClerkAuth();
+  const { theme } = useAppTheme();
+  const { scaleFont, scaleSpace } = useResponsive();
   const { isAuthenticated } = useConvexAuth();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
   const ensureCurrentUser = useMutation(api.users.mutations.ensureCurrentUser);
   const me = useQuery(api.users.queries.getMe, isAuthenticated ? {} : "skip");
-  const { bookmarks, isMember, isMembershipLoading } = useBookmarks();
+  const { bookmarks, isMember } = useBookmarks();
   const { downloads } = useDownloads({ enabled: isSignedIn && isMember });
 
   useEffect(() => {
@@ -66,40 +69,9 @@ function ProfileDashboard() {
 
   const savedCount = bookmarks.length;
   const downloadedCount = downloads.length;
-  const heroTitle =
-    fullName ?? me?.name ?? email ?? t("guestName");
-  const heroBio = !isSignedIn
-    ? t("guestBio")
-    : savedCount > 0 || downloadedCount > 0
-      ? t("memberBioActive")
-      : isMember
-        ? t("memberBio")
-        : t("signedInBio");
-  const heroMeta = !isSignedIn
-    ? t("heroMetaGuest")
-    : isMember
-      ? t("heroMetaMember")
-      : t("heroMetaSignedIn");
-  const avatarUrl = user?.imageUrl ?? me?.avatarUrl ?? appIconUrl ?? null;
-  const heroChips = [
-    { iconName: "library-outline" as const, label: tenantName },
-    {
-      iconName: savedCount > 0 ? ("bookmark" as const) : ("bookmark-outline" as const),
-      label: t("heroChipSaved", { count: savedCount }),
-    },
-    {
-      iconName:
-        downloadedCount > 0 ? ("download" as const) : ("download-outline" as const),
-      label: t("heroChipDownloaded", { count: downloadedCount }),
-    },
-  ];
-  const bannerImageUrl =
-    bookmarks[0]?.content
-      ? getContentCoverImageUrl(bookmarks[0].content)
-      : downloads[0]?.localCoverImagePath ??
-        (downloads[0]?.content ? getContentCoverImageUrl(downloads[0].content) : undefined) ??
-        user?.imageUrl ??
-        appIconUrl;
+  const historyCount = 0;
+  const name = fullName ?? me?.name ?? email ?? t("guestName");
+  const avatarUrl = user?.imageUrl ?? me?.avatarUrl ?? null;
 
   return (
     <Screen>
@@ -107,90 +79,114 @@ function ProfileDashboard() {
         contentContainerStyle={[
           styles.container,
           {
-            gap: 20,
+            gap: theme.spacing.lg * scaleSpace,
             paddingBottom: tabBarSpace + persistentPlayerSpace,
           },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <ProfileHero
-          avatarUrl={avatarUrl}
-          bannerImageUrl={bannerImageUrl}
-          bio={heroBio}
-          eyebrow={t("eyebrow")}
-          heroChips={heroChips}
-          meta={heroMeta}
-          tenantName={tenantName}
-          title={heroTitle}
-        />
+        {isSignedIn ? (
+          <>
+            <ProfileIdentity
+              title={t("title")}
+              name={name}
+              status={isMember ? t("status.memberPremium") : t("status.memberFree")}
+              since={isMember ? t("since.member") : t("since.upgrade")}
+              avatarUrl={avatarUrl}
+            />
 
-        <ProfileStatCards
-          downloadCount={downloadedCount}
-          isMember={isMember}
-          isSignedIn={isSignedIn}
-          isSynced={Boolean(isSignedIn && isAuthenticated && me && !isMembershipLoading)}
-          labels={{
-            saved: t("stats.savedLabel"),
-            savedHint: t("stats.savedHint"),
-            downloaded: t("stats.downloadedLabel"),
-            downloadedHint: t("stats.downloadedHint"),
-            access: t("stats.accessLabel"),
-            memberHint: t("stats.memberHint"),
-            guestHint: t("stats.guestHint"),
-            sync: t("stats.syncLabel"),
-            syncReady: t("stats.syncReady"),
-            syncPending: t("stats.syncPending"),
-          }}
-          savedCount={savedCount}
-        />
+            <ResumeCard />
 
-        {!isSignedIn ? (
-          <View
-            style={[
-              styles.noteCard,
-              {
-                borderRadius: theme.radii.xl,
-                borderColor: theme.colors.border,
-                backgroundColor: theme.colors.surface,
-              },
-            ]}
-          >
-            <Text style={[styles.noteTitle, { color: theme.colors.heading }]}>
-              {t("guestTitle")}
-            </Text>
-            <Text style={[styles.noteBody, { color: theme.colors.textMuted }]}>
-              {t("guestNote")}
-            </Text>
-            <View style={styles.noteButtonWrap}>
-              <Link href="/sign-in" asChild>
-                <Pressable
-                  accessibilityRole="link"
-                  style={({ pressed }) => [pressed && styles.pressed]}
-                >
-                  <View
-                    testID="profile-create-account-button"
-                    style={[
-                      styles.noteButton,
-                      {
-                        borderRadius: theme.radii.pill,
-                        backgroundColor: theme.colors.heading,
-                      },
-                    ]}
+            <ProfileStatStrip
+              savedCount={savedCount}
+              offlineCount={downloadedCount}
+              historyCount={historyCount}
+              labels={{
+                saved: t("stats.savedLabel"),
+                offline: t("stats.offlineLabel"),
+                history: t("stats.historyLabel"),
+              }}
+            />
+
+            <ProfileLibraryRows
+              isMember={isMember}
+              savedCount={savedCount}
+              downloadCount={downloadedCount}
+              onSignOut={() => {
+                void signOut();
+              }}
+            />
+          </>
+        ) : (
+          <>
+            <View
+              style={[
+                styles.topBar,
+                { marginHorizontal: -(theme.spacing.lg * scaleSpace) },
+              ]}
+            >
+              <View style={styles.topBarSide} />
+              <Text
+                style={[
+                  styles.topBarTitle,
+                  {
+                    color: theme.colors.heading,
+                    fontSize: 18 * scaleFont,
+                  },
+                ]}
+              >
+                {t("title")}
+              </Text>
+              <View style={styles.topBarSide} />
+            </View>
+
+            <View
+              style={[
+                styles.noteCard,
+                {
+                  borderRadius: theme.radii.xl,
+                  borderColor: theme.colors.border,
+                  backgroundColor: theme.colors.surface,
+                },
+              ]}
+            >
+              <Text style={[styles.noteTitle, { color: theme.colors.heading }]}>
+                {t("guestTitle")}
+              </Text>
+              <Text style={[styles.noteBody, { color: theme.colors.textMuted }]}>
+                {t("guestNote")}
+              </Text>
+              <View style={styles.noteButtonWrap}>
+                <Link href="/sign-in" asChild>
+                  <Pressable
+                    accessibilityRole="link"
+                    style={({ pressed }) => [pressed && styles.pressed]}
                   >
-                    <Text
+                    <View
+                      testID="profile-create-account-button"
                       style={[
-                        styles.noteButtonLabel,
-                        { color: theme.colors.canvas },
+                        styles.noteButton,
+                        {
+                          borderRadius: theme.radii.pill,
+                          backgroundColor: theme.colors.heading,
+                        },
                       ]}
                     >
-                      {t("createAccount")}
-                    </Text>
-                  </View>
-                </Pressable>
-              </Link>
+                      <Text
+                        style={[
+                          styles.noteButtonLabel,
+                          { color: theme.colors.canvas },
+                        ]}
+                      >
+                        {t("createAccount")}
+                      </Text>
+                    </View>
+                  </Pressable>
+                </Link>
+              </View>
             </View>
-          </View>
-        ) : null}
+          </>
+        )}
       </ScrollView>
     </Screen>
   );
@@ -209,6 +205,22 @@ const styles = StyleSheet.create({
   loadingLabel: {
     fontFamily: fontFamilies.body,
     fontSize: 14,
+  },
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
+  },
+  topBarSide: {
+    width: 34,
+    height: 34,
+  },
+  topBarTitle: {
+    fontFamily: fontFamilies.display,
+    letterSpacing: -0.2,
   },
   noteCard: {
     borderWidth: StyleSheet.hairlineWidth,

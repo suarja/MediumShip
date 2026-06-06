@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { Screen } from "../../src/components/layout/screen";
 import { DownloadedLibrarySection } from "../../src/components/library/downloaded-library-section";
+import { ResumeCard } from "../../src/components/library/resume-card";
 import { SavedLibrarySection } from "../../src/components/library/saved-library-section";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
@@ -242,95 +243,7 @@ export default function LibraryScreen() {
 
         <View style={styles.sectionBlockFirst}>
           <SectionHeader label={t("library:screen.sections.resume")} />
-          <View
-            style={[
-              styles.resumeCard,
-              {
-                borderRadius: theme.radii.lg,
-                backgroundColor: theme.colors.heading,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.resumeKicker,
-                {
-                  color: theme.colors.premium,
-                  fontSize: 8 * scaleFont,
-                },
-              ]}
-            >
-              {t("library:screen.resumeKicker")}
-            </Text>
-            <View style={styles.resumeRow}>
-              <View
-                style={[
-                  styles.resumeCover,
-                  {
-                    borderRadius: theme.radii.md,
-                    backgroundColor: theme.colors.accent,
-                  },
-                ]}
-              />
-              <View style={styles.resumeCopy}>
-                <Text
-                  style={[
-                    styles.resumeTitle,
-                    {
-                      color: theme.colors.canvas,
-                      fontSize: 14 * scaleFont,
-                    },
-                  ]}
-                >
-                  {t("library:screen.resumeTitle")}
-                </Text>
-                <Text
-                  style={[
-                    styles.resumeMeta,
-                    {
-                      color: withAlpha(theme.colors.canvas, 0.64),
-                      fontSize: 10 * scaleFont,
-                    },
-                  ]}
-                >
-                  {t("library:screen.resumeMeta")}
-                </Text>
-              </View>
-              <View
-                style={[
-                  styles.resumePlay,
-                  {
-                    backgroundColor: theme.colors.accent,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.resumePlayLabel,
-                    {
-                      color: theme.colors.accentContrast,
-                      fontSize: 8 * scaleFont,
-                    },
-                  ]}
-                >
-                  ▶
-                </Text>
-              </View>
-            </View>
-            <View
-              style={[
-                styles.resumeBar,
-                { backgroundColor: withAlpha(theme.colors.canvas, 0.16) },
-              ]}
-            >
-              <View
-                style={[
-                  styles.resumeProgress,
-                  { backgroundColor: theme.colors.accent },
-                ]}
-              />
-            </View>
-          </View>
+          <ResumeCard />
         </View>
 
         <View style={styles.sectionBlock}>
@@ -586,60 +499,6 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.mono,
     letterSpacing: 0.8,
     textTransform: "uppercase",
-  },
-  resumeCard: {
-    paddingHorizontal: 13,
-    paddingVertical: 12,
-    marginBottom: 2,
-  },
-  resumeKicker: {
-    fontFamily: fontFamilies.mono,
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    marginBottom: 8,
-  },
-  resumeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  resumeCover: {
-    width: 40,
-    height: 40,
-  },
-  resumeCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  resumeTitle: {
-    fontFamily: fontFamilies.display,
-    lineHeight: 16,
-  },
-  resumeMeta: {
-    fontFamily: fontFamilies.body,
-    lineHeight: 14,
-    marginTop: 2,
-  },
-  resumePlay: {
-    width: 24,
-    height: 24,
-    borderRadius: 999,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  resumePlayLabel: {
-    fontFamily: fontFamilies.bodyBold,
-  },
-  resumeBar: {
-    height: 3,
-    borderRadius: 999,
-    marginTop: 10,
-    overflow: "hidden",
-  },
-  resumeProgress: {
-    width: "62%",
-    height: "100%",
-    borderRadius: 999,
   },
   placeholderCard: {
     borderWidth: StyleSheet.hairlineWidth,

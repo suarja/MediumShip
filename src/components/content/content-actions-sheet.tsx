@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -200,9 +200,10 @@ function SheetBody({
   onSignIn: () => void;
   onOpenPaywall: (reason: "offline" | "lists") => void;
 }) {
-  const { t } = useTranslation(["lists", "library"]);
-  const { theme } = useAppTheme();
+  const { t } = useTranslation(["lists", "library", "discover"]);
+  const { theme, tenantSlug } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
+  const recordInteraction = useMutation(api.discovery.interactions.recordInteraction);
   const {
     bookmarks,
     toggleBookmark,
@@ -221,6 +222,7 @@ function SheetBody({
   const isSaved = bookmarks.some((bookmark) => bookmark.content._id === content._id);
   const downloadSupport = getDownloadSupport(content);
   const showGeneralActions = focus === "all";
+  const showDiscoveryActions = focus === "discovery";
 
   return (
     <View style={{ gap: 8 * scaleSpace }}>
@@ -248,7 +250,7 @@ function SheetBody({
         />
       ) : null}
 
-      {showGeneralActions && canOffline ? (
+      {(showGeneralActions || showDiscoveryActions) && canOffline ? (
         <SheetActionRow
           icon={
             downloadedItem
@@ -281,7 +283,27 @@ function SheetBody({
         />
       ) : null}
 
-      {showGeneralActions ? (
+      {showDiscoveryActions ? (
+        <SheetActionRow
+          testID="discover-hide-action"
+          icon="eye-off-outline"
+          label={t("discover:actions.notInterested")}
+          onPress={() => {
+            if (!isSignedIn) {
+              onSignIn();
+              return;
+            }
+            void recordInteraction({
+              tenantSlug,
+              contentId: content._id,
+              type: "hide",
+            });
+            onDismiss();
+          }}
+        />
+      ) : null}
+
+      {showGeneralActions || showDiscoveryActions ? (
         <Pressable
           accessibilityRole="button"
           onPress={onDismiss}
@@ -536,6 +558,7 @@ function SheetActionRow({
   loading = false,
   disabled = false,
   tone = "accent",
+  testID,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
@@ -544,6 +567,7 @@ function SheetActionRow({
   loading?: boolean;
   disabled?: boolean;
   tone?: "accent" | "premium";
+  testID?: string;
 }) {
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
@@ -553,6 +577,7 @@ function SheetActionRow({
     <Pressable
       accessibilityRole="button"
       disabled={disabled || loading}
+      testID={testID}
       onPress={onPress}
       style={({ pressed }) => [
         styles.actionRow,

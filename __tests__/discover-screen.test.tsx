@@ -263,4 +263,60 @@ describe("discover screen", () => {
       true,
     );
   });
+
+  it("wires the Favoris toggle without removing the card", () => {
+    render(<DiscoverScreen />);
+
+    fireEvent.press(screen.getAllByTestId("discover-favorite-button")[0]);
+
+    expect(mockToggleBookmark).toHaveBeenCalledWith({ contentId: "article-1" });
+    expect(screen.getByText("Economie du soin")).toBeTruthy();
+  });
+
+  it("renders the FR Favoris label on the inline bookmark control", () => {
+    render(<DiscoverScreen />);
+
+    expect(screen.getAllByText("Favoris").length).toBeGreaterThan(0);
+  });
+
+  it("opens the shared actions sheet in discovery context from overflow", () => {
+    render(<DiscoverScreen />);
+
+    fireEvent.press(screen.getAllByTestId("discover-overflow-button")[0]);
+
+    expect(mockOpenContentActions).toHaveBeenCalledWith("article-1", "discovery");
+  });
+
+  it("keeps hidden content in the feed until refresh recomputes it", () => {
+    const { rerender } = render(<DiscoverScreen />);
+
+    expect(screen.getByText("Economie du soin")).toBeTruthy();
+
+    mockUseDiscoveryFeed.mockReturnValue({
+      items: SAMPLE_FEED,
+      isLoading: false,
+      isRefreshing: false,
+      isSignedIn: true,
+      recordLike: mockRecordLike,
+      recordHide: mockRecordHide,
+      refresh: mockRefresh,
+    });
+
+    rerender(<DiscoverScreen />);
+    expect(screen.getByText("Economie du soin")).toBeTruthy();
+
+    mockUseDiscoveryFeed.mockReturnValue({
+      items: SAMPLE_FEED.filter((item) => item._id !== "article-1"),
+      isLoading: false,
+      isRefreshing: false,
+      isSignedIn: true,
+      recordLike: mockRecordLike,
+      recordHide: mockRecordHide,
+      refresh: mockRefresh,
+    });
+
+    rerender(<DiscoverScreen />);
+    expect(screen.queryByText("Economie du soin")).toBeNull();
+    expect(screen.getByText("West Texas Boom Report")).toBeTruthy();
+  });
 });

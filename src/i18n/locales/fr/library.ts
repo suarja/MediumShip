@@ -59,8 +59,8 @@ export default {
     inListCta: "En liste",
   },
   bookmark: {
-    saveCta: "Garder",
-    savedCta: "Garde",
+    saveCta: "Favoris",
+    savedCta: "En favoris",
     saveHint: "Ajoutez ce format a votre bibliotheque personnelle.",
     savedHint: "Deja range dans votre bibliotheque personnelle.",
   },

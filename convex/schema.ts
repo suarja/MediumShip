@@ -123,6 +123,53 @@ export default defineSchema({
   })
     .index("by_tokenIdentifier", ["tokenIdentifier"])
     .index("by_clerkId", ["clerkId"]),
+  collections: defineTable({
+    tenantSlug: v.string(),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("published"),
+      v.literal("archived"),
+    ),
+    slug: v.string(),
+    title: v.string(),
+    summary: v.string(),
+    coverImageUrl: v.optional(v.string()),
+    updatedAt: v.number(),
+  })
+    .index("by_tenant_and_status", ["tenantSlug", "status"])
+    .index("by_tenantSlug_and_slug", ["tenantSlug", "slug"]),
+  collectionItems: defineTable({
+    tenantSlug: v.string(),
+    collectionId: v.id("collections"),
+    contentId: v.id("contents"),
+    order: v.number(),
+  }).index("by_collection_and_order", ["collectionId", "order"]),
+  events: defineTable({
+    tenantSlug: v.string(),
+    status: v.union(v.literal("scheduled"), v.literal("archived")),
+    slug: v.string(),
+    title: v.string(),
+    summary: v.string(),
+    startsAt: v.string(),
+    locationLabel: v.string(),
+    mode: v.union(
+      v.literal("online"),
+      v.literal("offline"),
+      v.literal("hybrid"),
+    ),
+    access: v.union(
+      v.literal("free"),
+      v.literal("member"),
+      v.literal("premium"),
+    ),
+    coverImageUrl: v.optional(v.string()),
+    ctaLabel: v.optional(v.string()),
+    ctaUrl: v.optional(v.string()),
+    communityUrl: v.optional(v.string()),
+    descriptionLong: v.optional(v.string()),
+  })
+    .index("by_tenant_and_status", ["tenantSlug", "status"])
+    .index("by_tenant_and_startsAt", ["tenantSlug", "startsAt"]),
   bookmarks: defineTable({
     tokenIdentifier: v.string(),
     contentId: v.id("contents"),

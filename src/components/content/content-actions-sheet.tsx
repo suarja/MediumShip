@@ -4,7 +4,10 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -69,37 +72,42 @@ export function ContentActionsSheet({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss}>
-      <View style={[styles.backdrop, { backgroundColor: withAlpha(theme.colors.canvas, 0.72) }]}>
-        <Pressable
-          style={StyleSheet.absoluteFill}
-          onPress={onDismiss}
-          accessibilityLabel={t("lists:actionsSheet.dismiss")}
-        />
-        <View
-          style={[
-            styles.sheet,
-            {
-              backgroundColor: theme.colors.canvas,
-              borderTopLeftRadius: theme.radii.xl,
-              borderTopRightRadius: theme.radii.xl,
-              borderColor: theme.colors.border,
-              paddingBottom: insets.bottom + 24 * scaleSpace,
-              alignSelf: "center",
-              width: maxWidth ?? "100%",
-              maxHeight: "78%",
-            },
-          ]}
-        >
-          <View style={styles.grab}>
-            <View
-              style={[styles.grabBar, { backgroundColor: withAlpha(theme.colors.heading, 0.2) }]}
-            />
-          </View>
-
-          <ScrollView
-            contentContainerStyle={[styles.body, { gap: 12 * scaleSpace }]}
-            showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardRoot}
+      >
+        <View style={[styles.backdrop, { backgroundColor: withAlpha(theme.colors.canvas, 0.72) }]}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={onDismiss}
+            accessibilityLabel={t("lists:actionsSheet.dismiss")}
+          />
+          <View
+            style={[
+              styles.sheet,
+              {
+                backgroundColor: theme.colors.canvas,
+                borderTopLeftRadius: theme.radii.xl,
+                borderTopRightRadius: theme.radii.xl,
+                borderColor: theme.colors.border,
+                paddingBottom: insets.bottom + 24 * scaleSpace,
+                alignSelf: "center",
+                width: maxWidth ?? "100%",
+                maxHeight: "78%",
+              },
+            ]}
           >
+            <View style={styles.grab}>
+              <View
+                style={[styles.grabBar, { backgroundColor: withAlpha(theme.colors.heading, 0.2) }]}
+              />
+            </View>
+
+            <ScrollView
+              contentContainerStyle={[styles.body, { gap: 12 * scaleSpace }]}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
             <Text
               numberOfLines={2}
               style={[
@@ -133,9 +141,10 @@ export function ContentActionsSheet({
                 onOpenPaywall={openPaywall}
               />
             )}
-          </ScrollView>
+            </ScrollView>
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -561,6 +570,10 @@ function SheetActionRow({
 }
 
 const styles = StyleSheet.create({
+  keyboardRoot: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
   backdrop: {
     flex: 1,
     justifyContent: "flex-end",

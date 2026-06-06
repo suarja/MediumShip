@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { Keyboard } from "react-native";
 
 import type { Id } from "../../../convex/_generated/dataModel";
 import { ContentActionsSheet } from "../../components/content/content-actions-sheet";
@@ -38,12 +39,14 @@ export function ContentActionsSheetProvider({ children }: { children: ReactNode 
 
   const openContentActions = useCallback(
     (contentId: Id<"contents">, focus: ContentActionsFocus = "all") => {
+      Keyboard.dismiss();
       setState({ visible: true, contentId, focus });
     },
     [],
   );
 
   const closeContentActions = useCallback(() => {
+    Keyboard.dismiss();
     setState((prev) => ({ ...prev, visible: false }));
   }, []);
 

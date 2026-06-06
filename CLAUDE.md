@@ -33,6 +33,7 @@ Priority order:
 - Keep translations modular and split by page or feature. Do not accumulate all strings in one monolithic translation file.
 - Treat iPhone and iPad responsiveness as a first-pass requirement, not a later polish pass.
 - For translations and design system work, start by inspecting `../editia/mobile`, then complement with `../editia/web` when useful, and adapt what is already production-proven before creating new abstractions.
+- Before implementing or redesigning a product surface, read the relevant mockup sources in `docs/podapp/project/mobile-mockups/` and `docs/podapp/project/cms/` top-to-bottom. Treat the exported HTML/CSS/JS mockups as the visual source of truth for flows, states, copy, and module placement, then adapt them to the real app architecture instead of inventing new UI from scratch.
 
 ### Delivery rules
 
@@ -41,6 +42,7 @@ Priority order:
 - For auth work, expose a small test page or flow early so Clerk wiring can be validated in the app, not only in code structure.
 - For Convex work, start with a tiny schema and query/mutation path that can be exercised immediately before broadening the model.
 - Build the product through small end-to-end slices that can be verified incrementally, rather than stacking several invisible backend or provider layers before testing.
+- After unit tests and `tsc` pass, do a pixel-level smoke of any UI change on phone **and** iPad widths. Follow the Expo-web + headless-Chrome protocol in `docs/agents/ui-visual-testing.md` (auth-gated states and palette switching can't be driven headlessly — cover those with tests + a manual pass).
 
 ### Current architecture direction
 

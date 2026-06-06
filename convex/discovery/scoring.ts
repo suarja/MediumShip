@@ -18,6 +18,54 @@ export type FeedMix = {
   random?: number;
 };
 
+export const INTERACTION_WEIGHTS = {
+  view: 5,
+  open: 20,
+  skip: -10,
+  like: 50,
+  finish: 100,
+  share: 80,
+  hide: -100,
+} as const;
+
+export const DIMENSION_FACTORS = {
+  category: 1.0,
+  tag: 0.5,
+  contentType: 0.2,
+} as const;
+
+export type InteractionType = keyof typeof INTERACTION_WEIGHTS;
+
+export type TargetType = "category" | "tag" | "contentType";
+
+export type Affinity = {
+  targetType: TargetType;
+  targetId: string;
+  score: number;
+};
+
+export type InteractionSignal = {
+  type: InteractionType;
+  category: string;
+  tags: readonly string[];
+  kind: "article" | "episode" | "video";
+};
+
+export type ScoreableContent = {
+  category: string;
+  tags: readonly string[];
+  kind: "article" | "episode" | "video";
+  publishedAt?: string;
+};
+
+const MIN_AFFINITY_SCORE = -500;
+const MAX_AFFINITY_SCORE = 1000;
+const FRESHNESS_BOOST = 30;
+const ARCHIVE_BOOST = 15;
+const SEEN_PENALTY = 30;
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const ONE_EIGHTY_DAYS_MS = 180 * 24 * 60 * 60 * 1000;
+
 /** trim → lower → NFD strip accents → kebab-case slug */
 export function normalizeScoringKey(label: string): string {
   return label
@@ -27,6 +75,110 @@ export function normalizeScoringKey(label: string): string {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function clampAffinity(score: number): number {
+  return Math.max(MIN_AFFINITY_SCORE, Math.min(MAX_AFFINITY_SCORE, score));
+}
+
+function upsertAffinityDelta(
+  prefs: Affinity[],
+  targetType: TargetType,
+  rawTargetId: string,
+  delta: number,
+): Affinity[] {
+  const targetId =
+    targetType === "contentType" ? rawTargetId : normalizeScoringKey(rawTargetId);
+  const index = prefs.findIndex(
+    (pref) => pref.targetType === targetType && pref.targetId === targetId,
+  );
+
+  if (index === -1) {
+    return [...prefs, { targetType, targetId, score: clampAffinity(delta) }];
+  }
+
+  const next = [...prefs];
+  next[index] = {
+    ...next[index],
+    score: clampAffinity(next[index].score + delta),
+  };
+  return next;
+}
+
+export function applyInteraction(
+  prefs: readonly Affinity[],
+  signal: InteractionSignal,
+): Affinity[] {
+  const weight = INTERACTION_WEIGHTS[signal.type];
+  let next = [...prefs];
+
+  next = upsertAffinityDelta(
+    next,
+    "category",
+    signal.category,
+    weight * DIMENSION_FACTORS.category,
+  );
+
+  for (const tag of signal.tags) {
+    next = upsertAffinityDelta(next, "tag", tag, weight * DIMENSION_FACTORS.tag);
+  }
+
+  next = upsertAffinityDelta(
+    next,
+    "contentType",
+    signal.kind,
+    weight * DIMENSION_FACTORS.contentType,
+  );
+
+  return next;
+}
+
+function getAffinityScore(
+  prefs: readonly Affinity[],
+  targetType: TargetType,
+  rawTargetId: string,
+): number {
+  const targetId =
+    targetType === "contentType" ? rawTargetId : normalizeScoringKey(rawTargetId);
+  return (
+    prefs.find(
+      (pref) => pref.targetType === targetType && pref.targetId === targetId,
+    )?.score ?? 0
+  );
+}
+
+export function scoreContent(
+  content: ScoreableContent,
+  prefs: readonly Affinity[],
+  now: number,
+  options?: { seen?: boolean; rng?: () => number },
+): number {
+  let score = 0;
+
+  score += getAffinityScore(prefs, "category", content.category);
+  for (const tag of content.tags) {
+    score += getAffinityScore(prefs, "tag", tag);
+  }
+  score += getAffinityScore(prefs, "contentType", content.kind);
+
+  if (content.publishedAt) {
+    const ageMs = now - Date.parse(content.publishedAt);
+
+    if (ageMs < THIRTY_DAYS_MS) {
+      score += FRESHNESS_BOOST;
+    } else if (ageMs > ONE_EIGHTY_DAYS_MS && !options?.seen) {
+      score += ARCHIVE_BOOST;
+    }
+  }
+
+  if (options?.seen) {
+    score -= SEEN_PENALTY;
+  }
+
+  const rng = options?.rng ?? Math.random;
+  score += rng() * 0.01;
+
+  return score;
 }
 
 export function createSeededRng(seed: number): () => number {

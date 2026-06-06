@@ -94,9 +94,13 @@ export function ContentActionsSheet({
     return null;
   }
 
-  const sheetLift = keyboardHeight > 0 ? Math.max(0, keyboardHeight - insets.bottom) : 0;
+  const keyboardSheetGap = 14 * scaleSpace;
+  const sheetLift =
+    keyboardHeight > 0
+      ? Math.max(0, keyboardHeight - insets.bottom + keyboardSheetGap)
+      : 0;
   const sheetPaddingBottom =
-    keyboardHeight > 0 ? 12 * scaleSpace : insets.bottom + 24 * scaleSpace;
+    keyboardHeight > 0 ? 16 * scaleSpace : insets.bottom + 24 * scaleSpace;
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss}>

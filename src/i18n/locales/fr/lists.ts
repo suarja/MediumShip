@@ -1,0 +1,45 @@
+export default {
+  screen: {
+    title: "Listes",
+    back: "Retour",
+    createTitle: "Creer une liste",
+    createPlaceholder: "Nom de la liste",
+    createSubmit: "Creer",
+    lockedTitle: "Listes illimitees avec Premium",
+    lockedBody:
+      "Les membres gratuits creent 1 liste. Passez Premium pour des listes illimitees et la synchro multi-appareils.",
+    viewPremiumCta: "Voir Premium",
+    emptyTitle: "Aucune liste",
+    emptyBody:
+      "Creez une liste pour mettre de cote articles, episodes et videos.",
+    itemCount_one: "{{count}} contenu · privee",
+    itemCount_other: "{{count}} contenus · privee",
+    defaultTitle: "Ma liste",
+  },
+  actionsSheet: {
+    title: "Actions",
+    dismiss: "Fermer",
+    unavailable: "Ce contenu n'est plus disponible.",
+    addToList: "Ajouter a une liste",
+    createList: "Creer une nouvelle liste",
+    noLists: "Aucune liste — creez-en une ci-dessous.",
+    signInHint: "Connectez-vous pour organiser vos listes.",
+    overflowLabel: "Plus d'actions",
+  },
+  detail: {
+    back: "Retour",
+    emptyTitle: "Cette liste est vide",
+    emptyBody:
+      "Les contenus ajoutes a cette liste apparaitront ici.",
+    rename: "Renommer",
+    delete: "Supprimer",
+    deleteConfirmTitle: "Supprimer cette liste ?",
+    deleteConfirmBody: "Cette action est irreversible.",
+    deleteConfirmCta: "Supprimer",
+    cancel: "Annuler",
+    renamePlaceholder: "Nom de la liste",
+    renameSubmit: "Enregistrer",
+    pendingRename: "Le renommage arrive bientot.",
+    pendingDelete: "La suppression arrive bientot.",
+  },
+};

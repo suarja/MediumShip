@@ -4,11 +4,14 @@ import { useTranslation } from "react-i18next";
 
 import { Screen } from "../../src/components/layout/screen";
 import { DownloadedLibrarySection } from "../../src/components/library/downloaded-library-section";
+import { LibraryOfflineLockedCard } from "../../src/components/library/library-offline-locked-card";
+import { LibraryPersonalListRow } from "../../src/components/library/library-personal-list-row";
 import { LibrarySectionHeader } from "../../src/components/library/library-section-header";
 import { ResumeCard } from "../../src/components/library/resume-card";
 import { SavedLibrarySection } from "../../src/components/library/saved-library-section";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
+import { useIsMember } from "../../src/features/membership/use-is-member";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
@@ -30,7 +33,6 @@ export default function LibraryScreen() {
   const { scaleFont, scaleSpace } = useResponsive();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
-  const { openPaywall } = usePaywallSheet();
 
   if (!isSignedIn) {
     return (
@@ -176,6 +178,38 @@ export default function LibraryScreen() {
   }
 
   return (
+    <SignedInLibraryContent
+      canBookmark={canBookmark}
+      canOffline={canOffline}
+      canPersonalLists={canPersonalLists}
+      persistentPlayerSpace={persistentPlayerSpace}
+      tabBarSpace={tabBarSpace}
+    />
+  );
+}
+
+type SignedInLibraryContentProps = {
+  canBookmark: boolean;
+  canPersonalLists: boolean;
+  canOffline: boolean;
+  tabBarSpace: number;
+  persistentPlayerSpace: number;
+};
+
+function SignedInLibraryContent({
+  canBookmark,
+  canPersonalLists,
+  canOffline,
+  tabBarSpace,
+  persistentPlayerSpace,
+}: SignedInLibraryContentProps) {
+  const { t } = useTranslation("library");
+  const { theme } = useAppTheme();
+  const { scaleFont, scaleSpace } = useResponsive();
+  const { openPaywall } = usePaywallSheet();
+  const { isMember } = useIsMember();
+
+  return (
     <Screen>
       <ScrollView
         contentContainerStyle={[
@@ -269,16 +303,7 @@ export default function LibraryScreen() {
               gate="premium"
               title={t("library:screen.sections.lists")}
             />
-            <Pressable
-              onPress={() => openPaywall("lists")}
-              style={({ pressed }) => [pressed && styles.buttonPressed]}
-              accessibilityRole="button"
-            >
-              <PlaceholderCard
-                body={t("library:screen.listsBody")}
-                title={t("library:screen.listsTitle")}
-              />
-            </Pressable>
+            <LibraryPersonalListRow onPress={() => openPaywall("lists")} />
           </View>
         ) : null}
 
@@ -288,81 +313,15 @@ export default function LibraryScreen() {
               gate="premium"
               title={t("library:screen.sections.offline")}
             />
-            <DownloadedLibrarySection />
+            {isMember ? (
+              <DownloadedLibrarySection />
+            ) : (
+              <LibraryOfflineLockedCard onPress={() => openPaywall("offline")} />
+            )}
           </View>
         ) : null}
       </ScrollView>
     </Screen>
-  );
-}
-
-function PlaceholderCard({
-  title,
-  body,
-}: {
-  title: string;
-  body: string;
-}) {
-  const { theme } = useAppTheme();
-  const { scaleFont } = useResponsive();
-
-  return (
-    <View
-      style={[
-        styles.placeholderCard,
-        {
-          borderRadius: theme.radii.lg,
-          borderColor: theme.colors.border,
-          backgroundColor: theme.colors.surface,
-        },
-      ]}
-    >
-      <View style={styles.placeholderHead}>
-        <Text
-          style={[
-            styles.placeholderTitle,
-            {
-              color: theme.colors.heading,
-              fontSize: 15 * scaleFont,
-            },
-          ]}
-        >
-          {title}
-        </Text>
-        <View
-          style={[
-            styles.placeholderIcon,
-            {
-              borderRadius: theme.radii.sm,
-              backgroundColor: withAlpha(theme.colors.accent, theme.isDark ? 0.22 : 0.12),
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.placeholderIconLabel,
-              {
-                color: theme.colors.accent,
-                fontSize: 12 * scaleFont,
-              },
-            ]}
-          >
-            ◆
-          </Text>
-        </View>
-      </View>
-      <Text
-        style={[
-          styles.placeholderBody,
-          {
-            color: theme.colors.textMuted,
-            fontSize: 11 * scaleFont,
-          },
-        ]}
-      >
-        {body}
-      </Text>
-    </View>
   );
 }
 
@@ -471,36 +430,5 @@ const styles = StyleSheet.create({
   },
   sectionBlock: {
     marginTop: 20,
-  },
-  placeholderCard: {
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 14,
-    marginBottom: 2,
-  },
-  placeholderHead: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  placeholderTitle: {
-    flex: 1,
-    minWidth: 0,
-    fontFamily: fontFamilies.display,
-    lineHeight: 18,
-    marginRight: 10,
-  },
-  placeholderIcon: {
-    width: 26,
-    height: 26,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  placeholderIconLabel: {
-    fontFamily: fontFamilies.mono,
-  },
-  placeholderBody: {
-    fontFamily: fontFamilies.body,
-    lineHeight: 16,
   },
 });

@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
-import { render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import LibraryScreen from "../app/(app)/library";
 import { changeAppLanguage, initI18n } from "../src/i18n";
+
+const mockOpenPaywall = jest.fn();
 
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: ReactNode }) => children,
@@ -43,12 +45,17 @@ jest.mock("../src/features/membership/use-is-member", () => ({
   useIsMember: () => ({ isMember: false, isLoading: false }),
 }));
 
+jest.mock("../src/features/paywall/paywall-sheet-provider", () => ({
+  usePaywallSheet: () => ({ openPaywall: mockOpenPaywall, closePaywall: jest.fn() }),
+}));
+
 describe("signed-in library screen", () => {
   beforeAll(async () => {
     await initI18n();
   });
 
   beforeEach(async () => {
+    mockOpenPaywall.mockClear();
     await changeAppLanguage("en");
   });
 
@@ -58,8 +65,9 @@ describe("signed-in library screen", () => {
     expect(screen.getByText("Library")).toBeTruthy();
     expect(screen.getByText("Saved library section")).toBeTruthy();
     expect(screen.queryByText("Upgrade to save items")).toBeNull();
-    expect(screen.getByText("Offline shelf section")).toBeTruthy();
-    expect(screen.getAllByText("Lists").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Offline shelf section")).toBeNull();
+    expect(screen.getByText("Download to listen without a network")).toBeTruthy();
+    expect(screen.getAllByText("Lists")).toHaveLength(1);
     expect(screen.queryByText("Your library, everywhere")).toBeNull();
   });
 
@@ -68,5 +76,28 @@ describe("signed-in library screen", () => {
 
     expect(screen.getByText("Free")).toBeTruthy();
     expect(screen.getAllByText("Premium")).toHaveLength(2);
+  });
+
+  it("pressing the lists row opens the lists paywall", () => {
+    render(<LibraryScreen />);
+
+    fireEvent.press(screen.getByText("Listen in the car"));
+
+    expect(mockOpenPaywall).toHaveBeenCalledWith("lists");
+  });
+
+  it("shows the offline locked promo card copy for non-premium members", () => {
+    render(<LibraryScreen />);
+
+    expect(screen.getByText("Download to listen without a network")).toBeTruthy();
+    expect(screen.queryByText("Become a member")).toBeNull();
+  });
+
+  it("pressing the offline locked card opens the offline paywall", () => {
+    render(<LibraryScreen />);
+
+    fireEvent.press(screen.getByText("Download to listen without a network"));
+
+    expect(mockOpenPaywall).toHaveBeenCalledWith("offline");
   });
 });

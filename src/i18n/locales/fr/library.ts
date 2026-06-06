@@ -7,7 +7,7 @@ export default {
     guestContinueCta: "Continuer en invite",
     signedInTitle: "Bibliotheque",
     signedInBody:
-      "Les enregistrements, la reprise, le hors ligne et les listes personnelles arrivent ici dans la prochaine slice.",
+      "Les enregistrements, la reprise, le hors ligne et les listes personnelles vivent ici une fois connecte.",
     filters: {
       all: "Tout",
       articles: "Articles",
@@ -28,12 +28,15 @@ export default {
       "Tous les contenus que vous avez choisi de garder, quel que soit le format.",
     listsMeta: "Premium",
     listsTitle: "Listes",
+    listsPreviewTitle: "A ecouter en voiture",
+    listsPreviewMeta: "9 episodes · privee",
     listsBody:
-      "Les listes personnelles arrivent dans une prochaine slice. Gardez la place visible mais verrouillee pour l'instant.",
+      "Creez des listes privees pour mettre articles, episodes et videos en file d'attente.",
     offlineSubtitle:
       "Les telechargements restent reserves aux formats compatibles et aux membres premium.",
     offlineTitle: "Telecharger pour ecouter sans reseau",
-    offlineBody: "Les copies hors ligne pour les formats pris en charge apparaissent ici dans la prochaine slice.",
+    offlineBody:
+      "Le premium debloque les telechargements hors ligne pour les articles, episodes et videos hebergees.",
   },
   kinds: {
     article: "Article",

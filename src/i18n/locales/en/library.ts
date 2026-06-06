@@ -7,7 +7,7 @@ export default {
     guestContinueCta: "Continue as guest",
     signedInTitle: "Library",
     signedInBody:
-      "Saved items, resume state, offline, and personal lists move here in the next slice.",
+      "Saved items, resume state, offline copies, and personal lists live here once you are signed in.",
     filters: {
       all: "All",
       articles: "Articles",
@@ -28,12 +28,15 @@ export default {
       "Everything you chose to keep, across articles, episodes, and videos.",
     listsMeta: "Premium",
     listsTitle: "Lists",
+    listsPreviewTitle: "Listen in the car",
+    listsPreviewMeta: "9 episodes · private",
     listsBody:
-      "Personal lists arrive in a later slice. Keep the slot visible but premium-locked for now.",
+      "Create private lists to queue articles, episodes, and videos for later.",
     offlineSubtitle:
       "Downloads remain reserved for premium-capable formats and member access.",
     offlineTitle: "Download to listen without a network",
-    offlineBody: "Offline copies for supported formats appear here in the next slice.",
+    offlineBody:
+      "Premium unlocks offline downloads for articles, episodes, and hosted videos.",
   },
   kinds: {
     article: "Article",

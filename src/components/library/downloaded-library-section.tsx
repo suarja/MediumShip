@@ -33,30 +33,17 @@ export function DownloadedLibrarySection() {
 
   return (
     <LibraryCollectionSection
+      hideHeader
       emptyBody={
-        !isSignedIn
-          ? t("library:downloads.guestHint")
-          : isMember
-            ? t("library:downloads.empty")
-            : t("library:downloads.memberHint")
+        !isSignedIn ? t("library:downloads.guestHint") : t("library:downloads.empty")
       }
-      emptyCtaHref={
-        !isSignedIn ? "/sign-in" : isMember ? "/home" : "/premium"
-      }
+      emptyCtaHref={!isSignedIn ? "/sign-in" : "/home"}
       emptyCtaLabel={
-        !isSignedIn
-          ? t("library:actions.signInCta")
-          : isMember
-            ? t("library:downloads.exploreCta")
-            : t("library:actions.memberCta")
+        !isSignedIn ? t("library:actions.signInCta") : t("library:downloads.exploreCta")
       }
       emptyIconName="download-outline"
       emptyTitle={
-        !isSignedIn
-          ? t("library:downloads.guestTitle")
-          : isMember
-            ? t("library:downloads.emptyTitle")
-            : t("library:downloads.memberTitle")
+        !isSignedIn ? t("library:downloads.guestTitle") : t("library:downloads.emptyTitle")
       }
       isLoading={isMembershipLoading || isLoading}
       items={items}

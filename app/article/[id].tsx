@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import { ArticleBodyContent } from "../../src/components/content/article-body-content";
 import { ContentActionsBar } from "../../src/components/content/content-actions-bar";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
 import { ContentSourceAttribution } from "../../src/components/content/content-source-attribution";
@@ -14,7 +15,7 @@ import { DetailHeader } from "../../src/components/content/detail-header";
 import { DetailHero } from "../../src/components/content/detail-hero";
 import { PremiumPaywall } from "../../src/components/content/premium-paywall";
 import { resolveContentSource } from "../../src/features/content/source";
-import { splitArticleBodyParagraphs } from "../../src/features/content/article-body";
+import { parseArticleBody } from "../../src/features/content/article-body";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useDownloads } from "../../src/features/downloads/use-downloads";
@@ -138,8 +139,13 @@ export default function ArticleDetailScreen() {
     [],
   );
 
-  const articleParagraphs = resolvedContent?.articleBody
-    ? splitArticleBodyParagraphs(resolvedContent.articleBody)
+  const hasFullBody = Boolean(resolvedContent?.articleBody?.trim());
+  const showLede =
+    resolvedContent &&
+    (!isWikipedia || !hasFullBody) &&
+    Boolean(resolvedContent.summary?.trim());
+  const articleBodyBlocks = resolvedContent?.articleBody
+    ? parseArticleBody(resolvedContent.articleBody)
     : [];
 
   return (
@@ -183,7 +189,7 @@ export default function ArticleDetailScreen() {
                 ? t("readingTime", { minutes: resolvedContent.readingTimeMinutes })
                 : undefined
             }
-            lede={resolvedContent.summary}
+            lede={showLede ? resolvedContent.summary : undefined}
             premium={resolvedContent.isPremium}
           />
           {premiumGate === "locked" ? (
@@ -194,14 +200,7 @@ export default function ArticleDetailScreen() {
             />
           ) : (
             <>
-              {isWikipedia ? (
-                <ContentSourceAttribution
-                  source={contentSource}
-                  canonicalUrl={resolvedContent.canonicalUrl}
-                  showExtractNote
-                />
-              ) : null}
-              {isFetchingBody && articleParagraphs.length === 0 ? (
+              {isFetchingBody && articleBodyBlocks.length === 0 ? (
                 <View
                   style={[
                     styles.bodyLoading,
@@ -224,24 +223,18 @@ export default function ArticleDetailScreen() {
                   </Text>
                 </View>
               ) : null}
-              {articleParagraphs.length > 0 ? (
-                <View style={{ gap: 20 * scaleSpace }}>
-                  {articleParagraphs.map((paragraph, index) => (
-                    <Text
-                      key={`${resolvedContent._id}-paragraph-${index}`}
-                      style={[
-                        styles.bodyParagraph,
-                        {
-                          color: theme.colors.text,
-                          fontSize: 17 * scaleFont,
-                          lineHeight: 28 * scaleFont,
-                        },
-                      ]}
-                    >
-                      {paragraph}
-                    </Text>
-                  ))}
-                </View>
+              {articleBodyBlocks.length > 0 ? (
+                <ArticleBodyContent
+                  blocks={articleBodyBlocks}
+                  contentId={resolvedContent._id}
+                />
+              ) : null}
+              {isWikipedia ? (
+                <ContentSourceAttribution
+                  source={contentSource}
+                  canonicalUrl={resolvedContent.canonicalUrl}
+                  showExtractNote={!hasFullBody}
+                />
               ) : null}
             </>
           )}
@@ -252,7 +245,6 @@ export default function ArticleDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  bodyParagraph: { fontFamily: fontFamilies.body },
   bodyLoading: { alignItems: "center" },
   bodyLoadingLabel: { fontFamily: fontFamilies.body, textAlign: "center" },
 });

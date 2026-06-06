@@ -187,6 +187,7 @@ describe("article detail immersion", () => {
 
     const view = render(<ArticleDetailScreen />);
 
+    expect(screen.getByText(WIKI_BASE.summary)).toBeTruthy();
     expect(screen.getByText("Loading full article…")).toBeTruthy();
     expect(mockFetchArticleBody).toHaveBeenCalledTimes(1);
     expect(mockFetchArticleBody).toHaveBeenCalledWith({ contentId: "wiki_1" });
@@ -207,7 +208,33 @@ describe("article detail immersion", () => {
       expect(screen.getByText("First full paragraph.")).toBeTruthy();
       expect(screen.getByText("Second full paragraph.")).toBeTruthy();
     });
+    expect(screen.queryByText(WIKI_BASE.summary)).toBeNull();
     expect(screen.queryByText("Loading full article…")).toBeNull();
+    expect(
+      screen.queryByText(
+        "You are reading an excerpt ingested from the source. The full article remains on the original site.",
+      ),
+    ).toBeNull();
+    expect(screen.getByText("Read on Wikipedia")).toBeTruthy();
+  });
+
+  it("renders MediaWiki headings and places the source link after the body", () => {
+    mockContentQuery(() => ({
+      ...WIKI_BASE,
+      articleBody:
+        "Intro paragraph.\n\n== History ==\n\nEvents unfolded quickly.\n\n=== Early years ===\n\nMore detail.",
+    }));
+
+    render(<ArticleDetailScreen />);
+
+    expect(screen.getByText("History")).toBeTruthy();
+    expect(screen.getByText("Early years")).toBeTruthy();
+    expect(screen.queryByText(WIKI_BASE.summary)).toBeNull();
+
+    const intro = screen.getByText("Intro paragraph.");
+    const link = screen.getByText("Read on Wikipedia");
+    expect(intro).toBeTruthy();
+    expect(link).toBeTruthy();
   });
 
   it("renders cached articleBody immediately without fetching", () => {
@@ -220,6 +247,7 @@ describe("article detail immersion", () => {
 
     expect(screen.getByText("Cached paragraph one.")).toBeTruthy();
     expect(screen.getByText("Cached paragraph two.")).toBeTruthy();
+    expect(screen.queryByText(WIKI_BASE.summary)).toBeNull();
     expect(mockFetchArticleBody).not.toHaveBeenCalled();
     expect(screen.queryByText("Loading full article…")).toBeNull();
   });
@@ -229,6 +257,7 @@ describe("article detail immersion", () => {
 
     render(<ArticleDetailScreen />);
 
+    expect(screen.getByText("Une analyse longue.")).toBeTruthy();
     expect(screen.getByText("Premier paragraphe editorial.")).toBeTruthy();
     expect(screen.getByText("Deuxieme paragraphe editorial.")).toBeTruthy();
     expect(mockFetchArticleBody).not.toHaveBeenCalled();

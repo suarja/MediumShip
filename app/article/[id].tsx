@@ -16,6 +16,7 @@ import { DetailHero } from "../../src/components/content/detail-hero";
 import { PremiumPaywall } from "../../src/components/content/premium-paywall";
 import { resolveContentSource } from "../../src/features/content/source";
 import { parseArticleBody } from "../../src/features/content/article-body";
+import { sanitizeWikipediaPlaintext } from "../../src/features/content/wikipedia-plaintext";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useDownloads } from "../../src/features/downloads/use-downloads";
@@ -139,13 +140,17 @@ export default function ArticleDetailScreen() {
     [],
   );
 
-  const hasFullBody = Boolean(resolvedContent?.articleBody?.trim());
+  const normalizedArticleBody =
+    isWikipedia && resolvedContent?.articleBody
+      ? sanitizeWikipediaPlaintext(resolvedContent.articleBody)
+      : resolvedContent?.articleBody;
+  const hasFullBody = Boolean(normalizedArticleBody?.trim());
   const showLede =
     resolvedContent &&
     (!isWikipedia || !hasFullBody) &&
     Boolean(resolvedContent.summary?.trim());
-  const articleBodyBlocks = resolvedContent?.articleBody
-    ? parseArticleBody(resolvedContent.articleBody)
+  const articleBodyBlocks = normalizedArticleBody
+    ? parseArticleBody(normalizedArticleBody)
     : [];
 
   return (

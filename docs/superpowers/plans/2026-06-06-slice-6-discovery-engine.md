@@ -4,7 +4,7 @@
 >
 > - `2026-06-06-discovery-slice-a-feed-read.md` — **Slice A**: Discover renders (guest-first, read-only).
 > - `2026-06-06-discovery-slice-b-signals.md` — **Slice B**: Discover learns (interactions + personalization).
-> - `2026-06-06-discovery-slice-c-ambient.md` — **Slice C**: Discover deepens (ambient signals + explanation; deferrable).
+> - `2026-06-06-discovery-slice-c-card.md` — **Slice C**: reusable composable `ContentCard` (Découvrir first; Like/Favoris/⋯, non-destructive). The old "ambient signals + explanation" Slice C is deferred (see that file's backlog note).
 >
 > Slices A + B are the core; C is a deepening. Each references this spine for the deep specs and carries its own tasks + standard verification. The task list below remains the canonical reference for *what each module is*; the slice files decide *in which order and behind which end-to-end surface* the modules land.
 

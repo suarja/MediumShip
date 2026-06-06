@@ -233,3 +233,11 @@ _Avoid_: Algorithm, ranker, recommender service
 **ContentVisibility**:
 Règle d'accès unique — masquer un `PremiumContent` quand le module `premium` est inactif — appliquée à l'identique par le `Feed` éditorial et par le feed de découverte.
 _Avoid_: Filter, access check
+
+**Engagement**:
+Mesure normalisée de la consommation d'un `Content` par un `Member`, calculée selon le type de contenu (lecture d'un `Article`, écoute d'un `Episode`, visionnage d'une `Video`, parcours d'un contenu wiki). Exprimée en signaux discrets — ouvert / partiel / terminé, une fois par contenu, jamais en cumul brut — qui nourrissent l'`Affinity` via la `ScoringPolicy`. Pour l'audio et la vidéo, dérive de `PlaybackProgress`.
+_Avoid_: Dwell time, watch time, view count
+
+**FetchDemand**:
+Demande d'ingestion au niveau d'un `Tenant`, dérivée de l'agrégation des `Affinity` de son audience (plus un quota de diversité et un seed de bootstrap configuré au tenant), qui oriente ce qu'un `Provider` va chercher. Consommée par une ingestion planifiée — jamais déclenchée en direct par le geste d'un `Member`. C'est l'effet de groupe (tendance) sans couplage per-utilisateur.
+_Avoid_: Recommendation, per-user fetch, trending

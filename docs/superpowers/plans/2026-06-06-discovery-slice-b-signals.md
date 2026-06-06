@@ -138,4 +138,4 @@ Does **not** include:
 
 ## After This Slice
 
-→ **Slice C** (`2026-06-06-discovery-slice-c-ambient.md`, deferrable): ambient view/open/finish signals + richer recommendation explanation.
+→ **Slice C** (`2026-06-06-discovery-slice-c-card.md`): reusable composable `ContentCard` for Découvrir (Like/Favoris/⋯, non-destructive; fixes the `removedIds`-on-like behavior introduced here). Ambient signals + explanation are deferred (backlog note in that file).

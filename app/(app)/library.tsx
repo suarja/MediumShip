@@ -3,6 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { Screen } from "../../src/components/layout/screen";
+import { DownloadedLibrarySection } from "../../src/components/library/downloaded-library-section";
+import { SavedLibrarySection } from "../../src/components/library/saved-library-section";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
@@ -331,14 +333,7 @@ export default function LibraryScreen() {
         </View>
 
         <View style={styles.sectionBlock}>
-          <SectionHeader
-            label={t("library:screen.sections.saved")}
-            meta={t("library:screen.savedMeta")}
-          />
-          <PlaceholderCard
-            body={t("library:saved.empty")}
-            title={t("library:saved.emptyTitle")}
-          />
+          <SavedLibrarySection />
         </View>
 
         <View style={styles.sectionBlock}>
@@ -347,20 +342,13 @@ export default function LibraryScreen() {
             meta={t("library:screen.listsMeta")}
           />
           <PlaceholderCard
-            body={t("library:screen.signedInBody")}
-            title={t("library:screen.sections.lists")}
+            body={t("library:screen.listsBody")}
+            title={t("library:screen.listsTitle")}
           />
         </View>
 
         <View style={styles.sectionBlock}>
-          <SectionHeader
-            label={t("library:screen.sections.offline")}
-            meta={t("library:downloads.badge")}
-          />
-          <PlaceholderCard
-            body={t("library:screen.offlineBody")}
-            title={t("library:screen.offlineTitle")}
-          />
+          <DownloadedLibrarySection />
         </View>
       </ScrollView>
     </Screen>

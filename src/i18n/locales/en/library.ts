@@ -24,7 +24,14 @@ export default {
     resumeTitle: "The care economy",
     resumeMeta: "Episode · 22:48 left · 62%",
     savedMeta: "Free",
+    savedSubtitle:
+      "Everything you chose to keep, across articles, episodes, and videos.",
     listsMeta: "Premium",
+    listsTitle: "Lists",
+    listsBody:
+      "Personal lists arrive in a later slice. Keep the slot visible but premium-locked for now.",
+    offlineSubtitle:
+      "Downloads remain reserved for premium-capable formats and member access.",
     offlineTitle: "Download to listen without a network",
     offlineBody: "Offline copies for supported formats appear here in the next slice.",
   },

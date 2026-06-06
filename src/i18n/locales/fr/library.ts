@@ -24,7 +24,14 @@ export default {
     resumeTitle: "L'economie du soin",
     resumeMeta: "Episode · 22:48 restantes · 62%",
     savedMeta: "Gratuit",
+    savedSubtitle:
+      "Tous les contenus que vous avez choisi de garder, quel que soit le format.",
     listsMeta: "Premium",
+    listsTitle: "Listes",
+    listsBody:
+      "Les listes personnelles arrivent dans une prochaine slice. Gardez la place visible mais verrouillee pour l'instant.",
+    offlineSubtitle:
+      "Les telechargements restent reserves aux formats compatibles et aux membres premium.",
     offlineTitle: "Telecharger pour ecouter sans reseau",
     offlineBody: "Les copies hors ligne pour les formats pris en charge apparaissent ici dans la prochaine slice.",
   },

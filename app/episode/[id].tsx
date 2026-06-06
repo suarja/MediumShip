@@ -79,7 +79,9 @@ export default function EpisodeDetailScreen() {
         ) : undefined
       }
       actions={
-        resolvedContent ? <ContentActionsBar content={resolvedContent} /> : undefined
+        resolvedContent && premiumGate !== "locked" ? (
+          <ContentActionsBar content={resolvedContent} />
+        ) : undefined
       }
     >
       {resolvedContent ? (

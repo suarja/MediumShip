@@ -42,6 +42,7 @@ export default {
     "Listes personnelles illimitees + salon membres",
   ],
   signInCta: "Se connecter pour continuer",
+  becomeMemberCta: "Devenir membre",
   dismissCta: "PLUS TARD — CONTINUER GRATUITEMENT",
   pendingTitle: "Acces membre pas encore actif",
   pendingBody:

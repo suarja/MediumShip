@@ -92,7 +92,7 @@ describe("PaywallSheet", () => {
         onDismiss={dismissMock}
       />,
     );
-    expect(screen.getAllByText(/Membership not yet active/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Become a member/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Sign in to continue/i)).toBeNull();
   });
 

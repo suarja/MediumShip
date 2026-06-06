@@ -106,7 +106,9 @@ export default function VideoDetailScreen() {
         ) : undefined
       }
       actions={
-        resolvedContent ? <ContentActionsBar content={resolvedContent} /> : undefined
+        resolvedContent && premiumGate !== "locked" ? (
+          <ContentActionsBar content={resolvedContent} />
+        ) : undefined
       }
     >
       {resolvedContent ? (

@@ -42,6 +42,7 @@ export default {
     "Unlimited personal lists + members room",
   ],
   signInCta: "Sign in to continue",
+  becomeMemberCta: "Become a member",
   dismissCta: "LATER — CONTINUE FREE",
   pendingTitle: "Membership not yet active",
   pendingBody:

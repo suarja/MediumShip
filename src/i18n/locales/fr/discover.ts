@@ -3,13 +3,10 @@ export default {
   subtitle: "Un fil pour parcourir l'actualité et redécouvrir la bibliothèque.",
   loading: "Chargement du fil…",
   loadingMore: "Chargement…",
+  moreIncoming: "On en cherche d'autres pour vous…",
+  recyclingNote: "Vous avez parcouru les nouveautés — continuez à défiler.",
   emptyTitle: "Rien à découvrir pour le moment",
   emptyBody: "Revenez bientôt : de nouveaux contenus arrivent régulièrement.",
-  endOfFeedTitle: "Vous êtes à jour",
-  endOfFeedBodyWithArchive:
-    "Vous avez parcouru les nouveautés. Continuez à défiler pour les archives.",
-  endOfFeedBodyCaughtUp:
-    "Vous avez tout parcouru pour l'instant. De nouveaux contenus s'ajoutent ici dès qu'ils arrivent en arrière-plan.",
   actions: {
     like: "Aimer",
     more: "Plus d'actions",

@@ -18,11 +18,8 @@ jest.mock("../src/features/theme/theme-provider", () => ({
 }));
 
 jest.mock("../src/features/discovery/use-discovery-feed", () => ({
+  ...jest.requireActual("../src/features/discovery/use-discovery-feed"),
   useDiscoveryFeed: () => mockUseDiscoveryFeed(),
-  DISCOVERY_LOW_WATERMARK: 5,
-  shouldRequestDiscoveryRefill: jest.requireActual(
-    "../src/features/discovery/use-discovery-feed",
-  ).shouldRequestDiscoveryRefill,
 }));
 
 jest.mock("../src/components/navigation/app-tab-bar", () => ({
@@ -137,13 +134,13 @@ function defaultFeedMock(overrides: Record<string, unknown> = {}) {
     isLoading: false,
     isRefreshing: false,
     isLoadingMore: false,
-    isExhausted: false,
+    isRecycling: false,
     isSignedIn: true,
     recordLike: mockRecordLike,
     recordHide: mockRecordHide,
     refresh: mockRefresh,
     loadMore: mockLoadMore,
-    hasMoreLocal: false,
+    hasMoreLocal: true,
     ...overrides,
   };
 }
@@ -218,32 +215,25 @@ describe("discover screen", () => {
     expect(screen.getByText("Second page story")).toBeTruthy();
   });
 
-  it("renders the à jour end state when the feed is exhausted", () => {
+  it("shows the more-incoming affordance when the feed is recycling", () => {
     mockUseDiscoveryFeed.mockReturnValue(
       defaultFeedMock({
-        isExhausted: true,
-        hasMoreLocal: true,
+        isRecycling: true,
       }),
     );
 
     render(<DiscoverScreen />);
 
-    expect(screen.getByTestId("discover-end-state")).toBeTruthy();
-    expect(screen.getByText("Vous êtes à jour")).toBeTruthy();
-    expect(screen.getByText(/archives/i)).toBeTruthy();
+    expect(screen.getByTestId("discover-more-incoming")).toBeTruthy();
+    expect(screen.getByText(/on en cherche d'autres/i)).toBeTruthy();
+    expect(screen.queryByTestId("discover-end-state")).toBeNull();
   });
 
-  it("shows caught-up copy when there is no local archive page left", () => {
-    mockUseDiscoveryFeed.mockReturnValue(
-      defaultFeedMock({
-        isExhausted: true,
-        hasMoreLocal: false,
-      }),
-    );
-
+  it("does not show a dead-end footer while fresh content remains", () => {
     render(<DiscoverScreen />);
 
-    expect(screen.getByText(/arrivent en arrière-plan/i)).toBeTruthy();
+    expect(screen.queryByTestId("discover-end-state")).toBeNull();
+    expect(screen.queryByText("Vous êtes à jour")).toBeNull();
   });
 
   it("renders a loading skeleton while the feed is loading", () => {
@@ -396,12 +386,12 @@ describe("shouldRequestDiscoveryRefill", () => {
     expect(
       shouldRequestDiscoveryRefill({
         itemCount: 3,
-        isExhausted: false,
+        recycling: false,
       }),
     ).toBe(true);
   });
 
-  it("requests refill when the feed is exhausted", () => {
+  it("requests refill when the feed enters recycling", () => {
     const { shouldRequestDiscoveryRefill } = jest.requireActual(
       "../src/features/discovery/use-discovery-feed",
     );
@@ -409,7 +399,7 @@ describe("shouldRequestDiscoveryRefill", () => {
     expect(
       shouldRequestDiscoveryRefill({
         itemCount: 20,
-        isExhausted: true,
+        recycling: true,
       }),
     ).toBe(true);
   });

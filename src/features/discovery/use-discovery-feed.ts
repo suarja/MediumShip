@@ -19,8 +19,12 @@ export const DISCOVERY_LOW_WATERMARK = 5;
 type DiscoveryFeedPage = {
   items: DiscoveryFeedItem[];
   nextCursor: string | null;
-  isExhausted: boolean;
+  recycling: boolean;
 };
+
+export function discoveryFeedItemKey(item: DiscoveryFeedItem, index: number): string {
+  return `${index}-${item._id}`;
+}
 
 export function normalizeDiscoveryFeedPage(
   data: DiscoveryFeedPage | DiscoveryFeedItem[] | undefined,
@@ -33,7 +37,7 @@ export function normalizeDiscoveryFeedPage(
     return {
       items: data,
       nextCursor: null,
-      isExhausted: true,
+      recycling: false,
     };
   }
 
@@ -42,11 +46,11 @@ export function normalizeDiscoveryFeedPage(
 
 export function shouldRequestDiscoveryRefill(args: {
   itemCount: number;
-  isExhausted: boolean;
+  recycling: boolean;
   watermark?: number;
 }): boolean {
   const watermark = args.watermark ?? DISCOVERY_LOW_WATERMARK;
-  return args.isExhausted || args.itemCount < watermark;
+  return args.recycling || args.itemCount < watermark;
 }
 
 export function useDiscoveryFeed(): {
@@ -54,7 +58,7 @@ export function useDiscoveryFeed(): {
   isLoading: boolean;
   isRefreshing: boolean;
   isLoadingMore: boolean;
-  isExhausted: boolean;
+  isRecycling: boolean;
   isSignedIn: boolean;
   recordLike: (contentId: Id<"contents">) => void;
   recordHide: (contentId: Id<"contents">) => void;
@@ -71,7 +75,7 @@ export function useDiscoveryFeed(): {
   const [fetchCursor, setFetchCursor] = useState<string | null>(null);
   const [allItems, setAllItems] = useState<DiscoveryFeedItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [isExhausted, setIsExhausted] = useState(false);
+  const [isRecycling, setIsRecycling] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const refillRequestedRef = useRef(false);
   const pendingAppendRef = useRef<string | null>(null);
@@ -95,7 +99,7 @@ export function useDiscoveryFeed(): {
     setFetchCursor(null);
     setAllItems([]);
     setNextCursor(null);
-    setIsExhausted(false);
+    setIsRecycling(false);
     setIsLoadingMore(false);
     refillRequestedRef.current = false;
     pendingAppendRef.current = null;
@@ -112,7 +116,11 @@ export function useDiscoveryFeed(): {
     setIsRefreshing(false);
     setIsLoadingMore(false);
     setNextCursor(page.nextCursor);
-    setIsExhausted(page.isExhausted);
+    setIsRecycling(page.recycling);
+
+    if (page.recycling) {
+      refillRequestedRef.current = false;
+    }
 
     // NOTE: do NOT reset fetchCursor to page 0 on exhaustion. Doing so makes
     // page 0 report a non-null nextCursor again, so onEndReached/loadMore
@@ -140,9 +148,7 @@ export function useDiscoveryFeed(): {
         return previous;
       }
 
-      const existingIds = new Set(previous.map((item) => item._id));
-      const appended = page.items.filter((item) => !existingIds.has(item._id));
-      return [...previous, ...appended];
+      return [...previous, ...page.items];
     });
 
     pendingAppendRef.current = null;
@@ -152,7 +158,7 @@ export function useDiscoveryFeed(): {
     if (
       !shouldRequestDiscoveryRefill({
         itemCount: allItems.length,
-        isExhausted,
+        recycling: isRecycling,
       }) ||
       refillRequestedRef.current
     ) {
@@ -161,7 +167,7 @@ export function useDiscoveryFeed(): {
 
     refillRequestedRef.current = true;
     void requestRefill({ tenantSlug });
-  }, [allItems.length, isExhausted, requestRefill, tenantSlug]);
+  }, [allItems.length, isRecycling, requestRefill, tenantSlug]);
 
   const recordLike = useCallback(
     (contentId: Id<"contents">) => {
@@ -226,7 +232,7 @@ export function useDiscoveryFeed(): {
     isLoading: page === undefined && allItems.length === 0,
     isRefreshing,
     isLoadingMore,
-    isExhausted,
+    isRecycling,
     isSignedIn: isAuthenticated,
     recordLike,
     recordHide,

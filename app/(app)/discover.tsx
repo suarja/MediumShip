@@ -23,6 +23,7 @@ import {
 import { toContentCardModel } from "../../src/features/content/selectors";
 import {
   useDiscoveryFeed,
+  discoveryFeedItemKey,
   type DiscoveryFeedItem,
 } from "../../src/features/discovery/use-discovery-feed";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
@@ -44,12 +45,11 @@ export default function DiscoverScreen() {
     isLoading,
     isRefreshing,
     isLoadingMore,
-    isExhausted,
+    isRecycling,
     isSignedIn,
     recordLike,
     refresh,
     loadMore,
-    hasMoreLocal,
   } = useDiscoveryFeed();
 
   if (!isModuleEnabled(enabledModules, "discover")) {
@@ -110,7 +110,7 @@ export default function DiscoverScreen() {
       <FlatList
         testID="discover-list"
         data={items}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item, index) => discoveryFeedItemKey(item, index)}
         renderItem={renderItem}
         contentContainerStyle={listContentStyle}
         showsVerticalScrollIndicator={false}
@@ -161,8 +161,7 @@ export default function DiscoverScreen() {
           items.length > 0 ? (
             <DiscoverFeedFooter
               isLoadingMore={isLoadingMore}
-              isExhausted={isExhausted}
-              hasMoreLocal={hasMoreLocal}
+              isRecycling={isRecycling}
             />
           ) : null
         }
@@ -173,12 +172,10 @@ export default function DiscoverScreen() {
 
 function DiscoverFeedFooter({
   isLoadingMore,
-  isExhausted,
-  hasMoreLocal,
+  isRecycling,
 }: {
   isLoadingMore: boolean;
-  isExhausted: boolean;
-  hasMoreLocal: boolean;
+  isRecycling: boolean;
 }) {
   const { t } = useTranslation("discover");
   const { theme } = useAppTheme();
@@ -207,41 +204,44 @@ function DiscoverFeedFooter({
     );
   }
 
-  if (!isExhausted) {
+  if (!isRecycling) {
     return null;
   }
 
   return (
     <View
-      testID="discover-end-state"
+      testID="discover-more-incoming"
       style={[
         styles.footer,
-        styles.endState,
         {
-          borderRadius: theme.radii.lg,
-          backgroundColor: theme.colors.surface,
-          borderColor: theme.colors.border,
-          padding: theme.spacing.lg * scaleSpace,
+          paddingVertical: theme.spacing.md * scaleSpace,
           gap: theme.spacing.xs * scaleSpace,
-          marginTop: theme.spacing.md * scaleSpace,
         },
       ]}
     >
       <Text
         style={[
-          styles.endTitle,
-          { color: theme.colors.heading, fontSize: 16 * scaleFont },
+          styles.footerBody,
+          {
+            color: theme.colors.textMuted,
+            fontSize: 13 * scaleFont,
+            textAlign: "center",
+          },
         ]}
       >
-        {t("endOfFeedTitle")}
+        {t("moreIncoming")}
       </Text>
       <Text
         style={[
-          styles.footerBody,
-          { color: theme.colors.textMuted, fontSize: 13 * scaleFont },
+          styles.footerHint,
+          {
+            color: withAlpha(theme.colors.textMuted, 0.72),
+            fontSize: 12 * scaleFont,
+            textAlign: "center",
+          },
         ]}
       >
-        {hasMoreLocal ? t("endOfFeedBodyWithArchive") : t("endOfFeedBodyCaughtUp")}
+        {t("recyclingNote")}
       </Text>
     </View>
   );
@@ -362,18 +362,13 @@ const styles = StyleSheet.create({
   footer: {
     alignItems: "center",
   },
-  endState: {
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: "flex-start",
-  },
-  endTitle: {
-    fontFamily: fontFamilies.display,
-    letterSpacing: -0.2,
-  },
   footerBody: {
     fontFamily: fontFamilies.body,
     lineHeight: 18,
-    textAlign: "left",
+  },
+  footerHint: {
+    fontFamily: fontFamilies.body,
+    lineHeight: 16,
   },
   skeletonStack: {},
   skeletonRow: {

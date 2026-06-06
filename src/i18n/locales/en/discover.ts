@@ -3,13 +3,10 @@ export default {
   subtitle: "Browse what's new and revisit stories from the library.",
   loading: "Loading the feed…",
   loadingMore: "Loading more…",
+  moreIncoming: "Finding more stories for you…",
+  recyclingNote: "You've seen the latest — keep scrolling for more picks.",
   emptyTitle: "Nothing to discover yet",
   emptyBody: "Check back soon — new stories land here regularly.",
-  endOfFeedTitle: "You're up to date",
-  endOfFeedBodyWithArchive:
-    "You've seen everything new for now. Keep scrolling for archive picks.",
-  endOfFeedBodyCaughtUp:
-    "You've seen everything for now. New stories appear here as they arrive in the background.",
   actions: {
     like: "Like",
     more: "More actions",

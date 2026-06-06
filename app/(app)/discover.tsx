@@ -9,7 +9,7 @@ import {
 import { ContentCard } from "../../src/components/content/content-card";
 import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
-import { cardKicker, cardMeta } from "../../src/features/content/card-presentation";
+import { cardDurationMeta, cardKicker } from "../../src/features/content/card-presentation";
 import { toContentCardModel } from "../../src/features/content/selectors";
 import { groupDiscoveryFeedSections } from "../../src/features/discovery/group-feed-sections";
 import { useDiscoveryFeed } from "../../src/features/discovery/use-discovery-feed";
@@ -173,7 +173,7 @@ function DiscoverFeedSection({
         </Text>
       </View>
 
-      <View>
+      <View style={{ gap: theme.spacing.sm * scaleSpace }}>
         {items.map((item) => {
           const card = toContentCardModel(item);
 
@@ -183,7 +183,7 @@ function DiscoverFeedSection({
               variant="feature"
               item={card}
               kicker={cardKicker(card, tHome)}
-              meta={cardMeta(card, tHome)}
+              meta={cardDurationMeta(card, tHome)}
               divider={false}
               actions={
                 isSignedIn ? (

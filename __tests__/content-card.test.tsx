@@ -69,7 +69,6 @@ describe("ContentCard", () => {
 
     expect(screen.getByTestId("content-card-compact")).toBeTruthy();
     expect(screen.getByText("Economie du soin")).toBeTruthy();
-    expect(screen.getByText("Analyse")).toBeTruthy();
     expect(screen.getByText("18 min")).toBeTruthy();
     expect(screen.queryByTestId("content-card-feature")).toBeNull();
   });
@@ -105,12 +104,15 @@ describe("ContentCard", () => {
         item={SAMPLE_ITEM}
         kicker="Analyse"
         meta="18 min"
+        actions={<View testID="stub-actions" />}
       />,
     );
 
     expect(screen.getByTestId("content-card-feature")).toBeTruthy();
     expect(screen.getByText("Economie du soin")).toBeTruthy();
     expect(screen.getByText("Une analyse approfondie")).toBeTruthy();
+    expect(screen.getByTestId("content-card-title-category")).toHaveTextContent("Analyse");
+    expect(screen.getByTestId("content-card-actions")).toBeTruthy();
     expect(screen.queryByTestId("content-card-compact")).toBeNull();
   });
 

@@ -45,17 +45,20 @@ export function cardKicker(item: ContentCardModel, t: Translate): string {
  * Returned unstyled — callers apply uppercase/mono treatment.
  */
 export function cardMeta(item: ContentCardModel, t: Translate): string {
-  const parts: string[] = [];
+  const duration = cardDurationMeta(item, t);
+  if (!duration) {
+    return item.isPremium ? t("premiumTag") : "";
+  }
+  return item.isPremium ? `${duration} · ${t("premiumTag")}` : duration;
+}
 
+/** Duration / reading time only — premium is rendered as a separate badge in discovery. */
+export function cardDurationMeta(item: ContentCardModel, t: Translate): string {
   if (item.readingTimeMinutes) {
-    parts.push(t("minRead", { count: item.readingTimeMinutes }));
-  } else if (item.durationMinutes) {
-    parts.push(t("minDuration", { count: item.durationMinutes }));
+    return t("minRead", { count: item.readingTimeMinutes });
   }
-
-  if (item.isPremium) {
-    parts.push(t("premiumTag"));
+  if (item.durationMinutes) {
+    return t("minDuration", { count: item.durationMinutes });
   }
-
-  return parts.join(" · ");
+  return "";
 }

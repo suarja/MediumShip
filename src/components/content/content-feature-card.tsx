@@ -9,9 +9,8 @@ import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 /**
- * Compact discovery card — continuous feed rhythm (no dividers, no boxed chrome):
- * a small square thumb beside kicker / title / summary / meta, with a light
- * icon-only action row tucked underneath. Instagram/Facebook scroll reference.
+ * Flat discovery card — category/type top-right of the title row, tight summary
+ * stack, then a compact footer: duration + premium left, icon actions right.
  */
 export function ContentFeatureCard({
   item,
@@ -20,7 +19,9 @@ export function ContentFeatureCard({
   actions,
 }: {
   item: ContentCardModel;
+  /** Editorial category, or format name when category is absent. */
   kicker: string;
+  /** Duration / reading time only (no inline premium text). */
   meta: string;
   /** @deprecated Feature cards never draw inter-item dividers. */
   divider?: boolean;
@@ -30,142 +31,189 @@ export function ContentFeatureCard({
   const { scaleFont, scaleSpace } = useResponsive();
   const accentTone = item.isPremium ? theme.colors.premium : theme.colors.accent;
   const thumb = 72 * scaleSpace;
+  const hasEditorialCategory = Boolean(item.category?.trim());
+  const showFooter = Boolean(meta || item.isPremium || actions);
 
   return (
     <View
       testID="content-card-feature"
       style={[
         styles.card,
-        {
-          gap: theme.spacing.xs * scaleSpace,
-          paddingVertical: theme.spacing.sm * scaleSpace,
-        },
+        { paddingVertical: theme.spacing.xs * scaleSpace },
       ]}
     >
-      <Link href={item.href as never} asChild>
-        <Pressable
-          accessibilityRole="link"
-          style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
-        >
-          <View style={[styles.row, { gap: theme.spacing.md * scaleSpace }]}>
-            <View
-              style={[
-                styles.thumb,
-                {
-                  width: thumb,
-                  height: thumb,
-                  borderRadius: theme.radii.sm,
-                  backgroundColor: theme.colors.accentSoft,
-                },
-              ]}
-            >
-              {item.coverImageUrl ? (
-                <Image
-                  accessibilityLabel={`${item.title} thumbnail`}
-                  source={{ uri: item.coverImageUrl }}
-                  style={styles.thumbnail}
-                />
-              ) : (
-                <Text
-                  style={[
-                    styles.glyph,
-                    { color: accentTone, fontSize: 24 * scaleFont },
-                  ]}
-                >
-                  {KIND_GLYPH[item.kind]}
-                </Text>
-              )}
-              {item.isPremium ? (
-                <View
-                  style={[styles.premiumBadge, { backgroundColor: theme.colors.premium }]}
-                >
-                  <Text style={[styles.premiumStar, { color: PREMIUM_ON_FILL }]}>★</Text>
-                </View>
-              ) : null}
-            </View>
-
-            <View
-              style={[
-                styles.copy,
-                { gap: 3 * scaleSpace, paddingTop: 1 * scaleSpace },
-              ]}
-            >
-              <Text
-                numberOfLines={1}
-                style={[
-                  styles.kicker,
-                  { color: accentTone, fontSize: 10 * scaleFont },
-                ]}
-              >
-                {kicker}
-              </Text>
-              <Text
-                numberOfLines={2}
-                style={[
-                  styles.title,
-                  {
-                    color: theme.colors.heading,
-                    fontSize: 17 * scaleFont,
-                    lineHeight: 21 * scaleFont,
-                  },
-                ]}
-              >
-                {item.title}
-              </Text>
-              {item.summary ? (
-                <Text
-                  numberOfLines={2}
-                  ellipsizeMode="tail"
-                  style={[
-                    styles.summary,
-                    {
-                      color: theme.colors.textMuted,
-                      fontSize: 13 * scaleFont,
-                      lineHeight: 18 * scaleFont,
-                    },
-                  ]}
-                >
-                  {item.summary}
-                </Text>
-              ) : null}
-              {meta ? (
-                <Text
-                  numberOfLines={1}
-                  style={[
-                    styles.meta,
-                    { color: theme.colors.textMuted, fontSize: 11 * scaleFont },
-                  ]}
-                >
-                  {meta}
-                </Text>
-              ) : null}
-            </View>
-          </View>
-        </Pressable>
-      </Link>
-
-      {actions ? (
+      <View style={[styles.row, { gap: theme.spacing.md * scaleSpace }]}>
         <View
-          testID="content-card-actions"
           style={[
-            styles.actions,
+            styles.thumb,
             {
-              gap: theme.spacing.xs * scaleSpace,
-              paddingLeft: thumb + theme.spacing.md * scaleSpace,
+              width: thumb,
+              height: thumb,
+              borderRadius: theme.radii.sm,
+              backgroundColor: theme.colors.accentSoft,
             },
           ]}
         >
-          {actions}
+          {item.coverImageUrl ? (
+            <Image
+              accessibilityLabel={`${item.title} thumbnail`}
+              source={{ uri: item.coverImageUrl }}
+              style={styles.thumbnail}
+            />
+          ) : (
+            <Text
+              style={[
+                styles.thumbGlyph,
+                { color: accentTone, fontSize: 24 * scaleFont },
+              ]}
+            >
+              {KIND_GLYPH[item.kind]}
+            </Text>
+          )}
         </View>
-      ) : null}
+
+        <View style={[styles.copy, { gap: 2 * scaleSpace }]}>
+          <Link href={item.href as never} asChild>
+            <Pressable
+              accessibilityRole="link"
+              style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
+            >
+              <View style={{ gap: 2 * scaleSpace }}>
+                <View
+                  style={[
+                    styles.titleRow,
+                    { gap: theme.spacing.sm * scaleSpace },
+                  ]}
+                >
+                  <Text
+                    numberOfLines={2}
+                    ellipsizeMode="tail"
+                    style={[
+                      styles.title,
+                      {
+                        color: theme.colors.heading,
+                        fontSize: 17 * scaleFont,
+                        lineHeight: 21 * scaleFont,
+                      },
+                    ]}
+                  >
+                    {item.title}
+                  </Text>
+                  {hasEditorialCategory ? (
+                    <Text
+                      numberOfLines={1}
+                      testID="content-card-title-category"
+                      style={[
+                        styles.titleLabel,
+                        { color: accentTone, fontSize: 10 * scaleFont },
+                      ]}
+                    >
+                      {kicker}
+                    </Text>
+                  ) : (
+                    <Text
+                      accessibilityLabel={item.kindLabel}
+                      testID="content-card-title-kind"
+                      style={[
+                        styles.titleKindGlyph,
+                        { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
+                      ]}
+                    >
+                      {KIND_GLYPH[item.kind]}
+                    </Text>
+                  )}
+                </View>
+                {item.summary ? (
+                  <Text
+                    numberOfLines={2}
+                    ellipsizeMode="tail"
+                    style={[
+                      styles.summary,
+                      {
+                        color: theme.colors.textMuted,
+                        fontSize: 13 * scaleFont,
+                        lineHeight: 17 * scaleFont,
+                      },
+                    ]}
+                  >
+                    {item.summary}
+                  </Text>
+                ) : null}
+              </View>
+            </Pressable>
+          </Link>
+
+          {showFooter ? (
+            <View
+              testID="content-card-footer"
+              style={[
+                styles.footer,
+                {
+                  gap: theme.spacing.sm * scaleSpace,
+                  marginTop: 1 * scaleSpace,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.footerMeta,
+                  { gap: 6 * scaleSpace, minHeight: 28 * scaleSpace },
+                ]}
+              >
+                {meta ? (
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.meta,
+                      { color: theme.colors.textMuted, fontSize: 11 * scaleFont },
+                    ]}
+                  >
+                    {meta}
+                  </Text>
+                ) : null}
+                {item.isPremium ? (
+                  <View
+                    testID="content-card-premium-badge"
+                    style={[
+                      styles.premiumBadge,
+                      {
+                        borderRadius: theme.radii.pill,
+                        backgroundColor: theme.colors.premium,
+                        paddingHorizontal: 6 * scaleSpace,
+                        paddingVertical: 2 * scaleSpace,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.premiumLabel,
+                        { color: PREMIUM_ON_FILL, fontSize: 9 * scaleFont },
+                      ]}
+                    >
+                      ★
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+
+              {actions ? (
+                <View
+                  testID="content-card-actions"
+                  style={[styles.actions, { gap: 2 * scaleSpace }]}
+                >
+                  {actions}
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {},
-  pressable: {},
-  pressed: { opacity: 0.88 },
   row: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -177,38 +225,68 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   thumbnail: { width: "100%", height: "100%" },
-  glyph: { fontWeight: "700" },
-  premiumBadge: {
-    position: "absolute",
-    top: 4,
-    right: 4,
-    width: 16,
-    height: 16,
-    borderRadius: 5,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  premiumStar: { fontSize: 8, fontWeight: "700" },
+  thumbGlyph: { fontWeight: "700" },
   copy: { flex: 1, minWidth: 0 },
-  kicker: {
-    fontFamily: fontFamilies.mono,
-    textTransform: "uppercase",
-    letterSpacing: 1.3,
+  pressable: {},
+  pressed: { opacity: 0.88 },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
   },
   title: {
+    flex: 1,
+    minWidth: 0,
     fontFamily: fontFamilies.display,
     letterSpacing: -0.2,
+  },
+  titleLabel: {
+    fontFamily: fontFamilies.mono,
+    textTransform: "uppercase",
+    letterSpacing: 1.1,
+    flexShrink: 0,
+    maxWidth: 80,
+    textAlign: "right",
+    paddingTop: 2,
+  },
+  titleKindGlyph: {
+    fontWeight: "700",
+    flexShrink: 0,
+    lineHeight: 16,
+    paddingTop: 1,
   },
   summary: {
     fontFamily: fontFamilies.body,
   },
+  footer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  footerMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    minWidth: 0,
+  },
   meta: {
     fontFamily: fontFamilies.mono,
     letterSpacing: 0.3,
-    marginTop: 1,
+    flexShrink: 1,
+  },
+  premiumBadge: {
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  premiumLabel: {
+    fontFamily: fontFamilies.mono,
+    fontWeight: "700",
+    letterSpacing: 0.5,
   },
   actions: {
     flexDirection: "row",
     alignItems: "center",
+    flexShrink: 0,
   },
 });

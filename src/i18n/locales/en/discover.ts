@@ -6,8 +6,10 @@ export default {
   emptyTitle: "Nothing to discover yet",
   emptyBody: "Check back soon — new stories land here regularly.",
   endOfFeedTitle: "You're up to date",
-  endOfFeedBody:
-    "You've seen everything for now. Archive picks continue below, and fresh stories arrive in the background.",
+  endOfFeedBodyWithArchive:
+    "You've seen everything new for now. Keep scrolling for archive picks.",
+  endOfFeedBodyCaughtUp:
+    "You've seen everything for now. New stories appear here as they arrive in the background.",
   actions: {
     like: "Like",
     more: "More actions",

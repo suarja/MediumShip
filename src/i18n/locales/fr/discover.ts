@@ -6,8 +6,10 @@ export default {
   emptyTitle: "Rien à découvrir pour le moment",
   emptyBody: "Revenez bientôt : de nouveaux contenus arrivent régulièrement.",
   endOfFeedTitle: "Vous êtes à jour",
-  endOfFeedBody:
-    "Vous avez tout parcouru pour l'instant. Les archives continuent ci-dessous, et de nouveaux contenus arrivent en arrière-plan.",
+  endOfFeedBodyWithArchive:
+    "Vous avez parcouru les nouveautés. Continuez à défiler pour les archives.",
+  endOfFeedBodyCaughtUp:
+    "Vous avez tout parcouru pour l'instant. De nouveaux contenus s'ajoutent ici dès qu'ils arrivent en arrière-plan.",
   actions: {
     like: "Aimer",
     more: "Plus d'actions",

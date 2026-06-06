@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery, useConvexAuth } from "convex/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { api } from "../../../convex/_generated/api";
@@ -60,10 +60,12 @@ export function useDiscoveryFeed(): {
   recordHide: (contentId: Id<"contents">) => void;
   refresh: () => void;
   loadMore: () => void;
+  hasMoreLocal: boolean;
 } {
   const { tenantSlug } = useAppTheme();
-  const { isSignedIn } = useClerkAuth();
-  const me = useQuery(api.users.queries.getMe, isSignedIn ? {} : "skip");
+  const { isSignedIn: isClerkSignedIn } = useClerkAuth();
+  const { isAuthenticated } = useConvexAuth();
+  const me = useQuery(api.users.queries.getMe, isClerkSignedIn ? {} : "skip");
   const [feedSeed, setFeedSeed] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [fetchCursor, setFetchCursor] = useState<string | null>(null);
@@ -112,9 +114,28 @@ export function useDiscoveryFeed(): {
     setNextCursor(page.nextCursor);
     setIsExhausted(page.isExhausted);
 
+    if (page.isExhausted && page.nextCursor === null && fetchCursor !== null) {
+      setFetchCursor(null);
+      pendingAppendRef.current = null;
+    }
+
     setAllItems((previous) => {
       if (fetchCursor === null) {
-        return page.items;
+        if (previous.length === 0) {
+          return page.items;
+        }
+
+        const existingIds = new Set(previous.map((item) => item._id));
+        const newcomers = page.items.filter((item) => !existingIds.has(item._id));
+        if (newcomers.length > 0) {
+          return [...previous, ...newcomers];
+        }
+
+        if (previous.length <= DISCOVERY_PAGE_SIZE) {
+          return page.items;
+        }
+
+        return previous;
       }
 
       const existingIds = new Set(previous.map((item) => item._id));
@@ -142,9 +163,15 @@ export function useDiscoveryFeed(): {
 
   const recordLike = useCallback(
     (contentId: Id<"contents">) => {
-      if (!isSignedIn) {
+      if (!isAuthenticated) {
         return;
       }
+
+      setAllItems((previous) =>
+        previous.map((item) =>
+          item._id === contentId ? { ...item, isLiked: !item.isLiked } : item,
+        ),
+      );
 
       void recordInteraction({
         tenantSlug,
@@ -152,12 +179,12 @@ export function useDiscoveryFeed(): {
         type: "like",
       });
     },
-    [isSignedIn, recordInteraction, tenantSlug],
+    [isAuthenticated, recordInteraction, tenantSlug],
   );
 
   const recordHide = useCallback(
     (contentId: Id<"contents">) => {
-      if (!isSignedIn) {
+      if (!isAuthenticated) {
         return;
       }
 
@@ -167,7 +194,7 @@ export function useDiscoveryFeed(): {
         type: "hide",
       });
     },
-    [isSignedIn, recordInteraction, tenantSlug],
+    [isAuthenticated, recordInteraction, tenantSlug],
   );
 
   const refresh = useCallback(() => {
@@ -198,10 +225,11 @@ export function useDiscoveryFeed(): {
     isRefreshing,
     isLoadingMore,
     isExhausted,
-    isSignedIn,
+    isSignedIn: isAuthenticated,
     recordLike,
     recordHide,
     refresh,
     loadMore,
+    hasMoreLocal: nextCursor !== null,
   };
 }

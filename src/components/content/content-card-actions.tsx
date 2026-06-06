@@ -1,12 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet } from "react-native";
+import { useRouter } from "expo-router";
 
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useBookmarks } from "../../features/bookmarks/use-bookmarks";
-import { useClerkAuth } from "../../features/auth/use-clerk-auth";
 import type { ContentActionsFocus } from "../../features/content/content-actions-sheet-provider";
 import { useContentActionsSheet } from "../../features/content/content-actions-sheet-provider";
 import { useResponsive } from "../../features/responsive/use-responsive";
+import { hasCapability } from "../../features/tenant/public-config";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 /** Inline like toggle — icon only. */
@@ -30,7 +32,7 @@ export function ContentCardLikeAction({
   );
 }
 
-/** Inline bookmark (Favoris) toggle — icon only. */
+/** Inline bookmark (Favoris) toggle — icon only. Persists to `bookmarks`, not `contentInteractions`. */
 export function ContentCardFavoriteAction({
   contentId,
   accessibilityLabel,
@@ -40,21 +42,46 @@ export function ContentCardFavoriteAction({
   accessibilityLabel: string;
   savedAccessibilityLabel: string;
 }) {
-  const { isSignedIn } = useClerkAuth();
-  const { bookmarks, toggleBookmark, isBookmarksLoading } = useBookmarks();
-  const isSaved = bookmarks.some((bookmark) => bookmark.content._id === contentId);
+  const router = useRouter();
+  const { enabledModules } = useAppTheme();
+  const {
+    bookmarks,
+    toggleBookmark,
+    isBookmarksLoading,
+    canAccessBookmarks,
+  } = useBookmarks();
+  const canBookmark = hasCapability(enabledModules, "bookmarks");
+  const serverSaved = bookmarks.some(
+    (bookmark) => bookmark.content._id === contentId,
+  );
+  const [pendingSaved, setPendingSaved] = useState<boolean | null>(null);
+  const isSaved = pendingSaved ?? serverSaved;
+
+  useEffect(() => {
+    setPendingSaved(null);
+  }, [serverSaved, contentId]);
+
+  if (!canBookmark) {
+    return null;
+  }
 
   return (
     <CardIconAction
       testID="discover-favorite-button"
       icon={isSaved ? "bookmark" : "bookmark-outline"}
       active={isSaved}
-      loading={isSignedIn && isBookmarksLoading}
+      loading={canAccessBookmarks && isBookmarksLoading}
       onPress={() => {
-        if (!isSignedIn) {
+        if (!canAccessBookmarks) {
+          router.push("/sign-in");
           return;
         }
-        void toggleBookmark({ contentId });
+
+        const nextSaved = !isSaved;
+        setPendingSaved(nextSaved);
+        void toggleBookmark({ contentId }).catch(() => {
+          setPendingSaved(null);
+        });
       }}
       accessibilityLabel={isSaved ? savedAccessibilityLabel : accessibilityLabel}
     />

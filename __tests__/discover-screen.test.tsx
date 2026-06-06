@@ -38,6 +38,7 @@ jest.mock("../src/features/bookmarks/use-bookmarks", () => ({
     bookmarks: [],
     toggleBookmark: mockToggleBookmark,
     isBookmarksLoading: false,
+    canAccessBookmarks: true,
   }),
 }));
 
@@ -142,6 +143,7 @@ function defaultFeedMock(overrides: Record<string, unknown> = {}) {
     recordHide: mockRecordHide,
     refresh: mockRefresh,
     loadMore: mockLoadMore,
+    hasMoreLocal: false,
     ...overrides,
   };
 }
@@ -157,6 +159,7 @@ describe("discover screen", () => {
     mockRefresh.mockClear();
     mockLoadMore.mockClear();
     mockToggleBookmark.mockClear();
+    mockToggleBookmark.mockResolvedValue({ bookmarked: true });
     mockOpenContentActions.mockClear();
     mockUseAppTheme.mockReturnValue(
       makeTheme(["articles", "episodes", "videos", "discover", "bookmarks"]),
@@ -219,6 +222,7 @@ describe("discover screen", () => {
     mockUseDiscoveryFeed.mockReturnValue(
       defaultFeedMock({
         isExhausted: true,
+        hasMoreLocal: true,
       }),
     );
 
@@ -226,7 +230,20 @@ describe("discover screen", () => {
 
     expect(screen.getByTestId("discover-end-state")).toBeTruthy();
     expect(screen.getByText("Vous êtes à jour")).toBeTruthy();
-    expect(screen.getByText(/archives continuent/i)).toBeTruthy();
+    expect(screen.getByText(/archives/i)).toBeTruthy();
+  });
+
+  it("shows caught-up copy when there is no local archive page left", () => {
+    mockUseDiscoveryFeed.mockReturnValue(
+      defaultFeedMock({
+        isExhausted: true,
+        hasMoreLocal: false,
+      }),
+    );
+
+    render(<DiscoverScreen />);
+
+    expect(screen.getByText(/arrivent en arrière-plan/i)).toBeTruthy();
   });
 
   it("renders a loading skeleton while the feed is loading", () => {

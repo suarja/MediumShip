@@ -7,6 +7,7 @@ import homeEn from "./locales/en/home";
 import libraryEn from "./locales/en/library";
 import navigationEn from "./locales/en/navigation";
 import networkEn from "./locales/en/network";
+import paywallEn from "./locales/en/paywall";
 import premiumEn from "./locales/en/premium";
 import profileEn from "./locales/en/profile";
 import settingsEn from "./locales/en/settings";
@@ -20,6 +21,7 @@ import homeFr from "./locales/fr/home";
 import libraryFr from "./locales/fr/library";
 import navigationFr from "./locales/fr/navigation";
 import networkFr from "./locales/fr/network";
+import paywallFr from "./locales/fr/paywall";
 import premiumFr from "./locales/fr/premium";
 import profileFr from "./locales/fr/profile";
 import settingsFr from "./locales/fr/settings";
@@ -35,6 +37,7 @@ export const resources = {
     navigation: navigationEn,
     profile: profileEn,
     premium: premiumEn,
+    paywall: paywallEn,
     settings: settingsEn,
     article: articleEn,
     episode: episodeEn,
@@ -50,6 +53,7 @@ export const resources = {
     navigation: navigationFr,
     profile: profileFr,
     premium: premiumFr,
+    paywall: paywallFr,
     settings: settingsFr,
     article: articleFr,
     episode: episodeFr,

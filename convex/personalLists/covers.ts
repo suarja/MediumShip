@@ -1,28 +1,10 @@
-import type { Doc, Id } from "../_generated/dataModel";
+import type { Id } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
-import { extractYoutubeVideoId } from "../youtube/helpers";
+import { getContentCoverImageUrl } from "../../src/features/content/selectors";
+
+export { getContentCoverImageUrl };
 
 const PREVIEW_COVER_LIMIT = 3;
-
-export function getContentCoverImageUrl(
-  content: Pick<Doc<"contents">, "heroImageUrl" | "kind" | "videoSource">,
-): string | undefined {
-  if (content.heroImageUrl) {
-    return content.heroImageUrl;
-  }
-
-  if (content.kind === "video" && content.videoSource?.kind === "youtube") {
-    const youtubeVideoId =
-      content.videoSource.youtubeVideoId ||
-      extractYoutubeVideoId(content.videoSource.youtubeUrl);
-
-    if (youtubeVideoId) {
-      return `https://i.ytimg.com/vi/${youtubeVideoId}/hqdefault.jpg`;
-    }
-  }
-
-  return undefined;
-}
 
 export async function resolveListPreviewCoverUrls(
   ctx: QueryCtx,

@@ -25,4 +25,18 @@ describe("personalLists covers", () => {
       }),
     ).toBe("https://i.ytimg.com/vi/abc123/hqdefault.jpg");
   });
+
+  it("ignores a youtube watch-page hero url in favor of the real thumbnail", () => {
+    expect(
+      getContentCoverImageUrl({
+        kind: "video",
+        heroImageUrl: "https://www.youtube.com/watch?v=abc123",
+        videoSource: {
+          kind: "youtube",
+          youtubeVideoId: "abc123",
+          youtubeUrl: "https://www.youtube.com/watch?v=abc123",
+        },
+      }),
+    ).toBe("https://i.ytimg.com/vi/abc123/hqdefault.jpg");
+  });
 });

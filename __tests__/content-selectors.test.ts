@@ -73,6 +73,20 @@ describe("toContentCardModel", () => {
     ).toBe("https://cdn.example.com/video-cover.jpg");
   });
 
+  it("rejects a youtube page url stored as heroImageUrl", () => {
+    expect(
+      getContentCoverImageUrl({
+        kind: "video",
+        heroImageUrl: "https://youtube.com/watch?v=abc123xyz00",
+        videoSource: {
+          kind: "youtube",
+          youtubeVideoId: "abc123xyz00",
+          youtubeUrl: "https://www.youtube.com/watch?v=abc123xyz00",
+        },
+      }),
+    ).toBe("https://i.ytimg.com/vi/abc123xyz00/hqdefault.jpg");
+  });
+
   it("normalizes google image result urls to direct image urls", () => {
     expect(
       normalizeRemoteImageUrl(

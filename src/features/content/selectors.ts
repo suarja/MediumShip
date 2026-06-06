@@ -111,22 +111,47 @@ export function getYoutubeLaunchUrl(
   return watchUrl.toString();
 }
 
+function isYoutubeSiteUrl(url: string) {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "");
+
+    return (
+      host === "youtu.be" ||
+      host === "youtube.com" ||
+      host === "m.youtube.com" ||
+      host === "youtube-nocookie.com"
+    );
+  } catch {
+    return false;
+  }
+}
+
+function getYoutubeCoverThumbnail(
+  content: Pick<ContentDoc, "kind" | "videoSource">,
+) {
+  if (content.kind !== "video" || content.videoSource?.kind !== "youtube") {
+    return undefined;
+  }
+
+  const youtubeVideoId = getYoutubeVideoId(content.videoSource);
+  return youtubeVideoId ? getYoutubeThumbnailUrl(youtubeVideoId) : undefined;
+}
+
 export function getContentCoverImageUrl(
   content: Pick<ContentDoc, "heroImageUrl" | "kind" | "videoSource">,
 ) {
   const normalizedHeroImageUrl = normalizeRemoteImageUrl(content.heroImageUrl);
-  if (normalizedHeroImageUrl) {
-    return normalizedHeroImageUrl;
-  }
+  const youtubeThumbnail = getYoutubeCoverThumbnail(content);
 
-  if (content.kind === "video" && content.videoSource?.kind === "youtube") {
-    const youtubeVideoId = getYoutubeVideoId(content.videoSource);
-    if (youtubeVideoId) {
-      return getYoutubeThumbnailUrl(youtubeVideoId);
+  if (youtubeThumbnail) {
+    if (normalizedHeroImageUrl && !isYoutubeSiteUrl(normalizedHeroImageUrl)) {
+      return normalizedHeroImageUrl;
     }
+
+    return youtubeThumbnail;
   }
 
-  return undefined;
+  return normalizedHeroImageUrl;
 }
 
 export function toContentCardModel(content: ContentDoc): ContentCardModel {

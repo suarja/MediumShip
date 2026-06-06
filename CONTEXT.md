@@ -66,6 +66,7 @@ Le produit n'est pas centré exclusivement sur la vidéo. `Article`, `Episode` e
 - Favoriser les intégrations réversibles et les composants qui réduisent la surface backend spécifique.
 - Préférer des patterns déjà validés dans les repos de référence quand ils correspondent au besoin.
 - Donner priorité aux patterns validés dans la référence mobile la plus complète avant de puiser dans des repos secondaires.
+- Le moteur de découverte adopte une architecture hexagonale (ports & adapters) **assumée** : chaque `Provider` est un adapter d'ingestion derrière un port stable, même tant qu'un seul adapter est branché. Ce seam est un choix d'architecture justifié par l'évolution multi-source prévue à court terme ; il ne doit pas être supprimé au motif qu'un seul provider existe à l'instant T. Voir `docs/adr/0003-content-discovery-engine.md`.
 
 ## Non-Objectifs
 
@@ -128,6 +129,10 @@ _Avoid_: Section when it means layout only
 **Tag**:
 Étiquette thématique transverse reliant des contenus apparentés au-delà des catégories et collections.
 _Avoid_: Keyword, label
+
+**Entity**:
+Personne, organisation ou mouvement qui apparaît dans des contenus éditoriaux comme sujet, auteur, source ou participant. Dimension de scoring dans le moteur de découverte.
+_Avoid_: Actor, Subject, Person
 
 **Feed**:
 Flux principal ordonné de contenus publiés présenté à un membre.
@@ -206,3 +211,25 @@ _Avoid_: Calendar entry
 **CommunityLink**:
 Lien géré depuis le produit vers une surface communautaire externe telle que Discord, Telegram, WhatsApp ou une newsletter.
 _Avoid_: Social link
+
+### Moteur De Découverte
+
+**Provider**:
+Adapter d'ingestion qui récupère des contenus depuis une source (CMS interne, Wikipedia, RSS, YouTube, upload) et les normalise en `Content`. Premier port de l'architecture hexagonale du moteur de découverte : remplaçable et isolé derrière une interface stable.
+_Avoid_: Connector, fetcher, integration
+
+**Affinity**:
+Score pondéré qu'un `Member` accumule pour une dimension de contenu (`Category`, `Tag`, ou type de `Content`) à partir de ses interactions. Dimension d'entrée du classement du feed de découverte. La table technique qui la stocke est `userPreferences`.
+_Avoid_: Preference weight, like count, rating
+
+**ScoringKey**:
+Identité normalisée d'une dimension d'`Affinity` (catégorie ou tag) partagée par l'écriture de `Content`, l'écriture d'`Affinity` et le scoring du feed, pour qu'une même dimension ne se fragmente pas sur des variantes de casse ou d'accent.
+_Avoid_: Slug, raw label, key
+
+**ScoringPolicy**:
+Cœur de domaine du moteur de découverte : module pur qui possède les poids d'interaction, les facteurs par dimension, les boosts (fraîcheur, archive, déjà-vu) et la répartition du feed. Sans dépendance à la base : son interface est sa surface de test.
+_Avoid_: Algorithm, ranker, recommender service
+
+**ContentVisibility**:
+Règle d'accès unique — masquer un `PremiumContent` quand le module `premium` est inactif — appliquée à l'identique par le `Feed` éditorial et par le feed de découverte.
+_Avoid_: Filter, access check

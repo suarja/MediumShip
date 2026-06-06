@@ -42,7 +42,7 @@ Le barème ad hoc du brouillon (`Likes×10 + Opens×2 − Skips×5`) est **écar
 Ce qu'on fetch est décidé par la **`FetchDemand`** : l'agrégat des `Affinity` de l'audience du tenant + un quota de diversité + un **seed de bootstrap** (catégories configurées au tenant, pour le cold start). Une **ingestion planifiée (cron Convex)** consomme cette demande et appelle le provider ; le résultat est dédupliqué (par `externalId`) et upserté dans `contents`, **corpus partagé** réutilisable par tous les membres du tenant.
 
 - *Pourquoi pas le buffer-refill per-session du brouillon* : déclencher un fetch en direct sur le geste/épuisement d'un membre couple A→B en temps réel, impose dédup + rate-limit à la volée, et risque des boucles de rétroaction sur petit corpus. L'effet de groupe (tendance) est conservé — mais via l'**agrégat**, en différé.
-- Le **fetch on-demand** reste une évolution possible *si* le feed paraît stale, ajoutée plus tard.
+- **Mise à jour (Slice E) :** le **fetch on-demand** est **adopté** en complément du cron — mais en **arrière-plan** (jamais dans le chemin de lecture) et **coalescé** par `(tenant, catégorie)`. Le « couplage A→B » qui motivait le report est un non-problème : le corpus partagé est l'effet recherché ; les seuls garde-fous réels sont *background + coalescing + dédup `externalId`*, qui relèvent de l'implémentation, pas de l'architecture.
 
 ### 4. Infinite scroll = mécanique de feed séparée (pagination seed-stable)
 
@@ -54,7 +54,7 @@ La lecture JIT d'une page Wikipedia (parse HTML, réécriture des liens `/wiki/.
 
 ### 6. Hors scope (différés)
 
-Graphe `edges`, vector search, **pruning** du corpus, fetch on-demand, et l'**onboarding nuage-de-tags** (qui sèmera plus tard des `Affinity` initiales par membre).
+Graphe `edges`, vector search, **pruning** du corpus, et l'**onboarding nuage-de-tags** (qui sèmera plus tard des `Affinity` initiales par membre). *(Le fetch on-demand, initialement ici, est adopté en Slice E — voir Décision 3.)*
 
 ## Périmètre Slice D (immédiat)
 

@@ -1,5 +1,13 @@
 import type { ContentDoc, ContentKind } from "../content/types";
 
+export type CommunityLinkKind = "discord" | "telegram" | "whatsapp" | "newsletter";
+
+export type CommunityLink = {
+  kind: CommunityLinkKind;
+  url: string;
+  label?: string;
+};
+
 export const PUBLIC_CONTENT_MODULES = ["articles", "episodes", "videos"] as const;
 export const OPTIONAL_PUBLIC_MODULES = ["premium"] as const;
 export const ENABLED_MODULES = [

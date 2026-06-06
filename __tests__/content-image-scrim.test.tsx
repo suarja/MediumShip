@@ -41,4 +41,11 @@ describe("ContentImageScrim", () => {
     expect(screen.getByTestId("content-image-scrim")).toBeTruthy();
     expect(screen.getByTestId("content-image-scrim")).toHaveProp("data-strength", "strong");
   });
+
+  it("renders top-edge subtle scrim for overlay chrome", () => {
+    render(<ContentImageScrim edge="top" strength="subtle" />);
+
+    expect(screen.getByTestId("content-image-scrim")).toHaveProp("data-edge", "top");
+    expect(screen.getByTestId("content-image-scrim")).toHaveProp("data-strength", "subtle");
+  });
 });

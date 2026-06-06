@@ -5,6 +5,7 @@ import { OVER_MEDIA, PREMIUM_ON_FILL } from "../../features/content/card-present
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
+import { ContentImageScrim } from "./content-image-scrim";
 
 /**
  * Full-bleed detail cover from the mockups: either the content's cover image or
@@ -36,6 +37,8 @@ export function DetailHero({
   const heroBg = theme.isDark ? theme.colors.canvasAccent : theme.colors.heading;
   const onHero = theme.isDark ? theme.colors.heading : theme.colors.canvas;
   const canRenderImage = Boolean(coverImageUrl) && !imageFailed;
+  const needsTopOverlayScrim = canRenderImage && Boolean(premiumLabel);
+  const needsBottomOverlayScrim = canRenderImage && Boolean(durationLabel);
 
   useEffect(() => {
     setImageFailed(false);
@@ -65,6 +68,13 @@ export function DetailHero({
           </Text>
         </>
       )}
+
+      {needsTopOverlayScrim ? (
+        <ContentImageScrim edge="top" strength="subtle" />
+      ) : null}
+      {needsBottomOverlayScrim ? (
+        <ContentImageScrim edge="bottom" strength="subtle" />
+      ) : null}
 
       {playGlyph ? (
         <View style={styles.playWrap} pointerEvents="none">

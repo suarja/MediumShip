@@ -3,6 +3,17 @@ import { render, screen } from "@testing-library/react-native";
 import CollectionsScreen from "../app/(app)/collections";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
+const MOCK_COLLECTIONS = [
+  { _id: "coll-1", slug: "le-grand-entretien", title: "Le grand entretien", summary: "La série phare.", itemCount: 14 },
+  { _id: "coll-2", slug: "programme-2027", title: "Programme 2027", summary: "Prépare le cycle électoral.", itemCount: 32 },
+  { _id: "coll-3", slug: "economie-autrement", title: "L'économie autrement", summary: "Déconstruit les idées reçues.", itemCount: 8 },
+];
+
+jest.mock("../src/features/collections/use-collections", () => ({
+  useCollections: () => ({ collections: MOCK_COLLECTIONS, isLoading: false }),
+  useCollection: () => ({ collection: undefined, isLoading: false }),
+}));
+
 jest.mock("../src/components/navigation/app-tab-bar", () => ({
   useTabBarSpace: () => 96,
 }));
@@ -37,13 +48,11 @@ describe("collections index screen", () => {
 
   it("renders at least one fixture collection", () => {
     render(<CollectionsScreen />);
-
     expect(screen.getAllByText(/grand entretien|Programme 2027|autrement/i).length).toBeGreaterThan(0);
   });
 
   it("shows item counts for rendered collections", () => {
     render(<CollectionsScreen />);
-
     expect(screen.getAllByText(/CONTENUS/i).length).toBeGreaterThan(0);
   });
 });

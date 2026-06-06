@@ -1,17 +1,28 @@
-// Slice 3: fixture-backed. Slice 4 swaps the body to a Convex query; the return shape is the contract — do not change it here.
+import { useQuery } from "convex/react";
+
+import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
+import { useAppTheme } from "../theme/theme-provider";
 import type { AppEvent, EventFilter } from "./types";
-import { FIXTURE_EVENTS } from "./fixtures";
 
 export function useEvents(filter: EventFilter): { events: AppEvent[]; isLoading: boolean } {
-  const filtered = FIXTURE_EVENTS.filter((e) => {
-    if (filter === "online") return e.mode === "online" || e.mode === "hybrid";
-    if (filter === "local") return e.mode === "offline" || e.mode === "hybrid";
-    return true;
-  });
+  const { tenantSlug } = useAppTheme();
+  const data = useQuery(api.events.queries.listPublishedEvents, { tenantSlug, filter });
 
-  return { events: filtered, isLoading: false };
+  return {
+    events: data ?? [],
+    isLoading: data === undefined,
+  };
 }
 
 export function useEvent(id: string): { event?: AppEvent; isLoading: boolean } {
-  return { event: FIXTURE_EVENTS.find((e) => e._id === id), isLoading: false };
+  const data = useQuery(
+    api.events.queries.getPublishedEventById,
+    id ? { id: id as Id<"events"> } : "skip",
+  );
+
+  return {
+    event: data ?? undefined,
+    isLoading: data === undefined,
+  };
 }

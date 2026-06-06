@@ -1,11 +1,28 @@
-// Slice 3: fixture-backed. Slice 4 swaps the body to a Convex query; the return shape is the contract — do not change it here.
+import { useQuery } from "convex/react";
+
+import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
+import { useAppTheme } from "../theme/theme-provider";
 import type { Collection, CollectionDetail } from "./types";
-import { FIXTURE_COLLECTIONS, FIXTURE_COLLECTION_DETAILS } from "./fixtures";
 
 export function useCollections(): { collections: Collection[]; isLoading: boolean } {
-  return { collections: FIXTURE_COLLECTIONS, isLoading: false };
+  const { tenantSlug } = useAppTheme();
+  const data = useQuery(api.collections.queries.listPublishedCollections, { tenantSlug });
+
+  return {
+    collections: data ?? [],
+    isLoading: data === undefined,
+  };
 }
 
 export function useCollection(id: string): { collection?: CollectionDetail; isLoading: boolean } {
-  return { collection: FIXTURE_COLLECTION_DETAILS[id], isLoading: false };
+  const data = useQuery(
+    api.collections.queries.getPublishedCollectionById,
+    id ? { id: id as Id<"collections"> } : "skip",
+  );
+
+  return {
+    collection: data ?? undefined,
+    isLoading: data === undefined,
+  };
 }

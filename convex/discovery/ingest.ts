@@ -163,3 +163,31 @@ export const runDiscoveryIngestion = internalAction({
     return { tenantsProcessed, totalUpserted };
   },
 });
+
+export const runRefillIngestion = internalAction({
+  args: {
+    tenantSlug: v.string(),
+    category: v.string(),
+    coldStart: v.optional(v.boolean()),
+  },
+  returns: v.object({ upserted: v.number() }),
+  handler: async (ctx, args) => {
+    for (const provider of PROVIDERS) {
+      if (provider.source === "cms") {
+        continue;
+      }
+
+      const result: { upserted: number } = await provider.ingest(ctx, {
+        tenantSlug: args.tenantSlug,
+        demand: {
+          categories: [args.category],
+          coldStart: args.coldStart,
+        },
+      });
+
+      return result;
+    }
+
+    return { upserted: 0 };
+  },
+});

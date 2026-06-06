@@ -43,6 +43,7 @@ Priority order:
 - For Convex work, start with a tiny schema and query/mutation path that can be exercised immediately before broadening the model.
 - Build the product through small end-to-end slices that can be verified incrementally, rather than stacking several invisible backend or provider layers before testing.
 - After unit tests and `tsc` pass, do a pixel-level smoke of any UI change on phone **and** iPad widths. Follow the Expo-web + headless-Chrome protocol in `docs/agents/ui-visual-testing.md` (auth-gated states and palette switching can't be driven headlessly — cover those with tests + a manual pass).
+- Test where the code lives, do not duplicate: **Jest** (`jest-expo`, `npm test`) covers everything in `app/` and `src/` — RN components, screens, hooks, pure TS. **Vitest + convex-test** (`npm run test:convex`) covers Convex backend functions in `convex/**` — queries/mutations/actions, authz, server rules — run in a Node env (see `docs/agents` notes and `convex/bookmarks/authz.test.ts`). A backend rule gets a Vitest test; its client hook/UI gets a Jest test. Jest ignores `convex/`; Vitest only runs `convex/**/*.test.ts`.
 
 ### Current architecture direction
 

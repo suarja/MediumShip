@@ -1,12 +1,15 @@
 import type { ReactNode } from "react";
-import { render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import LibraryScreen from "../app/(app)/library";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
+const mockReplace = jest.fn();
+const mockPush = jest.fn();
+
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: ReactNode }) => children,
-  useRouter: () => ({ push: jest.fn() }),
+  useRouter: () => ({ push: mockPush, replace: mockReplace }),
 }));
 
 jest.mock("../src/features/auth/use-clerk-auth", () => ({
@@ -30,6 +33,8 @@ describe("guest library screen", () => {
   });
 
   beforeEach(async () => {
+    mockReplace.mockClear();
+    mockPush.mockClear();
     await changeAppLanguage("en");
   });
 
@@ -39,5 +44,14 @@ describe("guest library screen", () => {
     expect(screen.getByText("Library")).toBeTruthy();
     expect(screen.getByText("Your library, everywhere")).toBeTruthy();
     expect(screen.getByText("Sign in")).toBeTruthy();
+  });
+
+  it("returns to the home tab without stacking the guest gate", () => {
+    render(<LibraryScreen />);
+
+    fireEvent.press(screen.getByText("Continue as guest"));
+
+    expect(mockReplace).toHaveBeenCalledWith("/home");
+    expect(mockPush).not.toHaveBeenCalledWith("/home");
   });
 });

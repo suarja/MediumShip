@@ -1,24 +1,53 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Link, useRouter } from "expo-router";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { FeedRow } from "../../src/components/content/feed-row";
 import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
+import { useCategories } from "../../src/features/categories/use-categories";
+import type { ContentKind } from "../../src/features/content/types";
+import { toContentCardModel } from "../../src/features/content/selectors";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
+import { useSearch } from "../../src/features/search/use-search";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
-const CATEGORY_ITEMS = [
-  { key: "analyses", icon: "✎" },
-  { key: "podcasts", icon: "▷" },
-  { key: "videos", icon: "▶" },
-  { key: "agenda", icon: "☷" },
-] as const;
+type SearchFilter = "all" | ContentKind;
+
+const CATEGORY_ICON_MAP: Record<string, string> = {
+  analyses: "✎",
+  podcasts: "▷",
+  episodes: "▷",
+  videos: "▶",
+  agenda: "☷",
+  collections: "◆",
+  community: "✦",
+};
+
+function getCategoryIcon(category: string): string {
+  const key = category.toLowerCase();
+  for (const [k, icon] of Object.entries(CATEGORY_ICON_MAP)) {
+    if (key.includes(k)) return icon;
+  }
+  return "◉";
+}
 
 const MODULE_ITEMS = [
-  { key: "collections", icon: "◆" },
-  { key: "community", icon: "✦" },
+  { key: "collections", icon: "◆", href: "/collections" },
+  { key: "community", icon: "✦", href: "/community" },
 ] as const;
 
 const TREND_KEYS = [
@@ -32,9 +61,33 @@ const TREND_KEYS = [
 export default function ExploreScreen() {
   const { t } = useTranslation("explore");
   const { theme } = useAppTheme();
-  const { scaleFont, scaleSpace } = useResponsive();
+  const { isTablet, scaleFont, scaleSpace, contentMaxWidth } = useResponsive();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
+  const router = useRouter();
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchFilter, setSearchFilter] = useState<SearchFilter>("all");
+  const { results: rawResults, isSearching } = useSearch(searchQuery);
+  const { categories } = useCategories();
+
+  const isSearchActive = searchQuery.trim().length > 0;
+
+  const filteredResults =
+    searchFilter === "all"
+      ? rawResults
+      : rawResults.filter((c) => c.kind === searchFilter);
+
+  const searchCards = filteredResults.map(toContentCardModel);
+
+  const maxWidth = contentMaxWidth ?? (isTablet ? 640 : undefined);
+
+  const FILTER_OPTIONS: { key: SearchFilter; label: string }[] = [
+    { key: "all", label: t("searchResultsAll") },
+    { key: "article", label: t("searchResultsArticles") },
+    { key: "episode", label: t("searchResultsPodcasts") },
+    { key: "video", label: t("searchResultsVideos") },
+  ];
 
   return (
     <Screen>
@@ -47,6 +100,7 @@ export default function ExploreScreen() {
           },
         ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View
           style={[
@@ -69,8 +123,7 @@ export default function ExploreScreen() {
           <View style={styles.topBarSide} />
         </View>
 
-        <Pressable
-          accessibilityRole="button"
+        <View
           style={[
             styles.searchCard,
             {
@@ -91,77 +144,195 @@ export default function ExploreScreen() {
           >
             ⌕
           </Text>
-          <Text
+          <TextInput
             style={[
-              styles.searchLabel,
+              styles.searchInput,
               {
-                color: theme.colors.textMuted,
+                color: theme.colors.text,
                 fontSize: 15 * scaleFont,
+                fontFamily: fontFamilies.body,
               },
             ]}
-          >
-            {t("searchPlaceholder")}
-          </Text>
-        </Pressable>
-
-        <SectionHeader label={t("categoriesTitle")} />
-        <View style={styles.grid}>
-          {CATEGORY_ITEMS.map((item) => (
-            <FeatureCard
-              key={item.key}
-              icon={item.icon}
-              meta={t(`categories.${item.key}.meta`)}
-              title={t(`categories.${item.key}.title`)}
-            />
-          ))}
+            placeholder={t("searchPlaceholder")}
+            placeholderTextColor={theme.colors.textMuted}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+            clearButtonMode="while-editing"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
         </View>
 
-        <SectionHeader label={t("modulesTitle")} />
-        <View style={styles.grid}>
-          {MODULE_ITEMS.map((item) => (
-            <FeatureCard
-              key={item.key}
-              icon={item.icon}
-              meta={t(`modules.${item.key}.meta`)}
-              title={t(`modules.${item.key}.title`)}
-            />
-          ))}
-        </View>
+        {isSearchActive ? (
+          <View style={{ gap: theme.spacing.sm * scaleSpace }}>
+            <View style={[styles.filterRow, { gap: theme.spacing.xs * scaleSpace }]}>
+              {FILTER_OPTIONS.map((opt) => {
+                const active = searchFilter === opt.key;
+                return (
+                  <Pressable
+                    key={opt.key}
+                    onPress={() => setSearchFilter(opt.key)}
+                    style={[
+                      styles.filterChip,
+                      {
+                        borderRadius: theme.radii.pill,
+                        borderColor: active ? theme.colors.accent : theme.colors.border,
+                        backgroundColor: active
+                          ? withAlpha(theme.colors.accent, 0.1)
+                          : "transparent",
+                        paddingHorizontal: 12 * scaleSpace,
+                        paddingVertical: 6 * scaleSpace,
+                      },
+                    ]}
+                    accessibilityRole="button"
+                  >
+                    <Text
+                      style={[
+                        styles.filterLabel,
+                        {
+                          color: active ? theme.colors.accent : theme.colors.textMuted,
+                          fontSize: 12 * scaleFont,
+                        },
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
 
-        <View style={[styles.section, { gap: theme.spacing.sm * scaleSpace }]}>
-          <SectionHeader label={t("trendsTitle")} italic />
-          <View style={[styles.trendRow, { gap: theme.spacing.sm * scaleSpace }]}>
-            {TREND_KEYS.map((key) => (
-              <View
-                key={key}
-                style={[
-                  styles.trendChip,
-                  {
-                    borderRadius: theme.radii.pill,
-                    borderColor: withAlpha(theme.colors.heading, theme.isDark ? 0.24 : 0.12),
-                    backgroundColor: "transparent",
-                  },
-                ]}
-              >
+            {isSearching ? (
+              <View style={styles.searchStateWrap}>
+                <ActivityIndicator color={theme.colors.accent} />
+              </View>
+            ) : searchCards.length === 0 ? (
+              <View style={styles.searchStateWrap}>
                 <Text
                   style={[
-                    styles.trendLabel,
-                    {
-                      color: theme.colors.heading,
-                      fontSize: 12 * scaleFont,
-                    },
+                    styles.emptyLabel,
+                    { color: theme.colors.textMuted, fontSize: 14 * scaleFont },
                   ]}
                 >
-                  {t(`trends.${key}`)}
+                  {t("searchEmpty")}
                 </Text>
               </View>
-            ))}
+            ) : (
+              searchCards.map((item, index) => (
+                <FeedRow
+                  key={item.id}
+                  item={item}
+                  kicker={item.category}
+                  meta={item.metaLabel}
+                  divider={index !== 0}
+                />
+              ))
+            )}
           </View>
-        </View>
+        ) : (
+          <>
+            <SectionHeader label={t("categoriesTitle")} />
+            <View style={styles.grid}>
+              {categories.length > 0
+                ? categories.slice(0, 4).map((cat) => (
+                    <Pressable
+                      key={cat.category}
+                      style={({ pressed }) => [styles.gridCell, pressed && styles.pressed]}
+                      onPress={() => router.push(`/category/${encodeURIComponent(cat.category)}` as never)}
+                      accessibilityRole="button"
+                    >
+                      <FeatureCard
+                        icon={getCategoryIcon(cat.category)}
+                        meta={`${cat.count} contenus`.toUpperCase()}
+                        title={cat.category}
+                      />
+                    </Pressable>
+                  ))
+                : STATIC_CATEGORY_ITEMS.map((item) => (
+                    <Pressable
+                      key={item.key}
+                      style={({ pressed }) => [styles.gridCell, pressed && styles.pressed]}
+                      onPress={() =>
+                        item.key === "agenda"
+                          ? router.push("/agenda" as never)
+                          : router.push(`/category/${encodeURIComponent(t(`categories.${item.key}.title`))}` as never)
+                      }
+                      accessibilityRole="button"
+                    >
+                      <FeatureCard
+                        icon={item.icon}
+                        meta={t(`categories.${item.key}.meta`)}
+                        title={t(`categories.${item.key}.title`)}
+                      />
+                    </Pressable>
+                  ))}
+            </View>
+
+            <SectionHeader label={t("modulesTitle")} />
+            <View style={styles.grid}>
+              {MODULE_ITEMS.map((item) => (
+                <Link key={item.key} href={item.href as never} asChild>
+                  <Pressable
+                    style={({ pressed }) => [styles.gridCell, pressed && styles.pressed]}
+                    accessibilityRole="link"
+                  >
+                    <FeatureCard
+                      icon={item.icon}
+                      meta={t(`modules.${item.key}.meta`)}
+                      title={t(`modules.${item.key}.title`)}
+                    />
+                  </Pressable>
+                </Link>
+              ))}
+            </View>
+
+            <View style={[styles.section, { gap: theme.spacing.sm * scaleSpace }]}>
+              <SectionHeader label={t("trendsTitle")} italic />
+              <View style={[styles.trendRow, { gap: theme.spacing.sm * scaleSpace }]}>
+                {TREND_KEYS.map((key) => (
+                  <View
+                    key={key}
+                    style={[
+                      styles.trendChip,
+                      {
+                        borderRadius: theme.radii.pill,
+                        borderColor: withAlpha(
+                          theme.colors.heading,
+                          theme.isDark ? 0.24 : 0.12,
+                        ),
+                        backgroundColor: "transparent",
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.trendLabel,
+                        {
+                          color: theme.colors.heading,
+                          fontSize: 12 * scaleFont,
+                        },
+                      ]}
+                    >
+                      {t(`trends.${key}`)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </>
+        )}
       </ScrollView>
     </Screen>
   );
 }
+
+const STATIC_CATEGORY_ITEMS = [
+  { key: "analyses", icon: "✎" },
+  { key: "podcasts", icon: "▷" },
+  { key: "videos", icon: "▶" },
+  { key: "agenda", icon: "☷" },
+] as const;
 
 function SectionHeader({
   label,
@@ -187,7 +358,9 @@ function SectionHeader({
         {italic ? (
           <>
             <Text>{label.split(" ")[0]} </Text>
-            <Text style={styles.sectionTitleItalic}>{label.slice(label.indexOf(" ") + 1)}</Text>
+            <Text style={styles.sectionTitleItalic}>
+              {label.slice(label.indexOf(" ") + 1)}
+            </Text>
           </>
         ) : (
           label
@@ -210,8 +383,7 @@ function FeatureCard({
   const { scaleFont, scaleSpace } = useResponsive();
 
   return (
-    <Pressable
-      accessibilityRole="button"
+    <View
       style={[
         styles.card,
         {
@@ -226,7 +398,10 @@ function FeatureCard({
           styles.iconBadge,
           {
             borderRadius: theme.radii.pill,
-            backgroundColor: withAlpha(theme.colors.accent, theme.isDark ? 0.22 : 0.12),
+            backgroundColor: withAlpha(
+              theme.colors.accent,
+              theme.isDark ? 0.22 : 0.12,
+            ),
           },
         ]}
       >
@@ -267,7 +442,7 @@ function FeatureCard({
           {meta}
         </Text>
       </View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -304,8 +479,27 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 22,
   },
-  searchLabel: {
+  searchInput: {
     flex: 1,
+    minHeight: 42,
+  },
+  filterRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  filterChip: {
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  filterLabel: {
+    fontFamily: fontFamilies.mono,
+    letterSpacing: 0.6,
+  },
+  searchStateWrap: {
+    minHeight: 80,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyLabel: {
     fontFamily: fontFamilies.body,
   },
   section: {},
@@ -326,8 +520,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     rowGap: 8,
   },
-  card: {
+  gridCell: {
     width: "48.5%",
+  },
+  card: {
+    width: "100%",
     borderWidth: StyleSheet.hairlineWidth,
     padding: 12,
     gap: 2,
@@ -368,5 +565,8 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.mono,
     letterSpacing: 0.8,
     textTransform: "uppercase",
+  },
+  pressed: {
+    opacity: 0.84,
   },
 });

@@ -95,7 +95,11 @@ export default defineSchema({
     .index("by_tenant_and_status", ["tenantSlug", "status"])
     .index("by_tenant_and_kind", ["tenantSlug", "kind"])
     .index("by_tenantSlug", ["tenantSlug"])
-    .index("by_tenantSlug_and_slug", ["tenantSlug", "slug"]),
+    .index("by_tenantSlug_and_slug", ["tenantSlug", "slug"])
+    .searchIndex("search_title", {
+      searchField: "title",
+      filterFields: ["tenantSlug", "status"],
+    }),
   // Single source of truth for the member ("Pro") entitlement. Provider-agnostic
   // on purpose: today only the manual admin grant writes it, but later a
   // RevenueCat / Stripe webhook will upsert the SAME row (matching on

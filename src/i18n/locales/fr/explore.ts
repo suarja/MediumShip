@@ -1,6 +1,11 @@
 export default {
   title: "Explorer",
   searchPlaceholder: "Chercher analyses, podcasts, evenements…",
+  searchResultsAll: "Tout",
+  searchResultsArticles: "Articles",
+  searchResultsPodcasts: "Podcasts",
+  searchResultsVideos: "Videos",
+  searchEmpty: "Aucun resultat pour cette recherche.",
   categoriesTitle: "Categories",
   modulesTitle: "Modules",
   trendsTitle: "Cette semaine",

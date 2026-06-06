@@ -24,6 +24,7 @@ import type * as collections_queries from "../collections/queries.js";
 import type * as content_queries from "../content/queries.js";
 import type * as content_source from "../content/source.js";
 import type * as crons from "../crons.js";
+import type * as discovery_engagement from "../discovery/engagement.js";
 import type * as discovery_feed from "../discovery/feed.js";
 import type * as discovery_fetchDemand from "../discovery/fetchDemand.js";
 import type * as discovery_ingest from "../discovery/ingest.js";
@@ -80,6 +81,7 @@ declare const fullApi: ApiFromModules<{
   "content/queries": typeof content_queries;
   "content/source": typeof content_source;
   crons: typeof crons;
+  "discovery/engagement": typeof discovery_engagement;
   "discovery/feed": typeof discovery_feed;
   "discovery/fetchDemand": typeof discovery_fetchDemand;
   "discovery/ingest": typeof discovery_ingest;

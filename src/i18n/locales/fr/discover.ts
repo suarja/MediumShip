@@ -5,8 +5,9 @@ export default {
   emptyTitle: "Rien à découvrir pour le moment",
   emptyBody: "Revenez bientôt : de nouveaux contenus arrivent régulièrement.",
   actions: {
-    skip: "Passer",
     like: "Aimer",
+    more: "Plus d'actions",
+    notInterested: "Pas intéressé",
   },
   sections: {
     editorial: {

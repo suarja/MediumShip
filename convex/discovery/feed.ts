@@ -22,6 +22,7 @@ const MEMBER_FEED_MIX = {
 
 export type DiscoveryFeedItem = Doc<"contents"> & {
   reason: FeedReason;
+  isLiked: boolean;
 };
 
 function recencyScore(content: Doc<"contents">): number {
@@ -43,6 +44,20 @@ function hashFeedSeed(tokenIdentifier: string, feedSeed: number): number {
   }
 
   return hash;
+}
+
+async function loadLikedContentIds(
+  ctx: QueryCtx,
+  tokenIdentifier: string,
+): Promise<Set<Id<"contents">>> {
+  const likes = await ctx.db
+    .query("contentInteractions")
+    .withIndex("by_tokenIdentifier_and_type", (q) =>
+      q.eq("tokenIdentifier", tokenIdentifier).eq("type", "like"),
+    )
+    .collect();
+
+  return new Set(likes.map((row) => row.contentId));
 }
 
 async function loadHiddenContentIds(
@@ -155,6 +170,7 @@ export const getDiscoveryFeed = query({
         v.literal("editorial"),
         v.literal("random"),
       ),
+      isLiked: v.boolean(),
     }),
   ),
   handler: async (ctx, args) => {
@@ -194,10 +210,12 @@ export const getDiscoveryFeed = query({
       return mixed.map((item) => ({
         ...item.content,
         reason: item.reason,
+        isLiked: false,
       }));
     }
 
     const hiddenIds = await loadHiddenContentIds(ctx, tokenIdentifier);
+    const likedIds = await loadLikedContentIds(ctx, tokenIdentifier);
     const seenIds = await loadSeenContentIds(ctx, tokenIdentifier);
     const affinities = await loadAffinities(ctx, tokenIdentifier);
     const referenceTime = referenceTimeFrom(visible);
@@ -221,6 +239,7 @@ export const getDiscoveryFeed = query({
     return mixed.map((item) => ({
       ...item.content,
       reason: item.reason,
+      isLiked: likedIds.has(item.content._id),
     }));
   },
 });

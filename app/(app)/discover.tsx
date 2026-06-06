@@ -1,6 +1,11 @@
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import {
+  ContentCardFavoriteAction,
+  ContentCardLikeAction,
+  ContentCardOverflowAction,
+} from "../../src/components/content/content-card-actions";
 import { ContentCard } from "../../src/components/content/content-card";
 import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
@@ -28,7 +33,6 @@ export default function DiscoverScreen() {
     isLoading,
     isRefreshing,
     isSignedIn,
-    recordSkip,
     recordLike,
     refresh,
   } = useDiscoveryFeed();
@@ -104,7 +108,6 @@ export default function DiscoverScreen() {
               items={section.items}
               tHome={tHome}
               isSignedIn={isSignedIn}
-              recordSkip={recordSkip}
               recordLike={recordLike}
             />
           ))
@@ -120,7 +123,6 @@ function DiscoverFeedSection({
   items,
   tHome,
   isSignedIn,
-  recordSkip,
   recordLike,
 }: {
   reason: FeedReason;
@@ -128,10 +130,9 @@ function DiscoverFeedSection({
   items: ReturnType<typeof useDiscoveryFeed>["items"];
   tHome: (key: string, options?: Record<string, unknown>) => string;
   isSignedIn: boolean;
-  recordSkip: ReturnType<typeof useDiscoveryFeed>["recordSkip"];
   recordLike: ReturnType<typeof useDiscoveryFeed>["recordLike"];
 }) {
-  const { t } = useTranslation("discover");
+  const { t } = useTranslation(["discover", "library"]);
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
 
@@ -160,7 +161,7 @@ function DiscoverFeedSection({
             { color: theme.colors.heading, fontSize: 18 * scaleFont },
           ]}
         >
-          {t(`sections.${reason}.title`)}
+          {t(`discover:sections.${reason}.title`)}
         </Text>
         <Text
           style={[
@@ -168,7 +169,7 @@ function DiscoverFeedSection({
             { color: theme.colors.textMuted, fontSize: 13 * scaleFont },
           ]}
         >
-          {t(`sections.${reason}.body`)}
+          {t(`discover:sections.${reason}.body`)}
         </Text>
       </View>
 
@@ -179,18 +180,31 @@ function DiscoverFeedSection({
           return (
             <ContentCard
               key={item._id}
+              variant="feature"
               item={card}
               kicker={cardKicker(card, tHome)}
               meta={cardMeta(card, tHome)}
               divider={index > 0}
-              onSkip={
-                isSignedIn ? () => recordSkip(item._id as never) : undefined
+              actions={
+                isSignedIn ? (
+                  <>
+                    <ContentCardLikeAction
+                      isLiked={item.isLiked}
+                      onPress={() => recordLike(item._id as never)}
+                      accessibilityLabel={t("discover:actions.like")}
+                    />
+                    <ContentCardFavoriteAction
+                      contentId={item._id as never}
+                      accessibilityLabel={t("library:bookmark.saveCta")}
+                      savedAccessibilityLabel={t("library:bookmark.savedCta")}
+                    />
+                    <ContentCardOverflowAction
+                      contentId={item._id as never}
+                      accessibilityLabel={t("discover:actions.more")}
+                    />
+                  </>
+                ) : undefined
               }
-              onLike={
-                isSignedIn ? () => recordLike(item._id as never) : undefined
-              }
-              skipAccessibilityLabel={t("actions.skip")}
-              likeAccessibilityLabel={t("actions.like")}
             />
           );
         })}

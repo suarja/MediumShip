@@ -11,7 +11,7 @@ import { Keyboard } from "react-native";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { ContentActionsSheet } from "../../components/content/content-actions-sheet";
 
-export type ContentActionsFocus = "all" | "lists";
+export type ContentActionsFocus = "all" | "lists" | "discovery";
 
 type ContentActionsSheetState = {
   visible: boolean;

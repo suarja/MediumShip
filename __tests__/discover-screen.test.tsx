@@ -6,9 +6,11 @@ import type { DiscoveryFeedItem } from "../src/features/discovery/use-discovery-
 
 const mockUseAppTheme = jest.fn();
 const mockUseDiscoveryFeed = jest.fn();
-const mockRecordSkip = jest.fn();
 const mockRecordLike = jest.fn();
+const mockRecordHide = jest.fn();
 const mockRefresh = jest.fn();
+const mockToggleBookmark = jest.fn();
+const mockOpenContentActions = jest.fn();
 
 jest.mock("../src/features/theme/theme-provider", () => ({
   useAppTheme: () => mockUseAppTheme(),
@@ -24,6 +26,25 @@ jest.mock("../src/components/navigation/app-tab-bar", () => ({
 
 jest.mock("../src/features/media/persistent-media-player", () => ({
   usePersistentMediaPlayerSpace: () => 0,
+}));
+
+jest.mock("../src/features/bookmarks/use-bookmarks", () => ({
+  useBookmarks: () => ({
+    bookmarks: [],
+    toggleBookmark: mockToggleBookmark,
+    isBookmarksLoading: false,
+  }),
+}));
+
+jest.mock("../src/features/auth/use-clerk-auth", () => ({
+  useClerkAuth: () => ({ isSignedIn: true }),
+}));
+
+jest.mock("../src/features/content/content-actions-sheet-provider", () => ({
+  useContentActionsSheet: () => ({
+    openContentActions: mockOpenContentActions,
+    closeContentActions: jest.fn(),
+  }),
 }));
 
 jest.mock("expo-router", () => ({
@@ -48,9 +69,10 @@ function makeTheme(enabledModules: string[]) {
         accentSoft: "#eef",
         premium: "#c9a227",
         canvas: "#fff",
+        canvasAccent: "#eee",
       },
       spacing: { lg: 16, md: 12, sm: 8, xs: 4, xl: 24 },
-      radii: { pill: 99, md: 8, sm: 4, lg: 12 },
+      radii: { pill: 99, md: 8, sm: 4, lg: 12, xl: 16 },
       isDark: false,
     },
   };
@@ -69,6 +91,7 @@ const SAMPLE_FEED: DiscoveryFeedItem[] = [
     isPremium: false,
     publishedAt: "2026-06-03T08:00:00.000Z",
     reason: "editorial",
+    isLiked: false,
   },
   {
     _id: "episode-1",
@@ -83,6 +106,7 @@ const SAMPLE_FEED: DiscoveryFeedItem[] = [
     publishedAt: "2026-06-03T09:00:00.000Z",
     durationSeconds: 1800,
     reason: "random",
+    isLiked: true,
   },
 ];
 
@@ -92,19 +116,21 @@ describe("discover screen", () => {
   });
 
   beforeEach(async () => {
-    mockRecordSkip.mockClear();
     mockRecordLike.mockClear();
+    mockRecordHide.mockClear();
     mockRefresh.mockClear();
+    mockToggleBookmark.mockClear();
+    mockOpenContentActions.mockClear();
     mockUseAppTheme.mockReturnValue(
-      makeTheme(["articles", "episodes", "videos", "discover"]),
+      makeTheme(["articles", "episodes", "videos", "discover", "bookmarks"]),
     );
     mockUseDiscoveryFeed.mockReturnValue({
       items: SAMPLE_FEED,
       isLoading: false,
       isRefreshing: false,
       isSignedIn: true,
-      recordSkip: mockRecordSkip,
       recordLike: mockRecordLike,
+      recordHide: mockRecordHide,
       refresh: mockRefresh,
     });
     await changeAppLanguage("fr");
@@ -118,9 +144,10 @@ describe("discover screen", () => {
     expect(toJSON()).toBeNull();
   });
 
-  it("renders a content card per feed item", () => {
+  it("renders a feature content card per feed item", () => {
     render(<DiscoverScreen />);
 
+    expect(screen.getAllByTestId("content-card-feature")).toHaveLength(2);
     expect(screen.getByText("Economie du soin")).toBeTruthy();
     expect(screen.getByText("West Texas Boom Report")).toBeTruthy();
   });
@@ -167,53 +194,46 @@ describe("discover screen", () => {
     expect(screen.getByText("Découvrir")).toBeTruthy();
   });
 
-  it("records a skip and removes the card when the skip affordance is tapped", () => {
-    const { rerender } = render(<DiscoverScreen />);
-
-    fireEvent.press(screen.getAllByTestId("discover-skip-button")[0]);
-
-    expect(mockRecordSkip).toHaveBeenCalledWith("article-1");
-
-    mockUseDiscoveryFeed.mockReturnValue({
-      items: SAMPLE_FEED.filter((item) => item._id !== "article-1"),
-      isLoading: false,
-      isRefreshing: false,
-      isSignedIn: true,
-      recordSkip: mockRecordSkip,
-      recordLike: mockRecordLike,
-      refresh: mockRefresh,
-    });
-
-    rerender(<DiscoverScreen />);
-
-    expect(screen.queryByText("Economie du soin")).toBeNull();
-    expect(screen.getByText("West Texas Boom Report")).toBeTruthy();
-  });
-
-  it("records a like when the like affordance is tapped", () => {
+  it("records a like without removing the card from the list", () => {
     render(<DiscoverScreen />);
 
     fireEvent.press(screen.getAllByTestId("discover-like-button")[0]);
 
     expect(mockRecordLike).toHaveBeenCalledWith("article-1");
+    expect(screen.getByText("Economie du soin")).toBeTruthy();
+    expect(screen.getByText("West Texas Boom Report")).toBeTruthy();
   });
 
-  it("does not record skip or like for guests", () => {
+  it("reflects isLiked on the like control", () => {
+    render(<DiscoverScreen />);
+
+    const likeButtons = screen.getAllByTestId("discover-like-button");
+    expect(likeButtons[0].props.accessibilityLabel).toBe("Aimer");
+    expect(likeButtons[1].props.accessibilityLabel).toBe("Aimer");
+  });
+
+  it("does not render skip affordances", () => {
+    render(<DiscoverScreen />);
+
+    expect(screen.queryAllByTestId("discover-skip-button")).toHaveLength(0);
+  });
+
+  it("does not render member actions for guests", () => {
     mockUseDiscoveryFeed.mockReturnValue({
       items: SAMPLE_FEED,
       isLoading: false,
       isRefreshing: false,
       isSignedIn: false,
-      recordSkip: mockRecordSkip,
       recordLike: mockRecordLike,
+      recordHide: mockRecordHide,
       refresh: mockRefresh,
     });
 
     render(<DiscoverScreen />);
 
-    expect(screen.queryAllByTestId("discover-skip-button")).toHaveLength(0);
     expect(screen.queryAllByTestId("discover-like-button")).toHaveLength(0);
-    expect(mockRecordSkip).not.toHaveBeenCalled();
+    expect(screen.queryAllByTestId("discover-favorite-button")).toHaveLength(0);
+    expect(screen.queryAllByTestId("discover-overflow-button")).toHaveLength(0);
     expect(mockRecordLike).not.toHaveBeenCalled();
   });
 
@@ -232,8 +252,8 @@ describe("discover screen", () => {
       isLoading: false,
       isRefreshing: true,
       isSignedIn: true,
-      recordSkip: mockRecordSkip,
       recordLike: mockRecordLike,
+      recordHide: mockRecordHide,
       refresh: mockRefresh,
     });
 

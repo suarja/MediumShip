@@ -178,6 +178,42 @@ describe("getDiscoveryFeed authenticated path", () => {
     expect(feed.some((item) => item.reason === "personalized")).toBe(true);
   });
 
+  it("marks feed items the member has liked with isLiked", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t, ["articles", "discover"]);
+    const asMember = t.withIdentity(MEMBER);
+
+    const likedId = await insertPublishedContent(t, {
+      title: "Liked story",
+      publishedAt: "2026-06-02T08:00:00.000Z",
+    });
+    await insertPublishedContent(t, {
+      title: "Neutral story",
+      publishedAt: "2026-06-01T08:00:00.000Z",
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("contentInteractions", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        tenantSlug: TENANT,
+        contentId: likedId,
+        type: "like",
+        createdAt: 1,
+      });
+    });
+
+    const feed = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+    });
+
+    const likedItem = feed.find((item) => item._id === likedId);
+    const neutralItem = feed.find((item) => item.title === "Neutral story");
+
+    expect(likedItem?.isLiked).toBe(true);
+    expect(neutralItem?.isLiked).toBe(false);
+  });
+
   it("excludes content the member has hidden", async () => {
     const t = convexTest(schema, modules);
     await seedTenant(t, ["articles", "discover"]);

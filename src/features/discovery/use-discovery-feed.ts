@@ -10,6 +10,7 @@ import { useAppTheme } from "../theme/theme-provider";
 
 export type DiscoveryFeedItem = ContentDoc & {
   reason: FeedReason;
+  isLiked: boolean;
 };
 
 export function useDiscoveryFeed(): {
@@ -17,8 +18,8 @@ export function useDiscoveryFeed(): {
   isLoading: boolean;
   isRefreshing: boolean;
   isSignedIn: boolean;
-  recordSkip: (contentId: Id<"contents">) => void;
   recordLike: (contentId: Id<"contents">) => void;
+  recordHide: (contentId: Id<"contents">) => void;
   refresh: () => void;
 } {
   const { tenantSlug } = useAppTheme();
@@ -26,7 +27,6 @@ export function useDiscoveryFeed(): {
   const me = useQuery(api.users.queries.getMe, isSignedIn ? {} : "skip");
   // Re-rolled on pull-to-refresh so jitter and affinity changes reshape the feed.
   const [feedSeed, setFeedSeed] = useState(0);
-  const [removedIds, setRemovedIds] = useState<ReadonlySet<string>>(new Set());
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const data = useQuery(api.discovery.feed.getDiscoveryFeed, {
@@ -43,27 +43,8 @@ export function useDiscoveryFeed(): {
     }
   }, [data, feedSeed]);
 
-  const recordSkip = useCallback(
-    (contentId: Id<"contents">) => {
-      setRemovedIds((current) => new Set([...current, contentId]));
-
-      if (!isSignedIn) {
-        return;
-      }
-
-      void recordInteraction({
-        tenantSlug,
-        contentId,
-        type: "skip",
-      });
-    },
-    [isSignedIn, recordInteraction, tenantSlug],
-  );
-
   const recordLike = useCallback(
     (contentId: Id<"contents">) => {
-      setRemovedIds((current) => new Set([...current, contentId]));
-
       if (!isSignedIn) {
         return;
       }
@@ -77,18 +58,29 @@ export function useDiscoveryFeed(): {
     [isSignedIn, recordInteraction, tenantSlug],
   );
 
+  const recordHide = useCallback(
+    (contentId: Id<"contents">) => {
+      if (!isSignedIn) {
+        return;
+      }
+
+      void recordInteraction({
+        tenantSlug,
+        contentId,
+        type: "hide",
+      });
+    },
+    [isSignedIn, recordInteraction, tenantSlug],
+  );
+
   const refresh = useCallback(() => {
     setIsRefreshing(true);
-    setRemovedIds(new Set());
     setFeedSeed((current) => current + 1);
   }, []);
 
   const items = useMemo(
-    () =>
-      ((data as DiscoveryFeedItem[] | undefined) ?? []).filter(
-        (item) => !removedIds.has(item._id),
-      ),
-    [data, removedIds],
+    () => (data as DiscoveryFeedItem[] | undefined) ?? [],
+    [data],
   );
 
   return {
@@ -96,8 +88,8 @@ export function useDiscoveryFeed(): {
     isLoading: data === undefined,
     isRefreshing,
     isSignedIn,
-    recordSkip,
     recordLike,
+    recordHide,
     refresh,
   };
 }

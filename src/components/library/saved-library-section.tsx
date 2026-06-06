@@ -29,6 +29,7 @@ export function SavedLibrarySection() {
 
   return (
     <LibraryCollectionSection
+      hideHeader
       emptyBody={isSignedIn ? t("library:saved.empty") : t("library:saved.guestHint")}
       emptyCtaHref={isSignedIn ? "/home" : "/sign-in"}
       emptyCtaLabel={

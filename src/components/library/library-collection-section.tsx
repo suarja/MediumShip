@@ -32,6 +32,8 @@ export type LibraryCollectionItem = {
 type LibraryCollectionSectionProps = {
   title: string;
   subtitle: string;
+  /** When true, section chrome is rendered by the parent screen header. */
+  hideHeader?: boolean;
   items: LibraryCollectionItem[];
   isLoading: boolean;
   loadingLabel: string;
@@ -45,6 +47,7 @@ type LibraryCollectionSectionProps = {
 export function LibraryCollectionSection({
   title,
   subtitle,
+  hideHeader = false,
   items,
   isLoading,
   loadingLabel,
@@ -62,24 +65,26 @@ export function LibraryCollectionSection({
 
   return (
     <View style={[styles.section, { gap: theme.spacing.md * scaleSpace }]}>
-      <View style={[styles.sectionHeader, { gap: 4 * scaleSpace }]}>
-        <Text
-          style={[
-            styles.sectionTitle,
-            { color: theme.colors.heading, fontSize: 24 * scaleFont },
-          ]}
-        >
-          {title}
-        </Text>
-        <Text
-          style={[
-            styles.sectionSubtitle,
-            { color: theme.colors.textMuted, fontSize: 15 * scaleFont },
-          ]}
-        >
-          {subtitle}
-        </Text>
-      </View>
+      {hideHeader ? null : (
+        <View style={[styles.sectionHeader, { gap: 4 * scaleSpace }]}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: theme.colors.heading, fontSize: 24 * scaleFont },
+            ]}
+          >
+            {title}
+          </Text>
+          <Text
+            style={[
+              styles.sectionSubtitle,
+              { color: theme.colors.textMuted, fontSize: 15 * scaleFont },
+            ]}
+          >
+            {subtitle}
+          </Text>
+        </View>
+      )}
 
       {isLoading ? (
         <View

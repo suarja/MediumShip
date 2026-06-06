@@ -38,6 +38,17 @@ export default {
     offlineBody:
       "Le premium debloque les telechargements hors ligne pour les articles, episodes et videos hebergees.",
   },
+  listsScreen: {
+    back: "Retour",
+    createTitle: "Creer une liste",
+    pendingAction: "Cette action sera disponible dans une prochaine mise a jour.",
+    lockedTitle: "Listes illimitees avec Premium",
+    lockedBody:
+      "Les membres gratuits creent 1 liste. Passez Premium pour des listes illimitees et la synchro multi-appareils.",
+    viewPremiumCta: "Voir Premium",
+    secondPreviewTitle: "Economie — a relire",
+    secondPreviewMeta: "6 contenus · privee",
+  },
   kinds: {
     article: "Article",
     episode: "Episode",

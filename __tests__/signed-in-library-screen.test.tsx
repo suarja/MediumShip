@@ -5,10 +5,11 @@ import LibraryScreen from "../app/(app)/library";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
 const mockOpenPaywall = jest.fn();
+const mockPush = jest.fn();
 
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: ReactNode }) => children,
-  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
+  useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn() }),
 }));
 
 jest.mock("../src/features/auth/use-clerk-auth", () => ({
@@ -41,8 +42,10 @@ jest.mock("../src/components/library/downloaded-library-section", () => {
   };
 });
 
+const mockUseIsMember = jest.fn(() => ({ isMember: false, isLoading: false }));
+
 jest.mock("../src/features/membership/use-is-member", () => ({
-  useIsMember: () => ({ isMember: false, isLoading: false }),
+  useIsMember: () => mockUseIsMember(),
 }));
 
 jest.mock("../src/features/paywall/paywall-sheet-provider", () => ({
@@ -56,6 +59,8 @@ describe("signed-in library screen", () => {
 
   beforeEach(async () => {
     mockOpenPaywall.mockClear();
+    mockPush.mockClear();
+    mockUseIsMember.mockReturnValue({ isMember: false, isLoading: false });
     await changeAppLanguage("en");
   });
 
@@ -78,12 +83,25 @@ describe("signed-in library screen", () => {
     expect(screen.getAllByText("Premium")).toHaveLength(2);
   });
 
-  it("pressing the lists row opens the lists paywall", () => {
+  it("pressing the lists row opens the lists paywall for non-premium members", () => {
     render(<LibraryScreen />);
 
-    fireEvent.press(screen.getByText("Listen in the car"));
+    fireEvent.press(screen.getByLabelText("Listen in the car"));
 
     expect(mockOpenPaywall).toHaveBeenCalledWith("lists");
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it("pressing the lists row opens the lists screen for premium members", () => {
+    mockUseIsMember.mockReturnValue({ isMember: true, isLoading: false });
+
+    render(<LibraryScreen />);
+
+    fireEvent.press(screen.getByLabelText("Listen in the car"));
+
+    expect(mockPush).toHaveBeenCalledWith("/lists");
+    expect(mockOpenPaywall).not.toHaveBeenCalled();
+    expect(screen.getByText("Offline shelf section")).toBeTruthy();
   });
 
   it("shows the offline locked promo card copy for non-premium members", () => {

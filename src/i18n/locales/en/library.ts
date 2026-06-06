@@ -38,6 +38,17 @@ export default {
     offlineBody:
       "Premium unlocks offline downloads for articles, episodes, and hosted videos.",
   },
+  listsScreen: {
+    back: "Back",
+    createTitle: "Create a list",
+    pendingAction: "This action will be available in an upcoming update.",
+    lockedTitle: "Unlimited lists with Premium",
+    lockedBody:
+      "Free members can create one list. Upgrade for unlimited lists and multi-device sync.",
+    viewPremiumCta: "See Premium",
+    secondPreviewTitle: "Economy — to revisit",
+    secondPreviewMeta: "6 items · private",
+  },
   kinds: {
     article: "Article",
     episode: "Episode",

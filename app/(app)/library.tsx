@@ -206,8 +206,17 @@ function SignedInLibraryContent({
   const { t } = useTranslation("library");
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
+  const router = useRouter();
   const { openPaywall } = usePaywallSheet();
   const { isMember } = useIsMember();
+
+  const handleListsPress = () => {
+    if (isMember) {
+      router.push("/lists");
+      return;
+    }
+    openPaywall("lists");
+  };
 
   return (
     <Screen>
@@ -303,7 +312,7 @@ function SignedInLibraryContent({
               gate="premium"
               title={t("library:screen.sections.lists")}
             />
-            <LibraryPersonalListRow onPress={() => openPaywall("lists")} />
+            <LibraryPersonalListRow onPress={handleListsPress} />
           </View>
         ) : null}
 

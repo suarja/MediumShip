@@ -8,9 +8,15 @@ import { useAppTheme } from "../../features/theme/theme-provider";
 
 type LibraryPersonalListRowProps = {
   onPress: () => void;
+  title?: string;
+  meta?: string;
 };
 
-export function LibraryPersonalListRow({ onPress }: LibraryPersonalListRowProps) {
+export function LibraryPersonalListRow({
+  onPress,
+  title,
+  meta,
+}: LibraryPersonalListRowProps) {
   const { t } = useTranslation("library");
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
@@ -19,6 +25,7 @@ export function LibraryPersonalListRow({ onPress }: LibraryPersonalListRowProps)
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={t("library:screen.listsPreviewTitle")}
       onPress={onPress}
       style={({ pressed }) => [
         styles.row,
@@ -76,7 +83,7 @@ export function LibraryPersonalListRow({ onPress }: LibraryPersonalListRowProps)
             },
           ]}
         >
-          {t("library:screen.listsPreviewTitle")}
+          {title ?? t("library:screen.listsPreviewTitle")}
         </Text>
         <Text
           style={[
@@ -87,7 +94,7 @@ export function LibraryPersonalListRow({ onPress }: LibraryPersonalListRowProps)
             },
           ]}
         >
-          {t("library:screen.listsPreviewMeta")}
+          {meta ?? t("library:screen.listsPreviewMeta")}
         </Text>
       </View>
 

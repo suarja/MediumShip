@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { useResponsive } from "../../features/responsive/use-responsive";
@@ -11,13 +11,31 @@ type LibraryPersonalListRowProps = {
   title?: string;
   meta?: string;
   accessibilityLabel?: string;
+  previewCoverUrls?: string[];
 };
+
+type StackLayerKey = "back" | "mid" | "front";
+
+const STACK_LAYER_ORDER: StackLayerKey[] = ["back", "mid", "front"];
+
+const COVER_INDEX_BY_LAYER: Record<StackLayerKey, number> = {
+  front: 0,
+  mid: 1,
+  back: 2,
+};
+
+const PLACEHOLDER_TONES = {
+  back: "muted",
+  mid: "premium",
+  front: "accent",
+} as const;
 
 export function LibraryPersonalListRow({
   onPress,
   title,
   meta,
   accessibilityLabel,
+  previewCoverUrls = [],
 }: LibraryPersonalListRowProps) {
   const { t } = useTranslation("library");
   const { theme } = useAppTheme();
@@ -42,38 +60,10 @@ export function LibraryPersonalListRow({
         pressed && styles.pressed,
       ]}
     >
-      <View style={[styles.stack, { width: stackSize, height: stackSize }]}>
-        <View
-          style={[
-            styles.stackLayer,
-            styles.stackLayerBack,
-            {
-              borderRadius: theme.radii.sm,
-              backgroundColor: withAlpha(theme.colors.textMuted, theme.isDark ? 0.35 : 0.22),
-            },
-          ]}
-        />
-        <View
-          style={[
-            styles.stackLayer,
-            styles.stackLayerMid,
-            {
-              borderRadius: theme.radii.sm,
-              backgroundColor: withAlpha(theme.colors.premium, theme.isDark ? 0.55 : 0.42),
-            },
-          ]}
-        />
-        <View
-          style={[
-            styles.stackLayer,
-            styles.stackLayerFront,
-            {
-              borderRadius: theme.radii.sm,
-              backgroundColor: withAlpha(theme.colors.accent, theme.isDark ? 0.72 : 0.58),
-            },
-          ]}
-        />
-      </View>
+      <ListCoverStack
+        previewCoverUrls={previewCoverUrls}
+        stackSize={stackSize}
+      />
 
       <View style={styles.copy}>
         <Text
@@ -115,6 +105,77 @@ export function LibraryPersonalListRow({
   );
 }
 
+function ListCoverStack({
+  previewCoverUrls,
+  stackSize,
+}: {
+  previewCoverUrls: string[];
+  stackSize: number;
+}) {
+  const { theme } = useAppTheme();
+
+  return (
+    <View style={[styles.stack, { width: stackSize, height: stackSize }]}>
+      {STACK_LAYER_ORDER.map((layer) => {
+        const coverUrl = previewCoverUrls[COVER_INDEX_BY_LAYER[layer]];
+        const tone = PLACEHOLDER_TONES[layer];
+        const toneColor =
+          tone === "muted"
+            ? theme.colors.textMuted
+            : tone === "premium"
+              ? theme.colors.premium
+              : theme.colors.accent;
+        const layerStyle =
+          layer === "back"
+            ? styles.stackLayerBack
+            : layer === "mid"
+              ? styles.stackLayerMid
+              : styles.stackLayerFront;
+
+        return (
+          <View
+            key={layer}
+            style={[
+              styles.stackLayer,
+              layerStyle,
+              {
+                borderRadius: theme.radii.sm,
+                overflow: "hidden",
+                backgroundColor: withAlpha(
+                  toneColor,
+                  coverUrl
+                    ? theme.isDark
+                      ? 0.2
+                      : 0.12
+                    : theme.isDark
+                      ? tone === "muted"
+                        ? 0.35
+                        : tone === "premium"
+                          ? 0.55
+                          : 0.72
+                      : tone === "muted"
+                        ? 0.22
+                        : tone === "premium"
+                          ? 0.42
+                          : 0.58,
+                ),
+              },
+            ]}
+          >
+            {coverUrl ? (
+              <Image
+                accessibilityIgnoresInvertColors
+                source={{ uri: coverUrl }}
+                style={styles.stackImage}
+              />
+            ) : null}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
@@ -130,6 +191,10 @@ const styles = StyleSheet.create({
   },
   stackLayer: {
     position: "absolute",
+  },
+  stackImage: {
+    width: "100%",
+    height: "100%",
   },
   stackLayerBack: {
     top: 0,

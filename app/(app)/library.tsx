@@ -333,6 +333,7 @@ function SignedInLibraryContent({
               accessibilityLabel={
                 primaryList?.title ?? t("library:screen.listsPreviewTitle")
               }
+              previewCoverUrls={primaryList?.previewCoverUrls}
             />
           </View>
         ) : null}

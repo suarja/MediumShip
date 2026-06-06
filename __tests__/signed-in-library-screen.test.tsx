@@ -56,6 +56,7 @@ jest.mock("../src/features/personal-lists/use-personal-lists", () => ({
   usePersonalLists: () => ({
     lists: [],
     primaryList: null,
+    previewCoverUrls: [],
     isListsLoading: false,
   }),
 }));

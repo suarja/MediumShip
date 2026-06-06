@@ -28,6 +28,10 @@ jest.mock("../src/features/personal-lists/use-personal-lists", () => ({
         _id: "list_1",
         title: "Listen in the car",
         itemCount: 3,
+        previewCoverUrls: [
+          "https://example.com/cover-1.jpg",
+          "https://example.com/cover-2.jpg",
+        ],
       },
     ],
     isMember: true,

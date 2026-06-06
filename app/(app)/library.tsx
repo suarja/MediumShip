@@ -18,6 +18,9 @@ import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { hasCapability } from "../../src/features/tenant/public-config";
+
+/** Mockup-aligned loupe scale for the top-bar action (matches Explore search card). */
+const SEARCH_GLYPH_SIZE = 19;
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 const SECTION_KEYS = ["resume", "saved", "lists", "offline"] as const;
@@ -248,18 +251,26 @@ function SignedInLibraryContent({
           >
             {t("library:screen.title")}
           </Text>
-          <Text
+          <View
             style={[
               styles.topBarAction,
-              {
-                color: theme.colors.heading,
-                fontSize: 19 * scaleFont,
-                lineHeight: 34,
-              },
+              { width: 34 * scaleSpace, height: 34 * scaleSpace },
             ]}
           >
-            ⌕
-          </Text>
+            <Text
+              testID="library-top-bar-search"
+              style={[
+                styles.topBarActionGlyph,
+                {
+                  color: theme.colors.heading,
+                  fontSize: SEARCH_GLYPH_SIZE * scaleFont,
+                  lineHeight: SEARCH_GLYPH_SIZE * scaleFont,
+                },
+              ]}
+            >
+              ⌕
+            </Text>
+          </View>
         </View>
 
         <View style={[styles.filters, { marginBottom: theme.spacing.xl * scaleSpace }]}>
@@ -355,11 +366,11 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   topBarAction: {
-    width: 34,
-    height: 34,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  topBarActionGlyph: {
     textAlign: "center",
-    textAlignVertical: "center",
-    fontFamily: fontFamilies.bodyMedium,
   },
   gateScreen: {
     flex: 1,

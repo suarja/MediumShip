@@ -29,6 +29,9 @@ import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 type SearchFilter = "all" | ContentKind;
 
+/** Mockup-aligned loupe scale shared by the top-bar action and search card. */
+const SEARCH_GLYPH_SIZE = 19;
+
 const ALL_MODULE_ITEMS = [
   { key: "collections" as const, icon: "◆", href: "/collections" },
   { key: "agenda" as const, icon: "☷", href: "/agenda" },
@@ -109,7 +112,26 @@ export default function ExploreScreen() {
           >
             {t("title")}
           </Text>
-          <View style={styles.topBarSide} />
+          <View
+            style={[
+              styles.topBarAction,
+              { width: 34 * scaleSpace, height: 34 * scaleSpace },
+            ]}
+          >
+            <Text
+              testID="explore-top-bar-search"
+              style={[
+                styles.topBarActionGlyph,
+                {
+                  color: theme.colors.heading,
+                  fontSize: SEARCH_GLYPH_SIZE * scaleFont,
+                  lineHeight: SEARCH_GLYPH_SIZE * scaleFont,
+                },
+              ]}
+            >
+              ⌕
+            </Text>
+          </View>
         </View>
 
         <View
@@ -123,11 +145,13 @@ export default function ExploreScreen() {
           ]}
         >
           <Text
+            testID="explore-search-card-icon"
             style={[
               styles.searchIcon,
               {
                 color: theme.colors.accent,
-                fontSize: 19 * scaleFont,
+                fontSize: SEARCH_GLYPH_SIZE * scaleFont,
+                lineHeight: SEARCH_GLYPH_SIZE * scaleFont,
                 width: 22 * scaleSpace,
               },
             ]}
@@ -465,6 +489,13 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
   },
+  topBarAction: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  topBarActionGlyph: {
+    textAlign: "center",
+  },
   topBarTitle: {
     fontFamily: fontFamilies.display,
     letterSpacing: -0.2,
@@ -480,7 +511,6 @@ const styles = StyleSheet.create({
   searchIcon: {
     width: 22,
     textAlign: "center",
-    lineHeight: 22,
   },
   searchInput: {
     flex: 1,

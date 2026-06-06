@@ -50,6 +50,24 @@ describe("explore screen", () => {
     mockUseCategories.mockClear();
   });
 
+  it("aligns top-bar and search-card loupe glyphs to the same scale", () => {
+    render(<ExploreScreen />);
+
+    const topBarSearch = screen.getByTestId("explore-top-bar-search");
+    const searchCardIcon = screen.getByTestId("explore-search-card-icon");
+
+    expect(topBarSearch.props.style).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ fontSize: 19, lineHeight: 19 }),
+      ]),
+    );
+    expect(searchCardIcon.props.style).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ fontSize: 19, lineHeight: 19 }),
+      ]),
+    );
+  });
+
   it("renders the first discovery shell sections", () => {
     render(<ExploreScreen />);
 

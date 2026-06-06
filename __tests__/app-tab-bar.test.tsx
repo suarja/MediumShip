@@ -90,6 +90,48 @@ describe("app tab bar", () => {
     expect(screen.queryByText("Settings")).toBeNull();
   });
 
+  it("sizes tab icons to the mockup 16px scale", () => {
+    render(
+      <AppTabBar
+        descriptors={{
+          "home-key": { options: {} },
+          "explore-key": { options: {} },
+          "library-key": { options: {} },
+          "profile-key": { options: {} },
+        } as never}
+        navigation={{
+          emit: jest.fn(() => ({ defaultPrevented: false })),
+          navigate: jest.fn(),
+        } as never}
+        insets={{ top: 0, right: 0, bottom: 0, left: 0 }}
+        state={{
+          index: 0,
+          key: "tab-state",
+          routeNames: ["home", "explore", "library", "profile"],
+          routes: [
+            { key: "home-key", name: "home" },
+            { key: "explore-key", name: "explore" },
+            { key: "library-key", name: "library" },
+            { key: "profile-key", name: "profile" },
+          ],
+          stale: false,
+          type: "tab",
+          history: [],
+        } as never}
+      />,
+    );
+
+    const homeIcon = screen.getByText("◉");
+    expect(homeIcon.props.style).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fontSize: 16,
+          lineHeight: 16,
+        }),
+      ]),
+    );
+  });
+
   it("renders each tab label on a single line", () => {
     render(
       <AppTabBar

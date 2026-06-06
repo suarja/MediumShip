@@ -117,7 +117,7 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
                   styles.icon,
                   {
                     fontSize: 16 * scaleFont,
-                    lineHeight: 18 * scaleFont,
+                    lineHeight: 16 * scaleFont,
                     color: isFocused ? theme.colors.surface : theme.colors.tabInactive,
                   },
                 ]}

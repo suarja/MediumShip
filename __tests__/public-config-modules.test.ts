@@ -5,11 +5,11 @@ import {
 } from "../src/features/tenant/public-config";
 
 describe("isModuleEnabled", () => {
-  it("defaults all nav modules to enabled when none are configured", () => {
+  it("treats nav modules as OFF when absent (strict allowlist, no default-on)", () => {
     const noNavModules = ["articles", "episodes", "videos", "premium"];
-    expect(isModuleEnabled(noNavModules, "collections")).toBe(true);
-    expect(isModuleEnabled(noNavModules, "agenda")).toBe(true);
-    expect(isModuleEnabled(noNavModules, "community")).toBe(true);
+    expect(isModuleEnabled(noNavModules, "collections")).toBe(false);
+    expect(isModuleEnabled(noNavModules, "agenda")).toBe(false);
+    expect(isModuleEnabled(noNavModules, "community")).toBe(false);
   });
 
   it("returns true for modules present in the array", () => {
@@ -39,14 +39,10 @@ describe("isModuleEnabled", () => {
 });
 
 describe("hasCapability", () => {
-  it("bookmarks and progressSync are enabled by default when no capabilities are configured", () => {
+  it("treats capabilities as OFF when absent (strict allowlist)", () => {
     const modules = ["articles", "episodes"];
-    expect(hasCapability(modules, "bookmarks")).toBe(true);
-    expect(hasCapability(modules, "progressSync")).toBe(true);
-  });
-
-  it("offline, personalLists, membersRoom are disabled by default", () => {
-    const modules = ["articles", "episodes"];
+    expect(hasCapability(modules, "bookmarks")).toBe(false);
+    expect(hasCapability(modules, "progressSync")).toBe(false);
     expect(hasCapability(modules, "offline")).toBe(false);
     expect(hasCapability(modules, "personalLists")).toBe(false);
     expect(hasCapability(modules, "membersRoom")).toBe(false);

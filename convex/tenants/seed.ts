@@ -210,9 +210,14 @@ export const seedDemoContent = mutation({
         enabledModules: defaultTenant.enabledModules,
         feedSections: defaultTenant.feedSections,
       });
-    } else if (!existingTenant.feedSections) {
+    } else {
+      // Seed = restore the demo tenant to a known state, including the full
+      // default module set (content + premium + navigation). Module gating is a
+      // strict allowlist now, so a stale content-only row would otherwise hide
+      // collections/agenda/community. CMS edits after seeding take over.
       await ctx.db.patch(existingTenant._id, {
-        feedSections: defaultTenant.feedSections,
+        enabledModules: defaultTenant.enabledModules,
+        feedSections: existingTenant.feedSections ?? defaultTenant.feedSections,
       });
     }
 

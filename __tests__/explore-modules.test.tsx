@@ -86,13 +86,13 @@ describe("explore modules gating", () => {
     expect(screen.queryByText("Community")).toBeNull();
   });
 
-  it("defaults all nav modules to enabled when no nav modules are in config (backward compat)", () => {
+  it("hides every nav module card when the config lists none (strict allowlist)", () => {
     mockUseAppTheme.mockReturnValue(makeTheme(["articles", "episodes", "videos", "premium"]));
     render(<ExploreScreen />);
 
-    expect(screen.getByText("Collections")).toBeTruthy();
-    expect(screen.getByText("Agenda")).toBeTruthy();
-    expect(screen.getByText("Community")).toBeTruthy();
+    expect(screen.queryByText("Collections")).toBeNull();
+    expect(screen.queryByText("Agenda")).toBeNull();
+    expect(screen.queryByText("Community")).toBeNull();
   });
 
   it("hides the Modules section heading when all nav modules are disabled", () => {

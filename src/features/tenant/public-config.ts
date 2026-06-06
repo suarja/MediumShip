@@ -20,15 +20,17 @@ export type ContentModule = (typeof PUBLIC_CONTENT_MODULES)[number];
 export const NAVIGATION_MODULES = ["collections", "agenda", "community"] as const;
 export type NavigationModule = (typeof NAVIGATION_MODULES)[number];
 
-const NAV_MODULE_SET = new Set<string>(NAVIGATION_MODULES);
-
-/** All navigation modules are on by default when the tenant hasn't configured any. */
+/**
+ * Strict allowlist: a navigation module is enabled iff it is present in the
+ * tenant's `enabledModules`. Out-of-the-box defaults come from
+ * `defaultTenant.enabledModules`, NOT from a "default-on when unconfigured"
+ * heuristic — that heuristic resurrected every module when the last one was
+ * unchecked, and left never-activated modules visible.
+ */
 export function isModuleEnabled(
   modules: readonly string[],
   name: NavigationModule,
 ): boolean {
-  const hasExplicitNavConfig = modules.some((m) => NAV_MODULE_SET.has(m));
-  if (!hasExplicitNavConfig) return true;
   return modules.includes(name);
 }
 
@@ -43,13 +45,8 @@ export const CAPABILITIES = [
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
-const DEFAULT_CAPABILITIES = new Set<Capability>(["bookmarks", "progressSync"]);
-const CAPABILITY_SET = new Set<string>(CAPABILITIES);
-
-/** bookmarks + progressSync are on by default; others require explicit inclusion. */
+/** Strict allowlist, like {@link isModuleEnabled}: a capability is on iff listed. */
 export function hasCapability(modules: readonly string[], cap: Capability): boolean {
-  const hasExplicitCapConfig = modules.some((m) => CAPABILITY_SET.has(m));
-  if (!hasExplicitCapConfig) return DEFAULT_CAPABILITIES.has(cap);
   return modules.includes(cap);
 }
 

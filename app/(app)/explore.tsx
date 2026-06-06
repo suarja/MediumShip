@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { FeedRow } from "../../src/components/content/feed-row";
 import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
+import { getCategoryPresentation } from "../../src/features/categories/category-presentation";
 import { useCategories } from "../../src/features/categories/use-categories";
 import type { ContentKind } from "../../src/features/content/types";
 import { toContentCardModel } from "../../src/features/content/selectors";
@@ -27,24 +28,6 @@ import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 type SearchFilter = "all" | ContentKind;
-
-const CATEGORY_ICON_MAP: Record<string, string> = {
-  analyses: "✎",
-  podcasts: "▷",
-  episodes: "▷",
-  videos: "▶",
-  agenda: "☷",
-  collections: "◆",
-  community: "✦",
-};
-
-function getCategoryIcon(category: string): string {
-  const key = category.toLowerCase();
-  for (const [k, icon] of Object.entries(CATEGORY_ICON_MAP)) {
-    if (key.includes(k)) return icon;
-  }
-  return "◉";
-}
 
 const ALL_MODULE_ITEMS = [
   { key: "collections" as const, icon: "◆", href: "/collections" },
@@ -249,7 +232,7 @@ export default function ExploreScreen() {
                       accessibilityRole="button"
                     >
                       <FeatureCard
-                        icon={getCategoryIcon(cat.category)}
+                        icon={getCategoryPresentation(cat.category).icon}
                         meta={`${cat.count} contenus`.toUpperCase()}
                         title={cat.category}
                       />

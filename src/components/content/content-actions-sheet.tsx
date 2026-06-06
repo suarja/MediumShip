@@ -295,7 +295,7 @@ function SheetBody({
             }
             void recordInteraction({
               tenantSlug,
-              contentId: content._id,
+              contentId: content._id as Id<"contents">,
               type: "hide",
             });
             onDismiss();

@@ -18,6 +18,7 @@ function item(
     tags: [],
     isPremium: false,
     reason,
+    isLiked: false,
   };
 }
 

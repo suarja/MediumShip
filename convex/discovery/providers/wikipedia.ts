@@ -80,6 +80,16 @@ export function toWikipediaCategoryTitle(categorySlug: string): string {
   return `Category:${words.join("_")}`;
 }
 
+/**
+ * Full-text search term for a category. `incategory:"X"` only matches the few
+ * pages directly in that category (exhausted within a couple of refills); a
+ * plain topical search returns thousands of relevance-ranked pages, giving the
+ * search offset real depth to paginate through.
+ */
+export function toWikipediaSearchTerm(categorySlug: string): string {
+  return categorySlug.split("-").filter(Boolean).join(" ");
+}
+
 function buildApiUrl(params: Record<string, string>): string {
   const url = new URL(WIKIPEDIA_API_URL);
   for (const [key, value] of Object.entries(params)) {
@@ -120,17 +130,17 @@ function pagesFromQueryResponse(data: unknown): WikipediaPageRaw[] {
 export async function fetchWikipediaPagesViaSearch(
   categorySlug: string,
   fetchImpl: typeof fetch = fetch,
+  offset = 0,
 ): Promise<WikipediaPageRaw[]> {
-  const categoryTitle = toWikipediaCategoryTitle(categorySlug);
-
   const data = await mediaWikiFetch(
     {
       action: "query",
       format: "json",
       origin: "*",
       generator: "search",
-      gsrsearch: `incategory:"${categoryTitle.replace(/^Category:/, "")}"`,
+      gsrsearch: toWikipediaSearchTerm(categorySlug),
       gsrlimit: String(PAGES_PER_CATEGORY),
+      gsroffset: String(offset),
       prop: "extracts|pageimages|info",
       exintro: "1",
       explaintext: "1",
@@ -197,8 +207,10 @@ export async function fetchWikipediaPagesViaCategoryMembers(
 export async function fetchWikipediaCategoryPages(
   categorySlug: string,
   fetchImpl: typeof fetch = fetch,
-  options: { coldStart?: boolean } = {},
+  options: { coldStart?: boolean; offset?: number } = {},
 ): Promise<WikipediaPageRaw[]> {
+  const offset = options.offset ?? 0;
+
   if (options.coldStart) {
     const members = await fetchWikipediaPagesViaCategoryMembers(
       categorySlug,
@@ -209,7 +221,11 @@ export async function fetchWikipediaCategoryPages(
     }
   }
 
-  const searchPages = await fetchWikipediaPagesViaSearch(categorySlug, fetchImpl);
+  const searchPages = await fetchWikipediaPagesViaSearch(
+    categorySlug,
+    fetchImpl,
+    offset,
+  );
   if (searchPages.length > 0) {
     return searchPages;
   }
@@ -225,8 +241,18 @@ async function ingestWikipediaDemand(
   let totalUpserted = 0;
 
   for (const category of args.demand.categories) {
+    // Cold start fills from offset 0 (categorymembers); refills advance a
+    // persisted search offset so each run brings genuinely new pages.
+    const offset = args.demand.coldStart
+      ? 0
+      : await ctx.runQuery(internal.discovery.ingest.getCategoryOffset, {
+          tenantSlug: args.tenantSlug,
+          category,
+        });
+
     const pages = await fetchWikipediaCategoryPages(category, fetchImpl, {
       coldStart: args.demand.coldStart,
+      offset,
     });
     const normalized = pages.map((page) =>
       normalizeWikipediaPage(page, {
@@ -244,6 +270,14 @@ async function ingestWikipediaDemand(
       { items: normalized },
     );
     totalUpserted += result.upserted;
+
+    if (!args.demand.coldStart) {
+      await ctx.runMutation(internal.discovery.ingest.advanceCategoryOffset, {
+        tenantSlug: args.tenantSlug,
+        category,
+        by: pages.length,
+      });
+    }
   }
 
   return { upserted: totalUpserted };

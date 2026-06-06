@@ -67,6 +67,53 @@ export const upsertIngested = internalMutation({
   },
 });
 
+export const getCategoryOffset = internalQuery({
+  args: { tenantSlug: v.string(), category: v.string() },
+  returns: v.number(),
+  handler: async (ctx, { tenantSlug, category }) => {
+    const record = await ctx.db
+      .query("ingestionThrottle")
+      .withIndex("by_tenant_and_category", (q) =>
+        q.eq("tenantSlug", tenantSlug).eq("categoryKey", category),
+      )
+      .unique();
+
+    return record?.searchOffset ?? 0;
+  },
+});
+
+export const advanceCategoryOffset = internalMutation({
+  args: { tenantSlug: v.string(), category: v.string(), by: v.number() },
+  returns: v.null(),
+  handler: async (ctx, { tenantSlug, category, by }) => {
+    if (by <= 0) {
+      return null;
+    }
+
+    const record = await ctx.db
+      .query("ingestionThrottle")
+      .withIndex("by_tenant_and_category", (q) =>
+        q.eq("tenantSlug", tenantSlug).eq("categoryKey", category),
+      )
+      .unique();
+
+    if (record) {
+      await ctx.db.patch(record._id, {
+        searchOffset: (record.searchOffset ?? 0) + by,
+      });
+    } else {
+      await ctx.db.insert("ingestionThrottle", {
+        tenantSlug,
+        categoryKey: category,
+        lastRequestedAt: Date.now(),
+        searchOffset: by,
+      });
+    }
+
+    return null;
+  },
+});
+
 export const listTenantsForIngestion = internalQuery({
   args: {},
   returns: v.array(

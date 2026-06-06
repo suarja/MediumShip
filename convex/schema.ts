@@ -267,5 +267,9 @@ export default defineSchema({
     tenantSlug: v.string(),
     categoryKey: v.string(),
     lastRequestedAt: v.number(),
+    // Wikipedia search offset for this (tenant, category): advanced after each
+    // refill so successive fetches return genuinely new pages instead of
+    // re-fetching the same top-N (which dedup-collapses to zero new content).
+    searchOffset: v.optional(v.number()),
   }).index("by_tenant_and_category", ["tenantSlug", "categoryKey"]),
 });

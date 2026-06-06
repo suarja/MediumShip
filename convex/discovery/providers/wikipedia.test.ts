@@ -105,6 +105,15 @@ describe("wikipediaProvider.ingest", () => {
     vi.unstubAllGlobals();
   });
 
+  function makeIngestCtx(t: ReturnType<typeof convexTest>) {
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      runQuery: (ref: any, args: any) => t.query(ref, args),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      runMutation: (ref: any, args: any) => t.mutation(ref, args),
+    } as never;
+  }
+
   it("fetches, normalizes, and upserts without duplicating on re-run", async () => {
     const t = convexTest(schema, modules);
     const searchResponse = {
@@ -121,18 +130,13 @@ describe("wikipediaProvider.ingest", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    const ctx = {
-      runMutation: (
-        ref: typeof internal.discovery.ingest.upsertIngested,
-        args: { items: ReturnType<typeof normalizeWikipediaPage>[] },
-      ) => t.mutation(ref, args),
-    };
+    const ctx = makeIngestCtx(t);
 
-    const first = await wikipediaProvider.ingest(ctx as never, {
+    const first = await wikipediaProvider.ingest(ctx, {
       tenantSlug: TENANT,
       demand: { categories: ["science"] },
     });
-    const second = await wikipediaProvider.ingest(ctx as never, {
+    const second = await wikipediaProvider.ingest(ctx, {
       tenantSlug: TENANT,
       demand: { categories: ["science"] },
     });
@@ -148,6 +152,62 @@ describe("wikipediaProvider.ingest", () => {
         "User-Agent": expect.stringContaining("MediumShip"),
       }),
     });
+  });
+
+  it("advances the search offset so a refill returns genuinely new pages", async () => {
+    const t = convexTest(schema, modules);
+
+    // The mock returns a different page depending on the gsroffset, modelling
+    // real Wikipedia pagination: offset 0 → page 1, offset 1 → page 2, etc.
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      const offset = Number(new URL(url).searchParams.get("gsroffset") ?? "0");
+      const pageId = offset + 1;
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          query: {
+            pages: {
+              [String(pageId)]: makeWikiPage({
+                pageid: pageId,
+                title: `Page ${pageId}`,
+              }),
+            },
+          },
+        }),
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const ctx = makeIngestCtx(t);
+
+    const first = await wikipediaProvider.ingest(ctx, {
+      tenantSlug: TENANT,
+      demand: { categories: ["science"] },
+    });
+    const second = await wikipediaProvider.ingest(ctx, {
+      tenantSlug: TENANT,
+      demand: { categories: ["science"] },
+    });
+
+    // Both runs add NEW content — the offset advanced between them.
+    expect(first.upserted).toBe(1);
+    expect(second.upserted).toBe(1);
+
+    const offsets = fetchMock.mock.calls.map((call) =>
+      new URL(call[0] as string).searchParams.get("gsroffset"),
+    );
+    expect(offsets[0]).toBe("0");
+    expect(offsets[1]).toBe("1");
+
+    const rows = await t.run(async (db) =>
+      db.db
+        .query("contents")
+        .withIndex("by_tenant_and_status", (q) =>
+          q.eq("tenantSlug", TENANT).eq("status", "published"),
+        )
+        .collect(),
+    );
+    expect(rows).toHaveLength(2);
   });
 });
 

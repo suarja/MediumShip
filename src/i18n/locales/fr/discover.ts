@@ -9,6 +9,9 @@ export default {
     more: "Plus d'actions",
     notInterested: "Pas intéressé",
   },
+  source: {
+    wikipedia: "Wikipedia",
+  },
   sections: {
     editorial: {
       title: "À la une",

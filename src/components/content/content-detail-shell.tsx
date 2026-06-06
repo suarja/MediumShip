@@ -2,7 +2,7 @@ import { PropsWithChildren, ReactNode, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Link } from "expo-router";
+import { useRouter } from "expo-router";
 
 import { StatusBannerStack } from "./status-banner-stack";
 import { OVER_MEDIA } from "../../features/content/card-presentation";
@@ -52,9 +52,19 @@ export function ContentDetailShell({
   actions,
   children,
 }: ContentDetailShellProps) {
+  const router = useRouter();
   const { theme } = useAppTheme();
   const { scaleSpace, scaleFont, contentMaxWidth } = useResponsive();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/home");
+  };
   // Measure the sticky action bar so the scroll body reserves exactly its
   // height (it is an absolute overlay). A hardcoded inset used to clip the
   // body — e.g. hiding the premium member-access card behind a tall bar.
@@ -91,19 +101,18 @@ export function ContentDetailShell({
             </View>
           </ScrollView>
 
-          <Link href="/home" asChild>
-            <Pressable
-              accessibilityRole="link"
-              accessibilityLabel={backLabel}
-              hitSlop={10}
-              style={StyleSheet.flatten([
-                styles.floatingBack,
-                { top: theme.spacing.sm * scaleSpace },
-              ])}
-            >
-              <Text style={styles.floatingBackGlyph}>‹</Text>
-            </Pressable>
-          </Link>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={backLabel}
+            hitSlop={10}
+            onPress={handleBack}
+            style={StyleSheet.flatten([
+              styles.floatingBack,
+              { top: theme.spacing.sm * scaleSpace },
+            ])}
+          >
+            <Text style={styles.floatingBackGlyph}>‹</Text>
+          </Pressable>
 
           {actions ? (
             <View
@@ -133,13 +142,16 @@ export function ContentDetailShell({
             },
           ]}
         >
-          <Link href="/home" asChild>
-            <Pressable accessibilityRole="link" style={{ paddingVertical: 4 }}>
-              <Text style={[styles.back, { color: theme.colors.accent, fontSize: 15 * scaleFont }]}>
-                {backLabel}
-              </Text>
-            </Pressable>
-          </Link>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={backLabel}
+            onPress={handleBack}
+            style={{ paddingVertical: 4 }}
+          >
+            <Text style={[styles.back, { color: theme.colors.accent, fontSize: 15 * scaleFont }]}>
+              {backLabel}
+            </Text>
+          </Pressable>
 
           {state === "loading" ? (
             <View style={styles.center}>

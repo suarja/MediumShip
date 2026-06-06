@@ -9,7 +9,10 @@ import {
 import { ContentCard } from "../../src/components/content/content-card";
 import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
-import { cardDurationMeta, cardKicker } from "../../src/features/content/card-presentation";
+import {
+  cardDurationMeta,
+  discoveryCardKicker,
+} from "../../src/features/content/card-presentation";
 import { toContentCardModel } from "../../src/features/content/selectors";
 import { groupDiscoveryFeedSections } from "../../src/features/discovery/group-feed-sections";
 import { useDiscoveryFeed } from "../../src/features/discovery/use-discovery-feed";
@@ -182,7 +185,7 @@ function DiscoverFeedSection({
               key={item._id}
               variant="feature"
               item={card}
-              kicker={cardKicker(card, tHome)}
+              kicker={discoveryCardKicker(card, tHome, t)}
               meta={cardDurationMeta(card, tHome)}
               divider={false}
               actions={

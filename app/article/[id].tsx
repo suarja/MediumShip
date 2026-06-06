@@ -7,9 +7,11 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../convex/_generated/api";
 import { ContentActionsBar } from "../../src/components/content/content-actions-bar";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
+import { ContentSourceAttribution } from "../../src/components/content/content-source-attribution";
 import { DetailHeader } from "../../src/components/content/detail-header";
 import { DetailHero } from "../../src/components/content/detail-hero";
 import { PremiumPaywall } from "../../src/components/content/premium-paywall";
+import { resolveContentSource } from "../../src/features/content/source";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useDownloads } from "../../src/features/downloads/use-downloads";
@@ -52,6 +54,10 @@ export default function ArticleDetailScreen() {
   const coverImageUrl =
     downloadedItem?.localCoverImagePath ??
     (resolvedContent ? getContentCoverImageUrl(resolvedContent) : undefined);
+  const contentSource = resolvedContent
+    ? resolveContentSource(resolvedContent)
+    : "cms";
+  const isWikipedia = contentSource === "wikipedia";
 
   return (
     <ContentDetailShell
@@ -82,7 +88,11 @@ export default function ArticleDetailScreen() {
       {resolvedContent ? (
         <>
           <DetailHeader
-            kicker={resolvedContent.category || t("kicker")}
+            kicker={
+              isWikipedia
+                ? t("sourceWikipedia")
+                : resolvedContent.category || t("kicker")
+            }
             title={resolvedContent.title}
             meta={
               resolvedContent.readingTimeMinutes
@@ -98,16 +108,31 @@ export default function ArticleDetailScreen() {
               description={t("premiumBody")}
               ctaLabel={t("premiumCta")}
             />
-          ) : resolvedContent.articleBody ? (
-            <Text
-              style={[
-                styles.body,
-                { color: theme.colors.text, fontSize: 16 * scaleFont, lineHeight: 26 * scaleFont },
-              ]}
-            >
-              {resolvedContent.articleBody}
-            </Text>
-          ) : null}
+          ) : (
+            <>
+              {isWikipedia ? (
+                <ContentSourceAttribution
+                  source={contentSource}
+                  canonicalUrl={resolvedContent.canonicalUrl}
+                  showExtractNote
+                />
+              ) : null}
+              {resolvedContent.articleBody ? (
+                <Text
+                  style={[
+                    styles.body,
+                    {
+                      color: theme.colors.text,
+                      fontSize: 16 * scaleFont,
+                      lineHeight: 26 * scaleFont,
+                    },
+                  ]}
+                >
+                  {resolvedContent.articleBody}
+                </Text>
+              ) : null}
+            </>
+          )}
         </>
       ) : null}
     </ContentDetailShell>

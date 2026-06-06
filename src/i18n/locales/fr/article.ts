@@ -6,6 +6,7 @@ export default {
   notFoundTitle: "Article indisponible",
   notFoundBody: "Cet article n'est pas publié ou n'existe plus.",
   kicker: "Article",
+  sourceWikipedia: "Wikipedia",
   readingTime: "{{minutes}} min de lecture",
   premiumTag: "Premium",
   premiumTitle: "Article réservé aux membres",

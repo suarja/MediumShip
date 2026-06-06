@@ -40,6 +40,19 @@ export function cardKicker(item: ContentCardModel, t: Translate): string {
   return category && category.length > 0 ? category : t(`kind_${item.kind}`);
 }
 
+/** Discovery kicker — surfaces external source when content is not CMS-authored. */
+export function discoveryCardKicker(
+  item: ContentCardModel,
+  t: Translate,
+  tDiscover: Translate,
+): string {
+  if (item.source === "wikipedia") {
+    return tDiscover("source.wikipedia");
+  }
+
+  return cardKicker(item, t);
+}
+
 /**
  * Localized, human meta line: reading time or duration, then a premium tag.
  * Returned unstyled — callers apply uppercase/mono treatment.

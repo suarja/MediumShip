@@ -193,5 +193,6 @@ export function toContentCardModel(content: ContentDoc): ContentCardModel {
     href: `/${content.kind}/${content._id}`,
     isPremium: content.isPremium,
     coverImageUrl: getContentCoverImageUrl(content),
+    source: content.source,
   };
 }

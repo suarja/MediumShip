@@ -1,3 +1,5 @@
+import type { ContentSource } from "./source";
+
 export type ContentKind = "article" | "episode" | "video";
 export type ContentStatus = "draft" | "published" | "archived";
 
@@ -35,6 +37,9 @@ export type ContentDoc = {
   audioUrl?: string;
   durationSeconds?: number;
   videoSource?: VideoSource;
+  source?: ContentSource;
+  externalId?: string;
+  canonicalUrl?: string;
 };
 
 export type ContentCardModel = {
@@ -53,4 +58,5 @@ export type ContentCardModel = {
   href: string;
   isPremium: boolean;
   coverImageUrl?: string;
+  source?: ContentSource;
 };

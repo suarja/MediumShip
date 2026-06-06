@@ -16,6 +16,30 @@ export type DiscoveryFeedItem = ContentDoc & {
 export const DISCOVERY_PAGE_SIZE = 10;
 export const DISCOVERY_LOW_WATERMARK = 5;
 
+type DiscoveryFeedPage = {
+  items: DiscoveryFeedItem[];
+  nextCursor: string | null;
+  isExhausted: boolean;
+};
+
+export function normalizeDiscoveryFeedPage(
+  data: DiscoveryFeedPage | DiscoveryFeedItem[] | undefined,
+): DiscoveryFeedPage | undefined {
+  if (data === undefined) {
+    return undefined;
+  }
+
+  if (Array.isArray(data)) {
+    return {
+      items: data,
+      nextCursor: null,
+      isExhausted: true,
+    };
+  }
+
+  return data;
+}
+
 export function shouldRequestDiscoveryRefill(args: {
   itemCount: number;
   isExhausted: boolean;
@@ -50,13 +74,17 @@ export function useDiscoveryFeed(): {
   const refillRequestedRef = useRef(false);
   const pendingAppendRef = useRef<string | null>(null);
 
-  const page = useQuery(api.discovery.feed.getDiscoveryFeed, {
+  const rawPage = useQuery(api.discovery.feed.getDiscoveryFeed, {
     tenantSlug,
     tokenIdentifier: me?.tokenIdentifier,
     feedSeed,
     cursor: fetchCursor,
     limit: DISCOVERY_PAGE_SIZE,
   });
+
+  const page = normalizeDiscoveryFeedPage(
+    rawPage as DiscoveryFeedPage | DiscoveryFeedItem[] | undefined,
+  );
 
   const recordInteraction = useMutation(api.discovery.interactions.recordInteraction);
   const requestRefill = useMutation(api.discovery.refill.requestDiscoveryRefill);
@@ -72,6 +100,9 @@ export function useDiscoveryFeed(): {
   }, [feedSeed, tenantSlug, me?.tokenIdentifier]);
 
   useEffect(() => {
+    const page = normalizeDiscoveryFeedPage(
+      rawPage as DiscoveryFeedPage | DiscoveryFeedItem[] | undefined,
+    );
     if (page === undefined) {
       return;
     }
@@ -83,18 +114,16 @@ export function useDiscoveryFeed(): {
 
     setAllItems((previous) => {
       if (fetchCursor === null) {
-        return page.items as DiscoveryFeedItem[];
+        return page.items;
       }
 
       const existingIds = new Set(previous.map((item) => item._id));
-      const appended = (page.items as DiscoveryFeedItem[]).filter(
-        (item) => !existingIds.has(item._id),
-      );
+      const appended = page.items.filter((item) => !existingIds.has(item._id));
       return [...previous, ...appended];
     });
 
     pendingAppendRef.current = null;
-  }, [page, fetchCursor]);
+  }, [rawPage, fetchCursor]);
 
   useEffect(() => {
     if (

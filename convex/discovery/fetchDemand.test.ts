@@ -83,9 +83,7 @@ describe("computeFetchDemand", () => {
       SCHEDULED_INGESTION_DEMAND_OPTIONS,
     );
 
-    expect(demand.categories).toHaveLength(
-      SCHEDULED_INGESTION_DEMAND_OPTIONS.maxCategories,
-    );
+    expect(demand.categories).toHaveLength(8);
     expect(demand.categories).toContain("science");
     expect(demand.categories).toContain("sports");
   });

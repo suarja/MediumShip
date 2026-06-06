@@ -1,4 +1,4 @@
-import { PropsWithChildren, ReactNode } from "react";
+import { PropsWithChildren, ReactNode, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -55,6 +55,10 @@ export function ContentDetailShell({
   const { theme } = useAppTheme();
   const { scaleSpace, scaleFont, contentMaxWidth } = useResponsive();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
+  // Measure the sticky action bar so the scroll body reserves exactly its
+  // height (it is an absolute overlay). A hardcoded inset used to clip the
+  // body — e.g. hiding the premium member-access card behind a tall bar.
+  const [actionsHeight, setActionsHeight] = useState(96);
 
   const heroLayout = state === "ready" && hero;
 
@@ -69,8 +73,9 @@ export function ContentDetailShell({
         <View style={[styles.heroColumn, { maxWidth: contentMaxWidth }]}>
           <ScrollView
             contentContainerStyle={{
-              paddingBottom:
-                (actions ? 96 : theme.spacing.xxl) * scaleSpace + persistentPlayerSpace,
+              paddingBottom: actions
+                ? actionsHeight + theme.spacing.md * scaleSpace + persistentPlayerSpace
+                : theme.spacing.xxl * scaleSpace + persistentPlayerSpace,
             }}
             showsVerticalScrollIndicator={false}
           >
@@ -102,6 +107,7 @@ export function ContentDetailShell({
 
           {actions ? (
             <View
+              onLayout={(event) => setActionsHeight(event.nativeEvent.layout.height)}
               style={[
                 styles.actionBar,
                 {

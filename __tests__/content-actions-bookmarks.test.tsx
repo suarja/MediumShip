@@ -6,6 +6,7 @@ import { changeAppLanguage, initI18n } from "../src/i18n";
 
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: ReactNode }) => children,
+  useRouter: () => ({ push: jest.fn() }),
 }));
 
 jest.mock("../src/features/auth/use-clerk-auth", () => ({
@@ -57,7 +58,11 @@ describe("content bookmark actions", () => {
       />,
     );
 
+    // Compact bar: Keep (free for any signed-in account) + Offline (opens the
+    // paywall for non-members). The standalone "Become a member" card is gone —
+    // becoming a member now flows through the offline pill / paywall sheet.
     expect(screen.getByText("Keep")).toBeTruthy();
-    expect(screen.getByText("Become a member")).toBeTruthy();
+    expect(screen.getByText("Offline")).toBeTruthy();
+    expect(screen.queryByText("Become a member")).toBeNull();
   });
 });

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useClerkAuth } from "../../features/auth/use-clerk-auth";
+import { usePaywallSheet } from "../../features/paywall/paywall-sheet-provider";
 import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
@@ -28,6 +29,7 @@ export function PremiumPaywall({
 }: PremiumPaywallProps) {
   const { theme } = useAppTheme();
   const { isSignedIn } = useClerkAuth();
+  const { openPaywall } = usePaywallSheet();
   const { t } = useTranslation("premium");
 
   const benefits = t("paywallBenefits", { returnObjects: true }) as string[];
@@ -65,21 +67,39 @@ export function PremiumPaywall({
       </View>
 
       {isSignedIn ? (
-        <View
-          style={[
-            styles.pending,
-            {
-              borderTopColor: withAlpha(theme.colors.premium, 0.32),
-            },
-          ]}
-        >
-          <Text style={[styles.pendingTitle, { color: theme.colors.heading }]}>
-            {t("paywallMemberPendingTitle")}
-          </Text>
-          <Text style={[styles.pendingBody, { color: theme.colors.textMuted }]}>
-            {t("paywallMemberPendingBody")}
-          </Text>
-        </View>
+        <>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => openPaywall("content")}
+            style={({ pressed }) => [
+              styles.cta,
+              {
+                backgroundColor: theme.colors.premium,
+                borderRadius: theme.radii.pill,
+              },
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={[styles.ctaLabel, { color: theme.colors.accentContrast }]}>
+              {ctaLabel}
+            </Text>
+          </Pressable>
+          <View
+            style={[
+              styles.pending,
+              {
+                borderTopColor: withAlpha(theme.colors.premium, 0.32),
+              },
+            ]}
+          >
+            <Text style={[styles.pendingTitle, { color: theme.colors.heading }]}>
+              {t("paywallMemberPendingTitle")}
+            </Text>
+            <Text style={[styles.pendingBody, { color: theme.colors.textMuted }]}>
+              {t("paywallMemberPendingBody")}
+            </Text>
+          </View>
+        </>
       ) : (
         <>
           <Link href="/sign-in" asChild>

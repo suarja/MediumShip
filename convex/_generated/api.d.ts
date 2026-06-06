@@ -12,6 +12,8 @@ import type * as bookmarks_model from "../bookmarks/model.js";
 import type * as bookmarks_mutations from "../bookmarks/mutations.js";
 import type * as bookmarks_queries from "../bookmarks/queries.js";
 import type * as cms_authz from "../cms/authz.js";
+import type * as cms_collections from "../cms/collections.js";
+import type * as cms_events from "../cms/events.js";
 import type * as cms_mutations from "../cms/mutations.js";
 import type * as cms_queries from "../cms/queries.js";
 import type * as collections_model from "../collections/model.js";
@@ -48,6 +50,8 @@ declare const fullApi: ApiFromModules<{
   "bookmarks/mutations": typeof bookmarks_mutations;
   "bookmarks/queries": typeof bookmarks_queries;
   "cms/authz": typeof cms_authz;
+  "cms/collections": typeof cms_collections;
+  "cms/events": typeof cms_events;
   "cms/mutations": typeof cms_mutations;
   "cms/queries": typeof cms_queries;
   "collections/model": typeof collections_model;

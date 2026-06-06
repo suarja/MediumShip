@@ -91,12 +91,12 @@ describe("video detail", () => {
 
     render(<VideoDetailScreen />);
 
-    expect(screen.getByText("Play video")).toBeTruthy();
-    expect(screen.getByText("Open on YouTube")).toBeTruthy();
+    expect(screen.getByLabelText("Play video")).toBeTruthy();
 
-    fireEvent.press(screen.getByTestId("video-start-button"));
+    fireEvent.press(screen.getByLabelText("Play video"));
 
     expect(screen.getByTestId("youtube-player")).toBeTruthy();
+    expect(screen.getByText("Open on YouTube")).toBeTruthy();
     expect(mockPush).not.toHaveBeenCalled();
     expect(WebBrowser.openBrowserAsync).not.toHaveBeenCalled();
   });
@@ -131,9 +131,9 @@ describe("video detail", () => {
 
     render(<VideoDetailScreen />);
 
-    expect(screen.getByText("Play video")).toBeTruthy();
+    expect(screen.getByLabelText("Play video")).toBeTruthy();
 
-    fireEvent.press(screen.getByText("Play video"));
+    fireEvent.press(screen.getByLabelText("Play video"));
 
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith("/player/video_2");

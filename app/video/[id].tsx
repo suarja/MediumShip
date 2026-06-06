@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text } from "react-native";
+import { Text } from "react-native";
 
 import { useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -11,12 +11,12 @@ import { DetailHeader } from "../../src/components/content/detail-header";
 import { DetailHero } from "../../src/components/content/detail-hero";
 import { PremiumPaywall } from "../../src/components/content/premium-paywall";
 import { VideoPlayerCard } from "../../src/components/media/video-player-card";
-import { usePersistentMediaPlayer } from "../../src/features/media/persistent-media-player";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useDownloads } from "../../src/features/downloads/use-downloads";
 import { resolvePremiumGate } from "../../src/features/membership/premium-gate";
 import { useIsMember } from "../../src/features/membership/use-is-member";
+import { usePersistentMediaPlayer } from "../../src/features/media/persistent-media-player";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { fontFamilies } from "../../src/features/theme/fonts";
@@ -64,6 +64,8 @@ export default function VideoDetailScreen() {
       : source?.kind === "hosted"
         ? t("hostedProvider")
         : null;
+  const playLabel =
+    activeSession?.contentId === resolvedContent?._id ? t("resumeVideo") : t("playVideo");
 
   return (
     <ContentDetailShell
@@ -87,10 +89,14 @@ export default function VideoDetailScreen() {
               playGlyph="▶"
               premiumLabel={t("premiumTag")}
             />
-          ) : source?.kind === "youtube" ? (
+          ) : source ? (
             <VideoPlayerCard
               coverImageUrl={coverImageUrl}
+              onHostedPlay={() => {
+                router.push(`/player/${resolvedContent._id}` as never);
+              }}
               onPlaybackIntent={closePlayer}
+              playLabel={playLabel}
               source={source}
             />
           ) : (
@@ -100,7 +106,6 @@ export default function VideoDetailScreen() {
               mediaKey={resolvedContent._id}
               watermarkGlyph="▶"
               height={200 * scaleSpace}
-              playGlyph="▶"
             />
           )
         ) : undefined
@@ -126,30 +131,9 @@ export default function VideoDetailScreen() {
               description={t("premiumBody")}
               ctaLabel={t("premiumCta")}
             />
-          ) : source?.kind === "hosted" || downloadedItem?.localMediaPath ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => {
-                router.push(`/player/${resolvedContent._id}` as never);
-              }}
-              style={({ pressed }) => [
-                styles.cta,
-                {
-                  backgroundColor: theme.colors.accent,
-                  borderRadius: 12,
-                },
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={[styles.ctaLabel, { color: theme.colors.accentContrast }]}>
-                {activeSession?.contentId === resolvedContent._id
-                  ? t("resumeVideo")
-                  : t("playVideo")}
-              </Text>
-            </Pressable>
           ) : null}
           {!source ? (
-            <Text style={[styles.unavailable, { color: theme.colors.textMuted }]}>
+            <Text style={{ color: theme.colors.textMuted, fontFamily: fontFamilies.body, fontSize: 14, lineHeight: 20, marginTop: 4 }}>
               {t("unavailable")}
             </Text>
           ) : null}
@@ -158,23 +142,3 @@ export default function VideoDetailScreen() {
     </ContentDetailShell>
   );
 }
-
-const styles = StyleSheet.create({
-  cta: {
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 52,
-    marginTop: 4,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-  },
-  ctaLabel: {
-    fontFamily: fontFamilies.bodySemiBold,
-    fontSize: 15,
-    lineHeight: 18,
-  },
-  pressed: {
-    opacity: 0.84,
-  },
-  unavailable: { fontFamily: fontFamilies.body, fontSize: 14, lineHeight: 20, marginTop: 4 },
-});

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
+import { Ionicons } from "@expo/vector-icons";
 import { useEventListener } from "expo";
 import {
   isPictureInPictureSupported,
@@ -23,7 +24,9 @@ import { env } from "../../lib/env";
 
 type VideoPlayerCardProps = {
   coverImageUrl?: string;
+  onHostedPlay?: () => void;
   onPlaybackIntent?: () => void;
+  playLabel: string;
   source: VideoSource;
 };
 
@@ -72,12 +75,14 @@ function buildYoutubeEmbedHtml(embedUrl: string) {
 
 export function VideoPlayerCard({
   coverImageUrl,
+  onHostedPlay,
   onPlaybackIntent,
+  playLabel,
   source,
 }: VideoPlayerCardProps) {
   const { t } = useTranslation("video");
   const { theme } = useAppTheme();
-  const { scaleFont } = useResponsive();
+  const { scaleFont, scaleSpace } = useResponsive();
   const hostedVideoRef = useRef<VideoView>(null);
   const [hasStarted, setHasStarted] = useState(false);
   const player = useVideoPlayer(
@@ -96,9 +101,23 @@ export function VideoPlayerCard({
     }
   }, [hasStarted, player, source.kind]);
 
-  const startPlayback = () => {
+  const startYoutubePlayback = () => {
     onPlaybackIntent?.();
     setHasStarted(true);
+  };
+
+  const handlePrimaryPlay = () => {
+    if (source.kind === "hosted") {
+      onPlaybackIntent?.();
+      if (onHostedPlay) {
+        onHostedPlay();
+        return;
+      }
+      setHasStarted(true);
+      return;
+    }
+
+    startYoutubePlayback();
   };
 
   if (source.kind === "youtube") {
@@ -120,18 +139,16 @@ export function VideoPlayerCard({
     const youtubeEmbedHtml = buildYoutubeEmbedHtml(startedEmbedUrl.toString());
 
     return (
-      <View style={styles.wrapper}>
-        {hasStarted ? (
-          <View
-            style={[
-              styles.playerSurface,
-              {
-                backgroundColor: theme.colors.surfaceMuted,
-                borderColor: theme.colors.border,
-                borderRadius: theme.radii.xl,
-              },
-            ]}
-          >
+      <View style={styles.card}>
+        <View
+          style={[
+            styles.media,
+            {
+              backgroundColor: theme.colors.surfaceMuted,
+            },
+          ]}
+        >
+          {hasStarted ? (
             <WebView
               allowsFullscreenVideo
               allowsInlineMediaPlayback
@@ -145,72 +162,57 @@ export function VideoPlayerCard({
               style={styles.webview}
               testID="youtube-player"
             />
-          </View>
-        ) : (
-          <Pressable
-            accessibilityRole="button"
-            onPress={startPlayback}
-            style={({ pressed }) => [
-              styles.previewSurface,
-              {
-                backgroundColor: theme.colors.surfaceMuted,
-                borderColor: theme.colors.border,
-                borderRadius: theme.radii.xl,
-              },
-              pressed && styles.pressed,
-            ]}
-            testID="video-start-button"
-          >
-            {coverImageUrl ? (
-              <Image
-                accessibilityLabel="Video cover"
-                source={{ uri: coverImageUrl }}
-                style={styles.previewImage}
-              />
-            ) : null}
-            <View
-              style={[
-                styles.previewOverlay,
-                { backgroundColor: theme.colors.overlay },
-              ]}
+          ) : coverImageUrl ? (
+            <Image
+              accessibilityLabel="Video cover"
+              source={{ uri: coverImageUrl }}
+              style={styles.coverImage}
             />
-            <Text
-              style={[
-                styles.previewPlay,
-                { color: theme.colors.accentContrast, fontSize: 42 * scaleFont },
+          ) : null}
+        </View>
+
+        <VideoControlBando
+          onPrimaryPlay={handlePrimaryPlay}
+          playLabel={playLabel}
+          scaleFont={scaleFont}
+          scaleSpace={scaleSpace}
+          showPrimaryPlay={!hasStarted}
+        />
+
+        {hasStarted ? (
+          <View
+            style={[
+              styles.secondaryActions,
+              {
+                paddingHorizontal: theme.spacing.lg * scaleSpace,
+                paddingTop: theme.spacing.md * scaleSpace,
+                paddingBottom: theme.spacing.lg * scaleSpace,
+              },
+            ]}
+          >
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                onPlaybackIntent?.();
+                void WebBrowser.openBrowserAsync(launchUrl);
+              }}
+              style={({ pressed }) => [
+                styles.linkButton,
+                {
+                  backgroundColor: theme.colors.accentSoft,
+                  borderRadius: theme.radii.pill,
+                  paddingHorizontal: 18 * scaleSpace,
+                  paddingVertical: 12 * scaleSpace,
+                },
+                pressed && styles.pressed,
               ]}
             >
-              ▶
-            </Text>
-            <Text
-              style={[
-                styles.previewLabel,
-                { color: theme.colors.accentContrast, fontSize: 14 * scaleFont },
-              ]}
-            >
-              {t("playVideo")}
-            </Text>
-          </Pressable>
-        )}
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => {
-            onPlaybackIntent?.();
-            void WebBrowser.openBrowserAsync(launchUrl);
-          }}
-          style={({ pressed }) => [
-            styles.linkButton,
-            {
-              backgroundColor: theme.colors.accentSoft,
-              borderRadius: theme.radii.pill,
-            },
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={[styles.linkButtonText, { color: theme.colors.accent, fontSize: 14 * scaleFont }]}>
-            {t("openExternal")}
-          </Text>
-        </Pressable>
+              <Text style={[styles.linkButtonText, { color: theme.colors.accent, fontSize: 14 * scaleFont }]}>
+                {t("openExternal")}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
       </View>
     );
   }
@@ -218,18 +220,16 @@ export function VideoPlayerCard({
   const pipSupported = isPictureInPictureSupported();
 
   return (
-    <View style={styles.wrapper}>
-      {hasStarted ? (
-        <View
-          style={[
-            styles.playerSurface,
-            {
-              backgroundColor: theme.colors.surfaceMuted,
-              borderColor: theme.colors.border,
-              borderRadius: theme.radii.xl,
-            },
-          ]}
-        >
+    <View style={styles.card}>
+      <View
+        style={[
+          styles.media,
+          {
+            backgroundColor: theme.colors.surfaceMuted,
+          },
+        ]}
+      >
+        {hasStarted ? (
           <VideoView
             allowsPictureInPicture
             contentFit="cover"
@@ -239,119 +239,143 @@ export function VideoPlayerCard({
             style={styles.videoView}
             testID="hosted-video-player"
           />
-        </View>
-      ) : (
-        <Pressable
-          accessibilityRole="button"
-          onPress={startPlayback}
-          style={({ pressed }) => [
-            styles.previewSurface,
-            {
-              backgroundColor: theme.colors.surfaceMuted,
-              borderColor: theme.colors.border,
-              borderRadius: theme.radii.xl,
-            },
-            pressed && styles.pressed,
-          ]}
-          testID="video-start-button"
-        >
-          {coverImageUrl ? (
-            <Image
-              accessibilityLabel="Video cover"
-              source={{ uri: coverImageUrl }}
-              style={styles.previewImage}
-            />
-          ) : null}
-          <View
-            style={[
-              styles.previewOverlay,
-              { backgroundColor: theme.colors.overlay },
-            ]}
+        ) : coverImageUrl ? (
+          <Image
+            accessibilityLabel="Video cover"
+            source={{ uri: coverImageUrl }}
+            style={styles.coverImage}
           />
-          <Text
-            style={[
-              styles.previewPlay,
-              { color: theme.colors.accentContrast, fontSize: 42 * scaleFont },
-            ]}
-          >
-            ▶
-          </Text>
-          <Text
-            style={[
-              styles.previewLabel,
-              { color: theme.colors.accentContrast, fontSize: 14 * scaleFont },
-            ]}
-          >
-            {t("playVideo")}
-          </Text>
-        </Pressable>
-      )}
+        ) : null}
+      </View>
+
+      <VideoControlBando
+        onPrimaryPlay={handlePrimaryPlay}
+        playLabel={playLabel}
+        scaleFont={scaleFont}
+        scaleSpace={scaleSpace}
+        showPrimaryPlay={!hasStarted}
+      />
+
       {hasStarted && pipSupported ? (
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => void hostedVideoRef.current?.startPictureInPicture()}
-          style={({ pressed }) => [
-            styles.linkButton,
+        <View
+          style={[
+            styles.secondaryActions,
             {
-              backgroundColor: theme.colors.accentSoft,
-              borderRadius: theme.radii.pill,
+              paddingHorizontal: theme.spacing.lg * scaleSpace,
+              paddingTop: theme.spacing.md * scaleSpace,
+              paddingBottom: theme.spacing.lg * scaleSpace,
             },
-            pressed && styles.pressed,
           ]}
         >
-          <Text
-            style={[
-              styles.linkButtonText,
-              { color: theme.colors.accent, fontSize: 14 * scaleFont },
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => void hostedVideoRef.current?.startPictureInPicture()}
+            style={({ pressed }) => [
+              styles.linkButton,
+              { backgroundColor: theme.colors.accentSoft },
+              pressed && styles.pressed,
             ]}
           >
-            {t("enterPictureInPicture")}
-          </Text>
-        </Pressable>
+            <Text
+              style={[
+                styles.linkButtonText,
+                { color: theme.colors.accent, fontSize: 14 * scaleFont },
+              ]}
+            >
+              {t("enterPictureInPicture")}
+            </Text>
+          </Pressable>
+        </View>
       ) : null}
     </View>
   );
 }
 
+function VideoControlBando({
+  onPrimaryPlay,
+  playLabel,
+  scaleFont,
+  scaleSpace,
+  showPrimaryPlay,
+}: {
+  onPrimaryPlay: () => void;
+  playLabel: string;
+  scaleFont: (value: number) => number;
+  scaleSpace: (value: number) => number;
+  showPrimaryPlay: boolean;
+}) {
+  const { theme } = useAppTheme();
+  const bandoBg = theme.isDark ? theme.colors.canvasAccent : theme.colors.heading;
+  const playIconSize = 22 * scaleFont;
+
+  if (!showPrimaryPlay) {
+    return null;
+  }
+
+  return (
+    <View
+      style={[
+        styles.bando,
+        {
+          backgroundColor: bandoBg,
+          paddingHorizontal: theme.spacing.md * scaleSpace,
+          paddingVertical: 10 * scaleSpace,
+        },
+      ]}
+    >
+      <Pressable
+        accessibilityLabel={playLabel}
+        accessibilityRole="button"
+        onPress={onPrimaryPlay}
+        style={({ pressed }) => [
+          styles.playIconButton,
+          {
+            backgroundColor: theme.colors.accent,
+            borderRadius: theme.radii.pill,
+          },
+          pressed && styles.pressed,
+        ]}
+        testID="video-play-button"
+      >
+        <Ionicons
+          color={theme.colors.accentContrast}
+          name="play"
+          size={playIconSize}
+          style={styles.playIconGlyph}
+        />
+      </Pressable>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  wrapper: {
-    gap: 12,
+  card: {
+    overflow: "hidden",
   },
-  playerSurface: {
+  media: {
     width: "100%",
     aspectRatio: 16 / 9,
     overflow: "hidden",
-    borderWidth: 1,
   },
-  previewSurface: {
-    width: "100%",
-    aspectRatio: 16 / 9,
-    overflow: "hidden",
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  previewImage: {
-    position: "absolute",
+  coverImage: {
     width: "100%",
     height: "100%",
   },
-  previewOverlay: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
+  bando: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "flex-end",
   },
-  previewPlay: {
-    fontWeight: "700",
-    opacity: 0.95,
+  playIconButton: {
+    alignItems: "center",
+    height: 40,
+    justifyContent: "center",
+    width: 40,
   },
-  previewLabel: {
-    marginTop: 8,
-    fontFamily: fontFamilies.bodySemiBold,
-    fontSize: 14,
+  playIconGlyph: {
+    marginLeft: 2,
   },
+  secondaryActions: {},
   webview: {
     flex: 1,
     backgroundColor: "transparent",

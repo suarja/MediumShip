@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 import { ContentActionsBar } from "../../src/components/content/content-actions-bar";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
 import { DetailHeader } from "../../src/components/content/detail-header";
@@ -14,6 +15,7 @@ import { VideoPlayerCard } from "../../src/components/media/video-player-card";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useDownloads } from "../../src/features/downloads/use-downloads";
+import { useContentEngagement } from "../../src/features/discovery/use-content-engagement";
 import { resolvePremiumGate } from "../../src/features/membership/premium-gate";
 import { useIsMember } from "../../src/features/membership/use-is-member";
 import { usePersistentMediaPlayer } from "../../src/features/media/persistent-media-player";
@@ -66,6 +68,12 @@ export default function VideoDetailScreen() {
         : null;
   const playLabel =
     activeSession?.contentId === resolvedContent?._id ? t("resumeVideo") : t("playVideo");
+
+  useContentEngagement({
+    contentId: resolvedContent?._id as Id<"contents"> | undefined,
+    kind: "video",
+    enabled: state === "ready" && premiumGate !== "locked",
+  });
 
   return (
     <ContentDetailShell

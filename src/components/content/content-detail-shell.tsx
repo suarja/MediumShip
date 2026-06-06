@@ -1,5 +1,14 @@
 import { PropsWithChildren, ReactNode, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useRouter } from "expo-router";
@@ -31,6 +40,7 @@ type ContentDetailShellProps = PropsWithChildren<{
   hero?: ReactNode;
   /** Optional sticky bottom action bar pinned above the safe-area inset. */
   actions?: ReactNode;
+  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
 }>;
 
 /**
@@ -50,6 +60,7 @@ export function ContentDetailShell({
   notFoundBody,
   hero,
   actions,
+  onScroll,
   children,
 }: ContentDetailShellProps) {
   const router = useRouter();
@@ -87,6 +98,8 @@ export function ContentDetailShell({
                 ? actionsHeight + theme.spacing.md * scaleSpace + persistentPlayerSpace
                 : theme.spacing.xxl * scaleSpace + persistentPlayerSpace,
             }}
+            onScroll={onScroll}
+            scrollEventThrottle={400}
             showsVerticalScrollIndicator={false}
           >
             {hero}

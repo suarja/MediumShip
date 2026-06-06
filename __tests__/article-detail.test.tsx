@@ -6,6 +6,8 @@ import { changeAppLanguage, initI18n } from "../src/i18n";
 
 jest.mock("convex/react", () => ({
   useQuery: () => undefined,
+  useConvexAuth: () => ({ isAuthenticated: false }),
+  useMutation: () => jest.fn(),
 }));
 
 jest.mock("expo-router", () => ({

@@ -2,9 +2,11 @@ import { StyleSheet, Text } from "react-native";
 
 import { useQuery } from "convex/react";
 import { useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
+import type { Id } from "../../convex/_generated/dataModel";
 import { ContentActionsBar } from "../../src/components/content/content-actions-bar";
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
 import { ContentSourceAttribution } from "../../src/components/content/content-source-attribution";
@@ -15,6 +17,7 @@ import { resolveContentSource } from "../../src/features/content/source";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useDownloads } from "../../src/features/downloads/use-downloads";
+import { useContentEngagement } from "../../src/features/discovery/use-content-engagement";
 import { resolvePremiumGate } from "../../src/features/membership/premium-gate";
 import { useIsMember } from "../../src/features/membership/use-is-member";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
@@ -58,6 +61,49 @@ export default function ArticleDetailScreen() {
     ? resolveContentSource(resolvedContent)
     : "cms";
   const isWikipedia = contentSource === "wikipedia";
+  const [scrolledToEnd, setScrolledToEnd] = useState(false);
+  const [dwellSeconds, setDwellSeconds] = useState(0);
+
+  useEffect(() => {
+    setScrolledToEnd(false);
+    setDwellSeconds(0);
+  }, [resolvedContent?._id]);
+
+  useEffect(() => {
+    if (state !== "ready" || !resolvedContent) {
+      return;
+    }
+
+    const startedAt = Date.now();
+    const timer = setInterval(() => {
+      setDwellSeconds(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [resolvedContent?._id, state]);
+
+  useContentEngagement({
+    contentId: resolvedContent?._id as Id<"contents"> | undefined,
+    kind: "article",
+    enabled: state === "ready" && premiumGate !== "locked",
+    consumption: {
+      scrolledToEnd,
+      dwellSeconds,
+      estimatedReadMinutes: resolvedContent?.readingTimeMinutes,
+    },
+  });
+
+  const handleScroll = useCallback(
+    (event: { nativeEvent: { layoutMeasurement: { height: number }; contentOffset: { y: number }; contentSize: { height: number } } }) => {
+      const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+      const nearEnd =
+        layoutMeasurement.height + contentOffset.y >= contentSize.height - 48;
+      if (nearEnd) {
+        setScrolledToEnd(true);
+      }
+    },
+    [],
+  );
 
   return (
     <ContentDetailShell
@@ -69,6 +115,7 @@ export default function ArticleDetailScreen() {
       offlineBody={t("offlineBody")}
       notFoundTitle={t("notFoundTitle")}
       notFoundBody={t("notFoundBody")}
+      onScroll={handleScroll}
       hero={
         resolvedContent ? (
           <DetailHero

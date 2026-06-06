@@ -18,6 +18,7 @@ import { useRouter, useSegments } from "expo-router";
 import { useVideoPlayer, type VideoPlayer } from "expo-video";
 
 import { useIsMember } from "../membership/use-is-member";
+import { useContentEngagement } from "../discovery/use-content-engagement";
 import { hasCapability } from "../tenant/public-config";
 import { useAppTheme } from "../theme/theme-provider";
 import {
@@ -320,6 +321,23 @@ export function PersistentMediaPlayerProvider({
   const hasFinished =
     engine.justFinished ||
     (durationSeconds > 0 && currentTimeSeconds >= durationSeconds);
+
+  const mediaKind =
+    activeSession?.kind === "episode"
+      ? "episode"
+      : activeSession?.kind === "hostedVideo"
+        ? "video"
+        : undefined;
+  const progressRatio =
+    durationSeconds > 0 ? currentTimeSeconds / durationSeconds : 0;
+
+  useContentEngagement({
+    contentId: activeSession?.contentId as never,
+    kind: mediaKind,
+    enabled: Boolean(activeSession && mediaKind),
+    recordOpen: false,
+    consumption: { progressRatio },
+  });
 
   // PlaybackProgress: reconciles local + remote into a resume target and
   // persists progress. We only *apply* the target (below); the hook owns the

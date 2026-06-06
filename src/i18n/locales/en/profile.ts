@@ -1,11 +1,11 @@
 export default {
   eyebrow: "Your profile",
-  guestTitle: "Start your personal library.",
+  guestTitle: "Create your profile.",
   guestName: "Guest reader",
   guestBio:
-    "Reading stays open. Create an account to save favourite formats, sync progress, and keep supported content offline.",
+    "Reading stays open. Create an account to save favourite formats and sync progress. Premium adds offline access and personal lists.",
   signedInBio:
-    "Your profile is taking shape. Upgrade to membership to save, sync, and download your favourite formats.",
+    "Your account keeps saved formats and progress in sync. Premium adds offline access and personal lists.",
   memberBio:
     "A profile designed to keep your reading list, resume your listening, and surface your favourite formats without friction.",
   memberBioActive:
@@ -19,12 +19,12 @@ export default {
   heroChipDownloaded_other: "{{count}} offline",
   createAccount: "Create an account",
   guestNote:
-    "The profile now puts the library first: anything technical lives under Debug inside Settings.",
+    "Your profile now focuses on identity, account state, and settings. Saved items and offline copies live in Library.",
   stats: {
     savedLabel: "Saved",
-    savedHint: "Keep close",
+    savedHint: "See Library",
     downloadedLabel: "Downloaded",
-    downloadedHint: "Offline ready",
+    downloadedHint: "See Library",
     accessLabel: "Access",
     memberHint: "Premium active",
     guestHint: "Guest or standard account",

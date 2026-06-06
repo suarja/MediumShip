@@ -1,5 +1,13 @@
 import { useEffect } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Link } from "expo-router";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { useTranslation } from "react-i18next";
@@ -7,16 +15,13 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../convex/_generated/api";
 import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
-import { DownloadedContentSection } from "../../src/components/profile/downloaded-content-section";
 import { ProfileHero } from "../../src/components/profile/profile-hero";
 import { ProfileStatCards } from "../../src/components/profile/profile-stat-cards";
-import { SavedContentSection } from "../../src/components/profile/saved-content-section";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
 import { useBookmarks } from "../../src/features/bookmarks/use-bookmarks";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import { useDownloads } from "../../src/features/downloads/use-downloads";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
-import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
@@ -156,11 +161,30 @@ function ProfileDashboard() {
             <Text style={[styles.noteBody, { color: theme.colors.textMuted }]}>
               {t("guestNote")}
             </Text>
+            <Link href="/sign-in" asChild>
+              <Pressable
+                accessibilityRole="link"
+                style={({ pressed }) => [
+                  styles.noteButton,
+                  {
+                    borderRadius: theme.radii.pill,
+                    backgroundColor: theme.colors.heading,
+                  },
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.noteButtonLabel,
+                    { color: theme.colors.canvas },
+                  ]}
+                >
+                  {t("createAccount")}
+                </Text>
+              </Pressable>
+            </Link>
           </View>
         ) : null}
-
-        <SavedContentSection />
-        <DownloadedContentSection />
       </ScrollView>
     </Screen>
   );
@@ -198,5 +222,18 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.body,
     fontSize: 15,
     lineHeight: 22,
+  },
+  noteButton: {
+    alignSelf: "flex-start",
+    marginTop: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+  },
+  noteButtonLabel: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: 14,
+  },
+  pressed: {
+    opacity: 0.88,
   },
 });

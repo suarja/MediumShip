@@ -44,12 +44,13 @@ describe("guest profile", () => {
     await changeAppLanguage("en");
   });
 
-  it("shows a member CTA instead of authenticated identity fields", () => {
+  it("keeps profile focused on identity and account actions", () => {
     render(<ProfileScreen />);
 
     expect(screen.getAllByText("Create an account").length).toBeGreaterThan(0);
     expect(screen.getByText("Guest reader")).toBeTruthy();
-    expect(screen.getByText("Saved library")).toBeTruthy();
-    expect(screen.queryByText(/Stored in Convex/i)).toBeNull();
+    expect(screen.getByText("Your profile")).toBeTruthy();
+    expect(screen.queryByText("Saved library")).toBeNull();
+    expect(screen.queryByText("Offline shelf")).toBeNull();
   });
 });

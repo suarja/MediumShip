@@ -1,11 +1,11 @@
 export default {
   eyebrow: "Votre profil",
-  guestTitle: "Commencez votre bibliothèque personnelle.",
+  guestTitle: "Creez votre profil.",
   guestName: "Lecteur invité",
   guestBio:
-    "La lecture reste ouverte. Creez un compte pour enregistrer vos formats favoris, synchroniser votre progression et garder vos contenus hors ligne.",
+    "La lecture reste ouverte. Creez un compte pour enregistrer vos formats favoris et synchroniser votre progression. Premium ajoute le hors ligne et les listes personnelles.",
   signedInBio:
-    "Votre profil commence à prendre forme. Passez membre pour enregistrer, synchroniser et telecharger vos formats favoris.",
+    "Votre compte synchronise vos formats enregistres et votre progression. Premium ajoute le hors ligne et les listes personnelles.",
   memberBio:
     "Un profil pense pour garder vos lectures, reprendre vos ecoutes et retrouver vos formats favoris sans friction.",
   memberBioActive:
@@ -19,12 +19,12 @@ export default {
   heroChipDownloaded_other: "{{count}} hors ligne",
   createAccount: "Creer un compte",
   guestNote:
-    "Le profil met désormais la bibliothèque au premier plan: tout ce qui est technique reste dans Debug, côté Réglages.",
+    "Votre profil se concentre maintenant sur l'identite, le statut du compte et les reglages. Les contenus enregistres et hors ligne vivent dans Bibliotheque.",
   stats: {
     savedLabel: "Enregistres",
-    savedHint: "A garder",
+    savedHint: "Voir Bibliotheque",
     downloadedLabel: "Telecharges",
-    downloadedHint: "Hors ligne",
+    downloadedHint: "Voir Bibliotheque",
     accessLabel: "Acces",
     memberHint: "Premium actif",
     guestHint: "Invite ou compte standard",

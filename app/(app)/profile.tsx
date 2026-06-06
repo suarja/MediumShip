@@ -95,6 +95,7 @@ function ProfileDashboard() {
               status={isMember ? t("status.memberPremium") : t("status.memberFree")}
               since={isMember ? t("since.member") : t("since.upgrade")}
               avatarUrl={avatarUrl}
+              editableAvatar
             />
 
             <ResumeCard />

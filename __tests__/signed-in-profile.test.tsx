@@ -39,6 +39,14 @@ jest.mock("../src/features/downloads/use-downloads", () => ({
   useDownloads: () => ({ downloads: [] }),
 }));
 
+jest.mock("../src/features/profile/use-avatar-edit", () => ({
+  useAvatarEdit: () => ({
+    pickAndUploadAvatar: jest.fn(),
+    isUploading: false,
+    canEditAvatar: true,
+  }),
+}));
+
 jest.mock("../src/components/navigation/app-tab-bar", () => ({
   useTabBarSpace: () => 96,
 }));

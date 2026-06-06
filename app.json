@@ -29,6 +29,13 @@
           "supportsBackgroundPlayback": true,
           "supportsPictureInPicture": true
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "MediumShip needs access to your photo library so you can choose a profile picture.",
+          "cameraPermission": false
+        }
       ]
     ],
     "experiments": {

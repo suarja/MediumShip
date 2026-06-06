@@ -1,4 +1,5 @@
 import { mutation } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
 
 const demoContents = [
@@ -114,6 +115,79 @@ const demoContents = [
   },
 ];
 
+const demoCollections = [
+  {
+    slug: "le-grand-entretien",
+    title: "Le grand entretien",
+    summary: "La série phare d'entretiens longs avec des personnalités marquantes.",
+    itemSlugs: ["lea-bardin-entretien", "economie-du-soin", "democratie-locale"],
+  },
+  {
+    slug: "programme-2027",
+    title: "Programme 2027",
+    summary: "Des contenus qui préparent le cycle électoral. Mis à jour régulièrement.",
+    itemSlugs: ["economie-du-soin", "monde-dapres-episode-2"],
+  },
+  {
+    slug: "economie-autrement",
+    title: "L'économie autrement",
+    summary: "Une série de vidéos et articles qui déconstruisent les idées reçues sur l'économie.",
+    itemSlugs: ["democratie-locale", "monde-dapres-episode-3"],
+  },
+];
+
+const demoEvents = [
+  {
+    slug: "assemblee-ouverte-paris",
+    title: "Assemblée ouverte · Paris",
+    summary: "Une soirée de débat ouverte à tous les membres de la communauté.",
+    startsAt: "2026-09-24T19:00:00",
+    locationLabel: "La Bellevilloise, Paris · 180 inscrits",
+    mode: "offline" as const,
+    access: "free" as const,
+    ctaLabel: "S'inscrire",
+    descriptionLong:
+      "Une rencontre mensuelle pour échanger sur les enjeux éditoriaux de la semaine. Ouvert à tous, sans inscription obligatoire.",
+  },
+  {
+    slug: "atelier-programme-2027",
+    title: "Atelier programme 2027",
+    summary: "Atelier participatif en visioconférence pour les membres.",
+    startsAt: "2026-10-02T20:00:00",
+    locationLabel: "En visio · gratuit",
+    mode: "online" as const,
+    access: "member" as const,
+    ctaLabel: "Rejoindre le call",
+    communityUrl: "https://discord.gg/example",
+    descriptionLong:
+      "Un atelier en ligne réservé aux membres pour travailler collectivement sur les propositions éditoriales autour de 2027.",
+  },
+  {
+    slug: "debat-live-economie",
+    title: "Débat live — économie du soin",
+    summary: "Débat en direct sur YouTube, ouvert à tous.",
+    startsAt: "2026-10-11T21:00:00",
+    locationLabel: "YouTube live · ouvert à tous",
+    mode: "online" as const,
+    access: "free" as const,
+    ctaLabel: "Regarder en direct",
+    ctaUrl: "https://youtube.com/watch?v=example",
+    descriptionLong:
+      "Un grand débat live entre économistes et citoyens autour de la crise du care et des politiques sociales.",
+  },
+  {
+    slug: "cercle-local-lyon",
+    title: "Cercle local · Lyon",
+    summary: "Rencontre locale des membres lyonnais au café associatif.",
+    startsAt: "2026-10-18T19:30:00",
+    locationLabel: "Café associatif, Lyon · 24 inscrits",
+    mode: "offline" as const,
+    access: "free" as const,
+    descriptionLong:
+      "Les membres de Lyon se retrouvent pour échanger autour d'un verre et préparer les prochains événements locaux.",
+  },
+];
+
 const transitionalEpisodeSlugs = [
   "west-texas-boom-report",
   "valencia-tuition-report",
@@ -178,6 +252,76 @@ export const seedDemoContent = mutation({
           publishedAt: content.publishedAt,
           durationSeconds: content.durationSeconds,
           audioUrl: content.audioUrl,
+        });
+      }
+    }
+
+    // Seed demo collections + items
+    for (const coll of demoCollections) {
+      const existingColl = await ctx.db
+        .query("collections")
+        .withIndex("by_tenantSlug_and_slug", (q) =>
+          q.eq("tenantSlug", defaultTenant.slug).eq("slug", coll.slug),
+        )
+        .unique();
+
+      let collId: Id<"collections">;
+      if (!existingColl) {
+        collId = await ctx.db.insert("collections", {
+          tenantSlug: defaultTenant.slug,
+          status: "published",
+          slug: coll.slug,
+          title: coll.title,
+          summary: coll.summary,
+          updatedAt: Date.now(),
+        });
+      } else {
+        collId = existingColl._id;
+      }
+
+      // Upsert items in order — clear then re-insert for idempotency
+      const existingItems = await ctx.db
+        .query("collectionItems")
+        .withIndex("by_collection_and_order", (q) => q.eq("collectionId", collId))
+        .collect();
+      for (const item of existingItems) {
+        await ctx.db.delete(item._id);
+      }
+
+      let order = 1;
+      for (const contentSlug of coll.itemSlugs) {
+        const content = await ctx.db
+          .query("contents")
+          .withIndex("by_tenantSlug_and_slug", (q) =>
+            q.eq("tenantSlug", defaultTenant.slug).eq("slug", contentSlug),
+          )
+          .unique();
+        if (content) {
+          await ctx.db.insert("collectionItems", {
+            tenantSlug: defaultTenant.slug,
+            collectionId: collId,
+            contentId: content._id,
+            order: order++,
+          });
+        }
+      }
+    }
+
+    // Seed demo events
+    for (const evt of demoEvents) {
+      const existingEvt = await ctx.db
+        .query("events")
+        .withIndex("by_tenant_and_status", (q) =>
+          q.eq("tenantSlug", defaultTenant.slug).eq("status", "scheduled"),
+        )
+        .collect()
+        .then((rows) => rows.find((r) => r.slug === evt.slug));
+
+      if (!existingEvt) {
+        await ctx.db.insert("events", {
+          tenantSlug: defaultTenant.slug,
+          status: "scheduled",
+          ...evt,
         });
       }
     }

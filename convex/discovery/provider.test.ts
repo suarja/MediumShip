@@ -1,57 +1,25 @@
 import { describe, expect, it } from "vitest";
 
-import type { Doc } from "../_generated/dataModel";
-import { cmsProvider, PROVIDERS, type ContentProvider, type ProviderContext } from "./provider";
+import {
+  cmsProvider,
+  PROVIDERS,
+  type ContentProvider,
+} from "./provider";
 
-type ContentDoc = Doc<"contents">;
-
-function makeContent(id: string, overrides: Partial<ContentDoc> = {}): ContentDoc {
-  return {
-    _id: id as ContentDoc["_id"],
-    _creationTime: 0,
-    tenantSlug: "demo-media",
-    kind: "article",
-    status: "published",
-    slug: `slug-${id}`,
-    title: `Title ${id}`,
-    summary: "Summary",
-    category: "Analyse",
-    tags: [],
-    isPremium: false,
-    ...overrides,
-  };
-}
-
-function makeCtx(contents: ContentDoc[]): ProviderContext {
-  return {
-    db: {
-      query: () => ({
-        withIndex: () => ({
-          collect: async () => contents,
-        }),
-      }),
-    },
-  };
-}
+const noopCtx = {} as Parameters<ContentProvider["ingest"]>[0];
 
 describe("cmsProvider", () => {
   it("declares cms as its source", () => {
     expect(cmsProvider.source).toBe("cms");
   });
 
-  it("sync is identity over contents without duplication or mutation", async () => {
-    const original = [
-      makeContent("content-1"),
-      makeContent("content-2", { isPremium: true }),
-    ];
-    const snapshot = structuredClone(original);
-    const ctx = makeCtx(original);
+  it("ingest is the identity no-op for cms-authored content", async () => {
+    const result = await cmsProvider.ingest(noopCtx, {
+      tenantSlug: "demo-media",
+      demand: { categories: ["science"] },
+    });
 
-    const synced = await cmsProvider.sync(ctx, { tenantSlug: "demo-media" });
-
-    expect(synced).toEqual(original);
-    expect(ctx.db.query("contents")).toBeTruthy();
-    expect(original).toEqual(snapshot);
+    expect(result).toEqual({ upserted: 0 });
   });
 });
 
@@ -63,17 +31,23 @@ describe("PROVIDERS registry", () => {
   it("iterates any adapter registered in the same registry shape", async () => {
     const fakeProvider: ContentProvider = {
       source: "fake",
-      sync: async () => [],
+      ingest: async () => ({ upserted: 3 }),
     };
 
     const registry: ContentProvider[] = [...PROVIDERS, fakeProvider];
     const seen: string[] = [];
+    const upserted: number[] = [];
 
     for (const provider of registry) {
       seen.push(provider.source);
-      await provider.sync(makeCtx([]), { tenantSlug: "demo-media" });
+      const result = await provider.ingest(noopCtx, {
+        tenantSlug: "demo-media",
+        demand: { categories: [] },
+      });
+      upserted.push(result.upserted);
     }
 
     expect(seen).toEqual(["cms", "fake"]);
+    expect(upserted).toEqual([0, 3]);
   });
 });

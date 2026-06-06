@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react-native";
 import { Text, View } from "react-native";
 
 import { ContentCard } from "../src/components/content/content-card";
+import { changeAppLanguage, initI18n } from "../src/i18n";
 import type { ContentCardModel } from "../src/features/content/types";
 
 const mockUseAppTheme = jest.fn();
@@ -53,8 +54,13 @@ function makeTheme() {
 }
 
 describe("ContentCard", () => {
-  beforeEach(() => {
+  beforeAll(async () => {
+    await initI18n();
+  });
+
+  beforeEach(async () => {
     mockUseAppTheme.mockReturnValue(makeTheme());
+    await changeAppLanguage("fr");
   });
 
   it('variant="compact" renders the editorial feed row layout', () => {
@@ -114,6 +120,21 @@ describe("ContentCard", () => {
     expect(screen.getByTestId("content-card-title-category")).toHaveTextContent("Analyse");
     expect(screen.getByTestId("content-card-actions")).toBeTruthy();
     expect(screen.queryByTestId("content-card-compact")).toBeNull();
+  });
+
+  it("renders an explicit premium label on premium items", () => {
+    render(
+      <ContentCard
+        variant="feature"
+        item={{ ...SAMPLE_ITEM, isPremium: true }}
+        kicker="Analyse"
+        meta="18 min"
+      />,
+    );
+
+    expect(screen.getByTestId("content-card-premium-badge")).toHaveTextContent(
+      /★\s*Premium/i,
+    );
   });
 
   it("renders action slots only when provided", () => {

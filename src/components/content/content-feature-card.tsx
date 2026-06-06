@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { KIND_GLYPH, PREMIUM_ON_FILL } from "../../features/content/card-presentation";
 import type { ContentCardModel } from "../../features/content/types";
@@ -27,6 +28,7 @@ export function ContentFeatureCard({
   divider?: boolean;
   actions?: ReactNode;
 }) {
+  const { t } = useTranslation("home");
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
   const accentTone = item.isPremium ? theme.colors.premium : theme.colors.accent;
@@ -179,8 +181,8 @@ export function ContentFeatureCard({
                       {
                         borderRadius: theme.radii.pill,
                         backgroundColor: theme.colors.premium,
-                        paddingHorizontal: 6 * scaleSpace,
-                        paddingVertical: 2 * scaleSpace,
+                        paddingHorizontal: 8 * scaleSpace,
+                        paddingVertical: 3 * scaleSpace,
                       },
                     ]}
                   >
@@ -190,7 +192,7 @@ export function ContentFeatureCard({
                         { color: PREMIUM_ON_FILL, fontSize: 9 * scaleFont },
                       ]}
                     >
-                      ★
+                      {`★ ${t("premiumTag")}`}
                     </Text>
                   </View>
                 ) : null}
@@ -282,7 +284,8 @@ const styles = StyleSheet.create({
   premiumLabel: {
     fontFamily: fontFamilies.mono,
     fontWeight: "700",
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
   },
   actions: {
     flexDirection: "row",

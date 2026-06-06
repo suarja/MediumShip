@@ -1,3 +1,4 @@
+import { isContentVisible } from "../../../convex/discovery/visibility";
 import type { ContentDoc, ContentKind } from "../content/types";
 
 export type CommunityLinkKind = "discord" | "telegram" | "whatsapp" | "newsletter";
@@ -17,7 +18,12 @@ export type ContentModule = (typeof PUBLIC_CONTENT_MODULES)[number];
 
 // ─── Navigation modules ───────────────────────────────────────────────────────
 
-export const NAVIGATION_MODULES = ["collections", "agenda", "community"] as const;
+export const NAVIGATION_MODULES = [
+  "discover",
+  "collections",
+  "agenda",
+  "community",
+] as const;
 export type NavigationModule = (typeof NAVIGATION_MODULES)[number];
 
 /**
@@ -153,7 +159,7 @@ export function filterAndOrderFeedContent(
 
   return [...contents]
     .filter((content) => sectionOrder.has(content.kind))
-    .filter((content) => enabledModules.includes("premium") || !content.isPremium)
+    .filter((content) => isContentVisible(content, enabledModules))
     .sort((left, right) => {
       const leftOrder = sectionOrder.get(left.kind) ?? Number.MAX_SAFE_INTEGER;
       const rightOrder = sectionOrder.get(right.kind) ?? Number.MAX_SAFE_INTEGER;

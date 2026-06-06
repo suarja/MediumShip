@@ -13,16 +13,6 @@ async function seedTenant(
   enabledModules: string[],
 ) {
   await t.run(async (ctx) => {
-    const existing = await ctx.db
-      .query("tenants")
-      .withIndex("by_slug", (q) => q.eq("slug", TENANT))
-      .unique();
-
-    if (existing) {
-      await ctx.db.patch(existing._id, { enabledModules });
-      return;
-    }
-
     await ctx.db.insert("tenants", {
       slug: TENANT,
       name: "Demo Media",

@@ -37,6 +37,7 @@ const MODULE_LABELS: Record<(typeof ENABLED_MODULES)[number], string> = {
   episodes: "Épisodes",
   videos: "Vidéos",
   premium: "Premium",
+  discover: "Découverte",
   collections: "Collections",
   agenda: "Agenda",
   community: "Communauté",

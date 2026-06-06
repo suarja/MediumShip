@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { Screen } from "../../src/components/layout/screen";
 import { DownloadedLibrarySection } from "../../src/components/library/downloaded-library-section";
+import { LibrarySectionHeader } from "../../src/components/library/library-section-header";
 import { ResumeCard } from "../../src/components/library/resume-card";
 import { SavedLibrarySection } from "../../src/components/library/saved-library-section";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
@@ -248,21 +249,25 @@ export default function LibraryScreen() {
         </View>
 
         <View style={styles.sectionBlockFirst}>
-          <SectionHeader label={t("library:screen.sections.resume")} />
+          <LibrarySectionHeader title={t("library:screen.sections.resume")} />
           <ResumeCard />
         </View>
 
         {canBookmark ? (
           <View style={styles.sectionBlock}>
+            <LibrarySectionHeader
+              gate="free"
+              title={t("library:screen.sections.saved")}
+            />
             <SavedLibrarySection />
           </View>
         ) : null}
 
         {canPersonalLists ? (
           <View style={styles.sectionBlock}>
-            <SectionHeader
-              label={t("library:screen.sections.lists")}
-              meta={t("library:screen.listsMeta")}
+            <LibrarySectionHeader
+              gate="premium"
+              title={t("library:screen.sections.lists")}
             />
             <Pressable
               onPress={() => openPaywall("lists")}
@@ -279,51 +284,15 @@ export default function LibraryScreen() {
 
         {canOffline ? (
           <View style={styles.sectionBlock}>
+            <LibrarySectionHeader
+              gate="premium"
+              title={t("library:screen.sections.offline")}
+            />
             <DownloadedLibrarySection />
           </View>
         ) : null}
       </ScrollView>
     </Screen>
-  );
-}
-
-function SectionHeader({
-  label,
-  meta,
-}: {
-  label: string;
-  meta?: string;
-}) {
-  const { theme } = useAppTheme();
-  const { scaleFont } = useResponsive();
-
-  return (
-    <View style={styles.sectionHeader}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: theme.colors.heading,
-            fontSize: 18 * scaleFont,
-          },
-        ]}
-      >
-        {label}
-      </Text>
-      {meta ? (
-        <Text
-          style={[
-            styles.sectionMeta,
-            {
-              color: theme.colors.textMuted,
-              fontSize: 10 * scaleFont,
-            },
-          ]}
-        >
-          {meta}
-        </Text>
-      ) : null}
-    </View>
   );
 }
 
@@ -502,21 +471,6 @@ const styles = StyleSheet.create({
   },
   sectionBlock: {
     marginTop: 20,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingBottom: 14,
-  },
-  sectionTitle: {
-    fontFamily: fontFamilies.display,
-    letterSpacing: -0.2,
-  },
-  sectionMeta: {
-    fontFamily: fontFamilies.mono,
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
   },
   placeholderCard: {
     borderWidth: StyleSheet.hairlineWidth,

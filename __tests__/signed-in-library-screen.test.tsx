@@ -39,6 +39,10 @@ jest.mock("../src/components/library/downloaded-library-section", () => {
   };
 });
 
+jest.mock("../src/features/membership/use-is-member", () => ({
+  useIsMember: () => ({ isMember: false, isLoading: false }),
+}));
+
 describe("signed-in library screen", () => {
   beforeAll(async () => {
     await initI18n();
@@ -57,5 +61,12 @@ describe("signed-in library screen", () => {
     expect(screen.getByText("Offline shelf section")).toBeTruthy();
     expect(screen.getAllByText("Lists").length).toBeGreaterThan(0);
     expect(screen.queryByText("Your library, everywhere")).toBeNull();
+  });
+
+  it("shows gate badges on saved, lists, and offline section headers", () => {
+    render(<LibraryScreen />);
+
+    expect(screen.getByText("Free")).toBeTruthy();
+    expect(screen.getAllByText("Premium")).toHaveLength(2);
   });
 });

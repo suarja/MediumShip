@@ -4,13 +4,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { GateBadge, type GateTone } from "../library/gate-badge";
 import { useResponsive } from "../../features/responsive/use-responsive";
-import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
-type GateTone = "free" | "member" | "premium";
 
 type ProfileLibraryRowsProps = {
   isMember: boolean;
@@ -222,30 +221,6 @@ function ProfileRow({
   );
 }
 
-function GateBadge({ tone, label }: { tone: GateTone; label: string }) {
-  const { theme } = useAppTheme();
-  const { scaleFont } = useResponsive();
-  const color = tone === "premium" ? theme.colors.premium : theme.colors.accent;
-
-  return (
-    <View
-      style={[
-        styles.badge,
-        { backgroundColor: withAlpha(color, 0.16) },
-      ]}
-    >
-      <Text
-        style={[
-          styles.badgeLabel,
-          { color, fontSize: 8 * scaleFont },
-        ]}
-      >
-        {label}
-      </Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   kicker: {
     fontFamily: fontFamilies.mono,
@@ -284,15 +259,5 @@ const styles = StyleSheet.create({
   chevron: {
     fontFamily: fontFamilies.body,
     marginLeft: 4,
-  },
-  badge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  badgeLabel: {
-    fontFamily: fontFamilies.mono,
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
   },
 });

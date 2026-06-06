@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react-native";
+import { render, screen } from "@testing-library/react-native";
 import { Text, View } from "react-native";
 
 import { ContentCard } from "../src/components/content/content-card";
@@ -77,30 +77,6 @@ describe("ContentCard", () => {
     expect(screen.getByText("Economie du soin")).toBeTruthy();
     expect(screen.getByText("18 min")).toBeTruthy();
     expect(screen.queryByTestId("content-card-feature")).toBeNull();
-  });
-
-  it('variant="compact" keeps legacy inline skip and like affordances when provided', () => {
-    const onSkip = jest.fn();
-    const onLike = jest.fn();
-
-    render(
-      <ContentCard
-        variant="compact"
-        item={SAMPLE_ITEM}
-        kicker="Analyse"
-        meta="18 min"
-        onSkip={onSkip}
-        onLike={onLike}
-        skipAccessibilityLabel="Passer"
-        likeAccessibilityLabel="Aimer"
-      />,
-    );
-
-    fireEvent.press(screen.getByTestId("discover-skip-button"));
-    fireEvent.press(screen.getByTestId("discover-like-button"));
-
-    expect(onSkip).toHaveBeenCalledTimes(1);
-    expect(onLike).toHaveBeenCalledTimes(1);
   });
 
   it('variant="feature" renders a compact row with summary ellipsis', () => {

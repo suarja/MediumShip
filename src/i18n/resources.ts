@@ -1,6 +1,7 @@
 import articleEn from "./locales/en/article";
 import authEn from "./locales/en/auth";
 import commonEn from "./locales/en/common";
+import discoverEn from "./locales/en/discover";
 import episodeEn from "./locales/en/episode";
 import exploreEn from "./locales/en/explore";
 import homeEn from "./locales/en/home";
@@ -16,6 +17,7 @@ import videoEn from "./locales/en/video";
 import articleFr from "./locales/fr/article";
 import authFr from "./locales/fr/auth";
 import commonFr from "./locales/fr/common";
+import discoverFr from "./locales/fr/discover";
 import episodeFr from "./locales/fr/episode";
 import exploreFr from "./locales/fr/explore";
 import homeFr from "./locales/fr/home";
@@ -32,6 +34,7 @@ import videoFr from "./locales/fr/video";
 export const resources = {
   en: {
     common: commonEn,
+    discover: discoverEn,
     auth: authEn,
     home: homeEn,
     explore: exploreEn,
@@ -49,6 +52,7 @@ export const resources = {
   },
   fr: {
     common: commonFr,
+    discover: discoverFr,
     auth: authFr,
     home: homeFr,
     explore: exploreFr,

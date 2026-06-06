@@ -10,6 +10,7 @@ import { useAppTheme } from "../../features/theme/theme-provider";
 
 const TAB_META: Record<string, { icon: string; labelKey: string }> = {
   home: { icon: "◉", labelKey: "home" },
+  discover: { icon: "◎", labelKey: "discover" },
   explore: { icon: "⌕", labelKey: "explore" },
   library: { icon: "▤", labelKey: "library" },
   profile: { icon: "○", labelKey: "profile" },

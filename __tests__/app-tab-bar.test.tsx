@@ -40,11 +40,12 @@ describe("app tab bar", () => {
     await changeAppLanguage("en");
   });
 
-  it("renders only the target four visible tabs", () => {
+  it("renders only the target visible tabs", () => {
     render(
       <AppTabBar
         descriptors={{
           "home-key": { options: {} },
+          "discover-key": { options: {} },
           "explore-key": { options: {} },
           "library-key": { options: {} },
           "profile-key": { options: {} },
@@ -61,6 +62,7 @@ describe("app tab bar", () => {
           key: "tab-state",
           routeNames: [
             "home",
+            "discover",
             "explore",
             "library",
             "profile",
@@ -69,6 +71,7 @@ describe("app tab bar", () => {
           ],
           routes: [
             { key: "home-key", name: "home" },
+            { key: "discover-key", name: "discover" },
             { key: "explore-key", name: "explore" },
             { key: "library-key", name: "library" },
             { key: "profile-key", name: "profile" },
@@ -83,6 +86,7 @@ describe("app tab bar", () => {
     );
 
     expect(screen.getByText("Home")).toBeTruthy();
+    expect(screen.getByText("Discover")).toBeTruthy();
     expect(screen.getByText("Explore")).toBeTruthy();
     expect(screen.getByText("Library")).toBeTruthy();
     expect(screen.getByText("Profile")).toBeTruthy();

@@ -45,6 +45,7 @@ export function initI18n(): Promise<typeof i18n> {
       defaultNS: "common",
       ns: [
         "common",
+        "discover",
         "auth",
         "home",
         "explore",

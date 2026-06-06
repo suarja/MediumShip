@@ -79,6 +79,7 @@ export function useDiscoveryFeed(): {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const refillRequestedRef = useRef(false);
   const pendingAppendRef = useRef<string | null>(null);
+  const lastAppendedCursorRef = useRef<string | undefined>(undefined);
 
   const rawPage = useQuery(api.discovery.feed.getDiscoveryFeed, {
     tenantSlug,
@@ -103,6 +104,7 @@ export function useDiscoveryFeed(): {
     setIsLoadingMore(false);
     refillRequestedRef.current = false;
     pendingAppendRef.current = null;
+    lastAppendedCursorRef.current = undefined;
   }, [feedSeed, tenantSlug, me?.tokenIdentifier]);
 
   useEffect(() => {
@@ -129,27 +131,18 @@ export function useDiscoveryFeed(): {
     // grows (refill), new content is picked up via pull-to-refresh (new
     // feedSeed) or the page-0 reactive append below — never by cursor reset.
 
-    setAllItems((previous) => {
-      if (fetchCursor === null) {
-        if (previous.length === 0) {
-          return page.items;
-        }
-
-        const existingIds = new Set(previous.map((item) => item._id));
-        const newcomers = page.items.filter((item) => !existingIds.has(item._id));
-        if (newcomers.length > 0) {
-          return [...previous, ...newcomers];
-        }
-
-        if (previous.length <= DISCOVERY_PAGE_SIZE) {
-          return page.items;
-        }
-
-        return previous;
-      }
-
-      return [...previous, ...page.items];
-    });
+    // The feed query is reactive: the CURRENT page re-runs whenever the corpus
+    // grows (refill). Append a given cursor's page at most once, otherwise the
+    // reactive re-run re-appends it and the same article shows up twice within
+    // a few items. loadMore advances the cursor, so genuinely new pages (incl.
+    // intentional recycled repeats with a different cursor) still append.
+    const cursorKey = fetchCursor ?? "__page0__";
+    if (lastAppendedCursorRef.current !== cursorKey) {
+      lastAppendedCursorRef.current = cursorKey;
+      setAllItems((previous) =>
+        fetchCursor === null ? page.items : [...previous, ...page.items],
+      );
+    }
 
     pendingAppendRef.current = null;
   }, [rawPage, fetchCursor]);

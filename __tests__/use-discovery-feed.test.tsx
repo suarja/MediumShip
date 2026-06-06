@@ -122,6 +122,25 @@ describe("useDiscoveryFeed — no infinite pagination loop", () => {
     expect(result.current.items.map((item) => item._id)).toEqual(["a", "b", "a"]);
   });
 
+  it("does not re-append the current page when the reactive query re-runs (refill)", () => {
+    mockFeedReturn = makePage({ items: ["a"], nextCursor: "1", recycling: false });
+    const { result, rerender } = renderHook(() => useDiscoveryFeed());
+
+    mockFeedReturn = makePage({ items: ["b"], nextCursor: "2", recycling: false });
+    act(() => {
+      result.current.loadMore();
+    });
+    rerender({});
+    expect(result.current.items.map((item) => item._id)).toEqual(["a", "b"]);
+
+    // Corpus grew via refill → the query re-runs at the SAME cursor (no
+    // loadMore). The page must not be re-appended (the duplicate-within-a-few-
+    // items bug). A new object reference triggers the reactive effect.
+    mockFeedReturn = makePage({ items: ["b"], nextCursor: "2", recycling: false });
+    rerender({});
+    expect(result.current.items.map((item) => item._id)).toEqual(["a", "b"]);
+  });
+
   it("loadMore is a no-op once nextCursor is null", () => {
     mockFeedReturn = makePage({ items: ["a"], nextCursor: null, recycling: false });
     const { result } = renderHook(() => useDiscoveryFeed());

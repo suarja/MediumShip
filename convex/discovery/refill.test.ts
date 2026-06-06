@@ -141,6 +141,53 @@ describe("requestDiscoveryRefill", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("allows a second request after the shortened throttle window elapses", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenantForRefill(t);
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        query: {
+          pages: {
+            "42": {
+              pageid: 42,
+              title: "Quantum mechanics",
+              extract: "Physics theory.",
+            },
+          },
+        },
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const first = await t.mutation(api.discovery.refill.requestDiscoveryRefill, {
+      tenantSlug: TENANT,
+    });
+    await t.finishAllScheduledFunctions(() => {
+      vi.advanceTimersByTime(0);
+    });
+    fetchMock.mockClear();
+
+    vi.advanceTimersByTime(REFILL_THROTTLE_MS - 1);
+    const blocked = await t.mutation(api.discovery.refill.requestDiscoveryRefill, {
+      tenantSlug: TENANT,
+    });
+    expect(blocked.scheduledCategories).toEqual([]);
+
+    vi.advanceTimersByTime(1);
+    const second = await t.mutation(api.discovery.refill.requestDiscoveryRefill, {
+      tenantSlug: TENANT,
+    });
+    await t.finishAllScheduledFunctions(() => {
+      vi.advanceTimersByTime(0);
+    });
+
+    expect(first.scheduledCategories.length).toBeGreaterThan(0);
+    expect(second.scheduledCategories.length).toBeGreaterThan(0);
+    expect(fetchMock).toHaveBeenCalled();
+  });
+
   it("accepts guest callers without authentication", async () => {
     const t = convexTest(schema, modules);
     await seedTenantForRefill(t);

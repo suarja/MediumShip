@@ -5,7 +5,7 @@ import { mutation } from "../_generated/server";
 import { computeFetchDemand, SCHEDULED_INGESTION_DEMAND_OPTIONS } from "./fetchDemand";
 
 /** Minimum interval between on-demand fetches for the same (tenant, category). */
-export const REFILL_THROTTLE_MS = 5 * 60 * 1000;
+export const REFILL_THROTTLE_MS = 60 * 1000;
 
 export function isCategoryThrottled(
   record: { lastRequestedAt: number } | null,

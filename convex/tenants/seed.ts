@@ -209,6 +209,7 @@ export const seedDemoContent = mutation({
         themeConfig: defaultTenant.themeConfig,
         enabledModules: defaultTenant.enabledModules,
         feedSections: defaultTenant.feedSections,
+        discoverySeedCategories: ["Science", "Philosophy"],
       });
     } else {
       // Seed = restore the demo tenant to a known state, including the full
@@ -218,6 +219,7 @@ export const seedDemoContent = mutation({
       await ctx.db.patch(existingTenant._id, {
         enabledModules: defaultTenant.enabledModules,
         feedSections: existingTenant.feedSections ?? defaultTenant.feedSections,
+        discoverySeedCategories: ["Science", "Philosophy"],
       });
     }
 

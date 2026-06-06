@@ -204,6 +204,37 @@ export async function fetchWikipediaPagesViaCategoryMembers(
   return pagesFromQueryResponse(detailsData);
 }
 
+export async function fetchWikipediaArticleBody(
+  pageId: number | string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<string> {
+  const data = await mediaWikiFetch(
+    {
+      action: "query",
+      format: "json",
+      origin: "*",
+      pageids: String(pageId),
+      prop: "extracts",
+      explaintext: "1",
+    },
+    fetchImpl,
+  );
+
+  const pages = (
+    data as { query?: { pages?: Record<string, { extract?: string }> } }
+  ).query?.pages;
+  if (!pages) {
+    return "";
+  }
+
+  const extract = Object.values(pages)[0]?.extract;
+  if (typeof extract !== "string") {
+    return "";
+  }
+
+  return extract.trim();
+}
+
 export async function fetchWikipediaCategoryPages(
   categorySlug: string,
   fetchImpl: typeof fetch = fetch,

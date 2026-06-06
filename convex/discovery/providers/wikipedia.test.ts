@@ -6,10 +6,12 @@ import { internal } from "../../_generated/api";
 import schema from "../../schema";
 import { modules } from "../../../convexTestModules";
 import {
+  fetchWikipediaArticleBody,
   fetchWikipediaCategoryPages,
   normalizeWikipediaPage,
   slugFromWikipediaTitle,
   toWikipediaCategoryTitle,
+  WIKIPEDIA_USER_AGENT,
   wikipediaProvider,
 } from "./wikipedia";
 
@@ -208,6 +210,58 @@ describe("wikipediaProvider.ingest", () => {
         .collect(),
     );
     expect(rows).toHaveLength(2);
+  });
+});
+
+describe("fetchWikipediaArticleBody", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("requests full plaintext extracts without exintro and returns trimmed body", async () => {
+    const fullBody =
+      "Quantum mechanics is a fundamental theory.\n\nIt describes nature at small scales.";
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        query: {
+          pages: {
+            "42": { pageid: 42, extract: `  ${fullBody}  ` },
+          },
+        },
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const body = await fetchWikipediaArticleBody(42, fetchMock);
+
+    expect(body).toBe(fullBody);
+    const requestUrl = fetchMock.mock.calls[0]?.[0] as string;
+    const params = new URL(requestUrl).searchParams;
+    expect(params.get("prop")).toBe("extracts");
+    expect(params.get("explaintext")).toBe("1");
+    expect(params.has("exintro")).toBe(false);
+    expect(params.get("pageids")).toBe("42");
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+      headers: { "User-Agent": WIKIPEDIA_USER_AGENT },
+    });
+  });
+
+  it("returns an empty string for missing or malformed extract payloads", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ query: { pages: { "-1": { pageid: -1 } } } }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({}),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    expect(await fetchWikipediaArticleBody(99, fetchMock)).toBe("");
+    expect(await fetchWikipediaArticleBody(100, fetchMock)).toBe("");
   });
 });
 

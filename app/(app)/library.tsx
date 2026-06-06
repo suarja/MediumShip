@@ -13,6 +13,7 @@ import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provid
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
+import { hasCapability } from "../../src/features/tenant/public-config";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 const SECTION_KEYS = ["resume", "saved", "lists", "offline"] as const;
@@ -21,7 +22,10 @@ export default function LibraryScreen() {
   const { t } = useTranslation("library");
   const { isSignedIn } = useClerkAuth();
   const router = useRouter();
-  const { theme } = useAppTheme();
+  const { theme, enabledModules } = useAppTheme();
+  const canBookmark = hasCapability(enabledModules, "bookmarks");
+  const canPersonalLists = hasCapability(enabledModules, "personalLists");
+  const canOffline = hasCapability(enabledModules, "offline");
   const { scaleFont, scaleSpace } = useResponsive();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
@@ -248,30 +252,36 @@ export default function LibraryScreen() {
           <ResumeCard />
         </View>
 
-        <View style={styles.sectionBlock}>
-          <SavedLibrarySection />
-        </View>
+        {canBookmark ? (
+          <View style={styles.sectionBlock}>
+            <SavedLibrarySection />
+          </View>
+        ) : null}
 
-        <View style={styles.sectionBlock}>
-          <SectionHeader
-            label={t("library:screen.sections.lists")}
-            meta={t("library:screen.listsMeta")}
-          />
-          <Pressable
-            onPress={() => openPaywall("lists")}
-            style={({ pressed }) => [pressed && styles.buttonPressed]}
-            accessibilityRole="button"
-          >
-            <PlaceholderCard
-              body={t("library:screen.listsBody")}
-              title={t("library:screen.listsTitle")}
+        {canPersonalLists ? (
+          <View style={styles.sectionBlock}>
+            <SectionHeader
+              label={t("library:screen.sections.lists")}
+              meta={t("library:screen.listsMeta")}
             />
-          </Pressable>
-        </View>
+            <Pressable
+              onPress={() => openPaywall("lists")}
+              style={({ pressed }) => [pressed && styles.buttonPressed]}
+              accessibilityRole="button"
+            >
+              <PlaceholderCard
+                body={t("library:screen.listsBody")}
+                title={t("library:screen.listsTitle")}
+              />
+            </Pressable>
+          </View>
+        ) : null}
 
-        <View style={styles.sectionBlock}>
-          <DownloadedLibrarySection />
-        </View>
+        {canOffline ? (
+          <View style={styles.sectionBlock}>
+            <DownloadedLibrarySection />
+          </View>
+        ) : null}
       </ScrollView>
     </Screen>
   );

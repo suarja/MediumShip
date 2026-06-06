@@ -1,5 +1,6 @@
 import { defaultThemeConfig } from "../theme/palette-catalog";
 import {
+  CAPABILITIES,
   DEFAULT_FEED_SECTIONS,
   PUBLIC_CONTENT_MODULES,
   OPTIONAL_PUBLIC_MODULES,
@@ -15,6 +16,7 @@ export const defaultTenant = {
     ...PUBLIC_CONTENT_MODULES,
     ...OPTIONAL_PUBLIC_MODULES,
     ...NAVIGATION_MODULES,
+    ...CAPABILITIES,
   ],
   themeConfig: defaultThemeConfig,
   feedSections: DEFAULT_FEED_SECTIONS,

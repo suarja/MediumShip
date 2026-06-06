@@ -10,6 +10,7 @@ import { getDownloadSupport } from "../../features/downloads/model";
 import { useDownloads } from "../../features/downloads/use-downloads";
 import { useClerkAuth } from "../../features/auth/use-clerk-auth";
 import { usePaywallSheet } from "../../features/paywall/paywall-sheet-provider";
+import { hasCapability } from "../../features/tenant/public-config";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
@@ -22,7 +23,9 @@ import { useAppTheme } from "../../features/theme/theme-provider";
 // (offline) opens the contextual paywall sheet instead.
 export function ContentActionsBar({ content }: { content: ContentDoc }) {
   const { t } = useTranslation("library");
-  const { theme } = useAppTheme();
+  const { theme, enabledModules } = useAppTheme();
+  const canBookmark = hasCapability(enabledModules, "bookmarks");
+  const canOffline = hasCapability(enabledModules, "offline");
   const { scaleSpace } = useResponsive();
   const router = useRouter();
   const { isSignedIn } = useClerkAuth();
@@ -105,12 +108,16 @@ export function ContentActionsBar({ content }: { content: ContentDoc }) {
   const isLoading =
     isSignedIn && (isMembershipLoading || isBookmarksLoading || isDownloadsLoading);
 
+  if (!canBookmark && !canOffline) {
+    return null;
+  }
+
   return (
     <View
       style={[styles.row, { gap: theme.spacing.sm * scaleSpace, opacity: isLoading ? 0.6 : 1 }]}
     >
-      {bookmarkPill}
-      {offlinePill}
+      {canBookmark ? bookmarkPill : null}
+      {canOffline ? offlinePill : null}
     </View>
   );
 }

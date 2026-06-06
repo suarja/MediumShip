@@ -18,6 +18,8 @@ import { useRouter, useSegments } from "expo-router";
 import { useVideoPlayer, type VideoPlayer } from "expo-video";
 
 import { useIsMember } from "../membership/use-is-member";
+import { hasCapability } from "../tenant/public-config";
+import { useAppTheme } from "../theme/theme-provider";
 import {
   createAudioPlaybackEngine,
   createVideoPlaybackEngine,
@@ -166,10 +168,14 @@ export function PersistentMediaPlayerProvider({
   const segments = useSegments();
   const { isAuthenticated } = useConvexAuth();
   const { isMember } = useIsMember();
+  const { enabledModules } = useAppTheme();
   const [audioPlayer, setAudioPlayer] = useState(() =>
     createAudioPlayer(null, { updateInterval: 250 }),
   );
-  const canSyncRemoteProgress = isAuthenticated && isMember;
+  const canSyncRemoteProgress =
+    isAuthenticated &&
+    isMember &&
+    hasCapability(enabledModules, "progressSync");
   const audioStatus = useAudioPlayerStatus(audioPlayer);
   const hostedVideoSession =
     activeSession?.kind === "hostedVideo"

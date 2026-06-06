@@ -9,7 +9,7 @@ import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
 import { useIsMember } from "../../src/features/membership/use-is-member";
-import { isModuleEnabled } from "../../src/features/tenant/public-config";
+import { hasCapability, isModuleEnabled } from "../../src/features/tenant/public-config";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
@@ -32,6 +32,7 @@ export default function CommunityScreen() {
   const insets = useSafeAreaInsets();
   const { openPaywall } = usePaywallSheet();
   const { isMember } = useIsMember();
+  const canMembersRoom = hasCapability(enabledModules, "membersRoom");
 
   if (!isModuleEnabled(enabledModules, "community")) {
     return (
@@ -162,15 +163,17 @@ export default function CommunityScreen() {
           onPress={handleDiscord}
         />
 
-        <CommunityCard
-          title="Salon membres"
-          description="Espace réservé : AMA, coulisses, votes éditoriaux."
-          icon="✦"
-          stat="8 fils actifs"
-          accessLabel="Premium"
-          isPremium
-          onPress={handleMembersRoom}
-        />
+        {canMembersRoom ? (
+          <CommunityCard
+            title="Salon membres"
+            description="Espace réservé : AMA, coulisses, votes éditoriaux."
+            icon="✦"
+            stat="8 fils actifs"
+            accessLabel="Premium"
+            isPremium
+            onPress={handleMembersRoom}
+          />
+        ) : null}
       </ScrollView>
     </Screen>
   );

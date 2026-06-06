@@ -100,22 +100,33 @@ export function ProfileHero({
           ]}
         />
 
-        <Link href="/settings" asChild>
-          <Pressable
-            accessibilityRole="link"
-            style={({ pressed }) => [
-              styles.settingsButton,
-              {
-                borderRadius: theme.radii.pill,
-                borderColor: withAlpha(theme.colors.canvas, 0.14),
-                backgroundColor: withAlpha(theme.colors.canvas, 0.12),
-              },
-              pressed && styles.pressed,
-            ]}
-          >
-            <Ionicons color={theme.colors.canvas} name="settings-outline" size={18 * scaleFont} />
-          </Pressable>
-        </Link>
+        <View
+          testID="profile-settings-button"
+          style={[
+            styles.settingsButton,
+            {
+              borderRadius: theme.radii.pill,
+              borderColor: withAlpha(theme.colors.canvas, 0.14),
+              backgroundColor: withAlpha(theme.colors.canvas, 0.12),
+            },
+          ]}
+        >
+          <Link href="/settings" asChild>
+            <Pressable
+              accessibilityRole="link"
+              style={({ pressed }) => [
+                styles.settingsPressable,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Ionicons
+                color={theme.colors.canvas}
+                name="settings-outline"
+                size={18 * scaleFont}
+              />
+            </Pressable>
+          </Link>
+        </View>
       </View>
 
       <View
@@ -265,9 +276,13 @@ const styles = StyleSheet.create({
     right: 16,
     width: 40,
     height: 40,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: "hidden",
+  },
+  settingsPressable: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: StyleSheet.hairlineWidth,
   },
   body: {},
   identityRow: {

@@ -50,6 +50,8 @@ describe("guest profile", () => {
     expect(screen.getAllByText("Create an account").length).toBeGreaterThan(0);
     expect(screen.getByText("Guest reader")).toBeTruthy();
     expect(screen.getByText("Your profile")).toBeTruthy();
+    expect(screen.getByTestId("profile-settings-button")).toBeTruthy();
+    expect(screen.getByTestId("profile-create-account-button")).toBeTruthy();
     expect(screen.queryByText("Saved library")).toBeNull();
     expect(screen.queryByText("Offline shelf")).toBeNull();
   });

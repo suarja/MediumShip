@@ -161,28 +161,34 @@ function ProfileDashboard() {
             <Text style={[styles.noteBody, { color: theme.colors.textMuted }]}>
               {t("guestNote")}
             </Text>
-            <Link href="/sign-in" asChild>
-              <Pressable
-                accessibilityRole="link"
-                style={({ pressed }) => [
-                  styles.noteButton,
-                  {
-                    borderRadius: theme.radii.pill,
-                    backgroundColor: theme.colors.heading,
-                  },
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.noteButtonLabel,
-                    { color: theme.colors.canvas },
-                  ]}
+            <View style={styles.noteButtonWrap}>
+              <Link href="/sign-in" asChild>
+                <Pressable
+                  accessibilityRole="link"
+                  style={({ pressed }) => [pressed && styles.pressed]}
                 >
-                  {t("createAccount")}
-                </Text>
-              </Pressable>
-            </Link>
+                  <View
+                    testID="profile-create-account-button"
+                    style={[
+                      styles.noteButton,
+                      {
+                        borderRadius: theme.radii.pill,
+                        backgroundColor: theme.colors.heading,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.noteButtonLabel,
+                        { color: theme.colors.canvas },
+                      ]}
+                    >
+                      {t("createAccount")}
+                    </Text>
+                  </View>
+                </Pressable>
+              </Link>
+            </View>
           </View>
         ) : null}
       </ScrollView>
@@ -223,9 +229,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
   },
-  noteButton: {
+  noteButtonWrap: {
     alignSelf: "flex-start",
     marginTop: 8,
+  },
+  noteButton: {
     paddingHorizontal: 18,
     paddingVertical: 12,
   },

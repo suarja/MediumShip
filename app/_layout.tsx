@@ -15,6 +15,7 @@ import {
   PersistentMediaMiniPlayer,
   PersistentMediaPlayerProvider,
 } from "../src/features/media/persistent-media-player";
+import { ContentActionsSheetProvider } from "../src/features/content/content-actions-sheet-provider";
 import { PaywallSheetProvider } from "../src/features/paywall/paywall-sheet-provider";
 import { NetworkStatusDebugProvider } from "../src/features/network/use-network-status";
 import {
@@ -99,11 +100,13 @@ export default function RootLayout() {
             <AppThemeProvider>
               <PersistentMediaPlayerProvider>
                 <PaywallSheetProvider>
-                  <StatusBar style="auto" />
-                  <View style={styles.appFrame}>
-                    <Stack key={languageKey} screenOptions={{ headerShown: false }} />
-                    <PersistentMediaMiniPlayer />
-                  </View>
+                  <ContentActionsSheetProvider>
+                    <StatusBar style="auto" />
+                    <View style={styles.appFrame}>
+                      <Stack key={languageKey} screenOptions={{ headerShown: false }} />
+                      <PersistentMediaMiniPlayer />
+                    </View>
+                  </ContentActionsSheetProvider>
                 </PaywallSheetProvider>
               </PersistentMediaPlayerProvider>
             </AppThemeProvider>

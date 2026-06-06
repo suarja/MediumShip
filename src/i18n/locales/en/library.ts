@@ -54,6 +54,10 @@ export default {
     episode: "Episode",
     video: "Video",
   },
+  list: {
+    addCta: "List",
+    inListCta: "Listed",
+  },
   bookmark: {
     saveCta: "Keep",
     savedCta: "Saved",

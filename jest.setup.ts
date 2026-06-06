@@ -28,6 +28,14 @@ jest.mock("./src/features/paywall/paywall-sheet-provider", () => ({
   PaywallSheetProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+jest.mock("./src/features/content/content-actions-sheet-provider", () => ({
+  useContentActionsSheet: () => ({
+    openContentActions: jest.fn(),
+    closeContentActions: jest.fn(),
+  }),
+  ContentActionsSheetProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 jest.mock("expo-audio", () => ({
   createAudioPlayer: () => ({
     remove: jest.fn(),

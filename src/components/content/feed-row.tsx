@@ -3,9 +3,11 @@ import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { KIND_GLYPH, PREMIUM_ON_FILL } from "../../features/content/card-presentation";
 import type { ContentCardModel } from "../../features/content/types";
+import { hasCapability } from "../../features/tenant/public-config";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
+import { ContentOverflowButton } from "./content-overflow-button";
 
 /**
  * Dense editorial list row from the mockup: a square media tile (cover image or
@@ -17,34 +19,44 @@ export function FeedRow({
   kicker,
   meta,
   divider = true,
+  showOverflowActions = true,
+  overflowAccessibilityLabel,
 }: {
   item: ContentCardModel;
   kicker: string;
   meta: string;
   divider?: boolean;
+  showOverflowActions?: boolean;
+  overflowAccessibilityLabel?: string;
 }) {
-  const { theme } = useAppTheme();
+  const { theme, enabledModules } = useAppTheme();
+  const canShowOverflow =
+    showOverflowActions &&
+    (hasCapability(enabledModules, "bookmarks") ||
+      hasCapability(enabledModules, "personalLists") ||
+      hasCapability(enabledModules, "offline"));
   const { scaleFont, scaleSpace } = useResponsive();
   const tile = 60 * scaleSpace;
   const accentTone = item.isPremium ? theme.colors.premium : theme.colors.accent;
 
   return (
-    <Link href={item.href as never} asChild>
-      <Pressable
-        accessibilityRole="link"
-        style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
-      >
-        <View
-          style={[
-            styles.row,
-            {
-              gap: theme.spacing.md * scaleSpace,
-              paddingTop: divider ? theme.spacing.md * scaleSpace : 0,
-              borderTopWidth: divider ? StyleSheet.hairlineWidth : 0,
-              borderTopColor: theme.colors.border,
-            },
-          ]}
+    <View
+      style={[
+        styles.row,
+        {
+          gap: theme.spacing.sm * scaleSpace,
+          paddingTop: divider ? theme.spacing.md * scaleSpace : 0,
+          borderTopWidth: divider ? StyleSheet.hairlineWidth : 0,
+          borderTopColor: theme.colors.border,
+        },
+      ]}
+    >
+      <Link href={item.href as never} asChild style={styles.link}>
+        <Pressable
+          accessibilityRole="link"
+          style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
         >
+          <View style={[styles.rowInner, { gap: theme.spacing.md * scaleSpace }]}>
         <View
           style={[
             styles.tile,
@@ -99,15 +111,27 @@ export function FeedRow({
             </Text>
           ) : null}
         </View>
-        </View>
-      </Pressable>
-    </Link>
+          </View>
+        </Pressable>
+      </Link>
+
+      {canShowOverflow ? (
+        <ContentOverflowButton
+          contentId={item.id as never}
+          accessibilityLabel={
+            overflowAccessibilityLabel ?? `Actions for ${item.title}`
+          }
+        />
+      ) : null}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  pressable: {},
+  pressable: { flex: 1 },
+  link: { flex: 1, minWidth: 0 },
   row: { flexDirection: "row", alignItems: "center" },
+  rowInner: { flexDirection: "row", alignItems: "center", flex: 1 },
   pressed: { opacity: 0.7 },
   tile: {
     alignItems: "center",

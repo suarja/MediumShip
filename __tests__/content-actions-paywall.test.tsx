@@ -36,6 +36,10 @@ jest.mock("../src/features/auth/use-clerk-auth", () => ({
   }),
 }));
 
+jest.mock("convex/react", () => ({
+  useQuery: () => [],
+}));
+
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => children,
   useRouter: () => ({ push: jest.fn() }),

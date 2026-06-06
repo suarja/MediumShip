@@ -9,22 +9,25 @@ import type { ContentDoc } from "../../features/content/types";
 import { getDownloadSupport } from "../../features/downloads/model";
 import { useDownloads } from "../../features/downloads/use-downloads";
 import { useClerkAuth } from "../../features/auth/use-clerk-auth";
+import { useContentActionsSheet } from "../../features/content/content-actions-sheet-provider";
 import { usePaywallSheet } from "../../features/paywall/paywall-sheet-provider";
 import { hasCapability } from "../../features/tenant/public-config";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
-// Compact, single-row action bar for the content detail sticky footer. Two
-// pills only — Keep (bookmark) and Offline — so it stays slim and never
-// occludes the scrollable body (e.g. the premium member-access card). The
-// standalone "become a member" card is gone: tapping a premium capability
-// (offline) opens the contextual paywall sheet instead.
+// Compact sticky footer for content detail: Keep, Offline, and List pills.
+// Premium capabilities that need membership route through the paywall sheet;
+// list membership opens the add-to-list sheet.
 export function ContentActionsBar({ content }: { content: ContentDoc }) {
   const { t } = useTranslation("library");
   const { theme, enabledModules } = useAppTheme();
   const canBookmark = hasCapability(enabledModules, "bookmarks");
+  const canPersonalLists = hasCapability(enabledModules, "personalLists");
   const canOffline = hasCapability(enabledModules, "offline");
   const { scaleSpace } = useResponsive();
   const router = useRouter();
@@ -46,6 +49,16 @@ export function ContentActionsBar({ content }: { content: ContentDoc }) {
     enabled: isSignedIn && isMember,
   });
   const { openPaywall } = usePaywallSheet();
+  const { openContentActions } = useContentActionsSheet();
+  const listMembership = useQuery(
+    api.personalLists.queries.listMineForContent,
+    isSignedIn && canPersonalLists
+      ? { contentId: content._id as Id<"contents"> }
+      : "skip",
+  );
+  const isInList =
+    Array.isArray(listMembership) &&
+    listMembership.some((list) => list.contains);
 
   const isSaved = bookmarks.some((bookmark) => bookmark.content._id === content._id);
   const downloadSupport = getDownloadSupport(content);
@@ -108,7 +121,22 @@ export function ContentActionsBar({ content }: { content: ContentDoc }) {
   const isLoading =
     isSignedIn && (isMembershipLoading || isBookmarksLoading || isDownloadsLoading);
 
-  if (!canBookmark && !canOffline) {
+  const listPill = canPersonalLists ? (
+    <ActionPill
+      active={isInList}
+      iconName={isInList ? "list" : "list-outline"}
+      label={isInList ? t("list.inListCta") : t("list.addCta")}
+      onPress={() => {
+        if (!isSignedIn) {
+          router.push("/sign-in");
+          return;
+        }
+        openContentActions(content._id as Id<"contents">, "lists");
+      }}
+    />
+  ) : null;
+
+  if (!canBookmark && !canOffline && !canPersonalLists) {
     return null;
   }
 
@@ -118,6 +146,7 @@ export function ContentActionsBar({ content }: { content: ContentDoc }) {
     >
       {canBookmark ? bookmarkPill : null}
       {canOffline ? offlinePill : null}
+      {listPill}
     </View>
   );
 }

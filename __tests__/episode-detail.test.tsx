@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react-native";
 
+import { api } from "../convex/_generated/api";
 import EpisodeDetailScreen from "../app/episode/[id]";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
@@ -73,18 +74,27 @@ describe("episode detail", () => {
   beforeEach(async () => {
     await changeAppLanguage("en");
     mockPush.mockClear();
-    mockUseQuery.mockReturnValue({
-      _id: "episode_1",
-      tenantSlug: "demo-media",
-      kind: "episode",
-      status: "published",
-      title: "Avec Lea Bardin",
-      summary: "Entretien long format sur le travail invisible.",
-      category: "Podcast",
-      tags: ["podcast"],
-      isPremium: true,
-      publishedAt: "2026-06-03T09:00:00.000Z",
-      durationSeconds: 3240,
+    mockUseQuery.mockImplementation((queryRef: unknown, args: unknown) => {
+      if (args === "skip") {
+        return undefined;
+      }
+      if (queryRef === api.personalLists.queries.listMineForContent) {
+        return [];
+      }
+
+      return {
+        _id: "episode_1",
+        tenantSlug: "demo-media",
+        kind: "episode",
+        status: "published",
+        title: "Avec Lea Bardin",
+        summary: "Entretien long format sur le travail invisible.",
+        category: "Podcast",
+        tags: ["podcast"],
+        isPremium: true,
+        publishedAt: "2026-06-03T09:00:00.000Z",
+        durationSeconds: 3240,
+      };
     });
   });
 
@@ -99,7 +109,15 @@ describe("episode detail", () => {
   });
 
   it("renders a simple playback CTA for free episodes with an audio url", () => {
-    mockUseQuery.mockReturnValue({
+    mockUseQuery.mockImplementation((queryRef: unknown, args: unknown) => {
+      if (args === "skip") {
+        return undefined;
+      }
+      if (queryRef === api.personalLists.queries.listMineForContent) {
+        return [];
+      }
+
+      return {
       _id: "episode_1",
       tenantSlug: "demo-media",
       kind: "episode",
@@ -112,6 +130,7 @@ describe("episode detail", () => {
       publishedAt: "2026-06-03T09:00:00.000Z",
       durationSeconds: 3240,
       audioUrl: "https://cdn.example.com/episode.mp3",
+      };
     });
 
     render(<EpisodeDetailScreen />);
@@ -122,19 +141,28 @@ describe("episode detail", () => {
   });
 
   it("opens the dedicated player route from episode detail playback CTA", async () => {
-    mockUseQuery.mockReturnValue({
-      _id: "episode_1",
-      tenantSlug: "demo-media",
-      kind: "episode",
-      status: "published",
-      title: "Avec Lea Bardin",
-      summary: "Entretien long format sur le travail invisible.",
-      category: "Podcast",
-      tags: ["podcast"],
-      isPremium: false,
-      publishedAt: "2026-06-03T09:00:00.000Z",
-      durationSeconds: 3240,
-      audioUrl: "https://cdn.example.com/episode.mp3",
+    mockUseQuery.mockImplementation((queryRef: unknown, args: unknown) => {
+      if (args === "skip") {
+        return undefined;
+      }
+      if (queryRef === api.personalLists.queries.listMineForContent) {
+        return [];
+      }
+
+      return {
+        _id: "episode_1",
+        tenantSlug: "demo-media",
+        kind: "episode",
+        status: "published",
+        title: "Avec Lea Bardin",
+        summary: "Entretien long format sur le travail invisible.",
+        category: "Podcast",
+        tags: ["podcast"],
+        isPremium: false,
+        publishedAt: "2026-06-03T09:00:00.000Z",
+        durationSeconds: 3240,
+        audioUrl: "https://cdn.example.com/episode.mp3",
+      };
     });
 
     render(<EpisodeDetailScreen />);

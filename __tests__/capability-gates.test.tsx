@@ -41,6 +41,14 @@ jest.mock("../src/features/downloads/use-downloads", () => ({
   }),
 }));
 
+jest.mock("../src/features/personal-lists/use-personal-lists", () => ({
+  usePersonalLists: () => ({
+    lists: [],
+    primaryList: null,
+    isListsLoading: false,
+  }),
+}));
+
 const mockUseIsMember = jest.fn(() => ({ isMember: true, isLoading: false }));
 
 jest.mock("../src/features/membership/use-is-member", () => ({
@@ -84,6 +92,10 @@ jest.mock("react-native-safe-area-context", () => {
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => children,
   useRouter: () => ({ push: jest.fn(), back: jest.fn(), replace: jest.fn() }),
+}));
+
+jest.mock("convex/react", () => ({
+  useQuery: () => [],
 }));
 
 jest.mock("expo-web-browser", () => ({
@@ -154,22 +166,28 @@ describe("capability gates", () => {
     mockUseAppTheme.mockReturnValue(makeTheme(ALL_CAPS));
   });
 
-  it("shows bookmark and offline pills when capabilities are enabled", () => {
+  it("shows bookmark, offline, and list pills when capabilities are enabled", () => {
     render(<ContentActionsBar content={mockArticle} />);
 
     expect(screen.getByText("Keep")).toBeTruthy();
     expect(screen.getByText("Offline")).toBeTruthy();
+    expect(screen.getByText("List")).toBeTruthy();
   });
 
-  it("hides bookmark and offline pills when capabilities are disabled", () => {
+  it("hides member capability pills when capabilities are disabled", () => {
     mockUseAppTheme.mockReturnValue(
-      makeTheme(ALL_CAPS.filter((cap) => cap !== "bookmarks" && cap !== "offline")),
+      makeTheme(
+        ALL_CAPS.filter(
+          (cap) => cap !== "bookmarks" && cap !== "offline" && cap !== "personalLists",
+        ),
+      ),
     );
 
     render(<ContentActionsBar content={mockArticle} />);
 
     expect(screen.queryByText("Keep")).toBeNull();
     expect(screen.queryByText("Offline")).toBeNull();
+    expect(screen.queryByText("List")).toBeNull();
   });
 
   it("hides saved, lists, and offline library sections when capabilities are off", () => {

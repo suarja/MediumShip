@@ -32,6 +32,10 @@ jest.mock("../src/features/downloads/use-downloads", () => ({
   }),
 }));
 
+jest.mock("convex/react", () => ({
+  useQuery: () => [],
+}));
+
 describe("content bookmark actions", () => {
   beforeAll(async () => {
     await initI18n();

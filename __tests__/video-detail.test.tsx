@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react-native";
 
 import * as WebBrowser from "expo-web-browser";
+import { api } from "../convex/_generated/api";
 import VideoDetailScreen from "../app/video/[id]";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
@@ -61,22 +62,31 @@ describe("video detail", () => {
   });
 
   it("launches youtube inline and keeps an external fallback", () => {
-    mockUseQuery.mockReturnValue({
-      _id: "video_1",
-      tenantSlug: "demo-media",
-      kind: "video",
-      status: "published",
-      title: "Debat social",
-      summary: "Conversation long format.",
-      category: "Debat",
-      tags: ["video"],
-      isPremium: false,
-      publishedAt: "2026-06-03T09:00:00.000Z",
-      videoSource: {
-        kind: "youtube",
-        youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-        youtubeVideoId: "dQw4w9WgXcQ",
-      },
+    mockUseQuery.mockImplementation((queryRef: unknown, args: unknown) => {
+      if (args === "skip") {
+        return undefined;
+      }
+      if (queryRef === api.personalLists.queries.listMineForContent) {
+        return [];
+      }
+
+      return {
+        _id: "video_1",
+        tenantSlug: "demo-media",
+        kind: "video",
+        status: "published",
+        title: "Debat social",
+        summary: "Conversation long format.",
+        category: "Debat",
+        tags: ["video"],
+        isPremium: false,
+        publishedAt: "2026-06-03T09:00:00.000Z",
+        videoSource: {
+          kind: "youtube",
+          youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          youtubeVideoId: "dQw4w9WgXcQ",
+        },
+      };
     });
 
     render(<VideoDetailScreen />);
@@ -92,22 +102,31 @@ describe("video detail", () => {
   });
 
   it("opens the dedicated player route for hosted videos", async () => {
-    mockUseQuery.mockReturnValue({
-      _id: "video_2",
-      tenantSlug: "demo-media",
-      kind: "video",
-      status: "published",
-      title: "Film manifeste",
-      summary: "Hosted long-form video.",
-      category: "Film",
-      tags: ["video"],
-      isPremium: false,
-      publishedAt: "2026-06-03T10:00:00.000Z",
-      videoSource: {
-        kind: "hosted",
-        uploadKey: "video-asset-1",
-        playbackUrl: "https://cdn.example.com/video.mp4",
-      },
+    mockUseQuery.mockImplementation((queryRef: unknown, args: unknown) => {
+      if (args === "skip") {
+        return undefined;
+      }
+      if (queryRef === api.personalLists.queries.listMineForContent) {
+        return [];
+      }
+
+      return {
+        _id: "video_2",
+        tenantSlug: "demo-media",
+        kind: "video",
+        status: "published",
+        title: "Film manifeste",
+        summary: "Hosted long-form video.",
+        category: "Film",
+        tags: ["video"],
+        isPremium: false,
+        publishedAt: "2026-06-03T10:00:00.000Z",
+        videoSource: {
+          kind: "hosted",
+          uploadKey: "video-asset-1",
+          playbackUrl: "https://cdn.example.com/video.mp4",
+        },
+      };
     });
 
     render(<VideoDetailScreen />);

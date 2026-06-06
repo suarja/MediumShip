@@ -164,6 +164,11 @@ export const getDiscoveryFeed = query({
           }),
         ),
       ),
+      source: v.optional(
+        v.union(v.literal("cms"), v.literal("wikipedia")),
+      ),
+      externalId: v.optional(v.string()),
+      canonicalUrl: v.optional(v.string()),
       reason: v.union(
         v.literal("personalized"),
         v.literal("archive"),

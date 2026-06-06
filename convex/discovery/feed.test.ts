@@ -318,3 +318,49 @@ describe("getDiscoveryFeed authenticated path", () => {
     expect(counts.random).toBeLessThanOrEqual(6);
   });
 });
+
+describe("getDiscoveryFeed source isolation", () => {
+  it("includes wikipedia content alongside editorial corpus", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t, ["articles", "discover"]);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("contents", {
+        tenantSlug: TENANT,
+        kind: "article",
+        status: "published",
+        slug: "cms-read",
+        title: "CMS read",
+        summary: "Editorial",
+        category: "Analyse",
+        tags: [],
+        isPremium: false,
+        publishedAt: "2026-06-06T12:00:00.000Z",
+        source: "cms",
+      });
+      await ctx.db.insert("contents", {
+        tenantSlug: TENANT,
+        kind: "article",
+        status: "published",
+        slug: "wiki-read",
+        title: "Wikipedia read",
+        summary: "Discovery",
+        category: "science",
+        tags: [],
+        isPremium: false,
+        publishedAt: "2026-06-06T11:00:00.000Z",
+        source: "wikipedia",
+        externalId: "999",
+        canonicalUrl: "https://en.wikipedia.org/wiki/Example",
+      });
+    });
+
+    const feed = await t.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+    });
+
+    expect(feed.map((item) => item.title).sort()).toEqual(
+      ["CMS read", "Wikipedia read"].sort(),
+    );
+  });
+});

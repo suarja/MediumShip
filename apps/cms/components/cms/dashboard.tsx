@@ -7,7 +7,9 @@ import { useEffect, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import { AdminLoginShell } from "./admin-login-shell";
 import { AdminShell, isCmsTab, type CmsTab } from "./admin-shell";
+import { CollectionsTab } from "./collections-tab";
 import { ContentsTab } from "./contents-tab";
+import { EventsTab } from "./events-tab";
 import { PreviewTab } from "./preview-tab";
 import { TenantTab } from "./tenant-tab";
 import { UsersTab } from "./users-tab";
@@ -16,11 +18,22 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
   const viewer = useQuery(api.cms.queries.getViewer, {});
   const bootstrapAdmin = useMutation(api.cms.mutations.bootstrapAdmin);
   const createContent = useMutation(api.cms.mutations.createContent);
+  const createCollection = useMutation(api.cms.collections.createCollection);
+  const createEvent = useMutation(api.cms.events.createEvent);
   const [activeTab, setActiveTabState] = useState<CmsTab>(initialTab);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(
+    null,
+  );
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   const isAdmin = viewer?.isAdmin ?? false;
   const contents = useQuery(api.cms.queries.listContents, isAdmin ? {} : "skip");
+  const collections = useQuery(
+    api.cms.collections.listCmsCollections,
+    isAdmin ? {} : "skip",
+  );
+  const events = useQuery(api.cms.events.listCmsEvents, isAdmin ? {} : "skip");
   const tenant = useQuery(api.cms.queries.getTenantSettings, isAdmin ? {} : "skip");
 
   useEffect(() => {
@@ -28,6 +41,18 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
       setSelectedId(contents[0]._id);
     }
   }, [contents, selectedId]);
+
+  useEffect(() => {
+    if (!selectedCollectionId && collections && collections.length > 0) {
+      setSelectedCollectionId(collections[0]._id);
+    }
+  }, [collections, selectedCollectionId]);
+
+  useEffect(() => {
+    if (!selectedEventId && events && events.length > 0) {
+      setSelectedEventId(events[0]._id);
+    }
+  }, [events, selectedEventId]);
 
   useEffect(() => {
     setActiveTabState(initialTab);
@@ -89,7 +114,7 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
             name={viewer.name}
             onTabChange={setActiveTab}
           >
-            {contents && tenant ? (
+            {contents && collections && events && tenant ? (
               activeTab === "contents" ? (
                 <ContentsTab
                   items={contents}
@@ -99,6 +124,38 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
                   }}
                   onSelect={setSelectedId}
                   selectedId={selectedId}
+                />
+              ) : activeTab === "collections" ? (
+                <CollectionsTab
+                  items={collections}
+                  onCreate={async () => {
+                    const id = await createCollection({
+                      title: "Nouvelle collection",
+                      slug: "",
+                      summary: "Décris la série et ses contenus.",
+                    });
+                    setSelectedCollectionId(id);
+                  }}
+                  onSelect={setSelectedCollectionId}
+                  selectedId={selectedCollectionId}
+                />
+              ) : activeTab === "events" ? (
+                <EventsTab
+                  items={events}
+                  onCreate={async () => {
+                    const id = await createEvent({
+                      title: "Nouvel événement",
+                      slug: "",
+                      summary: "Décris l’événement pour l’agenda public.",
+                      startsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                      locationLabel: "À définir",
+                      mode: "online",
+                      access: "free",
+                    });
+                    setSelectedEventId(id);
+                  }}
+                  onSelect={setSelectedEventId}
+                  selectedId={selectedEventId}
                 />
               ) : activeTab === "tenant" ? (
                 <TenantTab tenant={tenant} />

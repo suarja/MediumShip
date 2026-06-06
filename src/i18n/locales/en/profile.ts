@@ -27,7 +27,7 @@ export default {
     memberPremium: "Member · Patron",
   },
   since: {
-    member: "Sync ready · since March 2024",
+    member: "Sync ready · member account",
     upgrade: "Free account · go Premium",
   },
   stats: {
@@ -75,7 +75,7 @@ export default {
     },
     subscription: {
       title: "Subscription · Annual",
-      sub: "Renews 14 March 2027",
+      sub: "Billing details coming soon",
     },
     goPremium: {
       title: "Go Premium",

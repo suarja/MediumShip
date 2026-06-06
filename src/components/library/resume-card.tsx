@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { useResponsive } from "../../features/responsive/use-responsive";
@@ -6,24 +7,42 @@ import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
+type ResumeCardProps = {
+  onPress?: () => void;
+};
+
+function showResumePendingAlert(title: string, body: string) {
+  Alert.alert(title, body);
+}
+
 /**
  * Static "resume / continue listening" card matching the mockup `p2__resume`.
  * Resume/progress wiring is deferred — this is faithful decoration shared by the
  * Library and Profile surfaces so the visual stays in one place.
  */
-export function ResumeCard() {
+export function ResumeCard({ onPress }: ResumeCardProps = {}) {
   const { t } = useTranslation("library");
   const { theme } = useAppTheme();
   const { scaleFont } = useResponsive();
 
+  const resumeTitle = t("library:screen.resumeTitle");
+  const handlePress =
+    onPress ??
+    (() => showResumePendingAlert(resumeTitle, t("library:listsScreen.pendingAction")));
+
   return (
-    <View
-      style={[
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={resumeTitle}
+      onPress={handlePress}
+      testID="resume-card"
+      style={({ pressed }) => [
         styles.resumeCard,
         {
           borderRadius: theme.radii.lg,
           backgroundColor: theme.colors.heading,
         },
+        pressed && styles.pressed,
       ]}
     >
       <Text
@@ -57,7 +76,7 @@ export function ResumeCard() {
               },
             ]}
           >
-            {t("library:screen.resumeTitle")}
+            {resumeTitle}
           </Text>
           <Text
             style={[
@@ -79,17 +98,11 @@ export function ResumeCard() {
             },
           ]}
         >
-          <Text
-            style={[
-              styles.resumePlayLabel,
-              {
-                color: theme.colors.accentContrast,
-                fontSize: 8 * scaleFont,
-              },
-            ]}
-          >
-            ▶
-          </Text>
+          <Ionicons
+            color={theme.colors.accentContrast}
+            name="play"
+            size={10 * scaleFont}
+          />
         </View>
       </View>
       <View
@@ -105,7 +118,7 @@ export function ResumeCard() {
           ]}
         />
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -114,6 +127,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 13,
     paddingVertical: 12,
     marginBottom: 2,
+  },
+  pressed: {
+    opacity: 0.92,
   },
   resumeKicker: {
     fontFamily: fontFamilies.mono,
@@ -149,9 +165,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
-  },
-  resumePlayLabel: {
-    fontFamily: fontFamilies.bodyBold,
   },
   resumeBar: {
     height: 3,

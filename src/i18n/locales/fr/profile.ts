@@ -27,7 +27,7 @@ export default {
     memberPremium: "Membre · Bienfaiteur",
   },
   since: {
-    member: "Synchro prete · depuis mars 2024",
+    member: "Synchro prete · compte membre",
     upgrade: "Compte gratuit · passez Premium",
   },
   stats: {
@@ -75,7 +75,7 @@ export default {
     },
     subscription: {
       title: "Abonnement · Annuel",
-      sub: "Renouvellement le 14 mars 2027",
+      sub: "Details de facturation a venir",
     },
     goPremium: {
       title: "Passer Premium",

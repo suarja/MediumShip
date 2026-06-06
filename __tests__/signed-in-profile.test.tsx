@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Alert } from "react-native";
 import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import ProfileScreen from "../app/(app)/profile";
@@ -149,5 +150,20 @@ describe("signed-in profile", () => {
 
     expect(mockPush).toHaveBeenCalledWith("/library");
     expect(mockOpenPaywall).not.toHaveBeenCalled();
+  });
+
+  it("shows stub feedback when the resume card is pressed", () => {
+    const alertSpy = jest.spyOn(Alert, "alert").mockImplementation(() => {});
+
+    render(<ProfileScreen />);
+
+    fireEvent.press(screen.getByTestId("resume-card"));
+
+    expect(alertSpy).toHaveBeenCalledWith(
+      "The care economy",
+      "This action will be available in an upcoming update.",
+    );
+
+    alertSpy.mockRestore();
   });
 });

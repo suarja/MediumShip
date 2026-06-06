@@ -2,6 +2,7 @@ import { v } from "convex/values";
 
 import { query } from "../_generated/server";
 import { requireAuth } from "../entitlements/authz";
+import { resolveListPreviewCoverUrls } from "./covers";
 
 export const listMine = query({
   args: {},
@@ -22,9 +23,12 @@ export const listMine = query({
           .withIndex("by_listId_and_position", (q) => q.eq("listId", list._id))
           .collect();
 
+        const previewCoverUrls = await resolveListPreviewCoverUrls(ctx, list._id);
+
         return {
           ...list,
           itemCount: items.length,
+          previewCoverUrls,
         };
       }),
     );

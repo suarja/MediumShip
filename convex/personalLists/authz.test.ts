@@ -191,6 +191,40 @@ describe("personalLists authz", () => {
     expect(empty.items).toHaveLength(0);
   });
 
+  it("returns preview cover urls from the newest list items", async () => {
+    const t = convexTest(schema, modules);
+    const asFree = t.withIdentity(FREE_USER);
+    const contentA = await seedPublishedContent(t, "cover-a");
+    const contentB = await seedPublishedContent(t, "cover-b");
+
+    await t.run(async (ctx) => {
+      await ctx.db.patch(contentA, {
+        heroImageUrl: "https://example.com/cover-a.jpg",
+      });
+      await ctx.db.patch(contentB, {
+        heroImageUrl: "https://example.com/cover-b.jpg",
+      });
+    });
+
+    const { listId } = await asFree.mutation(api.personalLists.mutations.create, {
+      title: "A lire",
+    });
+    await asFree.mutation(api.personalLists.mutations.addItem, {
+      listId,
+      contentId: contentA,
+    });
+    await asFree.mutation(api.personalLists.mutations.addItem, {
+      listId,
+      contentId: contentB,
+    });
+
+    const lists = await asFree.query(api.personalLists.queries.listMine, {});
+    expect(lists[0].previewCoverUrls).toEqual([
+      "https://example.com/cover-b.jpg",
+      "https://example.com/cover-a.jpg",
+    ]);
+  });
+
   it("marks list membership for listMineForContent", async () => {
     const t = convexTest(schema, modules);
     const asFree = t.withIdentity(FREE_USER);

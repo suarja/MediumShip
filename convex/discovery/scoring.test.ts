@@ -5,10 +5,46 @@ import {
   bucketFeed,
   createSeededRng,
   normalizeScoringKey,
+  projectAffinities,
   scoreContent,
   type Affinity,
+  type ProjectableSignal,
   type ScoredItem,
 } from "./scoring";
+
+describe("projectAffinities", () => {
+  const like = (contentId: string, category: string): ProjectableSignal => ({
+    contentId,
+    type: "like",
+    category,
+    tags: [],
+    kind: "article",
+  });
+
+  it("counts each (content, type) pair at most once — repeats never stack", () => {
+    const single = projectAffinities([like("c1", "Débat")]);
+    const repeated = projectAffinities([
+      like("c1", "Débat"),
+      like("c1", "Débat"),
+      like("c1", "Débat"),
+    ]);
+
+    expect(single).toEqual(repeated);
+    expect(
+      repeated.find((a) => a.targetType === "category" && a.targetId === "debat")
+        ?.score,
+    ).toBe(50);
+  });
+
+  it("is idempotent: projecting the same set twice yields the same profile", () => {
+    const set = [like("c1", "Débat"), like("c2", "Économie")];
+    expect(projectAffinities(set)).toEqual(projectAffinities([...set, ...set]));
+  });
+
+  it("drops a dimension once its only contributor leaves the set (toggle off)", () => {
+    expect(projectAffinities([])).toEqual([]);
+  });
+});
 
 describe("normalizeScoringKey", () => {
   it("folds case, trims whitespace, and strips accents", () => {

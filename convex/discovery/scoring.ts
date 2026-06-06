@@ -133,6 +133,35 @@ export function applyInteraction(
   return next;
 }
 
+/** A recorded interaction with the content metadata needed to score it. */
+export type ProjectableSignal = InteractionSignal & { contentId: string };
+
+/**
+ * Affinity is a pure projection of the **set** of (content, type) interactions,
+ * not the stream of taps. Each (content, type) pair contributes its weight at
+ * most once, so repeated likes/skips/views cannot inflate a score, and a
+ * toggled-off `like` (its row removed) simply drops out of the set. This is the
+ * idempotent counterpart of {@link applyInteraction}: fold the latter over the
+ * deduplicated signal set starting from an empty profile.
+ */
+export function projectAffinities(
+  signals: readonly ProjectableSignal[],
+): Affinity[] {
+  const seen = new Set<string>();
+  let prefs: Affinity[] = [];
+
+  for (const signal of signals) {
+    const key = `${signal.contentId}/${signal.type}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    prefs = applyInteraction(prefs, signal);
+  }
+
+  return prefs;
+}
+
 function getAffinityScore(
   prefs: readonly Affinity[],
   targetType: TargetType,

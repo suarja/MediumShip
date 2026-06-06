@@ -4,6 +4,8 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
+import { useResponsive } from "../../features/responsive/use-responsive";
+import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 const TAB_META: Record<string, { icon: string; labelKey: string }> = {
@@ -35,6 +37,7 @@ type AppTabBarProps =
 export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
   const { t } = useTranslation("navigation");
   const { theme } = useAppTheme();
+  const { scaleFont, scaleSpace } = useResponsive();
   const insets = useSafeAreaInsets();
   const visibleRoutes = state.routes.filter((route) => {
     const href = (descriptors[route.key]?.options as { href?: string | null } | undefined)
@@ -54,6 +57,8 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
         style={[
           styles.inner,
           {
+            gap: 8 * scaleSpace,
+            padding: 8 * scaleSpace,
             borderRadius: theme.radii.xl,
             borderColor: theme.colors.border,
             backgroundColor: theme.colors.tabBarCard,
@@ -94,6 +99,12 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
               onLongPress={onLongPress}
               style={({ pressed }) => [
                 styles.tab,
+                {
+                  minHeight: 56 * scaleSpace,
+                  gap: 3 * scaleSpace,
+                  paddingHorizontal: 6 * scaleSpace,
+                  paddingVertical: 4 * scaleSpace,
+                },
                 isFocused && {
                   borderRadius: theme.radii.lg,
                   backgroundColor: theme.colors.heading,
@@ -104,15 +115,23 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
               <Text
                 style={[
                   styles.icon,
-                  { color: isFocused ? theme.colors.surface : theme.colors.tabInactive },
+                  {
+                    fontSize: 16 * scaleFont,
+                    lineHeight: 18 * scaleFont,
+                    color: isFocused ? theme.colors.surface : theme.colors.tabInactive,
+                  },
                 ]}
               >
                 {meta.icon}
               </Text>
               <Text
+                numberOfLines={1}
                 style={[
                   styles.label,
-                  { color: isFocused ? theme.colors.surface : theme.colors.tabInactive },
+                  {
+                    fontSize: 9 * scaleFont,
+                    color: isFocused ? theme.colors.surface : theme.colors.tabInactive,
+                  },
                 ]}
               >
                 {t(meta.labelKey)}
@@ -137,9 +156,7 @@ const styles = StyleSheet.create({
   },
   inner: {
     flexDirection: "row",
-    gap: 8,
     borderWidth: StyleSheet.hairlineWidth,
-    padding: 8,
     // Floating elevation
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.16,
@@ -148,22 +165,21 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    minHeight: 56,
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
     borderRadius: 18,
   },
   tabPressed: {
     opacity: 0.85,
   },
   icon: {
-    fontSize: 14,
     fontWeight: "700",
+    textAlign: "center",
   },
   label: {
-    fontSize: 11,
-    fontWeight: "700",
+    fontFamily: fontFamilies.mono,
+    letterSpacing: 0.8,
+    textAlign: "center",
     textTransform: "uppercase",
   },
 });

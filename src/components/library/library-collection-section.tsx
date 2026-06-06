@@ -14,7 +14,6 @@ import { useResponsive } from "../../features/responsive/use-responsive";
 import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
-import { ContentImageScrim } from "../content/content-image-scrim";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 
@@ -63,6 +62,9 @@ export function LibraryCollectionSection({
 
   const featured = items[0];
   const rest = items.slice(1, isTablet ? 5 : 4);
+  const featuredHeroBg = theme.isDark ? theme.colors.canvasAccent : theme.colors.heading;
+  const featuredOnHero = theme.isDark ? theme.colors.heading : theme.colors.canvas;
+  const featuredMediaHeight = (isTablet ? 168 : 140) * scaleSpace;
 
   return (
     <View style={[styles.section, { gap: theme.spacing.md * scaleSpace }]}>
@@ -130,20 +132,17 @@ export function LibraryCollectionSection({
                   style={[
                     styles.featuredMedia,
                     {
-                      height: (isTablet ? 248 : 204) * scaleSpace,
+                      height: featuredMediaHeight,
                       backgroundColor: theme.colors.surfaceMuted,
                     },
                   ]}
                 >
                   {featured.imageUrl ? (
-                    <>
-                      <Image
-                        accessibilityLabel={`${featured.title} cover`}
-                        source={{ uri: featured.imageUrl }}
-                        style={styles.cover}
-                      />
-                      <ContentImageScrim />
-                    </>
+                    <Image
+                      accessibilityLabel={`${featured.title} cover`}
+                      source={{ uri: featured.imageUrl }}
+                      style={styles.cover}
+                    />
                   ) : (
                     <View
                       style={[
@@ -186,41 +185,58 @@ export function LibraryCollectionSection({
                       {featured.badgeLabel}
                     </Text>
                   </View>
+                </View>
 
-                  <View
+                <View
+                  style={[
+                    styles.featuredBody,
+                    {
+                      gap: 4 * scaleSpace,
+                      padding: theme.spacing.md * scaleSpace,
+                      backgroundColor: featuredHeroBg,
+                    },
+                  ]}
+                >
+                  <Text
+                    numberOfLines={1}
                     style={[
-                      styles.featuredCopy,
+                      styles.featuredEyebrow,
                       {
-                        gap: 6 * scaleSpace,
-                        padding: theme.spacing.lg * scaleSpace,
+                        color:
+                          featured.tone === "premium"
+                            ? theme.colors.premium
+                            : theme.colors.accent,
+                        fontSize: 10 * scaleFont,
                       },
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.featuredEyebrow,
-                        { color: theme.colors.canvas, fontSize: 11 * scaleFont },
-                      ]}
-                    >
-                      {featured.eyebrow}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.featuredTitle,
-                        { color: theme.colors.canvas, fontSize: 24 * scaleFont },
-                      ]}
-                    >
-                      {featured.title}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.featuredMeta,
-                        { color: withAlpha(theme.colors.canvas, 0.76), fontSize: 12 * scaleFont },
-                      ]}
-                    >
-                      {featured.meta}
-                    </Text>
-                  </View>
+                    {featured.eyebrow}
+                  </Text>
+                  <Text
+                    numberOfLines={2}
+                    style={[
+                      styles.featuredTitle,
+                      {
+                        color: featuredOnHero,
+                        fontSize: 18 * scaleFont,
+                        lineHeight: 22 * scaleFont,
+                      },
+                    ]}
+                  >
+                    {featured.title}
+                  </Text>
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.featuredMeta,
+                      {
+                        color: withAlpha(featuredOnHero, theme.isDark ? 0.72 : 0.68),
+                        fontSize: 12 * scaleFont,
+                      },
+                    ]}
+                  >
+                    {featured.meta}
+                  </Text>
                 </View>
               </View>
             </Pressable>
@@ -477,26 +493,18 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
-  featuredCopy: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
+  featuredBody: {},
   featuredEyebrow: {
-    fontFamily: fontFamilies.mono,
-    letterSpacing: 1.4,
-    textTransform: "uppercase",
+    fontFamily: fontFamilies.bodySemiBold,
+    letterSpacing: 0.2,
   },
   featuredTitle: {
-    fontFamily: fontFamilies.displayBoldItalic,
-    letterSpacing: -0.4,
-    lineHeight: 28,
+    fontFamily: fontFamilies.display,
+    letterSpacing: -0.25,
   },
   featuredMeta: {
-    fontFamily: fontFamilies.mono,
-    letterSpacing: 0.6,
-    textTransform: "uppercase",
+    fontFamily: fontFamilies.body,
+    lineHeight: 16,
   },
   rows: {},
   rowCard: {

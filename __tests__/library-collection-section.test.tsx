@@ -69,7 +69,7 @@ describe("LibraryCollectionSection", () => {
     await initI18n();
   });
 
-  it("renders the shared image scrim on featured cards with cover art", () => {
+  it("renders featured copy in a body block below cover art, not on the overlay", () => {
     render(
       <LibraryCollectionSection
         title="Saved"
@@ -83,7 +83,9 @@ describe("LibraryCollectionSection", () => {
       />,
     );
 
-    expect(screen.getByTestId("content-image-scrim")).toBeTruthy();
+    expect(screen.getByText("Featured title")).toBeTruthy();
+    expect(screen.getByText("18 min read")).toBeTruthy();
+    expect(screen.queryByTestId("content-image-scrim")).toBeNull();
     expect(screen.queryByTestId("featuredGlow")).toBeNull();
   });
 

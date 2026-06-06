@@ -128,6 +128,7 @@ export default function ExploreScreen() {
               {
                 color: theme.colors.accent,
                 fontSize: 19 * scaleFont,
+                width: 22 * scaleSpace,
               },
             ]}
           >
@@ -224,7 +225,10 @@ export default function ExploreScreen() {
             <SectionHeader label={t("categoriesTitle")} />
             <View style={styles.grid}>
               {categories.length > 0
-                ? categories.slice(0, 4).map((cat) => (
+                ? categories.slice(0, 4).map((cat) => {
+                    const presentation = getCategoryPresentation(cat.category);
+
+                    return (
                     <Pressable
                       key={cat.category}
                       style={({ pressed }) => [styles.gridCell, pressed && styles.pressed]}
@@ -232,12 +236,13 @@ export default function ExploreScreen() {
                       accessibilityRole="button"
                     >
                       <FeatureCard
-                        icon={getCategoryPresentation(cat.category).icon}
-                        meta={`${cat.count} contenus`.toUpperCase()}
+                        icon={presentation.icon}
+                        meta={t("categoryCount_other", { count: cat.count }).toUpperCase()}
                         title={cat.category}
                       />
                     </Pressable>
-                  ))
+                    );
+                  })
                 : STATIC_CATEGORY_ITEMS.map((item) => (
                     <Pressable
                       key={item.key}
@@ -282,8 +287,14 @@ export default function ExploreScreen() {
               <SectionHeader label={t("trendsTitle")} italic />
               <View style={[styles.trendRow, { gap: theme.spacing.sm * scaleSpace }]}>
                 {TREND_KEYS.map((key) => (
-                  <View
+                  <Pressable
                     key={key}
+                    onPress={() => {
+                      setSearchFilter("all");
+                      setSearchQuery(t(`trends.${key}`));
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={t("trendA11y", { label: t(`trends.${key}`) })}
                     style={[
                       styles.trendChip,
                       {
@@ -307,7 +318,7 @@ export default function ExploreScreen() {
                     >
                       {t(`trends.${key}`)}
                     </Text>
-                  </View>
+                  </Pressable>
                 ))}
               </View>
             </View>
@@ -341,7 +352,7 @@ function SectionHeader({
           styles.sectionTitle,
           {
             color: theme.colors.heading,
-            fontSize: 19 * scaleFont,
+            fontSize: 17 * scaleFont,
           },
         ]}
       >
@@ -400,7 +411,7 @@ function FeatureCard({
             styles.iconBadgeLabel,
             {
               color: theme.colors.accent,
-              fontSize: 15 * scaleFont,
+              fontSize: 16 * scaleFont,
             },
           ]}
         >
@@ -410,11 +421,12 @@ function FeatureCard({
 
       <View style={[styles.cardCopy, { gap: 2 * scaleSpace }]}>
         <Text
+          numberOfLines={1}
           style={[
             styles.cardTitle,
             {
               color: theme.colors.heading,
-              fontSize: 15 * scaleFont,
+              fontSize: 13 * scaleFont,
             },
           ]}
         >
@@ -425,7 +437,8 @@ function FeatureCard({
             styles.cardMeta,
             {
               color: theme.colors.textMuted,
-              fontSize: 10 * scaleFont,
+              fontSize: 9 * scaleFont,
+              lineHeight: 12 * scaleFont,
             },
           ]}
         >
@@ -465,7 +478,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
   },
   searchIcon: {
-    width: 18,
+    width: 22,
     textAlign: "center",
     lineHeight: 22,
   },
@@ -534,12 +547,11 @@ const styles = StyleSheet.create({
   cardCopy: {},
   cardTitle: {
     fontFamily: fontFamilies.display,
-    letterSpacing: -0.25,
+    letterSpacing: -0.15,
   },
   cardMeta: {
     fontFamily: fontFamilies.mono,
     letterSpacing: 0.8,
-    lineHeight: 14,
     textTransform: "uppercase",
   },
   trendRow: {

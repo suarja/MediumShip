@@ -85,7 +85,9 @@ describe("requestDiscoveryRefill", () => {
     expect(result.scheduledCategories.length).toBeGreaterThan(0);
     expect(result.scheduledCategories).toContain("science");
 
-    await t.finishAllScheduledFunctions(vi.advanceTimersByTime);
+    await t.finishAllScheduledFunctions(() => {
+      vi.advanceTimersByTime(0);
+    });
 
     const throttleRows = await t.run(async (ctx) =>
       ctx.db
@@ -122,13 +124,17 @@ describe("requestDiscoveryRefill", () => {
     const first = await t.mutation(api.discovery.refill.requestDiscoveryRefill, {
       tenantSlug: TENANT,
     });
-    await t.finishAllScheduledFunctions(vi.advanceTimersByTime);
+    await t.finishAllScheduledFunctions(() => {
+      vi.advanceTimersByTime(0);
+    });
     fetchMock.mockClear();
 
     const second = await t.mutation(api.discovery.refill.requestDiscoveryRefill, {
       tenantSlug: TENANT,
     });
-    await t.finishAllScheduledFunctions(vi.advanceTimersByTime);
+    await t.finishAllScheduledFunctions(() => {
+      vi.advanceTimersByTime(0);
+    });
 
     expect(first.scheduledCategories.length).toBeGreaterThan(0);
     expect(second.scheduledCategories).toEqual([]);

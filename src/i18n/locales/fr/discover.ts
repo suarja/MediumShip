@@ -2,8 +2,12 @@ export default {
   title: "Découvrir",
   subtitle: "Un fil pour parcourir l'actualité et redécouvrir la bibliothèque.",
   loading: "Chargement du fil…",
+  loadingMore: "Chargement…",
   emptyTitle: "Rien à découvrir pour le moment",
   emptyBody: "Revenez bientôt : de nouveaux contenus arrivent régulièrement.",
+  endOfFeedTitle: "Vous êtes à jour",
+  endOfFeedBody:
+    "Vous avez tout parcouru pour l'instant. Les archives continuent ci-dessous, et de nouveaux contenus arrivent en arrière-plan.",
   actions: {
     like: "Aimer",
     more: "Plus d'actions",

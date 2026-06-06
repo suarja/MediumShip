@@ -9,6 +9,7 @@ const mockUseDiscoveryFeed = jest.fn();
 const mockRecordLike = jest.fn();
 const mockRecordHide = jest.fn();
 const mockRefresh = jest.fn();
+const mockLoadMore = jest.fn();
 const mockToggleBookmark = jest.fn();
 const mockOpenContentActions = jest.fn();
 
@@ -18,6 +19,10 @@ jest.mock("../src/features/theme/theme-provider", () => ({
 
 jest.mock("../src/features/discovery/use-discovery-feed", () => ({
   useDiscoveryFeed: () => mockUseDiscoveryFeed(),
+  DISCOVERY_LOW_WATERMARK: 5,
+  shouldRequestDiscoveryRefill: jest.requireActual(
+    "../src/features/discovery/use-discovery-feed",
+  ).shouldRequestDiscoveryRefill,
 }));
 
 jest.mock("../src/components/navigation/app-tab-bar", () => ({
@@ -110,6 +115,37 @@ const SAMPLE_FEED: DiscoveryFeedItem[] = [
   },
 ];
 
+const PAGE_TWO_ITEM: DiscoveryFeedItem = {
+  _id: "article-2",
+  tenantSlug: "demo-media",
+  kind: "article",
+  status: "published",
+  title: "Second page story",
+  summary: "More to read",
+  category: "Culture",
+  tags: [],
+  isPremium: false,
+  publishedAt: "2026-06-04T08:00:00.000Z",
+  reason: "personalized",
+  isLiked: false,
+};
+
+function defaultFeedMock(overrides: Record<string, unknown> = {}) {
+  return {
+    items: SAMPLE_FEED,
+    isLoading: false,
+    isRefreshing: false,
+    isLoadingMore: false,
+    isExhausted: false,
+    isSignedIn: true,
+    recordLike: mockRecordLike,
+    recordHide: mockRecordHide,
+    refresh: mockRefresh,
+    loadMore: mockLoadMore,
+    ...overrides,
+  };
+}
+
 describe("discover screen", () => {
   beforeAll(async () => {
     await initI18n();
@@ -119,20 +155,13 @@ describe("discover screen", () => {
     mockRecordLike.mockClear();
     mockRecordHide.mockClear();
     mockRefresh.mockClear();
+    mockLoadMore.mockClear();
     mockToggleBookmark.mockClear();
     mockOpenContentActions.mockClear();
     mockUseAppTheme.mockReturnValue(
       makeTheme(["articles", "episodes", "videos", "discover", "bookmarks"]),
     );
-    mockUseDiscoveryFeed.mockReturnValue({
-      items: SAMPLE_FEED,
-      isLoading: false,
-      isRefreshing: false,
-      isSignedIn: true,
-      recordLike: mockRecordLike,
-      recordHide: mockRecordHide,
-      refresh: mockRefresh,
-    });
+    mockUseDiscoveryFeed.mockReturnValue(defaultFeedMock());
     await changeAppLanguage("fr");
   });
 
@@ -144,32 +173,69 @@ describe("discover screen", () => {
     expect(toJSON()).toBeNull();
   });
 
-  it("renders a feature content card per feed item", () => {
+  it("renders a flat list of feature cards without section headers", () => {
     render(<DiscoverScreen />);
 
+    expect(screen.getByTestId("discover-list")).toBeTruthy();
     expect(screen.getAllByTestId("content-card-feature")).toHaveLength(2);
+    expect(screen.queryByTestId("discover-section-editorial")).toBeNull();
+    expect(screen.queryByTestId("discover-section-random")).toBeNull();
     expect(screen.getByText("Economie du soin")).toBeTruthy();
     expect(screen.getByText("West Texas Boom Report")).toBeTruthy();
   });
 
-  it("groups the feed into meaningful sections with explanatory copy", () => {
+  it("shows reason as a per-card kicker", () => {
     render(<DiscoverScreen />);
 
-    expect(screen.getByTestId("discover-section-editorial")).toBeTruthy();
-    expect(screen.getByTestId("discover-section-random")).toBeTruthy();
     expect(screen.getByText("À la une")).toBeTruthy();
-    expect(screen.getByText(/publications les plus récentes/i)).toBeTruthy();
     expect(screen.getByText("À redécouvrir")).toBeTruthy();
-    expect(screen.getByText(/pépite oubliée/i)).toBeTruthy();
-    expect(screen.queryByText("Surprise")).toBeNull();
-    expect(screen.queryByText("Sélection éditoriale")).toBeNull();
+  });
+
+  it("calls loadMore when the list reaches the end", () => {
+    render(<DiscoverScreen />);
+
+    fireEvent(screen.getByTestId("discover-list"), "onEndReached");
+
+    expect(mockLoadMore).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders a second page of cards when loadMore appends items", () => {
+    const { rerender } = render(<DiscoverScreen />);
+
+    mockUseDiscoveryFeed.mockReturnValue(
+      defaultFeedMock({
+        items: [...SAMPLE_FEED, PAGE_TWO_ITEM],
+        isLoadingMore: false,
+      }),
+    );
+
+    rerender(<DiscoverScreen />);
+
+    expect(screen.getAllByTestId("content-card-feature")).toHaveLength(3);
+    expect(screen.getByText("Second page story")).toBeTruthy();
+  });
+
+  it("renders the à jour end state when the feed is exhausted", () => {
+    mockUseDiscoveryFeed.mockReturnValue(
+      defaultFeedMock({
+        isExhausted: true,
+      }),
+    );
+
+    render(<DiscoverScreen />);
+
+    expect(screen.getByTestId("discover-end-state")).toBeTruthy();
+    expect(screen.getByText("Vous êtes à jour")).toBeTruthy();
+    expect(screen.getByText(/archives continuent/i)).toBeTruthy();
   });
 
   it("renders a loading skeleton while the feed is loading", () => {
-    mockUseDiscoveryFeed.mockReturnValue({
-      items: [],
-      isLoading: true,
-    });
+    mockUseDiscoveryFeed.mockReturnValue(
+      defaultFeedMock({
+        items: [],
+        isLoading: true,
+      }),
+    );
 
     render(<DiscoverScreen />);
 
@@ -177,10 +243,12 @@ describe("discover screen", () => {
   });
 
   it("renders an empty fallback when the feed has no items", () => {
-    mockUseDiscoveryFeed.mockReturnValue({
-      items: [],
-      isLoading: false,
-    });
+    mockUseDiscoveryFeed.mockReturnValue(
+      defaultFeedMock({
+        items: [],
+        isLoading: false,
+      }),
+    );
 
     render(<DiscoverScreen />);
 
@@ -219,15 +287,11 @@ describe("discover screen", () => {
   });
 
   it("does not render member actions for guests", () => {
-    mockUseDiscoveryFeed.mockReturnValue({
-      items: SAMPLE_FEED,
-      isLoading: false,
-      isRefreshing: false,
-      isSignedIn: false,
-      recordLike: mockRecordLike,
-      recordHide: mockRecordHide,
-      refresh: mockRefresh,
-    });
+    mockUseDiscoveryFeed.mockReturnValue(
+      defaultFeedMock({
+        isSignedIn: false,
+      }),
+    );
 
     render(<DiscoverScreen />);
 
@@ -240,26 +304,22 @@ describe("discover screen", () => {
   it("triggers a feed refresh when the user pulls down", () => {
     render(<DiscoverScreen />);
 
-    const refreshControl = screen.getByTestId("discover-scroll").props.refreshControl;
+    const refreshControl = screen.getByTestId("discover-list").props.refreshControl;
     refreshControl.props.onRefresh();
 
     expect(mockRefresh).toHaveBeenCalledTimes(1);
   });
 
   it("shows the refresh spinner while the feed is recomputing", () => {
-    mockUseDiscoveryFeed.mockReturnValue({
-      items: SAMPLE_FEED,
-      isLoading: false,
-      isRefreshing: true,
-      isSignedIn: true,
-      recordLike: mockRecordLike,
-      recordHide: mockRecordHide,
-      refresh: mockRefresh,
-    });
+    mockUseDiscoveryFeed.mockReturnValue(
+      defaultFeedMock({
+        isRefreshing: true,
+      }),
+    );
 
     render(<DiscoverScreen />);
 
-    expect(screen.getByTestId("discover-scroll").props.refreshControl.props.refreshing).toBe(
+    expect(screen.getByTestId("discover-list").props.refreshControl.props.refreshing).toBe(
       true,
     );
   });
@@ -293,31 +353,47 @@ describe("discover screen", () => {
 
     expect(screen.getByText("Economie du soin")).toBeTruthy();
 
-    mockUseDiscoveryFeed.mockReturnValue({
-      items: SAMPLE_FEED,
-      isLoading: false,
-      isRefreshing: false,
-      isSignedIn: true,
-      recordLike: mockRecordLike,
-      recordHide: mockRecordHide,
-      refresh: mockRefresh,
-    });
+    mockUseDiscoveryFeed.mockReturnValue(defaultFeedMock());
 
     rerender(<DiscoverScreen />);
     expect(screen.getByText("Economie du soin")).toBeTruthy();
 
-    mockUseDiscoveryFeed.mockReturnValue({
-      items: SAMPLE_FEED.filter((item) => item._id !== "article-1"),
-      isLoading: false,
-      isRefreshing: false,
-      isSignedIn: true,
-      recordLike: mockRecordLike,
-      recordHide: mockRecordHide,
-      refresh: mockRefresh,
-    });
+    mockUseDiscoveryFeed.mockReturnValue(
+      defaultFeedMock({
+        items: SAMPLE_FEED.filter((item) => item._id !== "article-1"),
+      }),
+    );
 
     rerender(<DiscoverScreen />);
     expect(screen.queryByText("Economie du soin")).toBeNull();
     expect(screen.getByText("West Texas Boom Report")).toBeTruthy();
+  });
+});
+
+describe("shouldRequestDiscoveryRefill", () => {
+  it("requests refill when the unseen pool is below the watermark", () => {
+    const { shouldRequestDiscoveryRefill } = jest.requireActual(
+      "../src/features/discovery/use-discovery-feed",
+    );
+
+    expect(
+      shouldRequestDiscoveryRefill({
+        itemCount: 3,
+        isExhausted: false,
+      }),
+    ).toBe(true);
+  });
+
+  it("requests refill when the feed is exhausted", () => {
+    const { shouldRequestDiscoveryRefill } = jest.requireActual(
+      "../src/features/discovery/use-discovery-feed",
+    );
+
+    expect(
+      shouldRequestDiscoveryRefill({
+        itemCount: 20,
+        isExhausted: true,
+      }),
+    ).toBe(true);
   });
 });

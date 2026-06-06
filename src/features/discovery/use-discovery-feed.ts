@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -13,35 +13,103 @@ export type DiscoveryFeedItem = ContentDoc & {
   isLiked: boolean;
 };
 
+export const DISCOVERY_PAGE_SIZE = 10;
+export const DISCOVERY_LOW_WATERMARK = 5;
+
+export function shouldRequestDiscoveryRefill(args: {
+  itemCount: number;
+  isExhausted: boolean;
+  watermark?: number;
+}): boolean {
+  const watermark = args.watermark ?? DISCOVERY_LOW_WATERMARK;
+  return args.isExhausted || args.itemCount < watermark;
+}
+
 export function useDiscoveryFeed(): {
   items: DiscoveryFeedItem[];
   isLoading: boolean;
   isRefreshing: boolean;
+  isLoadingMore: boolean;
+  isExhausted: boolean;
   isSignedIn: boolean;
   recordLike: (contentId: Id<"contents">) => void;
   recordHide: (contentId: Id<"contents">) => void;
   refresh: () => void;
+  loadMore: () => void;
 } {
   const { tenantSlug } = useAppTheme();
   const { isSignedIn } = useClerkAuth();
   const me = useQuery(api.users.queries.getMe, isSignedIn ? {} : "skip");
-  // Re-rolled on pull-to-refresh so jitter and affinity changes reshape the feed.
   const [feedSeed, setFeedSeed] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [fetchCursor, setFetchCursor] = useState<string | null>(null);
+  const [allItems, setAllItems] = useState<DiscoveryFeedItem[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [isExhausted, setIsExhausted] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const refillRequestedRef = useRef(false);
+  const pendingAppendRef = useRef<string | null>(null);
 
-  const data = useQuery(api.discovery.feed.getDiscoveryFeed, {
+  const page = useQuery(api.discovery.feed.getDiscoveryFeed, {
     tenantSlug,
     tokenIdentifier: me?.tokenIdentifier,
     feedSeed,
+    cursor: fetchCursor,
+    limit: DISCOVERY_PAGE_SIZE,
   });
 
   const recordInteraction = useMutation(api.discovery.interactions.recordInteraction);
+  const requestRefill = useMutation(api.discovery.refill.requestDiscoveryRefill);
 
   useEffect(() => {
-    if (data !== undefined) {
-      setIsRefreshing(false);
+    setFetchCursor(null);
+    setAllItems([]);
+    setNextCursor(null);
+    setIsExhausted(false);
+    setIsLoadingMore(false);
+    refillRequestedRef.current = false;
+    pendingAppendRef.current = null;
+  }, [feedSeed, tenantSlug, me?.tokenIdentifier]);
+
+  useEffect(() => {
+    if (page === undefined) {
+      return;
     }
-  }, [data, feedSeed]);
+
+    setIsRefreshing(false);
+    setIsLoadingMore(false);
+    setNextCursor(page.nextCursor);
+    setIsExhausted(page.isExhausted);
+
+    setAllItems((previous) => {
+      if (fetchCursor === null) {
+        return page.items as DiscoveryFeedItem[];
+      }
+
+      const existingIds = new Set(previous.map((item) => item._id));
+      const appended = (page.items as DiscoveryFeedItem[]).filter(
+        (item) => !existingIds.has(item._id),
+      );
+      return [...previous, ...appended];
+    });
+
+    pendingAppendRef.current = null;
+  }, [page, fetchCursor]);
+
+  useEffect(() => {
+    if (
+      !shouldRequestDiscoveryRefill({
+        itemCount: allItems.length,
+        isExhausted,
+      }) ||
+      refillRequestedRef.current
+    ) {
+      return;
+    }
+
+    refillRequestedRef.current = true;
+    void requestRefill({ tenantSlug });
+  }, [allItems.length, isExhausted, requestRefill, tenantSlug]);
 
   const recordLike = useCallback(
     (contentId: Id<"contents">) => {
@@ -78,18 +146,33 @@ export function useDiscoveryFeed(): {
     setFeedSeed((current) => current + 1);
   }, []);
 
-  const items = useMemo(
-    () => (data as DiscoveryFeedItem[] | undefined) ?? [],
-    [data],
-  );
+  const loadMore = useCallback(() => {
+    if (
+      page === undefined ||
+      isLoadingMore ||
+      nextCursor === null ||
+      pendingAppendRef.current === nextCursor
+    ) {
+      return;
+    }
+
+    pendingAppendRef.current = nextCursor;
+    setIsLoadingMore(true);
+    setFetchCursor(nextCursor);
+  }, [isLoadingMore, nextCursor, page]);
+
+  const items = useMemo(() => allItems, [allItems]);
 
   return {
     items,
-    isLoading: data === undefined,
+    isLoading: page === undefined && allItems.length === 0,
     isRefreshing,
+    isLoadingMore,
+    isExhausted,
     isSignedIn,
     recordLike,
     recordHide,
     refresh,
+    loadMore,
   };
 }

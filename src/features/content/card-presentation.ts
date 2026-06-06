@@ -43,11 +43,18 @@ export function cardKicker(item: ContentCardModel, t: Translate): string {
 /** Discovery kicker — surfaces external source when content is not CMS-authored. */
 export function discoveryCardKicker(
   item: ContentCardModel,
+  reason: string,
   t: Translate,
   tDiscover: Translate,
 ): string {
   if (item.source === "wikipedia") {
     return tDiscover("source.wikipedia");
+  }
+
+  const reasonKey = `sections.${reason}.title`;
+  const reasonLabel = tDiscover(reasonKey);
+  if (reasonLabel !== reasonKey) {
+    return reasonLabel;
   }
 
   return cardKicker(item, t);

@@ -1,4 +1,11 @@
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+  type ListRenderItemInfo,
+} from "react-native";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -14,15 +21,16 @@ import {
   discoveryCardKicker,
 } from "../../src/features/content/card-presentation";
 import { toContentCardModel } from "../../src/features/content/selectors";
-import { groupDiscoveryFeedSections } from "../../src/features/discovery/group-feed-sections";
-import { useDiscoveryFeed } from "../../src/features/discovery/use-discovery-feed";
+import {
+  useDiscoveryFeed,
+  type DiscoveryFeedItem,
+} from "../../src/features/discovery/use-discovery-feed";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { isModuleEnabled } from "../../src/features/tenant/public-config";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
-import type { FeedReason } from "../../convex/discovery/scoring";
 
 export default function DiscoverScreen() {
   const { t } = useTranslation("discover");
@@ -35,9 +43,12 @@ export default function DiscoverScreen() {
     items,
     isLoading,
     isRefreshing,
+    isLoadingMore,
+    isExhausted,
     isSignedIn,
     recordLike,
     refresh,
+    loadMore,
   } = useDiscoveryFeed();
 
   if (!isModuleEnabled(enabledModules, "discover")) {
@@ -45,48 +56,65 @@ export default function DiscoverScreen() {
   }
 
   const maxWidth = contentMaxWidth ?? (isTablet ? 640 : undefined);
-  const sections = groupDiscoveryFeedSections(items);
+  const listContentStyle = [
+    styles.content,
+    {
+      paddingBottom: tabBarSpace + persistentPlayerSpace,
+      ...(maxWidth ? { maxWidth, alignSelf: "center" as const, width: "100%" as const } : {}),
+    },
+  ];
+
+  const renderItem = ({ item }: ListRenderItemInfo<DiscoveryFeedItem>) => {
+    const card = toContentCardModel(item);
+
+    return (
+      <View
+        style={{
+          marginBottom: theme.spacing.sm * scaleSpace,
+        }}
+      >
+        <ContentCard
+          variant="feature"
+          item={card}
+          kicker={discoveryCardKicker(card, item.reason, tHome, t)}
+          meta={cardDurationMeta(card, tHome)}
+          divider={false}
+          actions={
+            isSignedIn ? (
+              <>
+                <ContentCardLikeAction
+                  isLiked={item.isLiked}
+                  onPress={() => recordLike(item._id as never)}
+                  accessibilityLabel={t("actions.like")}
+                />
+                <ContentCardFavoriteAction
+                  contentId={item._id as never}
+                  accessibilityLabel={t("library:bookmark.saveCta")}
+                  savedAccessibilityLabel={t("library:bookmark.savedCta")}
+                />
+                <ContentCardOverflowAction
+                  contentId={item._id as never}
+                  accessibilityLabel={t("actions.more")}
+                />
+              </>
+            ) : undefined
+          }
+        />
+      </View>
+    );
+  };
 
   return (
     <Screen>
-      <View
-        testID="discover-screen"
-        style={[
-          styles.header,
-          {
-            gap: theme.spacing.xs * scaleSpace,
-            marginBottom: theme.spacing.lg * scaleSpace,
-            ...(maxWidth ? { maxWidth, alignSelf: "center", width: "100%" } : {}),
-          },
-        ]}
-      >
-        <Text
-          style={[
-            styles.title,
-            { color: theme.colors.heading, fontSize: 28 * scaleFont },
-          ]}
-        >
-          {t("title")}
-        </Text>
-        <Text
-          style={[
-            styles.subtitle,
-            { color: theme.colors.textMuted, fontSize: 14 * scaleFont },
-          ]}
-        >
-          {t("subtitle")}
-        </Text>
-      </View>
-
-      <ScrollView
-        testID="discover-scroll"
-        contentContainerStyle={[
-          styles.content,
-          {
-            paddingBottom: tabBarSpace + persistentPlayerSpace,
-            ...(maxWidth ? { maxWidth, alignSelf: "center", width: "100%" } : {}),
-          },
-        ]}
+      <FlatList
+        testID="discover-list"
+        data={items}
+        keyExtractor={(item) => item._id}
+        renderItem={renderItem}
+        contentContainerStyle={listContentStyle}
+        showsVerticalScrollIndicator={false}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.4}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
@@ -96,122 +124,121 @@ export default function DiscoverScreen() {
             progressBackgroundColor={theme.colors.surface}
           />
         }
-        showsVerticalScrollIndicator={false}
-      >
-        {isLoading ? (
-          <DiscoverSkeleton />
-        ) : items.length === 0 ? (
-          <DiscoverEmpty />
-        ) : (
-          sections.map((section, sectionIndex) => (
-            <DiscoverFeedSection
-              key={section.reason}
-              reason={section.reason}
-              isFirst={sectionIndex === 0}
-              items={section.items}
-              tHome={tHome}
-              isSignedIn={isSignedIn}
-              recordLike={recordLike}
+        ListHeaderComponent={
+          <View
+            testID="discover-screen"
+            style={[
+              styles.header,
+              {
+                gap: theme.spacing.xs * scaleSpace,
+                marginBottom: theme.spacing.lg * scaleSpace,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.title,
+                { color: theme.colors.heading, fontSize: 28 * scaleFont },
+              ]}
+            >
+              {t("title")}
+            </Text>
+            <Text
+              style={[
+                styles.subtitle,
+                { color: theme.colors.textMuted, fontSize: 14 * scaleFont },
+              ]}
+            >
+              {t("subtitle")}
+            </Text>
+          </View>
+        }
+        ListEmptyComponent={
+          isLoading ? <DiscoverSkeleton /> : items.length === 0 ? <DiscoverEmpty /> : null
+        }
+        ListFooterComponent={
+          items.length > 0 ? (
+            <DiscoverFeedFooter
+              isLoadingMore={isLoadingMore}
+              isExhausted={isExhausted}
             />
-          ))
-        )}
-      </ScrollView>
+          ) : null
+        }
+      />
     </Screen>
   );
 }
 
-function DiscoverFeedSection({
-  reason,
-  isFirst,
-  items,
-  tHome,
-  isSignedIn,
-  recordLike,
+function DiscoverFeedFooter({
+  isLoadingMore,
+  isExhausted,
 }: {
-  reason: FeedReason;
-  isFirst: boolean;
-  items: ReturnType<typeof useDiscoveryFeed>["items"];
-  tHome: (key: string, options?: Record<string, unknown>) => string;
-  isSignedIn: boolean;
-  recordLike: ReturnType<typeof useDiscoveryFeed>["recordLike"];
+  isLoadingMore: boolean;
+  isExhausted: boolean;
 }) {
-  const { t } = useTranslation(["discover", "library"]);
+  const { t } = useTranslation("discover");
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
 
-  return (
-    <View
-      testID={`discover-section-${reason}`}
-      style={[
-        styles.section,
-        {
-          gap: theme.spacing.sm * scaleSpace,
-          marginTop: isFirst ? 0 : theme.spacing.xl * scaleSpace,
-        },
-      ]}
-    >
+  if (isLoadingMore) {
+    return (
       <View
+        testID="discover-loading-more"
         style={[
-          styles.sectionIntro,
+          styles.footer,
           {
-            gap: theme.spacing.xs * scaleSpace,
+            paddingVertical: theme.spacing.md * scaleSpace,
           },
         ]}
       >
         <Text
           style={[
-            styles.sectionTitle,
-            { color: theme.colors.heading, fontSize: 18 * scaleFont },
-          ]}
-        >
-          {t(`discover:sections.${reason}.title`)}
-        </Text>
-        <Text
-          style={[
-            styles.sectionBody,
+            styles.footerBody,
             { color: theme.colors.textMuted, fontSize: 13 * scaleFont },
           ]}
         >
-          {t(`discover:sections.${reason}.body`)}
+          {t("loadingMore")}
         </Text>
       </View>
+    );
+  }
 
-      <View style={{ gap: theme.spacing.sm * scaleSpace }}>
-        {items.map((item) => {
-          const card = toContentCardModel(item);
+  if (!isExhausted) {
+    return null;
+  }
 
-          return (
-            <ContentCard
-              key={item._id}
-              variant="feature"
-              item={card}
-              kicker={discoveryCardKicker(card, tHome, t)}
-              meta={cardDurationMeta(card, tHome)}
-              divider={false}
-              actions={
-                isSignedIn ? (
-                  <>
-                    <ContentCardLikeAction
-                      isLiked={item.isLiked}
-                      onPress={() => recordLike(item._id as never)}
-                      accessibilityLabel={t("discover:actions.like")}
-                    />
-                    <ContentCardFavoriteAction
-                      contentId={item._id as never}
-                      accessibilityLabel={t("library:bookmark.saveCta")}
-                      savedAccessibilityLabel={t("library:bookmark.savedCta")}
-                    />
-                    <ContentCardOverflowAction
-                      contentId={item._id as never}
-                      accessibilityLabel={t("discover:actions.more")}
-                    />
-                  </>
-                ) : undefined
-              }
-            />
-          );
-        })}
-      </View>
+  return (
+    <View
+      testID="discover-end-state"
+      style={[
+        styles.footer,
+        styles.endState,
+        {
+          borderRadius: theme.radii.lg,
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.border,
+          padding: theme.spacing.lg * scaleSpace,
+          gap: theme.spacing.xs * scaleSpace,
+          marginTop: theme.spacing.md * scaleSpace,
+        },
+      ]}
+    >
+      <Text
+        style={[
+          styles.endTitle,
+          { color: theme.colors.heading, fontSize: 16 * scaleFont },
+        ]}
+      >
+        {t("endOfFeedTitle")}
+      </Text>
+      <Text
+        style={[
+          styles.footerBody,
+          { color: theme.colors.textMuted, fontSize: 13 * scaleFont },
+        ]}
+      >
+        {t("endOfFeedBody")}
+      </Text>
     </View>
   );
 }
@@ -326,16 +353,23 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
+    paddingHorizontal: 0,
   },
-  section: {},
-  sectionIntro: {},
-  sectionTitle: {
+  footer: {
+    alignItems: "center",
+  },
+  endState: {
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: "flex-start",
+  },
+  endTitle: {
     fontFamily: fontFamilies.display,
     letterSpacing: -0.2,
   },
-  sectionBody: {
+  footerBody: {
     fontFamily: fontFamilies.body,
     lineHeight: 18,
+    textAlign: "left",
   },
   skeletonStack: {},
   skeletonRow: {

@@ -23,7 +23,7 @@ jest.mock("../src/features/auth/use-clerk-auth", () => ({
 
 jest.mock("../src/features/bookmarks/use-bookmarks", () => ({
   useBookmarks: () => ({
-    bookmarks: [{ content: { _id: "a1", title: "Saved", kind: "article", category: "News", isPremium: false } }],
+    bookmarks: [{ content: { _id: "a1", title: "Care economy", kind: "article", category: "News", isPremium: false } }],
     isMember: true,
     isMembershipLoading: false,
     isBookmarksLoading: false,
@@ -41,8 +41,10 @@ jest.mock("../src/features/downloads/use-downloads", () => ({
   }),
 }));
 
+const mockUseIsMember = jest.fn(() => ({ isMember: true, isLoading: false }));
+
 jest.mock("../src/features/membership/use-is-member", () => ({
-  useIsMember: () => ({ isMember: false }),
+  useIsMember: () => mockUseIsMember(),
 }));
 
 jest.mock("../src/components/navigation/app-tab-bar", () => ({
@@ -60,7 +62,7 @@ jest.mock("../src/components/library/resume-card", () => ({
 jest.mock("../src/components/library/saved-library-section", () => {
   const { Text } = require("react-native");
   return {
-    SavedLibrarySection: () => <Text>Saved</Text>,
+    SavedLibrarySection: () => <Text>Saved library section</Text>,
   };
 });
 
@@ -148,6 +150,7 @@ describe("capability gates", () => {
   beforeEach(async () => {
     await changeAppLanguage("en");
     mockOpenPaywall.mockClear();
+    mockUseIsMember.mockReturnValue({ isMember: true, isLoading: false });
     mockUseAppTheme.mockReturnValue(makeTheme(ALL_CAPS));
   });
 
@@ -180,7 +183,7 @@ describe("capability gates", () => {
 
     render(<LibraryScreen />);
 
-    expect(screen.queryByText("Saved")).toBeNull();
+    expect(screen.queryByText("Saved library section")).toBeNull();
     expect(screen.queryByText("Lists")).toBeNull();
     expect(screen.queryByText("Offline shelf section")).toBeNull();
   });
@@ -188,7 +191,7 @@ describe("capability gates", () => {
   it("shows library capability sections when enabled", () => {
     render(<LibraryScreen />);
 
-    expect(screen.getByText("Saved")).toBeTruthy();
+    expect(screen.getByText("Saved library section")).toBeTruthy();
     expect(screen.getAllByText("Lists").length).toBeGreaterThan(0);
     expect(screen.getByText("Offline shelf section")).toBeTruthy();
   });
@@ -205,6 +208,8 @@ describe("capability gates", () => {
   });
 
   it("shows the members room card when membersRoom is enabled", () => {
+    mockUseIsMember.mockReturnValue({ isMember: false, isLoading: false });
+
     render(<CommunityScreen />);
 
     expect(screen.getByText("Salon membres")).toBeTruthy();

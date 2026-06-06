@@ -139,7 +139,7 @@ export default function LibraryScreen() {
 
             <Pressable
               accessibilityRole="button"
-              onPress={() => router.push("/home")}
+              onPress={() => router.replace("/home")}
               style={({ pressed }) => [
                 styles.secondaryButton,
                 {
@@ -202,7 +202,8 @@ export default function LibraryScreen() {
               styles.topBarAction,
               {
                 color: theme.colors.heading,
-                fontSize: 16 * scaleFont,
+                fontSize: 19 * scaleFont,
+                lineHeight: 34,
               },
             ]}
           >

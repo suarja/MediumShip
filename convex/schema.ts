@@ -186,4 +186,24 @@ export default defineSchema({
   })
     .index("by_tokenIdentifier_and_contentId", ["tokenIdentifier", "contentId"])
     .index("by_tokenIdentifier_and_updatedAt", ["tokenIdentifier", "updatedAt"]),
+  personalLists: defineTable({
+    tokenIdentifier: v.string(),
+    title: v.string(),
+    visibility: v.literal("private"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_tokenIdentifier", ["tokenIdentifier"])
+    .index("by_tokenIdentifier_and_updatedAt", [
+      "tokenIdentifier",
+      "updatedAt",
+    ]),
+  personalListItems: defineTable({
+    listId: v.id("personalLists"),
+    contentId: v.id("contents"),
+    position: v.number(),
+    addedAt: v.number(),
+  })
+    .index("by_listId_and_position", ["listId", "position"])
+    .index("by_listId_and_contentId", ["listId", "contentId"]),
 });

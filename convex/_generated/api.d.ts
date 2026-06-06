@@ -23,6 +23,7 @@ import type * as collections_model from "../collections/model.js";
 import type * as collections_queries from "../collections/queries.js";
 import type * as content_queries from "../content/queries.js";
 import type * as discovery_feed from "../discovery/feed.js";
+import type * as discovery_interactions from "../discovery/interactions.js";
 import type * as discovery_provider from "../discovery/provider.js";
 import type * as discovery_scoring from "../discovery/scoring.js";
 import type * as discovery_visibility from "../discovery/visibility.js";
@@ -72,6 +73,7 @@ declare const fullApi: ApiFromModules<{
   "collections/queries": typeof collections_queries;
   "content/queries": typeof content_queries;
   "discovery/feed": typeof discovery_feed;
+  "discovery/interactions": typeof discovery_interactions;
   "discovery/provider": typeof discovery_provider;
   "discovery/scoring": typeof discovery_scoring;
   "discovery/visibility": typeof discovery_visibility;

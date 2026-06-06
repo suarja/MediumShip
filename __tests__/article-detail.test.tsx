@@ -8,6 +8,7 @@ jest.mock("convex/react", () => ({
   useQuery: () => undefined,
   useConvexAuth: () => ({ isAuthenticated: false }),
   useMutation: () => jest.fn(),
+  useAction: () => jest.fn(),
 }));
 
 jest.mock("expo-router", () => ({

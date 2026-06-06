@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import { api, internal } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import { action, internalMutation } from "../_generated/server";
 import { fetchWikipediaArticleBody } from "./providers/wikipedia";
 
@@ -27,15 +27,23 @@ const fetchResultValidator = v.object({
   fetched: v.boolean(),
 });
 
+type FetchArticleBodyResult = {
+  articleBody: string;
+  fetched: boolean;
+};
+
 export const fetchArticleBody = action({
   args: {
     contentId: v.id("contents"),
   },
   returns: fetchResultValidator,
-  handler: async (ctx, { contentId }) => {
-    const content = await ctx.runQuery(api.content.queries.getPublishedById, {
-      id: contentId,
-    });
+  handler: async (ctx, { contentId }): Promise<FetchArticleBodyResult> => {
+    const content: Doc<"contents"> | null = await ctx.runQuery(
+      api.content.queries.getPublishedById,
+      {
+        id: contentId,
+      },
+    );
 
     if (!content) {
       return { articleBody: "", fetched: false };

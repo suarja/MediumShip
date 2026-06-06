@@ -1,6 +1,7 @@
 export default {
   back: "← Feed",
   loading: "Loading article…",
+  bodyLoading: "Loading full article…",
   offlineTitle: "Article unavailable offline",
   offlineBody: "Reconnect to load this article for the first time, or open a downloaded copy.",
   notFoundTitle: "Article unavailable",

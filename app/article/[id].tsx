@@ -1,8 +1,8 @@
-import { StyleSheet, Text } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
-import { useQuery } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import { useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
@@ -14,6 +14,7 @@ import { DetailHeader } from "../../src/components/content/detail-header";
 import { DetailHero } from "../../src/components/content/detail-hero";
 import { PremiumPaywall } from "../../src/components/content/premium-paywall";
 import { resolveContentSource } from "../../src/features/content/source";
+import { splitArticleBodyParagraphs } from "../../src/features/content/article-body";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useDownloads } from "../../src/features/downloads/use-downloads";
@@ -63,11 +64,43 @@ export default function ArticleDetailScreen() {
   const isWikipedia = contentSource === "wikipedia";
   const [scrolledToEnd, setScrolledToEnd] = useState(false);
   const [dwellSeconds, setDwellSeconds] = useState(0);
+  const [isFetchingBody, setIsFetchingBody] = useState(false);
+  const bodyFetchStartedRef = useRef<string | null>(null);
+  const fetchArticleBody = useAction(api.discovery.immersion.fetchArticleBody);
 
   useEffect(() => {
     setScrolledToEnd(false);
     setDwellSeconds(0);
+    bodyFetchStartedRef.current = null;
+    setIsFetchingBody(false);
   }, [resolvedContent?._id]);
+
+  useEffect(() => {
+    if (state !== "ready" || !resolvedContent || premiumGate === "locked") {
+      return;
+    }
+
+    if (resolvedContent.articleBody?.trim()) {
+      return;
+    }
+
+    const contentId = resolvedContent._id;
+    if (bodyFetchStartedRef.current === contentId) {
+      return;
+    }
+
+    bodyFetchStartedRef.current = contentId;
+    setIsFetchingBody(true);
+
+    fetchArticleBody({ contentId: contentId as Id<"contents"> }).finally(() => {
+      setIsFetchingBody(false);
+    });
+  }, [
+    fetchArticleBody,
+    premiumGate,
+    resolvedContent,
+    state,
+  ]);
 
   useEffect(() => {
     if (state !== "ready" || !resolvedContent) {
@@ -104,6 +137,10 @@ export default function ArticleDetailScreen() {
     },
     [],
   );
+
+  const articleParagraphs = resolvedContent?.articleBody
+    ? splitArticleBodyParagraphs(resolvedContent.articleBody)
+    : [];
 
   return (
     <ContentDetailShell
@@ -164,19 +201,47 @@ export default function ArticleDetailScreen() {
                   showExtractNote
                 />
               ) : null}
-              {resolvedContent.articleBody ? (
-                <Text
+              {isFetchingBody && articleParagraphs.length === 0 ? (
+                <View
                   style={[
-                    styles.body,
-                    {
-                      color: theme.colors.text,
-                      fontSize: 16 * scaleFont,
-                      lineHeight: 26 * scaleFont,
-                    },
+                    styles.bodyLoading,
+                    { paddingVertical: 32 * scaleSpace, gap: 12 * scaleSpace },
                   ]}
+                  accessibilityRole="progressbar"
                 >
-                  {resolvedContent.articleBody}
-                </Text>
+                  <ActivityIndicator color={theme.colors.heading} />
+                  <Text
+                    style={[
+                      styles.bodyLoadingLabel,
+                      {
+                        color: theme.colors.textMuted,
+                        fontSize: 14 * scaleFont,
+                        lineHeight: 20 * scaleFont,
+                      },
+                    ]}
+                  >
+                    {t("bodyLoading")}
+                  </Text>
+                </View>
+              ) : null}
+              {articleParagraphs.length > 0 ? (
+                <View style={{ gap: 20 * scaleSpace }}>
+                  {articleParagraphs.map((paragraph, index) => (
+                    <Text
+                      key={`${resolvedContent._id}-paragraph-${index}`}
+                      style={[
+                        styles.bodyParagraph,
+                        {
+                          color: theme.colors.text,
+                          fontSize: 17 * scaleFont,
+                          lineHeight: 28 * scaleFont,
+                        },
+                      ]}
+                    >
+                      {paragraph}
+                    </Text>
+                  ))}
+                </View>
               ) : null}
             </>
           )}
@@ -187,5 +252,7 @@ export default function ArticleDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  body: { fontFamily: fontFamilies.body },
+  bodyParagraph: { fontFamily: fontFamilies.body },
+  bodyLoading: { alignItems: "center" },
+  bodyLoadingLabel: { fontFamily: fontFamilies.body, textAlign: "center" },
 });

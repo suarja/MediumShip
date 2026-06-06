@@ -1,6 +1,7 @@
 export default {
   back: "← Fil",
   loading: "Chargement de l'article…",
+  bodyLoading: "Chargement de l'article complet…",
   offlineTitle: "Article indisponible hors ligne",
   offlineBody: "Reconnectez-vous pour charger cet article une première fois, ou ouvrez une copie téléchargée.",
   notFoundTitle: "Article indisponible",

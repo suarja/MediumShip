@@ -93,6 +93,7 @@ export default defineSchema({
     ),
   })
     .index("by_tenant_and_status", ["tenantSlug", "status"])
+    .index("by_tenant_and_status_and_category", ["tenantSlug", "status", "category"])
     .index("by_tenant_and_kind", ["tenantSlug", "kind"])
     .index("by_tenantSlug", ["tenantSlug"])
     .index("by_tenantSlug_and_slug", ["tenantSlug", "slug"])

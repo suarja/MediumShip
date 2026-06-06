@@ -53,6 +53,21 @@ export const searchPublished = query({
   },
 });
 
+export const listPublishedByCategory = query({
+  args: { tenantSlug: v.string(), category: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("contents")
+      .withIndex("by_tenant_and_status_and_category", (q) =>
+        q
+          .eq("tenantSlug", args.tenantSlug)
+          .eq("status", "published")
+          .eq("category", args.category),
+      )
+      .take(50);
+  },
+});
+
 export const listPublishedCategories = query({
   args: { tenantSlug: v.string() },
   handler: async (ctx, args) => {

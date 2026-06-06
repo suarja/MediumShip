@@ -48,4 +48,12 @@ export default {
     purchasingPower: "Purchasing power",
     leaBardin: "Lea Bardin",
   },
+  category: {
+    backToExplore: "Back to Explore",
+    loading: "Loading category…",
+    empty: "No published content in this category.",
+  },
+  categoryCount_one: "{{count}} content",
+  categoryCount_other: "{{count}} contents",
+  trendA11y: "Search for {{label}}",
 } as const;

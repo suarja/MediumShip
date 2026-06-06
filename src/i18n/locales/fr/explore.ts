@@ -48,4 +48,12 @@ export default {
     purchasingPower: "Pouvoir d'achat",
     leaBardin: "Lea Bardin",
   },
+  category: {
+    backToExplore: "Retour vers Explorer",
+    loading: "Chargement de la categorie…",
+    empty: "Aucun contenu publie dans cette categorie.",
+  },
+  categoryCount_one: "{{count}} contenu",
+  categoryCount_other: "{{count}} contenus",
+  trendA11y: "Chercher {{label}}",
 } as const;

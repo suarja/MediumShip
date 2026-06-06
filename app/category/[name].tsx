@@ -2,29 +2,30 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery } from "convex/react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
 import { toContentCardModel } from "../../src/features/content/selectors";
-import type { ContentKind } from "../../src/features/content/types";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 import { fontFamilies } from "../../src/features/theme/fonts";
-import { withAlpha } from "../../src/features/theme/contrast";
 import { FeedRow } from "../../src/components/content/feed-row";
 import { Screen } from "../../src/components/layout/screen";
 
 export default function CategoryScreen() {
   const { name } = useLocalSearchParams<{ name: string }>();
   const router = useRouter();
+  const { t } = useTranslation("explore");
   const { theme, tenantSlug } = useAppTheme();
   const { scaleFont, scaleSpace, isTablet } = useResponsive();
   const insets = useSafeAreaInsets();
 
-  const contents = useQuery(api.content.queries.listPublishedFeed, { tenantSlug });
+  const contents = useQuery(api.content.queries.listPublishedByCategory, {
+    tenantSlug,
+    category: name ?? "",
+  });
 
-  const filtered = (contents ?? [])
-    .filter((c) => c.category.toLowerCase() === (name ?? "").toLowerCase())
-    .map(toContentCardModel);
+  const items = (contents ?? []).map(toContentCardModel);
 
   const maxWidth = isTablet ? 640 : undefined;
   const contentStyle = maxWidth
@@ -44,10 +45,16 @@ export default function CategoryScreen() {
       >
         <Pressable
           onPress={() => router.back()}
-          style={styles.backBtn}
+          style={styles.topBarAction}
           accessibilityRole="button"
+          accessibilityLabel={t("category.backToExplore")}
         >
-          <Text style={[styles.backLabel, { color: theme.colors.heading, fontSize: 22 * scaleFont }]}>
+          <Text
+            style={[
+              styles.topBarActionGlyph,
+              { color: theme.colors.heading, fontSize: 24 * scaleFont },
+            ]}
+          >
             ‹
           </Text>
         </Pressable>
@@ -66,18 +73,18 @@ export default function CategoryScreen() {
       {contents === undefined ? (
         <View style={styles.center}>
           <Text style={[styles.hint, { color: theme.colors.textMuted, fontSize: 14 * scaleFont }]}>
-            Chargement…
+            {t("category.loading")}
           </Text>
         </View>
-      ) : filtered.length === 0 ? (
+      ) : items.length === 0 ? (
         <View style={styles.center}>
           <Text style={[styles.hint, { color: theme.colors.textMuted, fontSize: 14 * scaleFont }]}>
-            Aucun contenu dans cette catégorie.
+            {t("category.empty")}
           </Text>
         </View>
       ) : (
         <FlatList
-          data={filtered}
+          data={items}
           keyExtractor={(item) => item.id}
           contentContainerStyle={[
             styles.list,
@@ -106,11 +113,13 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 12,
   },
-  backBtn: {
+  topBarAction: {
     width: 34,
-    alignItems: "flex-start",
+    height: 34,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  backLabel: {
+  topBarActionGlyph: {
     fontFamily: fontFamilies.body,
     lineHeight: 28,
   },

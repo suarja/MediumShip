@@ -9,7 +9,9 @@ export const WIKIPEDIA_USER_AGENT =
 
 export const WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php";
 
-const PAGES_PER_CATEGORY = 5;
+const PAGES_PER_CATEGORY = 12;
+
+export { PAGES_PER_CATEGORY as WIKIPEDIA_PAGES_PER_CATEGORY };
 
 export type WikipediaPageRaw = {
   pageid: number;

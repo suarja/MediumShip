@@ -24,6 +24,12 @@ export type FetchDemandOptions = {
 const DEFAULT_MAX_CATEGORIES = 5;
 const DEFAULT_DIVERSITY_SLOTS = 2;
 
+/** Deeper batch for scheduled cron + on-demand refill (Slice E). */
+export const SCHEDULED_INGESTION_DEMAND_OPTIONS: FetchDemandOptions = {
+  maxCategories: 8,
+  diversitySlots: 3,
+};
+
 export function aggregateCategoryAffinities(
   preferences: readonly TenantCategoryPreference[],
 ): AggregatedCategoryAffinity[] {

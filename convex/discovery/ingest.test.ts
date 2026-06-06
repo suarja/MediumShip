@@ -6,6 +6,7 @@ import { internal } from "../_generated/api";
 import schema from "../schema";
 import { modules } from "../../convexTestModules";
 import { aggregateCategoryAffinities } from "./fetchDemand";
+import { WIKIPEDIA_PAGES_PER_CATEGORY } from "./providers/wikipedia";
 
 const TENANT = "demo-media";
 
@@ -70,5 +71,11 @@ describe("getTenantIngestionInputs", () => {
     expect(inputs.aggregatedAffinities).toEqual([
       { targetId: "science", score: 55 },
     ]);
+  });
+});
+
+describe("scheduled ingestion depth", () => {
+  it("requests a larger Wikipedia batch per category", () => {
+    expect(WIKIPEDIA_PAGES_PER_CATEGORY).toBeGreaterThanOrEqual(10);
   });
 });

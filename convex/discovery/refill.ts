@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
 import { mutation } from "../_generated/server";
-import { computeFetchDemand } from "./fetchDemand";
+import { computeFetchDemand, SCHEDULED_INGESTION_DEMAND_OPTIONS } from "./fetchDemand";
 
 /** Minimum interval between on-demand fetches for the same (tenant, category). */
 export const REFILL_THROTTLE_MS = 5 * 60 * 1000;
@@ -35,6 +35,7 @@ export const requestDiscoveryRefill = mutation({
     const demand = computeFetchDemand(
       inputs.aggregatedAffinities,
       inputs.seedCategories,
+      SCHEDULED_INGESTION_DEMAND_OPTIONS,
     );
 
     const now = Date.now();

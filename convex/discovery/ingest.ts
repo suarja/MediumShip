@@ -9,6 +9,7 @@ import {
 import {
   aggregateCategoryAffinities,
   computeFetchDemand,
+  SCHEDULED_INGESTION_DEMAND_OPTIONS,
 } from "./fetchDemand";
 import { PROVIDERS } from "./provider";
 
@@ -139,6 +140,7 @@ export const runDiscoveryIngestion = internalAction({
       const demand = computeFetchDemand(
         inputs.aggregatedAffinities,
         inputs.seedCategories,
+        SCHEDULED_INGESTION_DEMAND_OPTIONS,
       );
 
       if (demand.categories.length === 0) {

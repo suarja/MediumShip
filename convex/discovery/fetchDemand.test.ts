@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { computeFetchDemand } from "./fetchDemand";
+import { computeFetchDemand, SCHEDULED_INGESTION_DEMAND_OPTIONS } from "./fetchDemand";
 
 describe("computeFetchDemand", () => {
   it("returns tenant seed categories on cold start with no affinities", () => {
@@ -67,5 +67,26 @@ describe("computeFetchDemand", () => {
     );
 
     expect(demand.categories).toHaveLength(3);
+  });
+
+  it("honors scheduled ingestion limits for deeper cron batches", () => {
+    const demand = computeFetchDemand(
+      [
+        { targetId: "science", score: 200 },
+        { targetId: "history", score: 180 },
+        { targetId: "culture", score: 160 },
+        { targetId: "politics", score: 140 },
+        { targetId: "economy", score: 120 },
+        { targetId: "technology", score: 100 },
+      ],
+      ["sports", "music", "art"],
+      SCHEDULED_INGESTION_DEMAND_OPTIONS,
+    );
+
+    expect(demand.categories).toHaveLength(
+      SCHEDULED_INGESTION_DEMAND_OPTIONS.maxCategories,
+    );
+    expect(demand.categories).toContain("science");
+    expect(demand.categories).toContain("sports");
   });
 });

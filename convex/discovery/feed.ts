@@ -25,6 +25,63 @@ export type DiscoveryFeedItem = Doc<"contents"> & {
   isLiked: boolean;
 };
 
+const discoveryFeedItemValidator = v.object({
+  _id: v.id("contents"),
+  _creationTime: v.number(),
+  tenantSlug: v.string(),
+  kind: v.union(
+    v.literal("article"),
+    v.literal("episode"),
+    v.literal("video"),
+  ),
+  status: v.union(
+    v.literal("draft"),
+    v.literal("published"),
+    v.literal("archived"),
+  ),
+  slug: v.string(),
+  title: v.string(),
+  summary: v.string(),
+  category: v.string(),
+  tags: v.array(v.string()),
+  isPremium: v.boolean(),
+  heroImageUrl: v.optional(v.string()),
+  publishedAt: v.optional(v.string()),
+  readingTimeMinutes: v.optional(v.number()),
+  articleBody: v.optional(v.string()),
+  audioUrl: v.optional(v.string()),
+  durationSeconds: v.optional(v.number()),
+  videoSource: v.optional(
+    v.union(
+      v.object({
+        kind: v.literal("youtube"),
+        youtubeVideoId: v.string(),
+        youtubeUrl: v.string(),
+      }),
+      v.object({
+        kind: v.literal("hosted"),
+        uploadKey: v.string(),
+        playbackUrl: v.string(),
+      }),
+    ),
+  ),
+  source: v.optional(v.union(v.literal("cms"), v.literal("wikipedia"))),
+  externalId: v.optional(v.string()),
+  canonicalUrl: v.optional(v.string()),
+  reason: v.union(
+    v.literal("personalized"),
+    v.literal("archive"),
+    v.literal("editorial"),
+    v.literal("random"),
+  ),
+  isLiked: v.boolean(),
+});
+
+export type OrderedFeedEntry = {
+  content: Doc<"contents">;
+  reason: FeedReason;
+};
+
 function recencyScore(content: Doc<"contents">): number {
   return content.publishedAt ? Date.parse(content.publishedAt) : 0;
 }
@@ -36,7 +93,7 @@ function referenceTimeFrom(contents: readonly Doc<"contents">[]): number {
   }, 0);
 }
 
-function hashFeedSeed(tokenIdentifier: string, feedSeed: number): number {
+export function hashFeedSeed(tokenIdentifier: string, feedSeed: number): number {
   let hash = feedSeed >>> 0;
 
   for (let index = 0; index < tokenIdentifier.length; index += 1) {
@@ -44,6 +101,15 @@ function hashFeedSeed(tokenIdentifier: string, feedSeed: number): number {
   }
 
   return hash;
+}
+
+function parseCursor(cursor: string | null | undefined): number {
+  if (cursor === null || cursor === undefined || cursor === "") {
+    return 0;
+  }
+
+  const offset = Number.parseInt(cursor, 10);
+  return Number.isFinite(offset) && offset >= 0 ? offset : 0;
 }
 
 async function loadLikedContentIds(
@@ -93,9 +159,7 @@ async function loadSeenContentIds(
       .collect(),
   ]);
 
-  return new Set(
-    [...opened, ...finished].map((row) => row.contentId),
-  );
+  return new Set([...opened, ...finished].map((row) => row.contentId));
 }
 
 async function loadAffinities(
@@ -116,70 +180,119 @@ async function loadAffinities(
   }));
 }
 
+/** Builds a stable, paginated feed: unseen bucket mix first, then recycled seen archive. */
+export function buildOrderedDiscoveryFeed(args: {
+  visible: readonly Doc<"contents">[];
+  tokenIdentifier: string | null;
+  feedSeed: number;
+  hiddenIds: Set<Id<"contents">>;
+  seenIds: Set<Id<"contents">>;
+  affinities: Affinity[];
+}): { ordered: OrderedFeedEntry[]; unseenCount: number } {
+  const referenceTime = referenceTimeFrom(args.visible);
+
+  if (!args.tokenIdentifier) {
+    const scored = args.visible.map((content) => ({
+      id: content._id,
+      content,
+      score: recencyScore(content),
+    }));
+    const mixed = bucketFeed(scored, GUEST_FEED_MIX);
+    return {
+      ordered: mixed.map((item) => ({
+        content: item.content,
+        reason: item.reason,
+      })),
+      unseenCount: mixed.length,
+    };
+  }
+
+  const rng = createSeededRng(
+    hashFeedSeed(args.tokenIdentifier, args.feedSeed),
+  );
+  const eligible = args.visible.filter(
+    (content) => !args.hiddenIds.has(content._id),
+  );
+
+  const unseen = eligible.filter((content) => !args.seenIds.has(content._id));
+  const seen = eligible.filter((content) => args.seenIds.has(content._id));
+
+  const unseenScored = unseen.map((content) => ({
+    id: content._id,
+    content,
+    score: scoreContent(content, args.affinities, referenceTime, { rng }),
+  }));
+
+  const unseenMixed = bucketFeed(unseenScored, MEMBER_FEED_MIX, rng);
+
+  const seenScored = seen
+    .map((content) => ({
+      content,
+      score: scoreContent(content, args.affinities, referenceTime, {
+        seen: true,
+        rng,
+      }),
+    }))
+    .sort((left, right) => left.score - right.score);
+
+  const ordered: OrderedFeedEntry[] = [
+    ...unseenMixed.map((item) => ({
+      content: item.content,
+      reason: item.reason,
+    })),
+    ...seenScored.map((item) => ({
+      content: item.content,
+      reason: "archive" as const,
+    })),
+  ];
+
+  return { ordered, unseenCount: unseenMixed.length };
+}
+
+export function paginateOrderedFeed(args: {
+  ordered: readonly OrderedFeedEntry[];
+  unseenCount: number;
+  cursor: string | null | undefined;
+  limit: number;
+}): {
+  items: OrderedFeedEntry[];
+  nextCursor: string | null;
+  isExhausted: boolean;
+} {
+  const offset = parseCursor(args.cursor);
+  const page = args.ordered.slice(offset, offset + args.limit);
+  const nextOffset = offset + page.length;
+  const hasMore = nextOffset < args.ordered.length;
+  const crossedUnseenBoundary =
+    offset < args.unseenCount &&
+    nextOffset >= args.unseenCount &&
+    args.unseenCount > 0;
+  const finishedUnseen =
+    args.unseenCount === 0 || offset >= args.unseenCount || crossedUnseenBoundary;
+
+  return {
+    items: page,
+    nextCursor: hasMore ? String(nextOffset) : null,
+    isExhausted: finishedUnseen,
+  };
+}
+
 export const getDiscoveryFeed = query({
   args: {
     tenantSlug: v.string(),
     tokenIdentifier: v.optional(v.string()),
     limit: v.optional(v.number()),
     feedSeed: v.optional(v.number()),
+    cursor: v.optional(v.union(v.string(), v.null())),
   },
-  returns: v.array(
-    v.object({
-      _id: v.id("contents"),
-      _creationTime: v.number(),
-      tenantSlug: v.string(),
-      kind: v.union(
-        v.literal("article"),
-        v.literal("episode"),
-        v.literal("video"),
-      ),
-      status: v.union(
-        v.literal("draft"),
-        v.literal("published"),
-        v.literal("archived"),
-      ),
-      slug: v.string(),
-      title: v.string(),
-      summary: v.string(),
-      category: v.string(),
-      tags: v.array(v.string()),
-      isPremium: v.boolean(),
-      heroImageUrl: v.optional(v.string()),
-      publishedAt: v.optional(v.string()),
-      readingTimeMinutes: v.optional(v.number()),
-      articleBody: v.optional(v.string()),
-      audioUrl: v.optional(v.string()),
-      durationSeconds: v.optional(v.number()),
-      videoSource: v.optional(
-        v.union(
-          v.object({
-            kind: v.literal("youtube"),
-            youtubeVideoId: v.string(),
-            youtubeUrl: v.string(),
-          }),
-          v.object({
-            kind: v.literal("hosted"),
-            uploadKey: v.string(),
-            playbackUrl: v.string(),
-          }),
-        ),
-      ),
-      source: v.optional(
-        v.union(v.literal("cms"), v.literal("wikipedia")),
-      ),
-      externalId: v.optional(v.string()),
-      canonicalUrl: v.optional(v.string()),
-      reason: v.union(
-        v.literal("personalized"),
-        v.literal("archive"),
-        v.literal("editorial"),
-        v.literal("random"),
-      ),
-      isLiked: v.boolean(),
-    }),
-  ),
+  returns: v.object({
+    items: v.array(discoveryFeedItemValidator),
+    nextCursor: v.union(v.string(), v.null()),
+    isExhausted: v.boolean(),
+  }),
   handler: async (ctx, args) => {
     const limit = args.limit ?? DEFAULT_LIMIT;
+    const feedSeed = args.feedSeed ?? 0;
 
     const tenant = await ctx.db
       .query("tenants")
@@ -203,48 +316,43 @@ export const getDiscoveryFeed = query({
     const tokenIdentifier =
       identity?.tokenIdentifier ?? args.tokenIdentifier ?? null;
 
-    if (!tokenIdentifier) {
-      const scored = visible.map((content) => ({
-        id: content._id,
-        content,
-        score: recencyScore(content),
-      }));
+    const hiddenIds = tokenIdentifier
+      ? await loadHiddenContentIds(ctx, tokenIdentifier)
+      : new Set<Id<"contents">>();
+    const likedIds = tokenIdentifier
+      ? await loadLikedContentIds(ctx, tokenIdentifier)
+      : new Set<Id<"contents">>();
+    const seenIds = tokenIdentifier
+      ? await loadSeenContentIds(ctx, tokenIdentifier)
+      : new Set<Id<"contents">>();
+    const affinities = tokenIdentifier
+      ? await loadAffinities(ctx, tokenIdentifier)
+      : [];
 
-      const mixed = bucketFeed(scored, GUEST_FEED_MIX).slice(0, limit);
+    const { ordered, unseenCount } = buildOrderedDiscoveryFeed({
+      visible,
+      tokenIdentifier,
+      feedSeed,
+      hiddenIds,
+      seenIds,
+      affinities,
+    });
 
-      return mixed.map((item) => ({
+    const page = paginateOrderedFeed({
+      ordered,
+      unseenCount,
+      cursor: args.cursor,
+      limit,
+    });
+
+    return {
+      items: page.items.map((item) => ({
         ...item.content,
         reason: item.reason,
-        isLiked: false,
-      }));
-    }
-
-    const hiddenIds = await loadHiddenContentIds(ctx, tokenIdentifier);
-    const likedIds = await loadLikedContentIds(ctx, tokenIdentifier);
-    const seenIds = await loadSeenContentIds(ctx, tokenIdentifier);
-    const affinities = await loadAffinities(ctx, tokenIdentifier);
-    const referenceTime = referenceTimeFrom(visible);
-    const rng = createSeededRng(
-      hashFeedSeed(tokenIdentifier, args.feedSeed ?? 0),
-    );
-
-    const eligible = visible.filter((content) => !hiddenIds.has(content._id));
-
-    const scored = eligible.map((content) => ({
-      id: content._id,
-      content,
-      score: scoreContent(content, affinities, referenceTime, {
-        seen: seenIds.has(content._id),
-        rng,
-      }),
-    }));
-
-    const mixed = bucketFeed(scored, MEMBER_FEED_MIX, rng).slice(0, limit);
-
-    return mixed.map((item) => ({
-      ...item.content,
-      reason: item.reason,
-      isLiked: likedIds.has(item.content._id),
-    }));
+        isLiked: likedIds.has(item.content._id),
+      })),
+      nextCursor: page.nextCursor,
+      isExhausted: page.isExhausted,
+    };
   },
 });

@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
 
@@ -5,6 +6,10 @@ import { api } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import schema from "../schema";
 import { modules } from "../../convexTestModules";
+import {
+  buildOrderedDiscoveryFeed,
+  paginateOrderedFeed,
+} from "./feed";
 
 const TENANT = "demo-media";
 const MEMBER = { subject: "member_1", tokenIdentifier: "token_member" };
@@ -69,11 +74,13 @@ describe("getDiscoveryFeed guest path", () => {
       tenantSlug: TENANT,
     });
 
-    expect(feed.length).toBeGreaterThan(0);
-    expect(feed.every((item) => item.reason === "editorial" || item.reason === "random")).toBe(
-      true,
-    );
-    expect(feed.map((item) => item.title).sort()).toEqual(
+    expect(feed.items.length).toBeGreaterThan(0);
+    expect(
+      feed.items.every(
+        (item) => item.reason === "editorial" || item.reason === "random",
+      ),
+    ).toBe(true);
+    expect(feed.items.map((item) => item.title).sort()).toEqual(
       ["Archive story", "Fresh story", "Older story"].sort(),
     );
   });
@@ -96,7 +103,7 @@ describe("getDiscoveryFeed guest path", () => {
       tenantSlug: TENANT,
     });
 
-    expect(feed.map((item) => item.title)).toEqual(["Free read"]);
+    expect(feed.items.map((item) => item.title)).toEqual(["Free read"]);
   });
 
   it("includes premium content when the premium module is on", async () => {
@@ -117,7 +124,10 @@ describe("getDiscoveryFeed guest path", () => {
       tenantSlug: TENANT,
     });
 
-    expect(feed.map((item) => item.title).sort()).toEqual(["Free read", "Premium read"]);
+    expect(feed.items.map((item) => item.title).sort()).toEqual([
+      "Free read",
+      "Premium read",
+    ]);
   });
 
   it("returns at most the requested limit", async () => {
@@ -136,7 +146,8 @@ describe("getDiscoveryFeed guest path", () => {
       limit: 10,
     });
 
-    expect(feed).toHaveLength(10);
+    expect(feed.items).toHaveLength(10);
+    expect(feed.nextCursor).toBe("10");
   });
 });
 
@@ -174,8 +185,8 @@ describe("getDiscoveryFeed authenticated path", () => {
       feedSeed: 3,
     });
 
-    expect(feed[0]?._id).toBe(politiqueId);
-    expect(feed.some((item) => item.reason === "personalized")).toBe(true);
+    expect(feed.items[0]?._id).toBe(politiqueId);
+    expect(feed.items.some((item) => item.reason === "personalized")).toBe(true);
   });
 
   it("marks feed items the member has liked with isLiked", async () => {
@@ -207,8 +218,8 @@ describe("getDiscoveryFeed authenticated path", () => {
       tokenIdentifier: MEMBER.tokenIdentifier,
     });
 
-    const likedItem = feed.find((item) => item._id === likedId);
-    const neutralItem = feed.find((item) => item.title === "Neutral story");
+    const likedItem = feed.items.find((item) => item._id === likedId);
+    const neutralItem = feed.items.find((item) => item.title === "Neutral story");
 
     expect(likedItem?.isLiked).toBe(true);
     expect(neutralItem?.isLiked).toBe(false);
@@ -243,7 +254,7 @@ describe("getDiscoveryFeed authenticated path", () => {
       tokenIdentifier: MEMBER.tokenIdentifier,
     });
 
-    expect(feed.map((item) => item.title)).toEqual(["Visible story"]);
+    expect(feed.items.map((item) => item.title)).toEqual(["Visible story"]);
   });
 
   it("sinks content the member has already opened or finished", async () => {
@@ -270,16 +281,27 @@ describe("getDiscoveryFeed authenticated path", () => {
       });
     });
 
-    const feed = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+    const page1 = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
       tenantSlug: TENANT,
       tokenIdentifier: MEMBER.tokenIdentifier,
       feedSeed: 1,
+      limit: 1,
     });
 
-    const seenIndex = feed.findIndex((item) => item._id === seenId);
-    const freshIndex = feed.findIndex((item) => item._id === freshId);
+    expect(page1.items).toHaveLength(1);
+    expect(page1.items[0]?._id).toBe(freshId);
 
-    expect(seenIndex).toBeGreaterThan(freshIndex);
+    const page2 = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+      feedSeed: 1,
+      limit: 1,
+      cursor: page1.nextCursor,
+    });
+
+    expect(page2.items).toHaveLength(1);
+    expect(page2.items[0]?._id).toBe(seenId);
+    expect(page2.items[0]?.reason).toBe("archive");
   });
 
   it("uses the full 60/20/10/10 mix for authenticated members", async () => {
@@ -302,10 +324,11 @@ describe("getDiscoveryFeed authenticated path", () => {
     });
 
     const counts = {
-      personalized: feed.filter((item) => item.reason === "personalized").length,
-      archive: feed.filter((item) => item.reason === "archive").length,
-      editorial: feed.filter((item) => item.reason === "editorial").length,
-      random: feed.filter((item) => item.reason === "random").length,
+      personalized: feed.items.filter((item) => item.reason === "personalized")
+        .length,
+      archive: feed.items.filter((item) => item.reason === "archive").length,
+      editorial: feed.items.filter((item) => item.reason === "editorial").length,
+      random: feed.items.filter((item) => item.reason === "random").length,
     };
 
     expect(counts.personalized).toBeGreaterThanOrEqual(22);
@@ -359,8 +382,226 @@ describe("getDiscoveryFeed source isolation", () => {
       tenantSlug: TENANT,
     });
 
-    expect(feed.map((item) => item.title).sort()).toEqual(
+    expect(feed.items.map((item) => item.title).sort()).toEqual(
       ["CMS read", "Wikipedia read"].sort(),
     );
+  });
+});
+
+describe("getDiscoveryFeed pagination", () => {
+  it("keeps stable order across pages for the same feedSeed", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t, ["articles", "discover"]);
+    const asMember = t.withIdentity(MEMBER);
+
+    for (let index = 0; index < 15; index += 1) {
+      await insertPublishedContent(t, {
+        title: `Story ${index}`,
+        publishedAt: `2026-06-${String((index % 28) + 1).padStart(2, "0")}T08:00:00.000Z`,
+      });
+    }
+
+    const page1 = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+      feedSeed: 42,
+      limit: 5,
+    });
+    const page2 = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+      feedSeed: 42,
+      limit: 5,
+      cursor: page1.nextCursor,
+    });
+
+    const page1Ids = page1.items.map((item) => item._id);
+    const page2Ids = page2.items.map((item) => item._id);
+
+    expect(page1Ids).toHaveLength(5);
+    expect(page2Ids).toHaveLength(5);
+    expect(new Set([...page1Ids, ...page2Ids]).size).toBe(10);
+
+    const full = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+      feedSeed: 42,
+      limit: 15,
+    });
+    expect([...page1Ids, ...page2Ids]).toEqual(
+      full.items.slice(0, 10).map((item) => item._id),
+    );
+  });
+
+  it("reshuffles order when feedSeed changes", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t, ["articles", "discover"]);
+    const asMember = t.withIdentity(MEMBER);
+
+    for (let index = 0; index < 12; index += 1) {
+      await insertPublishedContent(t, {
+        title: `Story ${index}`,
+        publishedAt: `2026-06-${String((index % 28) + 1).padStart(2, "0")}T08:00:00.000Z`,
+      });
+    }
+
+    const seedA = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+      feedSeed: 1,
+      limit: 12,
+    });
+    const seedB = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+      feedSeed: 2,
+      limit: 12,
+    });
+
+    expect(seedA.items.map((item) => item._id)).not.toEqual(
+      seedB.items.map((item) => item._id),
+    );
+  });
+
+  it("marks isExhausted when unseen items are fully paginated", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t, ["articles", "discover"]);
+    const asMember = t.withIdentity(MEMBER);
+
+    for (let index = 0; index < 6; index += 1) {
+      await insertPublishedContent(t, {
+        title: `Story ${index}`,
+        publishedAt: `2026-06-0${index + 1}T08:00:00.000Z`,
+      });
+    }
+
+    const page1 = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+      feedSeed: 7,
+      limit: 4,
+    });
+    expect(page1.isExhausted).toBe(false);
+
+    const page2 = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+      feedSeed: 7,
+      limit: 4,
+      cursor: page1.nextCursor,
+    });
+    expect(page2.isExhausted).toBe(true);
+    expect(page2.nextCursor).toBeNull();
+  });
+
+  it("serves recycled archive after unseen pool is exhausted", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t, ["articles", "discover"]);
+    const asMember = t.withIdentity(MEMBER);
+
+    const seenId = await insertPublishedContent(t, {
+      title: "Seen story",
+      publishedAt: "2026-06-05T08:00:00.000Z",
+    });
+    await insertPublishedContent(t, {
+      title: "Fresh story",
+      publishedAt: "2026-06-04T08:00:00.000Z",
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("contentInteractions", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        tenantSlug: TENANT,
+        contentId: seenId,
+        type: "finish",
+        createdAt: 1,
+      });
+    });
+
+    const page1 = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+      feedSeed: 3,
+      limit: 1,
+    });
+    expect(page1.items).toHaveLength(1);
+    expect(page1.items[0]?.title).toBe("Fresh story");
+    expect(page1.isExhausted).toBe(true);
+
+    const page2 = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+      feedSeed: 3,
+      limit: 1,
+      cursor: page1.nextCursor,
+    });
+    expect(page2.items).toHaveLength(1);
+    expect(page2.items[0]?.title).toBe("Seen story");
+    expect(page2.items[0]?.reason).toBe("archive");
+  });
+});
+
+describe("paginateOrderedFeed", () => {
+  it("returns no overlap between consecutive pages", () => {
+    const ordered = Array.from({ length: 8 }, (_, index) => ({
+      content: { _id: `id-${index}` } as never,
+      reason: "editorial" as const,
+    }));
+
+    const page1 = paginateOrderedFeed({
+      ordered,
+      unseenCount: 8,
+      cursor: null,
+      limit: 3,
+    });
+    const page2 = paginateOrderedFeed({
+      ordered,
+      unseenCount: 8,
+      cursor: page1.nextCursor,
+      limit: 3,
+    });
+
+    const ids1 = page1.items.map((item) => item.content._id);
+    const ids2 = page2.items.map((item) => item.content._id);
+    expect(ids1).toEqual(["id-0", "id-1", "id-2"]);
+    expect(ids2).toEqual(["id-3", "id-4", "id-5"]);
+    expect(new Set([...ids1, ...ids2]).size).toBe(6);
+  });
+});
+
+describe("buildOrderedDiscoveryFeed", () => {
+  it("places seen content after the unseen bucket mix", () => {
+    const contents = [
+      {
+        _id: "fresh" as Id<"contents">,
+        title: "Fresh",
+        category: "A",
+        tags: [],
+        kind: "article" as const,
+        publishedAt: "2026-06-06T08:00:00.000Z",
+      },
+      {
+        _id: "seen" as Id<"contents">,
+        title: "Seen",
+        category: "B",
+        tags: [],
+        kind: "article" as const,
+        publishedAt: "2026-06-05T08:00:00.000Z",
+      },
+    ] as never[];
+
+    const { ordered, unseenCount } = buildOrderedDiscoveryFeed({
+      visible: contents,
+      tokenIdentifier: "token",
+      feedSeed: 1,
+      hiddenIds: new Set(),
+      seenIds: new Set(["seen" as Id<"contents">]),
+      affinities: [],
+    });
+
+    expect(unseenCount).toBe(1);
+    expect(ordered[0]?.content._id).toBe("fresh");
+    expect(ordered[1]?.content._id).toBe("seen");
+    expect(ordered[1]?.reason).toBe("archive");
   });
 });

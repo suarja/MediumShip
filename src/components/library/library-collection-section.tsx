@@ -14,6 +14,7 @@ import { useResponsive } from "../../features/responsive/use-responsive";
 import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
+import { ContentImageScrim } from "../content/content-image-scrim";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 
@@ -135,11 +136,14 @@ export function LibraryCollectionSection({
                   ]}
                 >
                   {featured.imageUrl ? (
-                    <Image
-                      accessibilityLabel={`${featured.title} cover`}
-                      source={{ uri: featured.imageUrl }}
-                      style={styles.cover}
-                    />
+                    <>
+                      <Image
+                        accessibilityLabel={`${featured.title} cover`}
+                        source={{ uri: featured.imageUrl }}
+                        style={styles.cover}
+                      />
+                      <ContentImageScrim />
+                    </>
                   ) : (
                     <View
                       style={[
@@ -154,28 +158,6 @@ export function LibraryCollectionSection({
                       />
                     </View>
                   )}
-
-                  <View
-                    style={[
-                      styles.featuredOverlay,
-                      {
-                        backgroundColor: withAlpha(theme.colors.heading, theme.isDark ? 0.12 : 0.24),
-                      },
-                    ]}
-                  />
-                  <View
-                    style={[
-                      styles.featuredGlow,
-                      {
-                        backgroundColor: withAlpha(
-                          featured.tone === "premium"
-                            ? theme.colors.premium
-                            : theme.colors.accent,
-                          0.28,
-                        ),
-                      },
-                    ]}
-                  />
 
                   <View
                     style={[
@@ -479,17 +461,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-  },
-  featuredOverlay: {
-    ...StyleSheet.absoluteFill,
-  },
-  featuredGlow: {
-    position: "absolute",
-    top: -80,
-    right: -60,
-    width: 220,
-    height: 220,
-    borderRadius: 999,
   },
   featuredBadge: {
     position: "absolute",

@@ -1,4 +1,4 @@
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View, type ViewStyle } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { useResponsive } from "../../features/responsive/use-responsive";
@@ -12,23 +12,17 @@ type LibraryPersonalListRowProps = {
   meta?: string;
   accessibilityLabel?: string;
   previewCoverUrls?: string[];
+  itemCount?: number;
 };
 
-type StackLayerKey = "back" | "mid" | "front";
+type StackLayerKey = "back" | "mid" | "front" | "single";
 
-const STACK_LAYER_ORDER: StackLayerKey[] = ["back", "mid", "front"];
-
-const COVER_INDEX_BY_LAYER: Record<StackLayerKey, number> = {
-  front: 0,
-  mid: 1,
-  back: 2,
+type StackLayerSpec = {
+  key: StackLayerKey;
+  coverUrl?: string;
+  placeholderTone: "muted" | "premium" | "accent";
+  style: ViewStyle;
 };
-
-const PLACEHOLDER_TONES = {
-  back: "muted",
-  mid: "premium",
-  front: "accent",
-} as const;
 
 export function LibraryPersonalListRow({
   onPress,
@@ -36,11 +30,13 @@ export function LibraryPersonalListRow({
   meta,
   accessibilityLabel,
   previewCoverUrls = [],
+  itemCount = 0,
 }: LibraryPersonalListRowProps) {
   const { t } = useTranslation("library");
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
   const stackSize = 44 * scaleSpace;
+  const hasItems = itemCount > 0;
 
   return (
     <Pressable
@@ -62,6 +58,7 @@ export function LibraryPersonalListRow({
     >
       <ListCoverStack
         previewCoverUrls={previewCoverUrls}
+        itemCount={hasItems ? itemCount : 0}
         stackSize={stackSize}
       />
 
@@ -107,65 +104,60 @@ export function LibraryPersonalListRow({
 
 function ListCoverStack({
   previewCoverUrls,
+  itemCount,
   stackSize,
 }: {
   previewCoverUrls: string[];
+  itemCount: number;
   stackSize: number;
 }) {
   const { theme } = useAppTheme();
+  const layers = buildItemStackLayers(itemCount, previewCoverUrls);
 
   return (
     <View style={[styles.stack, { width: stackSize, height: stackSize }]}>
-      {STACK_LAYER_ORDER.map((layer) => {
-        const coverUrl = previewCoverUrls[COVER_INDEX_BY_LAYER[layer]];
-        const tone = PLACEHOLDER_TONES[layer];
+      {layers.map((layer) => {
         const toneColor =
-          tone === "muted"
+          layer.placeholderTone === "muted"
             ? theme.colors.textMuted
-            : tone === "premium"
+            : layer.placeholderTone === "premium"
               ? theme.colors.premium
               : theme.colors.accent;
-        const layerStyle =
-          layer === "back"
-            ? styles.stackLayerBack
-            : layer === "mid"
-              ? styles.stackLayerMid
-              : styles.stackLayerFront;
 
         return (
           <View
-            key={layer}
+            key={layer.key}
             style={[
               styles.stackLayer,
-              layerStyle,
+              layer.style,
               {
                 borderRadius: theme.radii.sm,
                 overflow: "hidden",
                 backgroundColor: withAlpha(
                   toneColor,
-                  coverUrl
+                  layer.coverUrl
                     ? theme.isDark
                       ? 0.2
                       : 0.12
                     : theme.isDark
-                      ? tone === "muted"
+                      ? layer.placeholderTone === "muted"
                         ? 0.35
-                        : tone === "premium"
+                        : layer.placeholderTone === "premium"
                           ? 0.55
                           : 0.72
-                      : tone === "muted"
+                      : layer.placeholderTone === "muted"
                         ? 0.22
-                        : tone === "premium"
+                        : layer.placeholderTone === "premium"
                           ? 0.42
                           : 0.58,
                 ),
               },
             ]}
           >
-            {coverUrl ? (
+            {layer.coverUrl ? (
               <Image
                 accessibilityIgnoresInvertColors
-                source={{ uri: coverUrl }}
+                source={{ uri: layer.coverUrl }}
                 style={styles.stackImage}
               />
             ) : null}
@@ -195,6 +187,12 @@ const styles = StyleSheet.create({
   stackImage: {
     width: "100%",
     height: "100%",
+  },
+  stackLayerSingle: {
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
   },
   stackLayerBack: {
     top: 0,
@@ -231,3 +229,67 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
 });
+
+function buildItemStackLayers(
+  itemCount: number,
+  previewCoverUrls: string[],
+): StackLayerSpec[] {
+  const visibleCount = Math.min(itemCount, 3);
+
+  if (visibleCount <= 0) {
+    return [
+      { key: "back", placeholderTone: "muted", style: styles.stackLayerBack },
+      { key: "mid", placeholderTone: "premium", style: styles.stackLayerMid },
+      { key: "front", placeholderTone: "accent", style: styles.stackLayerFront },
+    ];
+  }
+
+  if (visibleCount === 1) {
+    return [
+      {
+        key: "single",
+        coverUrl: previewCoverUrls[0],
+        placeholderTone: "accent",
+        style: styles.stackLayerSingle,
+      },
+    ];
+  }
+
+  if (visibleCount === 2) {
+    return [
+      {
+        key: "back",
+        coverUrl: previewCoverUrls[1],
+        placeholderTone: "muted",
+        style: styles.stackLayerBack,
+      },
+      {
+        key: "front",
+        coverUrl: previewCoverUrls[0],
+        placeholderTone: "accent",
+        style: styles.stackLayerFront,
+      },
+    ];
+  }
+
+  return [
+    {
+      key: "back",
+      coverUrl: previewCoverUrls[2],
+      placeholderTone: "muted",
+      style: styles.stackLayerBack,
+    },
+    {
+      key: "mid",
+      coverUrl: previewCoverUrls[1],
+      placeholderTone: "premium",
+      style: styles.stackLayerMid,
+    },
+    {
+      key: "front",
+      coverUrl: previewCoverUrls[0],
+      placeholderTone: "accent",
+      style: styles.stackLayerFront,
+    },
+  ];
+}

@@ -334,6 +334,7 @@ function SignedInLibraryContent({
                 primaryList?.title ?? t("library:screen.listsPreviewTitle")
               }
               previewCoverUrls={primaryList?.previewCoverUrls}
+              itemCount={primaryList?.itemCount ?? 0}
             />
           </View>
         ) : null}

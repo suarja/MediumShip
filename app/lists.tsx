@@ -260,6 +260,7 @@ export default function ListsScreen() {
                 meta={t("lists:screen.itemCount", { count: list.itemCount })}
                 accessibilityLabel={list.title}
                 previewCoverUrls={list.previewCoverUrls}
+                itemCount={list.itemCount}
                 onPress={() => router.push(`/list/${list._id}`)}
               />
             ))

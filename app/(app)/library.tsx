@@ -12,6 +12,7 @@ import { SavedLibrarySection } from "../../src/components/library/saved-library-
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
 import { useIsMember } from "../../src/features/membership/use-is-member";
+import { usePersonalLists } from "../../src/features/personal-lists/use-personal-lists";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
@@ -212,13 +213,11 @@ function SignedInLibraryContent({
   const router = useRouter();
   const { openPaywall } = usePaywallSheet();
   const { isMember } = useIsMember();
+  const { primaryList } = usePersonalLists();
+  const { t: tLists } = useTranslation("lists");
 
   const handleListsPress = () => {
-    if (isMember) {
-      router.push("/lists");
-      return;
-    }
-    openPaywall("lists");
+    router.push("/lists");
   };
 
   return (
@@ -323,7 +322,18 @@ function SignedInLibraryContent({
               gate="premium"
               title={t("library:screen.sections.lists")}
             />
-            <LibraryPersonalListRow onPress={handleListsPress} />
+            <LibraryPersonalListRow
+              onPress={handleListsPress}
+              title={primaryList?.title ?? t("library:screen.listsPreviewTitle")}
+              meta={
+                primaryList
+                  ? tLists("screen.itemCount", { count: primaryList.itemCount })
+                  : t("library:screen.listsPreviewMeta")
+              }
+              accessibilityLabel={
+                primaryList?.title ?? t("library:screen.listsPreviewTitle")
+              }
+            />
           </View>
         ) : null}
 

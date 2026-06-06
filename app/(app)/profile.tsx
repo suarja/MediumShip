@@ -22,6 +22,7 @@ import { ProfileStatStrip } from "../../src/components/profile/profile-stat-stri
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
 import { useBookmarks } from "../../src/features/bookmarks/use-bookmarks";
 import { useDownloads } from "../../src/features/downloads/use-downloads";
+import { usePersonalLists } from "../../src/features/personal-lists/use-personal-lists";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
@@ -61,6 +62,7 @@ function ProfileDashboard() {
   const ensureCurrentUser = useMutation(api.users.mutations.ensureCurrentUser);
   const me = useQuery(api.users.queries.getMe, isAuthenticated ? {} : "skip");
   const { bookmarks, isMember } = useBookmarks();
+  const { lists } = usePersonalLists();
   const { downloads } = useDownloads({ enabled: isSignedIn && isMember });
   const { openPaywall } = usePaywallSheet();
 
@@ -262,6 +264,7 @@ function ProfileDashboard() {
           isMember={isMember}
           savedCount={savedCount}
           downloadCount={downloadedCount}
+          listsCount={lists.length}
           onSignOut={() => {
             void signOut();
           }}

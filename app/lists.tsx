@@ -1,11 +1,20 @@
 import { useRouter } from "expo-router";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
 import { Screen } from "../src/components/layout/screen";
 import { LibraryPersonalListRow } from "../src/components/library/library-personal-list-row";
-import { useIsMember } from "../src/features/membership/use-is-member";
+import { usePersonalLists } from "../src/features/personal-lists/use-personal-lists";
 import { usePaywallSheet } from "../src/features/paywall/paywall-sheet-provider";
 import { useResponsive } from "../src/features/responsive/use-responsive";
 import { withAlpha } from "../src/features/theme/contrast";
@@ -13,32 +22,56 @@ import { fontFamilies } from "../src/features/theme/fonts";
 import { useAppTheme } from "../src/features/theme/theme-provider";
 
 export default function ListsScreen() {
-  const { t } = useTranslation("library");
+  const { t } = useTranslation(["lists", "library"]);
   const { theme } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { openPaywall } = usePaywallSheet();
-  const { isMember } = useIsMember();
+  const {
+    lists,
+    isMember,
+    isListsLoading,
+    canCreateAnother,
+    createList,
+  } = usePersonalLists();
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [draftTitle, setDraftTitle] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
 
-  const showPendingAction = (title: string) => {
-    Alert.alert(title, t("listsScreen.pendingAction"));
-  };
-
-  const handleCreateList = () => {
-    if (!isMember) {
+  const handleCreatePress = () => {
+    if (!canCreateAnother) {
       openPaywall("lists");
       return;
     }
-    showPendingAction(t("listsScreen.createTitle"));
+    setDraftTitle(t("lists:screen.defaultTitle"));
+    setShowCreateForm(true);
   };
 
-  const handleOpenList = (title: string) => {
-    if (!isMember) {
-      openPaywall("lists");
+  const handleSubmitCreate = async () => {
+    const title = draftTitle.trim();
+    if (!title || isCreating) {
       return;
     }
-    showPendingAction(title);
+
+    setIsCreating(true);
+    try {
+      const result = await createList({ title });
+      setShowCreateForm(false);
+      setDraftTitle("");
+      router.push(`/list/${result.listId}`);
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        /Premium required for additional lists/.test(error.message)
+      ) {
+        openPaywall("lists");
+        return;
+      }
+      throw error;
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -56,7 +89,7 @@ export default function ListsScreen() {
           onPress={() => router.back()}
           style={styles.topBarAction}
           accessibilityRole="button"
-          accessibilityLabel={t("listsScreen.back")}
+          accessibilityLabel={t("lists:screen.back")}
         >
           <Text
             style={[
@@ -74,7 +107,7 @@ export default function ListsScreen() {
           ]}
           numberOfLines={1}
         >
-          {t("screen.sections.lists")}
+          {t("lists:screen.title")}
         </Text>
         <View style={styles.topBarSide} />
       </View>
@@ -94,7 +127,7 @@ export default function ListsScreen() {
         <View style={[styles.stack, { gap: theme.spacing.sm * scaleSpace }]}>
           <Pressable
             accessibilityRole="button"
-            onPress={handleCreateList}
+            onPress={handleCreatePress}
             style={({ pressed }) => [
               styles.createRow,
               {
@@ -132,21 +165,106 @@ export default function ListsScreen() {
                 { color: theme.colors.heading, fontSize: 14 * scaleFont },
               ]}
             >
-              {t("listsScreen.createTitle")}
+              {t("lists:screen.createTitle")}
             </Text>
           </Pressable>
 
-          <LibraryPersonalListRow
-            onPress={() => handleOpenList(t("screen.listsPreviewTitle"))}
-          />
+          {showCreateForm ? (
+            <View
+              style={[
+                styles.createForm,
+                {
+                  gap: theme.spacing.sm * scaleSpace,
+                  borderRadius: theme.radii.md,
+                  borderColor: theme.colors.border,
+                  backgroundColor: theme.colors.surface,
+                  padding: theme.spacing.md * scaleSpace,
+                },
+              ]}
+            >
+              <TextInput
+                value={draftTitle}
+                onChangeText={setDraftTitle}
+                placeholder={t("lists:screen.createPlaceholder")}
+                placeholderTextColor={theme.colors.textMuted}
+                style={[
+                  styles.createInput,
+                  {
+                    color: theme.colors.heading,
+                    borderColor: theme.colors.border,
+                    fontSize: 14 * scaleFont,
+                  },
+                ]}
+                autoFocus
+                onSubmitEditing={handleSubmitCreate}
+              />
+              <Pressable
+                accessibilityRole="button"
+                disabled={isCreating || !draftTitle.trim()}
+                onPress={handleSubmitCreate}
+                style={({ pressed }) => [
+                  styles.createSubmit,
+                  {
+                    borderRadius: theme.radii.pill,
+                    backgroundColor: theme.colors.heading,
+                    opacity: isCreating || !draftTitle.trim() ? 0.5 : 1,
+                  },
+                  pressed && styles.pressed,
+                ]}
+              >
+                {isCreating ? (
+                  <ActivityIndicator color={theme.colors.canvas} />
+                ) : (
+                  <Text
+                    style={[
+                      styles.createSubmitLabel,
+                      {
+                        color: theme.colors.canvas,
+                        fontSize: 12 * scaleFont,
+                      },
+                    ]}
+                  >
+                    {t("lists:screen.createSubmit")}
+                  </Text>
+                )}
+              </Pressable>
+            </View>
+          ) : null}
 
-          {isMember ? (
-            <LibraryPersonalListRow
-              onPress={() => handleOpenList(t("listsScreen.secondPreviewTitle"))}
-              title={t("listsScreen.secondPreviewTitle")}
-              meta={t("listsScreen.secondPreviewMeta")}
-            />
+          {isListsLoading ? (
+            <ActivityIndicator color={theme.colors.accent} />
+          ) : lists.length === 0 ? (
+            <View style={{ gap: theme.spacing.xs * scaleSpace }}>
+              <Text
+                style={[
+                  styles.emptyTitle,
+                  { color: theme.colors.heading, fontSize: 14 * scaleFont },
+                ]}
+              >
+                {t("lists:screen.emptyTitle")}
+              </Text>
+              <Text
+                style={[
+                  styles.emptyBody,
+                  { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
+                ]}
+              >
+                {t("lists:screen.emptyBody")}
+              </Text>
+            </View>
           ) : (
+            lists.map((list) => (
+              <LibraryPersonalListRow
+                key={list._id}
+                title={list.title}
+                meta={t("lists:screen.itemCount", { count: list.itemCount })}
+                accessibilityLabel={list.title}
+                onPress={() => router.push(`/list/${list._id}`)}
+              />
+            ))
+          )}
+
+          {!isMember ? (
             <View
               style={[
                 styles.lockedCard,
@@ -165,7 +283,7 @@ export default function ListsScreen() {
                   { color: theme.colors.heading, fontSize: 14 * scaleFont },
                 ]}
               >
-                {t("listsScreen.lockedTitle")}
+                {t("lists:screen.lockedTitle")}
               </Text>
               <Text
                 style={[
@@ -173,7 +291,7 @@ export default function ListsScreen() {
                   { color: theme.colors.textMuted, fontSize: 11 * scaleFont },
                 ]}
               >
-                {t("listsScreen.lockedBody")}
+                {t("lists:screen.lockedBody")}
               </Text>
               <Pressable
                 accessibilityRole="button"
@@ -196,11 +314,11 @@ export default function ListsScreen() {
                     },
                   ]}
                 >
-                  {t("listsScreen.viewPremiumCta")}
+                  {t("lists:screen.viewPremiumCta")}
                 </Text>
               </Pressable>
             </View>
-          )}
+          ) : null}
         </View>
       </ScrollView>
     </Screen>
@@ -243,6 +361,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: StyleSheet.hairlineWidth,
   },
+  createForm: {
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  createInput: {
+    fontFamily: fontFamilies.body,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  createSubmit: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    minWidth: 88,
+    alignItems: "center",
+  },
+  createSubmitLabel: {
+    fontFamily: fontFamilies.bodySemiBold,
+  },
   createIcon: {
     width: 44,
     height: 44,
@@ -258,6 +396,14 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fontFamilies.display,
     lineHeight: 18,
+  },
+  emptyTitle: {
+    fontFamily: fontFamilies.display,
+    lineHeight: 18,
+  },
+  emptyBody: {
+    fontFamily: fontFamilies.body,
+    lineHeight: 16,
   },
   lockedCard: {
     borderWidth: StyleSheet.hairlineWidth,

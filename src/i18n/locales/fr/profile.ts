@@ -66,8 +66,10 @@ export default {
     },
     lists: {
       title: "Mes listes",
-      sub: "1 liste · illimité avec Premium",
-      subMember: "Listes personnelles",
+      sub: "1 liste · illimite avec Premium",
+      subMember_one: "{{count}} liste · privee",
+      subMember_other: "{{count}} listes · privees",
+      subMemberEmpty: "Creez votre premiere liste",
     },
     history: {
       title: "Historique & progression",

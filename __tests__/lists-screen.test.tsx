@@ -1,0 +1,71 @@
+import { fireEvent, render, screen } from "@testing-library/react-native";
+
+import ListsScreen from "../app/lists";
+import { changeAppLanguage, initI18n } from "../src/i18n";
+
+const mockOpenPaywall = jest.fn();
+const mockPush = jest.fn();
+const mockCreateList = jest.fn();
+
+jest.mock("expo-router", () => ({
+  useRouter: () => ({ push: mockPush, back: jest.fn() }),
+}));
+
+jest.mock("react-native-safe-area-context", () => {
+  const React = require("react");
+  const { View } = require("react-native");
+  return {
+    SafeAreaView: ({ children, style }: { children: React.ReactNode; style?: object }) =>
+      React.createElement(View, { style }, children),
+    useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 34, left: 0 }),
+  };
+});
+
+jest.mock("../src/features/personal-lists/use-personal-lists", () => ({
+  usePersonalLists: () => ({
+    lists: [
+      {
+        _id: "list_1",
+        title: "Listen in the car",
+        itemCount: 3,
+      },
+    ],
+    isMember: true,
+    isListsLoading: false,
+    canCreateAnother: true,
+    createList: mockCreateList,
+  }),
+}));
+
+jest.mock("../src/features/paywall/paywall-sheet-provider", () => ({
+  usePaywallSheet: () => ({ openPaywall: mockOpenPaywall }),
+}));
+
+describe("lists screen", () => {
+  beforeAll(async () => {
+    await initI18n();
+  });
+
+  beforeEach(async () => {
+    mockOpenPaywall.mockClear();
+    mockPush.mockClear();
+    mockCreateList.mockClear();
+    await changeAppLanguage("en");
+  });
+
+  it("renders real lists from the hook", () => {
+    render(<ListsScreen />);
+
+    expect(screen.getByText("Listen in the car")).toBeTruthy();
+    expect(screen.getByText("3 items · private")).toBeTruthy();
+    expect(screen.queryByText("This action will be available")).toBeNull();
+  });
+
+  it("opens list detail when a row is pressed", () => {
+    render(<ListsScreen />);
+
+    fireEvent.press(screen.getByLabelText("Listen in the car"));
+
+    expect(mockPush).toHaveBeenCalledWith("/list/list_1");
+  });
+});

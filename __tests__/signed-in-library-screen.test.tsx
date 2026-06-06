@@ -52,6 +52,14 @@ jest.mock("../src/features/paywall/paywall-sheet-provider", () => ({
   usePaywallSheet: () => ({ openPaywall: mockOpenPaywall, closePaywall: jest.fn() }),
 }));
 
+jest.mock("../src/features/personal-lists/use-personal-lists", () => ({
+  usePersonalLists: () => ({
+    lists: [],
+    primaryList: null,
+    isListsLoading: false,
+  }),
+}));
+
 describe("signed-in library screen", () => {
   beforeAll(async () => {
     await initI18n();
@@ -83,16 +91,16 @@ describe("signed-in library screen", () => {
     expect(screen.getAllByText("Premium")).toHaveLength(2);
   });
 
-  it("pressing the lists row opens the lists paywall for non-premium members", () => {
+  it("pressing the lists row opens the lists screen for signed-in members", () => {
     render(<LibraryScreen />);
 
     fireEvent.press(screen.getByLabelText("Listen in the car"));
 
-    expect(mockOpenPaywall).toHaveBeenCalledWith("lists");
-    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith("/lists");
+    expect(mockOpenPaywall).not.toHaveBeenCalled();
   });
 
-  it("pressing the lists row opens the lists screen for premium members", () => {
+  it("pressing the lists row still opens the lists screen for premium members", () => {
     mockUseIsMember.mockReturnValue({ isMember: true, isLoading: false });
 
     render(<LibraryScreen />);

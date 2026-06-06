@@ -45,6 +45,10 @@ jest.mock("../src/features/downloads/use-downloads", () => ({
   useDownloads: () => ({ downloads: [] }),
 }));
 
+jest.mock("../src/features/personal-lists/use-personal-lists", () => ({
+  usePersonalLists: () => ({ lists: [] }),
+}));
+
 jest.mock("../src/features/profile/use-avatar-edit", () => ({
   useAvatarEdit: () => ({
     pickAndUploadAvatar: jest.fn(),
@@ -104,13 +108,13 @@ describe("signed-in profile", () => {
     expect(screen.queryByText("Your profile")).toBeNull();
   });
 
-  it("opens the lists paywall when a non-premium member taps My lists", () => {
+  it("navigates to /lists when a signed-in member taps My lists", () => {
     render(<ProfileScreen />);
 
     fireEvent.press(screen.getByText("My lists"));
 
-    expect(mockOpenPaywall).toHaveBeenCalledWith("lists");
-    expect(mockPush).not.toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith("/lists");
+    expect(mockOpenPaywall).not.toHaveBeenCalled();
   });
 
   it("opens the offline paywall when a non-premium member taps Downloads", () => {
@@ -120,21 +124,6 @@ describe("signed-in profile", () => {
 
     expect(mockOpenPaywall).toHaveBeenCalledWith("offline");
     expect(mockPush).not.toHaveBeenCalled();
-  });
-
-  it("navigates to /lists when a premium member taps My lists", () => {
-    mockUseBookmarks.mockReturnValue({
-      bookmarks: [{ content: {}, createdAt: 1 }, { content: {}, createdAt: 2 }],
-      isMember: true,
-      isMembershipLoading: false,
-    });
-
-    render(<ProfileScreen />);
-
-    fireEvent.press(screen.getByText("My lists"));
-
-    expect(mockPush).toHaveBeenCalledWith("/lists");
-    expect(mockOpenPaywall).not.toHaveBeenCalled();
   });
 
   it("navigates to /library when a premium member taps Downloads", () => {

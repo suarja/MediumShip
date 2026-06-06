@@ -10,12 +10,14 @@ type LibraryPersonalListRowProps = {
   onPress: () => void;
   title?: string;
   meta?: string;
+  accessibilityLabel?: string;
 };
 
 export function LibraryPersonalListRow({
   onPress,
   title,
   meta,
+  accessibilityLabel,
 }: LibraryPersonalListRowProps) {
   const { t } = useTranslation("library");
   const { theme } = useAppTheme();
@@ -25,7 +27,7 @@ export function LibraryPersonalListRow({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={t("library:screen.listsPreviewTitle")}
+      accessibilityLabel={accessibilityLabel ?? title ?? t("library:screen.listsPreviewTitle")}
       onPress={onPress}
       style={({ pressed }) => [
         styles.row,

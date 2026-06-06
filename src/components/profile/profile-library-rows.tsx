@@ -16,6 +16,7 @@ type ProfileLibraryRowsProps = {
   isMember: boolean;
   savedCount: number;
   downloadCount: number;
+  listsCount: number;
   onSignOut: () => void;
   onGoPremium?: () => void;
 };
@@ -29,6 +30,7 @@ export function ProfileLibraryRows({
   isMember,
   savedCount,
   downloadCount,
+  listsCount,
   onSignOut,
   onGoPremium,
 }: ProfileLibraryRowsProps) {
@@ -39,11 +41,7 @@ export function ProfileLibraryRows({
   const { openPaywall } = usePaywallSheet();
 
   const openLists = () => {
-    if (isMember) {
-      router.push("/lists");
-      return;
-    }
-    openPaywall("lists");
+    router.push("/lists");
   };
 
   const openDownloads = () => {
@@ -84,7 +82,11 @@ export function ProfileLibraryRows({
           gate="premium"
           gateLabel={t("badges.premium")}
           subtitle={
-            isMember ? t("rows.lists.subMember") : t("rows.lists.sub")
+            listsCount > 0
+              ? t("rows.lists.subMember", { count: listsCount })
+              : isMember
+                ? t("rows.lists.subMemberEmpty")
+                : t("rows.lists.sub")
           }
           onPress={openLists}
         />

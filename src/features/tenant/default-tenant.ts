@@ -3,6 +3,7 @@ import {
   DEFAULT_FEED_SECTIONS,
   PUBLIC_CONTENT_MODULES,
   OPTIONAL_PUBLIC_MODULES,
+  NAVIGATION_MODULES,
 } from "./public-config";
 
 export const defaultTenant = {
@@ -10,7 +11,11 @@ export const defaultTenant = {
   name: "Demo Media",
   brandLogoUrl: undefined,
   appIconUrl: undefined,
-  enabledModules: [...PUBLIC_CONTENT_MODULES, ...OPTIONAL_PUBLIC_MODULES],
+  enabledModules: [
+    ...PUBLIC_CONTENT_MODULES,
+    ...OPTIONAL_PUBLIC_MODULES,
+    ...NAVIGATION_MODULES,
+  ],
   themeConfig: defaultThemeConfig,
   feedSections: DEFAULT_FEED_SECTIONS,
 };

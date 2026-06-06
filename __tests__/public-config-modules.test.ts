@@ -1,0 +1,84 @@
+import {
+  isModuleEnabled,
+  hasCapability,
+  normalizeEnabledModules,
+} from "../src/features/tenant/public-config";
+
+describe("isModuleEnabled", () => {
+  it("defaults all nav modules to enabled when none are configured", () => {
+    const noNavModules = ["articles", "episodes", "videos", "premium"];
+    expect(isModuleEnabled(noNavModules, "collections")).toBe(true);
+    expect(isModuleEnabled(noNavModules, "agenda")).toBe(true);
+    expect(isModuleEnabled(noNavModules, "community")).toBe(true);
+  });
+
+  it("returns true for modules present in the array", () => {
+    const modules = ["articles", "collections", "agenda"];
+    expect(isModuleEnabled(modules, "collections")).toBe(true);
+    expect(isModuleEnabled(modules, "agenda")).toBe(true);
+  });
+
+  it("returns false for modules absent when explicit nav config exists", () => {
+    const modules = ["articles", "collections"];
+    expect(isModuleEnabled(modules, "agenda")).toBe(false);
+    expect(isModuleEnabled(modules, "community")).toBe(false);
+  });
+
+  it("works with a full default-tenant-style modules array", () => {
+    const modules = ["articles", "episodes", "videos", "premium", "collections", "agenda", "community"];
+    expect(isModuleEnabled(modules, "collections")).toBe(true);
+    expect(isModuleEnabled(modules, "agenda")).toBe(true);
+    expect(isModuleEnabled(modules, "community")).toBe(true);
+  });
+
+  it("returns false for all when the array explicitly omits all nav modules", () => {
+    const modules = ["collections"];
+    expect(isModuleEnabled(modules, "agenda")).toBe(false);
+    expect(isModuleEnabled(modules, "community")).toBe(false);
+  });
+});
+
+describe("hasCapability", () => {
+  it("bookmarks and progressSync are enabled by default when no capabilities are configured", () => {
+    const modules = ["articles", "episodes"];
+    expect(hasCapability(modules, "bookmarks")).toBe(true);
+    expect(hasCapability(modules, "progressSync")).toBe(true);
+  });
+
+  it("offline, personalLists, membersRoom are disabled by default", () => {
+    const modules = ["articles", "episodes"];
+    expect(hasCapability(modules, "offline")).toBe(false);
+    expect(hasCapability(modules, "personalLists")).toBe(false);
+    expect(hasCapability(modules, "membersRoom")).toBe(false);
+  });
+
+  it("returns true for capabilities explicitly in the array", () => {
+    const modules = ["articles", "bookmarks", "offline"];
+    expect(hasCapability(modules, "bookmarks")).toBe(true);
+    expect(hasCapability(modules, "offline")).toBe(true);
+  });
+
+  it("returns false for bookmarks when explicit cap config omits it", () => {
+    const modules = ["articles", "offline"];
+    expect(hasCapability(modules, "bookmarks")).toBe(false);
+  });
+});
+
+describe("normalizeEnabledModules", () => {
+  it("preserves nav modules and capabilities through normalizeEnabledModules", () => {
+    const raw = ["articles", "collections", "agenda", "bookmarks", "unknown"];
+    const result = normalizeEnabledModules(raw);
+    expect(result).toContain("articles");
+    expect(result).toContain("collections");
+    expect(result).toContain("agenda");
+    expect(result).toContain("bookmarks");
+    expect(result).not.toContain("unknown");
+  });
+
+  it("falls back to content + premium when undefined", () => {
+    const result = normalizeEnabledModules(undefined);
+    expect(result).toContain("articles");
+    expect(result).toContain("premium");
+    expect(result).not.toContain("collections");
+  });
+});

@@ -8,11 +8,58 @@ export type CommunityLink = {
   label?: string;
 };
 
+// ─── Content modules ─────────────────────────────────────────────────────────
+
 export const PUBLIC_CONTENT_MODULES = ["articles", "episodes", "videos"] as const;
 export const OPTIONAL_PUBLIC_MODULES = ["premium"] as const;
+
+export type ContentModule = (typeof PUBLIC_CONTENT_MODULES)[number];
+
+// ─── Navigation modules ───────────────────────────────────────────────────────
+
+export const NAVIGATION_MODULES = ["collections", "agenda", "community"] as const;
+export type NavigationModule = (typeof NAVIGATION_MODULES)[number];
+
+const NAV_MODULE_SET = new Set<string>(NAVIGATION_MODULES);
+
+/** All navigation modules are on by default when the tenant hasn't configured any. */
+export function isModuleEnabled(
+  modules: readonly string[],
+  name: NavigationModule,
+): boolean {
+  const hasExplicitNavConfig = modules.some((m) => NAV_MODULE_SET.has(m));
+  if (!hasExplicitNavConfig) return true;
+  return modules.includes(name);
+}
+
+// ─── Capabilities ─────────────────────────────────────────────────────────────
+
+export const CAPABILITIES = [
+  "bookmarks",
+  "progressSync",
+  "offline",
+  "personalLists",
+  "membersRoom",
+] as const;
+export type Capability = (typeof CAPABILITIES)[number];
+
+const DEFAULT_CAPABILITIES = new Set<Capability>(["bookmarks", "progressSync"]);
+const CAPABILITY_SET = new Set<string>(CAPABILITIES);
+
+/** bookmarks + progressSync are on by default; others require explicit inclusion. */
+export function hasCapability(modules: readonly string[], cap: Capability): boolean {
+  const hasExplicitCapConfig = modules.some((m) => CAPABILITY_SET.has(m));
+  if (!hasExplicitCapConfig) return DEFAULT_CAPABILITIES.has(cap);
+  return modules.includes(cap);
+}
+
+// ─── Full module vocabulary ───────────────────────────────────────────────────
+
 export const ENABLED_MODULES = [
   ...PUBLIC_CONTENT_MODULES,
   ...OPTIONAL_PUBLIC_MODULES,
+  ...NAVIGATION_MODULES,
+  ...CAPABILITIES,
 ] as const;
 
 export type EnabledModule = (typeof ENABLED_MODULES)[number];
@@ -34,11 +81,13 @@ const DEFAULT_FEED_SECTION_TITLES: Record<ContentKind, string> = {
   video: "Watch now",
 };
 
-const CONTENT_KIND_MODULES: Record<ContentKind, EnabledModule> = {
+const CONTENT_KIND_MODULES: Record<ContentKind, ContentModule> = {
   article: "articles",
   episode: "episodes",
   video: "videos",
 };
+
+const CONTENT_MODULE_SET = new Set<string>(PUBLIC_CONTENT_MODULES);
 
 export function isEnabledModule(value: string): value is EnabledModule {
   return (ENABLED_MODULES as readonly string[]).includes(value);
@@ -58,9 +107,7 @@ export function normalizeEnabledModules(
     return [...PUBLIC_CONTENT_MODULES, ...OPTIONAL_PUBLIC_MODULES];
   }
 
-  const normalized = (modules ?? []).filter(isEnabledModule);
-
-  return normalized;
+  return (modules ?? []).filter(isEnabledModule);
 }
 
 export function normalizeFeedSections(
@@ -69,8 +116,8 @@ export function normalizeFeedSections(
 ): FeedSectionConfig[] {
   const enabledKinds = new Set(
     enabledModules
-      .filter((module) => module !== "premium")
-      .map((module) => moduleToContentKind(module)),
+      .filter((module): module is ContentModule => CONTENT_MODULE_SET.has(module))
+      .map(moduleToContentKind),
   );
 
   if (sections !== undefined) {
@@ -89,17 +136,11 @@ export function normalizeFeedSections(
   return DEFAULT_FEED_SECTIONS.filter((section) => enabledKinds.has(section.kind));
 }
 
-export function moduleToContentKind(
-  module: Exclude<EnabledModule, "premium">,
-): ContentKind {
-  return module === "articles"
-    ? "article"
-    : module === "episodes"
-      ? "episode"
-      : "video";
+export function moduleToContentKind(module: ContentModule): ContentKind {
+  return module === "articles" ? "article" : module === "episodes" ? "episode" : "video";
 }
 
-export function contentKindToModule(kind: ContentKind): EnabledModule {
+export function contentKindToModule(kind: ContentKind): ContentModule {
   return CONTENT_KIND_MODULES[kind];
 }
 

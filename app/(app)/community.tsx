@@ -9,6 +9,7 @@ import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
 import { useIsMember } from "../../src/features/membership/use-is-member";
+import { isModuleEnabled } from "../../src/features/tenant/public-config";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
@@ -23,7 +24,7 @@ const COMMUNITY_LINK_ICON: Record<string, string> = {
 
 export default function CommunityScreen() {
   const { t } = useTranslation("explore");
-  const { theme } = useAppTheme();
+  const { theme, enabledModules } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
@@ -31,6 +32,18 @@ export default function CommunityScreen() {
   const insets = useSafeAreaInsets();
   const { openPaywall } = usePaywallSheet();
   const { isMember } = useIsMember();
+
+  if (!isModuleEnabled(enabledModules, "community")) {
+    return (
+      <Screen>
+        <View style={styles.center}>
+          <Text style={[styles.centerText, { color: theme.colors.textMuted, fontSize: 14 * scaleFont }]}>
+            Module unavailable.
+          </Text>
+        </View>
+      </Screen>
+    );
+  }
 
   const handleMembersRoom = () => {
     if (!isMember) {
@@ -324,5 +337,13 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.84,
+  },
+  center: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  centerText: {
+    fontFamily: fontFamilies.body,
   },
 });

@@ -25,6 +25,7 @@ import { useResponsive } from "../../src/features/responsive/use-responsive";
 import {
   filterAndOrderFeedContent,
   moduleToContentKind,
+  type ContentModule,
 } from "../../src/features/tenant/public-config";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
@@ -58,7 +59,9 @@ export default function HomeFeedScreen() {
 
   const chips = useMemo<FeedFilterChip[]>(() => {
     const formatChips = enabledModules
-      .filter((module): module is Exclude<typeof module, "premium"> => module !== "premium")
+      .filter((module): module is ContentModule =>
+        module === "articles" || module === "episodes" || module === "videos",
+      )
       .map((module) => {
         const kind = moduleToContentKind(module);
         return { key: kind, label: t(CHIP_LABEL_KEY[kind]) } satisfies FeedFilterChip;

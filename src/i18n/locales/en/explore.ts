@@ -32,6 +32,10 @@ export default {
       title: "Collections",
       meta: "By the newsroom",
     },
+    agenda: {
+      title: "Agenda",
+      meta: "Events and circles",
+    },
     community: {
       title: "Community",
       meta: "Discord and circles",

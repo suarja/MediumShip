@@ -21,6 +21,7 @@ import { toContentCardModel } from "../../src/features/content/selectors";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { useSearch } from "../../src/features/search/use-search";
+import { isModuleEnabled } from "../../src/features/tenant/public-config";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
@@ -45,10 +46,11 @@ function getCategoryIcon(category: string): string {
   return "◉";
 }
 
-const MODULE_ITEMS = [
-  { key: "collections", icon: "◆", href: "/collections" },
-  { key: "community", icon: "✦", href: "/community" },
-] as const;
+const ALL_MODULE_ITEMS = [
+  { key: "collections" as const, icon: "◆", href: "/collections" },
+  { key: "agenda" as const, icon: "☷", href: "/agenda" },
+  { key: "community" as const, icon: "✦", href: "/community" },
+];
 
 const TREND_KEYS = [
   "programme2027",
@@ -60,8 +62,12 @@ const TREND_KEYS = [
 
 export default function ExploreScreen() {
   const { t } = useTranslation("explore");
-  const { theme } = useAppTheme();
+  const { theme, enabledModules } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace, contentMaxWidth } = useResponsive();
+
+  const moduleItems = ALL_MODULE_ITEMS.filter((item) =>
+    isModuleEnabled(enabledModules, item.key),
+  );
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
   const router = useRouter();
@@ -254,9 +260,7 @@ export default function ExploreScreen() {
                       key={item.key}
                       style={({ pressed }) => [styles.gridCell, pressed && styles.pressed]}
                       onPress={() =>
-                        item.key === "agenda"
-                          ? router.push("/agenda" as never)
-                          : router.push(`/category/${encodeURIComponent(t(`categories.${item.key}.title`))}` as never)
+                        router.push(`/category/${encodeURIComponent(t(`categories.${item.key}.title`))}` as never)
                       }
                       accessibilityRole="button"
                     >
@@ -269,23 +273,27 @@ export default function ExploreScreen() {
                   ))}
             </View>
 
-            <SectionHeader label={t("modulesTitle")} />
-            <View style={styles.grid}>
-              {MODULE_ITEMS.map((item) => (
-                <Link key={item.key} href={item.href as never} asChild>
-                  <Pressable
-                    style={({ pressed }) => [styles.gridCell, pressed && styles.pressed]}
-                    accessibilityRole="link"
-                  >
-                    <FeatureCard
-                      icon={item.icon}
-                      meta={t(`modules.${item.key}.meta`)}
-                      title={t(`modules.${item.key}.title`)}
-                    />
-                  </Pressable>
-                </Link>
-              ))}
-            </View>
+            {moduleItems.length > 0 && (
+              <>
+                <SectionHeader label={t("modulesTitle")} />
+                <View style={styles.grid}>
+                  {moduleItems.map((item) => (
+                    <Link key={item.key} href={item.href as never} asChild>
+                      <Pressable
+                        style={({ pressed }) => [styles.gridCell, pressed && styles.pressed]}
+                        accessibilityRole="link"
+                      >
+                        <FeatureCard
+                          icon={item.icon}
+                          meta={t(`modules.${item.key}.meta`)}
+                          title={t(`modules.${item.key}.title`)}
+                        />
+                      </Pressable>
+                    </Link>
+                  ))}
+                </View>
+              </>
+            )}
 
             <View style={[styles.section, { gap: theme.spacing.sm * scaleSpace }]}>
               <SectionHeader label={t("trendsTitle")} italic />
@@ -331,7 +339,6 @@ const STATIC_CATEGORY_ITEMS = [
   { key: "analyses", icon: "✎" },
   { key: "podcasts", icon: "▷" },
   { key: "videos", icon: "▶" },
-  { key: "agenda", icon: "☷" },
 ] as const;
 
 function SectionHeader({

@@ -11,6 +11,7 @@ import {
   contentKindToModule,
   moduleToContentKind,
   PUBLIC_CONTENT_MODULES,
+  type ContentModule,
   type FeedSectionConfig,
 } from "../../../../src/features/tenant/public-config";
 import {
@@ -36,6 +37,14 @@ const MODULE_LABELS: Record<(typeof ENABLED_MODULES)[number], string> = {
   episodes: "Épisodes",
   videos: "Vidéos",
   premium: "Premium",
+  collections: "Collections",
+  agenda: "Agenda",
+  community: "Communauté",
+  bookmarks: "Favoris",
+  progressSync: "Progression",
+  offline: "Mode hors-ligne",
+  personalLists: "Listes",
+  membersRoom: "Salon membres",
 };
 
 const KIND_LABELS: Record<FeedSectionConfig["kind"], string> = {
@@ -268,7 +277,7 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
         : [...current, module],
     );
 
-    if (module !== "premium") {
+    if (module === "articles" || module === "episodes" || module === "videos") {
       const kind = moduleToContentKind(module);
       setFeedSections((current) => {
         if (isEnabled) {

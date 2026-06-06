@@ -12,6 +12,7 @@ jest.mock("expo-router", () => ({
   Link: ({ children }: { children: ReactNode }) => children,
   useLocalSearchParams: () => ({ id: "article_1" }),
   useSegments: () => ["(app)"],
+  useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
 }));
 
 jest.mock("../src/features/network/use-network-status", () => ({

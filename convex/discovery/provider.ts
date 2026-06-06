@@ -1,5 +1,5 @@
 import type { ActionCtx } from "../_generated/server";
-import type { FetchDemand } from "./fetch-demand";
+import type { FetchDemand } from "./fetchDemand";
 
 export interface ContentProvider {
   readonly source: string;

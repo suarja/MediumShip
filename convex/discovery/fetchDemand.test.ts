@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { computeFetchDemand } from "./fetch-demand";
+import { computeFetchDemand } from "./fetchDemand";
 
 describe("computeFetchDemand", () => {
   it("returns tenant seed categories on cold start with no affinities", () => {

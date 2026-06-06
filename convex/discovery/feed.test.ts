@@ -8,7 +8,10 @@ import schema from "../schema";
 import { modules } from "../../convexTestModules";
 import {
   buildOrderedDiscoveryFeed,
+  encodeFeedCursor,
+  paginateContinuousDiscoveryFeed,
   paginateOrderedFeed,
+  parseFeedCursor,
 } from "./feed";
 
 const TENANT = "demo-media";
@@ -463,7 +466,7 @@ describe("getDiscoveryFeed pagination", () => {
     );
   });
 
-  it("marks isExhausted when unseen items are fully paginated", async () => {
+  it("sets recycling when unseen items are fully paginated but keeps serving", async () => {
     const t = convexTest(schema, modules);
     await seedTenant(t, ["articles", "discover"]);
     const asMember = t.withIdentity(MEMBER);
@@ -481,7 +484,7 @@ describe("getDiscoveryFeed pagination", () => {
       feedSeed: 7,
       limit: 4,
     });
-    expect(page1.isExhausted).toBe(false);
+    expect(page1.recycling).toBe(false);
 
     const page2 = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
       tenantSlug: TENANT,
@@ -490,8 +493,58 @@ describe("getDiscoveryFeed pagination", () => {
       limit: 4,
       cursor: page1.nextCursor,
     });
-    expect(page2.isExhausted).toBe(true);
-    expect(page2.nextCursor).toBeNull();
+    expect(page2.recycling).toBe(true);
+    expect(page2.nextCursor).not.toBeNull();
+    expect(page2.items.length).toBeGreaterThan(0);
+  });
+
+  it("wraps with a fresh order when the full corpus is consumed", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t, ["articles", "discover"]);
+    const asMember = t.withIdentity(MEMBER);
+
+    for (let index = 0; index < 4; index += 1) {
+      await insertPublishedContent(t, {
+        title: `Story ${index}`,
+        publishedAt: `2026-06-0${index + 1}T08:00:00.000Z`,
+      });
+    }
+
+    const page1 = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+      feedSeed: 99,
+      limit: 4,
+    });
+    const page2 = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+      feedSeed: 99,
+      limit: 4,
+      cursor: page1.nextCursor,
+    });
+
+    expect(page1.items).toHaveLength(4);
+    expect(page2.items.length).toBeGreaterThan(0);
+    expect(page2.nextCursor).not.toBeNull();
+    expect(page2.recycling).toBe(true);
+    // Wrap cycle advances — cursor encodes a new sub-seed.
+    expect(parseFeedCursor(page2.nextCursor).wrapCycle).toBeGreaterThan(0);
+  });
+
+  it("returns empty with null cursor when the corpus is truly empty", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t, ["articles", "discover"]);
+    const asMember = t.withIdentity(MEMBER);
+
+    const feed = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+    });
+
+    expect(feed.items).toEqual([]);
+    expect(feed.nextCursor).toBeNull();
+    expect(feed.recycling).toBe(false);
   });
 
   it("serves recycled archive after unseen pool is exhausted", async () => {
@@ -526,7 +579,7 @@ describe("getDiscoveryFeed pagination", () => {
     });
     expect(page1.items).toHaveLength(1);
     expect(page1.items[0]?.title).toBe("Fresh story");
-    expect(page1.isExhausted).toBe(true);
+    expect(page1.recycling).toBe(true);
 
     const page2 = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
       tenantSlug: TENANT,
@@ -538,6 +591,98 @@ describe("getDiscoveryFeed pagination", () => {
     expect(page2.items).toHaveLength(1);
     expect(page2.items[0]?.title).toBe("Seen story");
     expect(page2.items[0]?.reason).toBe("archive");
+  });
+});
+
+describe("parseFeedCursor / encodeFeedCursor", () => {
+  it("round-trips offset-only and wrapped cursors", () => {
+    expect(parseFeedCursor(null)).toEqual({ offset: 0, wrapCycle: 0 });
+    expect(parseFeedCursor("10")).toEqual({ offset: 10, wrapCycle: 0 });
+    expect(parseFeedCursor("3@2")).toEqual({ offset: 3, wrapCycle: 2 });
+    expect(encodeFeedCursor(10, 0)).toBe("10");
+    expect(encodeFeedCursor(3, 2)).toBe("3@2");
+  });
+});
+
+describe("paginateContinuousDiscoveryFeed", () => {
+  const baseArgs = {
+    visible: Array.from({ length: 5 }, (_, index) => ({
+      _id: `id-${index}` as Id<"contents">,
+      title: `Story ${index}`,
+      category: "A",
+      tags: [],
+      kind: "article" as const,
+      publishedAt: `2026-06-0${index + 1}T08:00:00.000Z`,
+    })) as never[],
+    tokenIdentifier: "token",
+    feedSeed: 1,
+    hiddenIds: new Set<Id<"contents">>(),
+    seenIds: new Set<Id<"contents">>(),
+    affinities: [],
+  };
+
+  it("keeps nextCursor non-null while content exists", () => {
+    const page = paginateContinuousDiscoveryFeed({
+      ...baseArgs,
+      cursor: null,
+      limit: 3,
+    });
+
+    expect(page.items).toHaveLength(3);
+    expect(page.nextCursor).not.toBeNull();
+
+    const page2 = paginateContinuousDiscoveryFeed({
+      ...baseArgs,
+      cursor: page.nextCursor,
+      limit: 3,
+    });
+
+    expect(page2.items.length).toBeGreaterThan(0);
+    expect(page2.nextCursor).not.toBeNull();
+  });
+
+  it("wraps with a new order after the full list is consumed", () => {
+    const page1 = paginateContinuousDiscoveryFeed({
+      ...baseArgs,
+      cursor: null,
+      limit: 5,
+    });
+    expect(page1.items).toHaveLength(5);
+    expect(page1.nextCursor).toBe("5");
+
+    const page2 = paginateContinuousDiscoveryFeed({
+      ...baseArgs,
+      cursor: page1.nextCursor,
+      limit: 3,
+    });
+
+    expect(page2.items.length).toBe(3);
+    expect(page2.nextCursor).not.toBeNull();
+    expect(parseFeedCursor(page2.nextCursor).wrapCycle).toBeGreaterThan(0);
+  });
+
+  it("is deterministic for the same token, feedSeed, and cursor", () => {
+    const args = { ...baseArgs, cursor: "2", limit: 2 };
+    const first = paginateContinuousDiscoveryFeed(args);
+    const second = paginateContinuousDiscoveryFeed(args);
+
+    expect(first.items.map((item) => item.content._id)).toEqual(
+      second.items.map((item) => item.content._id),
+    );
+    expect(first.nextCursor).toBe(second.nextCursor);
+  });
+
+  it("returns empty when the corpus is empty", () => {
+    const page = paginateContinuousDiscoveryFeed({
+      ...baseArgs,
+      visible: [],
+      cursor: null,
+      limit: 10,
+    });
+
+    expect(page.items).toEqual([]);
+    expect(page.nextCursor).toBeNull();
+    expect(page.recycling).toBe(false);
   });
 });
 

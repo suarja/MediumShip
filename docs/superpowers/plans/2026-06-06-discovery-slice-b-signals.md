@@ -37,6 +37,7 @@ Includes:
 - `recordInteraction` mutation (skip/like) over `applyInteraction`.
 - `getDiscoveryFeed` **authenticated path**: load interactions + affinities, drop `hide`-d, full personalized + archive + editorial + random mix.
 - Discover screen: skip/like affordances + optimistic removal.
+- **Pull-to-refresh** on the Discover feed (drag-down on the existing `ScrollView`). **Why it recomputes:** the feed is not a static list — a refresh re-runs `getDiscoveryFeed`, which re-rolls the controlled-random / diversity jitter **and** folds in the affinity changes the member just produced (likes/skips this session). So pulling down is the explicit "recompute my feed with what you now know about me" gesture, not a network retry. Keep the rationale in mind: the recalculation is the point.
 
 Does **not** include:
 
@@ -111,13 +112,18 @@ Does **not** include:
 - [ ] **Step 2:** add `onSkip`/`onLike` to `ContentCard`; `use-discovery-feed.ts` exposes `recordSkip`/`recordLike` (optimistic remove/update via `useMutation`). Tokens only.
 - [ ] **Step 3:** Jest → PASS; `tsc` clean. **Commit** — `feat(discover): skip/like affordances`.
 
+**Pull-to-refresh (same task):**
+
+- [ ] **Step 4 (Jest, TDD):** dragging the feed down triggers a refresh that re-invokes the feed query (assert the refetch fires and the `refreshing` flag toggles). Convex's `useQuery` is reactive, so wire a `RefreshControl` whose `onRefresh` forces a recompute — re-rolling jitter + reflecting this session's affinities — rather than a no-op.
+- [ ] **Step 5:** add a `RefreshControl` to the Discover `ScrollView` (tokens for `tintColor`/`colors`, verify `midnight`); `use-discovery-feed.ts` exposes a `refresh()` + `isRefreshing`. **Commit** — `feat(discover): pull-to-refresh recomputes the feed`.
+
 ---
 
 ### Task 6: Verify the slice (standard verification — always)
 
 - [ ] `npm run test:convex` → PASS · `npm test` → PASS · `npx tsc --noEmit` + `-p convex` → PASS.
 - [ ] Hardcoded-color scan clean on changed mobile files.
-- [ ] **Manual smoke** per `docs/agents/ui-visual-testing.md`: like several cards in one category → reload → that category ranks higher; skip sinks a card; affinities persist across a second session; guest still gets editorial+random; `midnight` + iPad.
+- [ ] **Manual smoke** per `docs/agents/ui-visual-testing.md`: like several cards in one category → **pull down to refresh** → feed visibly recomputes (order changes, that category ranks higher); skip sinks a card; affinities persist across a second session; guest still gets editorial+random; `RefreshControl` spinner uses theme tokens in `midnight` + iPad.
 - [ ] `git status --short` clean.
 
 ---

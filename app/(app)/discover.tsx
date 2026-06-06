@@ -49,6 +49,7 @@ export default function DiscoverScreen() {
     recordLike,
     refresh,
     loadMore,
+    hasMoreLocal,
   } = useDiscoveryFeed();
 
   if (!isModuleEnabled(enabledModules, "discover")) {
@@ -161,6 +162,7 @@ export default function DiscoverScreen() {
             <DiscoverFeedFooter
               isLoadingMore={isLoadingMore}
               isExhausted={isExhausted}
+              hasMoreLocal={hasMoreLocal}
             />
           ) : null
         }
@@ -172,9 +174,11 @@ export default function DiscoverScreen() {
 function DiscoverFeedFooter({
   isLoadingMore,
   isExhausted,
+  hasMoreLocal,
 }: {
   isLoadingMore: boolean;
   isExhausted: boolean;
+  hasMoreLocal: boolean;
 }) {
   const { t } = useTranslation("discover");
   const { theme } = useAppTheme();
@@ -237,7 +241,7 @@ function DiscoverFeedFooter({
           { color: theme.colors.textMuted, fontSize: 13 * scaleFont },
         ]}
       >
-        {t("endOfFeedBody")}
+        {hasMoreLocal ? t("endOfFeedBodyWithArchive") : t("endOfFeedBodyCaughtUp")}
       </Text>
     </View>
   );

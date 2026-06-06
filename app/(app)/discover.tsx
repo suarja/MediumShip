@@ -6,6 +6,7 @@ import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { cardKicker, cardMeta } from "../../src/features/content/card-presentation";
 import { toContentCardModel } from "../../src/features/content/selectors";
+import { groupDiscoveryFeedSections } from "../../src/features/discovery/group-feed-sections";
 import { useDiscoveryFeed } from "../../src/features/discovery/use-discovery-feed";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
@@ -13,6 +14,7 @@ import { isModuleEnabled } from "../../src/features/tenant/public-config";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
+import type { FeedReason } from "../../convex/discovery/scoring";
 
 export default function DiscoverScreen() {
   const { t } = useTranslation("discover");
@@ -28,6 +30,7 @@ export default function DiscoverScreen() {
   }
 
   const maxWidth = contentMaxWidth ?? (isTablet ? 640 : undefined);
+  const sections = groupDiscoveryFeedSections(items);
 
   return (
     <Screen>
@@ -75,23 +78,89 @@ export default function DiscoverScreen() {
         ) : items.length === 0 ? (
           <DiscoverEmpty />
         ) : (
-          items.map((item, index) => {
-            const card = toContentCardModel(item);
-
-            return (
-              <ContentCard
-                key={item._id}
-                item={card}
-                reasonLabel={t(`reason.${item.reason}`)}
-                kicker={cardKicker(card, tHome)}
-                meta={cardMeta(card, tHome)}
-                divider={index > 0}
-              />
-            );
-          })
+          sections.map((section, sectionIndex) => (
+            <DiscoverFeedSection
+              key={section.reason}
+              reason={section.reason}
+              isFirst={sectionIndex === 0}
+              items={section.items}
+              tHome={tHome}
+            />
+          ))
         )}
       </ScrollView>
     </Screen>
+  );
+}
+
+function DiscoverFeedSection({
+  reason,
+  isFirst,
+  items,
+  tHome,
+}: {
+  reason: FeedReason;
+  isFirst: boolean;
+  items: ReturnType<typeof useDiscoveryFeed>["items"];
+  tHome: (key: string, options?: Record<string, unknown>) => string;
+}) {
+  const { t } = useTranslation("discover");
+  const { theme } = useAppTheme();
+  const { scaleFont, scaleSpace } = useResponsive();
+
+  return (
+    <View
+      testID={`discover-section-${reason}`}
+      style={[
+        styles.section,
+        {
+          gap: theme.spacing.sm * scaleSpace,
+          marginTop: isFirst ? 0 : theme.spacing.xl * scaleSpace,
+        },
+      ]}
+    >
+      <View
+        style={[
+          styles.sectionIntro,
+          {
+            gap: theme.spacing.xs * scaleSpace,
+          },
+        ]}
+      >
+        <Text
+          style={[
+            styles.sectionTitle,
+            { color: theme.colors.heading, fontSize: 18 * scaleFont },
+          ]}
+        >
+          {t(`sections.${reason}.title`)}
+        </Text>
+        <Text
+          style={[
+            styles.sectionBody,
+            { color: theme.colors.textMuted, fontSize: 13 * scaleFont },
+          ]}
+        >
+          {t(`sections.${reason}.body`)}
+        </Text>
+      </View>
+
+      <View style={{ gap: theme.spacing.xs * scaleSpace }}>
+        {items.map((item, index) => {
+          const card = toContentCardModel(item);
+
+          return (
+            <ContentCard
+              key={item._id}
+              item={card}
+              kicker={cardKicker(card, tHome)}
+              meta={cardMeta(card, tHome)}
+              divider={index > 0}
+            />
+          );
+        })}
+      </View>
+    </View>
   );
 }
 
@@ -104,7 +173,7 @@ function DiscoverSkeleton() {
       testID="discover-loading"
       style={[
         styles.skeletonStack,
-        { gap: theme.spacing.md * scaleSpace, paddingHorizontal: theme.spacing.lg * scaleSpace },
+        { gap: theme.spacing.md * scaleSpace },
       ]}
     >
       {Array.from({ length: 4 }, (_, index) => (
@@ -175,7 +244,6 @@ function DiscoverEmpty() {
       style={[
         styles.empty,
         {
-          marginHorizontal: theme.spacing.lg * scaleSpace,
           borderRadius: theme.radii.lg,
           backgroundColor: theme.colors.surface,
           borderColor: theme.colors.border,
@@ -195,9 +263,7 @@ function DiscoverEmpty() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: 16,
-  },
+  header: {},
   title: {
     fontFamily: fontFamilies.display,
     letterSpacing: -0.6,
@@ -208,6 +274,16 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
+  },
+  section: {},
+  sectionIntro: {},
+  sectionTitle: {
+    fontFamily: fontFamilies.display,
+    letterSpacing: -0.2,
+  },
+  sectionBody: {
+    fontFamily: fontFamilies.body,
+    lineHeight: 18,
   },
   skeletonStack: {},
   skeletonRow: {

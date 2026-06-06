@@ -114,11 +114,17 @@ describe("discover screen", () => {
     expect(screen.getByText("West Texas Boom Report")).toBeTruthy();
   });
 
-  it("shows localized reason labels", () => {
+  it("groups the feed into meaningful sections with explanatory copy", () => {
     render(<DiscoverScreen />);
 
-    expect(screen.getByText("Sélection éditoriale")).toBeTruthy();
-    expect(screen.getByText("Surprise")).toBeTruthy();
+    expect(screen.getByTestId("discover-section-editorial")).toBeTruthy();
+    expect(screen.getByTestId("discover-section-random")).toBeTruthy();
+    expect(screen.getByText("À la une")).toBeTruthy();
+    expect(screen.getByText(/publications les plus récentes/i)).toBeTruthy();
+    expect(screen.getByText("À redécouvrir")).toBeTruthy();
+    expect(screen.getByText(/pépite oubliée/i)).toBeTruthy();
+    expect(screen.queryByText("Surprise")).toBeNull();
+    expect(screen.queryByText("Sélection éditoriale")).toBeNull();
   });
 
   it("renders a loading skeleton while the feed is loading", () => {

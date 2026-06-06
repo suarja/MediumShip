@@ -1,13 +1,25 @@
 export default {
   title: "Découvrir",
-  subtitle: "Un fil mélangé entre sélection éditoriale et surprises.",
+  subtitle: "Un fil pour parcourir l'actualité et redécouvrir la bibliothèque.",
   loading: "Chargement du fil…",
   emptyTitle: "Rien à découvrir pour le moment",
   emptyBody: "Revenez bientôt : de nouveaux contenus arrivent régulièrement.",
-  reason: {
-    editorial: "Sélection éditoriale",
-    random: "Surprise",
-    personalized: "Recommandé",
-    archive: "Archive",
+  sections: {
+    editorial: {
+      title: "À la une",
+      body: "Les publications les plus récentes, pour prendre le fil.",
+    },
+    random: {
+      title: "À redécouvrir",
+      body: "Un contenu tiré de la bibliothèque — parfois une pépite oubliée.",
+    },
+    personalized: {
+      title: "Pour vous",
+      body: "Sélectionnés à partir de ce que vous lisez et écoutez.",
+    },
+    archive: {
+      title: "Des archives",
+      body: "Des contenus plus anciens qui méritent un second regard.",
+    },
   },
 } as const;

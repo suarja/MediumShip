@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { ContentCard } from "../../src/components/content/content-card";
@@ -23,7 +23,15 @@ export default function DiscoverScreen() {
   const { isTablet, scaleFont, scaleSpace, contentMaxWidth } = useResponsive();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
-  const { items, isLoading } = useDiscoveryFeed();
+  const {
+    items,
+    isLoading,
+    isRefreshing,
+    isSignedIn,
+    recordSkip,
+    recordLike,
+    refresh,
+  } = useDiscoveryFeed();
 
   if (!isModuleEnabled(enabledModules, "discover")) {
     return null;
@@ -64,6 +72,7 @@ export default function DiscoverScreen() {
       </View>
 
       <ScrollView
+        testID="discover-scroll"
         contentContainerStyle={[
           styles.content,
           {
@@ -71,6 +80,15 @@ export default function DiscoverScreen() {
             ...(maxWidth ? { maxWidth, alignSelf: "center", width: "100%" } : {}),
           },
         ]}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={refresh}
+            tintColor={theme.colors.accent}
+            colors={[theme.colors.accent]}
+            progressBackgroundColor={theme.colors.surface}
+          />
+        }
         showsVerticalScrollIndicator={false}
       >
         {isLoading ? (
@@ -85,6 +103,9 @@ export default function DiscoverScreen() {
               isFirst={sectionIndex === 0}
               items={section.items}
               tHome={tHome}
+              isSignedIn={isSignedIn}
+              recordSkip={recordSkip}
+              recordLike={recordLike}
             />
           ))
         )}
@@ -98,11 +119,17 @@ function DiscoverFeedSection({
   isFirst,
   items,
   tHome,
+  isSignedIn,
+  recordSkip,
+  recordLike,
 }: {
   reason: FeedReason;
   isFirst: boolean;
   items: ReturnType<typeof useDiscoveryFeed>["items"];
   tHome: (key: string, options?: Record<string, unknown>) => string;
+  isSignedIn: boolean;
+  recordSkip: ReturnType<typeof useDiscoveryFeed>["recordSkip"];
+  recordLike: ReturnType<typeof useDiscoveryFeed>["recordLike"];
 }) {
   const { t } = useTranslation("discover");
   const { theme } = useAppTheme();
@@ -156,6 +183,14 @@ function DiscoverFeedSection({
               kicker={cardKicker(card, tHome)}
               meta={cardMeta(card, tHome)}
               divider={index > 0}
+              onSkip={
+                isSignedIn ? () => recordSkip(item._id as never) : undefined
+              }
+              onLike={
+                isSignedIn ? () => recordLike(item._id as never) : undefined
+              }
+              skipAccessibilityLabel={t("actions.skip")}
+              likeAccessibilityLabel={t("actions.like")}
             />
           );
         })}

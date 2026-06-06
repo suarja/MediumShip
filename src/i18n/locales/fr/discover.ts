@@ -4,6 +4,10 @@ export default {
   loading: "Chargement du fil…",
   emptyTitle: "Rien à découvrir pour le moment",
   emptyBody: "Revenez bientôt : de nouveaux contenus arrivent régulièrement.",
+  actions: {
+    skip: "Passer",
+    like: "Aimer",
+  },
   sections: {
     editorial: {
       title: "À la une",

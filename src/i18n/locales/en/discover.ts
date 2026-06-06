@@ -4,6 +4,10 @@ export default {
   loading: "Loading the feed…",
   emptyTitle: "Nothing to discover yet",
   emptyBody: "Check back soon — new stories land here regularly.",
+  actions: {
+    skip: "Skip",
+    like: "Like",
+  },
   sections: {
     editorial: {
       title: "Fresh picks",

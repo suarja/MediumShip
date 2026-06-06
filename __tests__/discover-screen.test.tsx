@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import DiscoverScreen from "../app/(app)/discover";
 import { changeAppLanguage, initI18n } from "../src/i18n";
@@ -6,6 +6,9 @@ import type { DiscoveryFeedItem } from "../src/features/discovery/use-discovery-
 
 const mockUseAppTheme = jest.fn();
 const mockUseDiscoveryFeed = jest.fn();
+const mockRecordSkip = jest.fn();
+const mockRecordLike = jest.fn();
+const mockRefresh = jest.fn();
 
 jest.mock("../src/features/theme/theme-provider", () => ({
   useAppTheme: () => mockUseAppTheme(),
@@ -89,12 +92,20 @@ describe("discover screen", () => {
   });
 
   beforeEach(async () => {
+    mockRecordSkip.mockClear();
+    mockRecordLike.mockClear();
+    mockRefresh.mockClear();
     mockUseAppTheme.mockReturnValue(
       makeTheme(["articles", "episodes", "videos", "discover"]),
     );
     mockUseDiscoveryFeed.mockReturnValue({
       items: SAMPLE_FEED,
       isLoading: false,
+      isRefreshing: false,
+      isSignedIn: true,
+      recordSkip: mockRecordSkip,
+      recordLike: mockRecordLike,
+      refresh: mockRefresh,
     });
     await changeAppLanguage("fr");
   });
@@ -154,5 +165,82 @@ describe("discover screen", () => {
 
     expect(screen.getByTestId("discover-screen")).toBeTruthy();
     expect(screen.getByText("Découvrir")).toBeTruthy();
+  });
+
+  it("records a skip and removes the card when the skip affordance is tapped", () => {
+    const { rerender } = render(<DiscoverScreen />);
+
+    fireEvent.press(screen.getAllByTestId("discover-skip-button")[0]);
+
+    expect(mockRecordSkip).toHaveBeenCalledWith("article-1");
+
+    mockUseDiscoveryFeed.mockReturnValue({
+      items: SAMPLE_FEED.filter((item) => item._id !== "article-1"),
+      isLoading: false,
+      isRefreshing: false,
+      isSignedIn: true,
+      recordSkip: mockRecordSkip,
+      recordLike: mockRecordLike,
+      refresh: mockRefresh,
+    });
+
+    rerender(<DiscoverScreen />);
+
+    expect(screen.queryByText("Economie du soin")).toBeNull();
+    expect(screen.getByText("West Texas Boom Report")).toBeTruthy();
+  });
+
+  it("records a like when the like affordance is tapped", () => {
+    render(<DiscoverScreen />);
+
+    fireEvent.press(screen.getAllByTestId("discover-like-button")[0]);
+
+    expect(mockRecordLike).toHaveBeenCalledWith("article-1");
+  });
+
+  it("does not record skip or like for guests", () => {
+    mockUseDiscoveryFeed.mockReturnValue({
+      items: SAMPLE_FEED,
+      isLoading: false,
+      isRefreshing: false,
+      isSignedIn: false,
+      recordSkip: mockRecordSkip,
+      recordLike: mockRecordLike,
+      refresh: mockRefresh,
+    });
+
+    render(<DiscoverScreen />);
+
+    expect(screen.queryAllByTestId("discover-skip-button")).toHaveLength(0);
+    expect(screen.queryAllByTestId("discover-like-button")).toHaveLength(0);
+    expect(mockRecordSkip).not.toHaveBeenCalled();
+    expect(mockRecordLike).not.toHaveBeenCalled();
+  });
+
+  it("triggers a feed refresh when the user pulls down", () => {
+    render(<DiscoverScreen />);
+
+    const refreshControl = screen.getByTestId("discover-scroll").props.refreshControl;
+    refreshControl.props.onRefresh();
+
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the refresh spinner while the feed is recomputing", () => {
+    mockUseDiscoveryFeed.mockReturnValue({
+      items: SAMPLE_FEED,
+      isLoading: false,
+      isRefreshing: true,
+      isSignedIn: true,
+      recordSkip: mockRecordSkip,
+      recordLike: mockRecordLike,
+      refresh: mockRefresh,
+    });
+
+    render(<DiscoverScreen />);
+
+    expect(screen.getByTestId("discover-scroll").props.refreshControl.props.refreshing).toBe(
+      true,
+    );
   });
 });

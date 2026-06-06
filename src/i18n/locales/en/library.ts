@@ -44,7 +44,7 @@ export default {
     saveCta: "Keep",
     savedCta: "Saved",
     saveHint: "Add this format to your personal library.",
-    savedHint: "Already stored in your member library.",
+    savedHint: "Already stored in your personal library.",
   },
   actions: {
     loading: "Checking your member access...",
@@ -53,7 +53,7 @@ export default {
       "Activate your profile to save content, sync progress, and download supported formats.",
     memberCta: "Become a member",
     memberHint:
-      "Saved items, synced progress, and offline downloads are reserved for members.",
+      "Offline downloads and personal lists are reserved for premium members.",
     memberFooter:
       "Member actions keep your library, sync, and offline copies together.",
     memberFooterWide:
@@ -80,9 +80,9 @@ export default {
     guestTitle: "Keep what deserves a return visit",
     guestHint:
       "Sign in to build your personal library as you read, watch, and listen.",
-    memberTitle: "Upgrade to save items",
+    memberTitle: "Saved items are included",
     memberHint:
-      "Member access unlocks persistent bookmarks and synced resumes across devices.",
+      "Every signed-in account can keep persistent bookmarks across devices.",
     emptyTitle: "Your library is waiting for its first marker",
     empty:
       "Save an article, episode, or hosted video to see it here with its cover art.",

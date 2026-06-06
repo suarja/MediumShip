@@ -59,14 +59,27 @@ export function ContentActionsBar({ content }: { content: ContentDoc }) {
     );
   }
 
+  const bookmarkAction = (
+    <ActionCard
+      body={isSaved ? t("bookmark.savedHint") : t("bookmark.saveHint")}
+      ctaLabel={isSaved ? t("bookmark.savedCta") : t("bookmark.saveCta")}
+      iconName={isSaved ? "bookmark" : "bookmark-outline"}
+      onPress={() => void toggleBookmark({ contentId: content._id as never })}
+      tone="accent"
+    />
+  );
+
   if (!isMember) {
     return (
-      <MembershipActionCard
-        body={t("actions.memberHint")}
-        ctaHref="/premium"
-        ctaLabel={t("actions.memberCta")}
-        iconName="sparkles-outline"
-      />
+      <View style={[styles.stack, { gap: theme.spacing.sm * scaleSpace }]}>
+        {bookmarkAction}
+        <MembershipActionCard
+          body={t("actions.memberHint")}
+          ctaHref="/premium"
+          ctaLabel={t("actions.memberCta")}
+          iconName="sparkles-outline"
+        />
+      </View>
     );
   }
 
@@ -95,13 +108,7 @@ export function ContentActionsBar({ content }: { content: ContentDoc }) {
   return (
     <View style={[styles.stack, { gap: theme.spacing.sm * scaleSpace }]}>
       <View style={[styles.row, { gap: theme.spacing.sm * scaleSpace }]}>
-        <ActionCard
-          body={isSaved ? t("bookmark.savedHint") : t("bookmark.saveHint")}
-          ctaLabel={isSaved ? t("bookmark.savedCta") : t("bookmark.saveCta")}
-          iconName={isSaved ? "bookmark" : "bookmark-outline"}
-          onPress={() => void toggleBookmark({ contentId: content._id as never })}
-          tone="accent"
-        />
+        {bookmarkAction}
         <ActionCard
           body={downloadHint}
           ctaLabel={downloadLabel}

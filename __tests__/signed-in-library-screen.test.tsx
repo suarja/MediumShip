@@ -53,6 +53,7 @@ describe("signed-in library screen", () => {
 
     expect(screen.getByText("Library")).toBeTruthy();
     expect(screen.getByText("Saved library section")).toBeTruthy();
+    expect(screen.queryByText("Upgrade to save items")).toBeNull();
     expect(screen.getByText("Offline shelf section")).toBeTruthy();
     expect(screen.getAllByText("Lists").length).toBeGreaterThan(0);
     expect(screen.queryByText("Your library, everywhere")).toBeNull();

@@ -44,7 +44,7 @@ export default {
     saveCta: "Garder",
     savedCta: "Garde",
     saveHint: "Ajoutez ce format a votre bibliotheque personnelle.",
-    savedHint: "Deja range dans votre bibliotheque membre.",
+    savedHint: "Deja range dans votre bibliotheque personnelle.",
   },
   actions: {
     loading: "Verification de vos droits membres...",
@@ -53,7 +53,7 @@ export default {
       "Activez votre profil pour enregistrer des contenus, synchroniser la progression et telecharger les formats pris en charge.",
     memberCta: "Devenir membre",
     memberHint:
-      "Les enregistrements, la progression synchronisee et les telechargements hors ligne sont reserves aux membres.",
+      "Les telechargements hors ligne et les listes personnelles sont reserves aux membres premium.",
     memberFooter:
       "Les actions membres gardent votre bibliotheque, votre sync et vos copies offline au meme endroit.",
     memberFooterWide:
@@ -79,8 +79,9 @@ export default {
     rowMetaPremium: "Premium · pret a retrouver",
     guestTitle: "Gardez ce qui merite de revenir",
     guestHint: "Connectez-vous pour construire votre bibliotheque personnelle au fil de vos lectures et ecoutes.",
-    memberTitle: "Passez membre pour enregistrer",
-    memberHint: "L'acces membre active les bookmarks persistants et la synchronisation de vos reprises.",
+    memberTitle: "Les enregistrements sont inclus",
+    memberHint:
+      "Chaque compte connecte peut garder des bookmarks persistants sur ses appareils.",
     emptyTitle: "Votre bibliotheque attend son premier repere",
     empty:
       "Enregistrez un article, un episode ou une video hebergee pour les retrouver ici avec leurs couvertures.",

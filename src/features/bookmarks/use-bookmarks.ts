@@ -13,7 +13,7 @@ export function useBookmarks() {
   const { isAuthenticated } = useConvexAuth();
   const { isMember, isLoading: isMembershipLoading } = useIsMember();
   const toggleBookmark = useMutation(api.bookmarks.mutations.toggleBookmark);
-  const canAccessBookmarks = isAuthenticated && isMember;
+  const canAccessBookmarks = isAuthenticated;
   const rawBookmarks = useQuery(
     api.bookmarks.queries.listBookmarks,
     canAccessBookmarks ? {} : "skip",

@@ -114,10 +114,12 @@ export function useDiscoveryFeed(): {
     setNextCursor(page.nextCursor);
     setIsExhausted(page.isExhausted);
 
-    if (page.isExhausted && page.nextCursor === null && fetchCursor !== null) {
-      setFetchCursor(null);
-      pendingAppendRef.current = null;
-    }
+    // NOTE: do NOT reset fetchCursor to page 0 on exhaustion. Doing so makes
+    // page 0 report a non-null nextCursor again, so onEndReached/loadMore
+    // re-paginates to the end, resets, and loops forever — an infinite
+    // getDiscoveryFeed loop (cost + always-same-content). When the corpus
+    // grows (refill), new content is picked up via pull-to-refresh (new
+    // feedSeed) or the page-0 reactive append below — never by cursor reset.
 
     setAllItems((previous) => {
       if (fetchCursor === null) {

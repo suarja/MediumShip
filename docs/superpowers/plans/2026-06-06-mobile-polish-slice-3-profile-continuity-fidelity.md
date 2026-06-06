@@ -196,4 +196,6 @@ git commit -m "fix(profile): make resume stub tappable and remove dummy dates"
 
 ## Next Slice
 
-**Slice 5 — Cartes, overlays et systeme visuel** (supervision slice 5 in design doc).
+**Slice 5 — Cartes, overlays et systeme visuel** (supervision slice 5 in design doc), then **Slice 6 — Verification**.
+
+**After supervision 5–6:** `docs/superpowers/plans/2026-06-06-personal-lists-crud-member-capability.md` — personal lists CRUD (replaces `/lists` stubs).

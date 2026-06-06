@@ -25,6 +25,7 @@ import { useDownloads } from "../../src/features/downloads/use-downloads";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
+import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
@@ -52,7 +53,7 @@ export default function ProfileScreen() {
 function ProfileDashboard() {
   const { t } = useTranslation("profile");
   const { isSignedIn, email, fullName, user, signOut } = useClerkAuth();
-  const { theme } = useAppTheme();
+  const { theme, tenantName } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
   const { isAuthenticated } = useConvexAuth();
   const tabBarSpace = useTabBarSpace();
@@ -74,6 +75,154 @@ function ProfileDashboard() {
   const historyCount = 0;
   const name = fullName ?? me?.name ?? email ?? t("guestName");
   const avatarUrl = user?.imageUrl ?? me?.avatarUrl ?? null;
+  const brandInitial = (tenantName.trim().charAt(0) || "M").toUpperCase();
+
+  if (!isSignedIn) {
+    return (
+      <Screen>
+        <View
+          style={[
+            styles.topBar,
+            { marginHorizontal: -(theme.spacing.lg * scaleSpace) },
+          ]}
+        >
+          <View style={styles.topBarSide} />
+          <Text
+            style={[
+              styles.topBarTitle,
+              {
+                color: theme.colors.heading,
+                fontSize: 18 * scaleFont,
+              },
+            ]}
+          >
+            {t("title")}
+          </Text>
+          <View style={styles.topBarSide} />
+        </View>
+
+        <View
+          style={[
+            styles.gateScreen,
+            {
+              paddingBottom: tabBarSpace + persistentPlayerSpace,
+              paddingHorizontal: 32 * scaleSpace,
+              paddingTop: 120 * scaleSpace,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.crest,
+              {
+                borderRadius: theme.radii.lg,
+                backgroundColor: theme.colors.accent,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.crestLabel,
+                {
+                  color: theme.colors.accentContrast,
+                  fontSize: 30 * scaleFont,
+                },
+              ]}
+            >
+              {brandInitial}
+            </Text>
+          </View>
+
+          <Text
+            style={[
+              styles.gateTitle,
+              {
+                color: theme.colors.heading,
+                fontSize: 26 * scaleFont,
+              },
+            ]}
+          >
+            {t("guestTitle")}
+          </Text>
+          <Text
+            style={[
+              styles.gateBody,
+              {
+                color: theme.colors.textMuted,
+                fontSize: 13 * scaleFont,
+              },
+            ]}
+          >
+            {t("guestBio")}
+          </Text>
+
+          <View
+            style={[
+              styles.gateActions,
+              {
+                gap: theme.spacing.sm * scaleSpace,
+                marginTop: theme.spacing.xs * scaleSpace,
+              },
+            ]}
+          >
+            <Link href="/sign-in" asChild>
+              <Pressable
+                accessibilityRole="link"
+                style={({ pressed }) => [
+                  styles.primaryButton,
+                  {
+                    borderRadius: theme.radii.pill,
+                    backgroundColor: theme.colors.heading,
+                  },
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text
+                  testID="profile-create-account-button"
+                  style={[
+                    styles.primaryButtonLabel,
+                    {
+                      color: theme.colors.canvas,
+                      fontSize: 15 * scaleFont,
+                    },
+                  ]}
+                >
+                  {t("createAccount")}
+                </Text>
+              </Pressable>
+            </Link>
+
+            <Pressable
+              testID="profile-discover-premium-button"
+              accessibilityRole="button"
+              onPress={() => openPaywall("support")}
+              style={({ pressed }) => [
+                styles.secondaryButton,
+                {
+                  borderRadius: theme.radii.pill,
+                  borderColor: withAlpha(theme.colors.premium, theme.isDark ? 0.35 : 0.25),
+                  backgroundColor: theme.colors.premium,
+                },
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.secondaryButtonLabel,
+                  {
+                    color: theme.colors.canvas,
+                    fontSize: 14 * scaleFont,
+                  },
+                ]}
+              >
+                {t("discoverPremium")}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
@@ -87,135 +236,37 @@ function ProfileDashboard() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {isSignedIn ? (
-          <>
-            <ProfileIdentity
-              title={t("title")}
-              name={name}
-              status={isMember ? t("status.memberPremium") : t("status.memberFree")}
-              since={isMember ? t("since.member") : t("since.upgrade")}
-              avatarUrl={avatarUrl}
-              editableAvatar
-            />
+        <ProfileIdentity
+          title={t("title")}
+          name={name}
+          status={isMember ? t("status.memberPremium") : t("status.memberFree")}
+          since={isMember ? t("since.member") : t("since.upgrade")}
+          avatarUrl={avatarUrl}
+          editableAvatar
+        />
 
-            <ResumeCard />
+        <ResumeCard />
 
-            <ProfileStatStrip
-              savedCount={savedCount}
-              offlineCount={downloadedCount}
-              historyCount={historyCount}
-              labels={{
-                saved: t("stats.savedLabel"),
-                offline: t("stats.offlineLabel"),
-                history: t("stats.historyLabel"),
-              }}
-            />
+        <ProfileStatStrip
+          savedCount={savedCount}
+          offlineCount={downloadedCount}
+          historyCount={historyCount}
+          labels={{
+            saved: t("stats.savedLabel"),
+            offline: t("stats.offlineLabel"),
+            history: t("stats.historyLabel"),
+          }}
+        />
 
-            <ProfileLibraryRows
-              isMember={isMember}
-              savedCount={savedCount}
-              downloadCount={downloadedCount}
-              onSignOut={() => {
-                void signOut();
-              }}
-              onGoPremium={() => openPaywall("support")}
-            />
-          </>
-        ) : (
-          <>
-            <View
-              style={[
-                styles.topBar,
-                { marginHorizontal: -(theme.spacing.lg * scaleSpace) },
-              ]}
-            >
-              <View style={styles.topBarSide} />
-              <Text
-                style={[
-                  styles.topBarTitle,
-                  {
-                    color: theme.colors.heading,
-                    fontSize: 18 * scaleFont,
-                  },
-                ]}
-              >
-                {t("title")}
-              </Text>
-              <View style={styles.topBarSide} />
-            </View>
-
-            <View
-              style={[
-                styles.noteCard,
-                {
-                  borderRadius: theme.radii.xl,
-                  borderColor: theme.colors.border,
-                  backgroundColor: theme.colors.surface,
-                },
-              ]}
-            >
-              <Text style={[styles.noteTitle, { color: theme.colors.heading }]}>
-                {t("guestTitle")}
-              </Text>
-              <Text style={[styles.noteBody, { color: theme.colors.textMuted }]}>
-                {t("guestNote")}
-              </Text>
-              <View style={[styles.noteButtonWrap, { gap: theme.spacing.sm * scaleSpace }]}>
-                <Link href="/sign-in" asChild>
-                  <Pressable
-                    accessibilityRole="link"
-                    style={({ pressed }) => [pressed && styles.pressed]}
-                  >
-                    <View
-                      testID="profile-create-account-button"
-                      style={[
-                        styles.noteButton,
-                        {
-                          borderRadius: theme.radii.pill,
-                          backgroundColor: theme.colors.heading,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.noteButtonLabel,
-                          { color: theme.colors.canvas },
-                        ]}
-                      >
-                        {t("createAccount")}
-                      </Text>
-                    </View>
-                  </Pressable>
-                </Link>
-                <Pressable
-                  testID="profile-discover-premium-button"
-                  accessibilityRole="button"
-                  onPress={() => openPaywall("support")}
-                  style={({ pressed }) => [pressed && styles.pressed]}
-                >
-                  <View
-                    style={[
-                      styles.noteButton,
-                      {
-                        borderRadius: theme.radii.pill,
-                        backgroundColor: theme.colors.premium,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.noteButtonLabel,
-                        { color: theme.colors.canvas },
-                      ]}
-                    >
-                      {t("discoverPremium")}
-                    </Text>
-                  </View>
-                </Pressable>
-              </View>
-            </View>
-          </>
-        )}
+        <ProfileLibraryRows
+          isMember={isMember}
+          savedCount={savedCount}
+          downloadCount={downloadedCount}
+          onSignOut={() => {
+            void signOut();
+          }}
+          onGoPremium={() => openPaywall("support")}
+        />
       </ScrollView>
     </Screen>
   );
@@ -251,38 +302,62 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.display,
     letterSpacing: -0.2,
   },
-  noteCard: {
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 20,
+  gateScreen: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "flex-start",
     gap: 8,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.06,
-    shadowRadius: 20,
-    elevation: 4,
   },
-  noteTitle: {
-    fontFamily: fontFamilies.displayBold,
-    fontSize: 20,
-    letterSpacing: -0.3,
+  crest: {
+    width: 56,
+    height: 56,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
   },
-  noteBody: {
+  crestLabel: {
+    fontFamily: fontFamilies.displayItalic,
+  },
+  gateTitle: {
+    fontFamily: fontFamilies.display,
+    letterSpacing: -0.4,
+    lineHeight: 30,
+    textAlign: "center",
+  },
+  gateBody: {
+    maxWidth: 280,
     fontFamily: fontFamilies.body,
-    fontSize: 15,
-    lineHeight: 22,
+    lineHeight: 20,
+    textAlign: "center",
+    marginTop: 4,
+    marginBottom: 16,
   },
-  noteButtonWrap: {
-    alignSelf: "flex-start",
-    marginTop: 8,
+  gateActions: {
+    width: "100%",
+    maxWidth: 280,
   },
-  noteButton: {
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+  primaryButton: {
+    width: "100%",
+    minHeight: 46,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
   },
-  noteButtonLabel: {
+  primaryButtonLabel: {
     fontFamily: fontFamilies.bodySemiBold,
-    fontSize: 14,
   },
-  pressed: {
+  secondaryButton: {
+    width: "100%",
+    minHeight: 42,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+  secondaryButtonLabel: {
+    fontFamily: fontFamilies.bodyMedium,
+  },
+  buttonPressed: {
     opacity: 0.88,
   },
 });

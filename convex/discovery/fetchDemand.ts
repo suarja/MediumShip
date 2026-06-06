@@ -2,6 +2,13 @@ import { normalizeScoringKey } from "./scoring";
 
 export type FetchDemand = {
   categories: string[];
+  coldStart?: boolean;
+};
+
+export type TenantCategoryPreference = {
+  targetType: "category" | "tag" | "contentType";
+  targetId: string;
+  score: number;
 };
 
 export type AggregatedCategoryAffinity = {
@@ -17,6 +24,29 @@ export type FetchDemandOptions = {
 const DEFAULT_MAX_CATEGORIES = 5;
 const DEFAULT_DIVERSITY_SLOTS = 2;
 
+export function aggregateCategoryAffinities(
+  preferences: readonly TenantCategoryPreference[],
+): AggregatedCategoryAffinity[] {
+  const totals = new Map<string, number>();
+
+  for (const preference of preferences) {
+    if (preference.targetType !== "category") {
+      continue;
+    }
+
+    const targetId = normalizeScoringKey(preference.targetId);
+    if (!targetId) {
+      continue;
+    }
+
+    totals.set(targetId, (totals.get(targetId) ?? 0) + preference.score);
+  }
+
+  return [...totals.entries()]
+    .map(([targetId, score]) => ({ targetId, score }))
+    .sort((left, right) => right.score - left.score);
+}
+
 export function computeFetchDemand(
   aggregatedAffinities: readonly AggregatedCategoryAffinity[],
   seedCategories: readonly string[],
@@ -29,7 +59,10 @@ export function computeFetchDemand(
   ];
 
   if (aggregatedAffinities.length === 0) {
-    return { categories: normalizedSeeds.slice(0, maxCategories) };
+    return {
+      categories: normalizedSeeds.slice(0, maxCategories),
+      coldStart: true,
+    };
   }
 
   const ranked = aggregatedAffinities

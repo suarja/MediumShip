@@ -24,8 +24,9 @@ describe("cmsProvider", () => {
 });
 
 describe("PROVIDERS registry", () => {
-  it("contains cmsProvider", () => {
+  it("contains cmsProvider and wikipediaProvider", () => {
     expect(PROVIDERS).toContain(cmsProvider);
+    expect(PROVIDERS.map((provider) => provider.source)).toContain("wikipedia");
   });
 
   it("iterates any adapter registered in the same registry shape", async () => {
@@ -47,7 +48,8 @@ describe("PROVIDERS registry", () => {
       upserted.push(result.upserted);
     }
 
-    expect(seen).toEqual(["cms", "fake"]);
-    expect(upserted).toEqual([0, 3]);
+    expect(seen).toEqual(["cms", "wikipedia", "fake"]);
+    expect(upserted[0]).toBe(0);
+    expect(upserted[2]).toBe(3);
   });
 });

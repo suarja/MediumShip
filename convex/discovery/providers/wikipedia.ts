@@ -217,14 +217,14 @@ export async function fetchWikipediaCategoryPages(
 
 async function ingestWikipediaDemand(
   ctx: ActionCtx,
-  args: { tenantSlug: string; demand: FetchDemand; coldStart?: boolean },
+  args: { tenantSlug: string; demand: FetchDemand },
   fetchImpl: typeof fetch = fetch,
 ): Promise<{ upserted: number }> {
   let totalUpserted = 0;
 
   for (const category of args.demand.categories) {
     const pages = await fetchWikipediaCategoryPages(category, fetchImpl, {
-      coldStart: args.coldStart,
+      coldStart: args.demand.coldStart,
     });
     const normalized = pages.map((page) =>
       normalizeWikipediaPage(page, {

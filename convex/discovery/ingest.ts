@@ -1,6 +1,16 @@
 import { v } from "convex/values";
 
-import { internalMutation } from "../_generated/server";
+import { internal } from "../_generated/api";
+import {
+  internalAction,
+  internalMutation,
+  internalQuery,
+} from "../_generated/server";
+import {
+  aggregateCategoryAffinities,
+  computeFetchDemand,
+} from "./fetchDemand";
+import { PROVIDERS } from "./provider";
 
 const ingestedContentValidator = v.object({
   tenantSlug: v.string(),
@@ -53,5 +63,103 @@ export const upsertIngested = internalMutation({
     }
 
     return { upserted };
+  },
+});
+
+export const listTenantsForIngestion = internalQuery({
+  args: {},
+  returns: v.array(
+    v.object({
+      slug: v.string(),
+      discoverySeedCategories: v.optional(v.array(v.string())),
+    }),
+  ),
+  handler: async (ctx) => {
+    const tenants = await ctx.db.query("tenants").collect();
+
+    return tenants.map((tenant) => ({
+      slug: tenant.slug,
+      discoverySeedCategories: tenant.discoverySeedCategories,
+    }));
+  },
+});
+
+export const getTenantIngestionInputs = internalQuery({
+  args: { tenantSlug: v.string() },
+  returns: v.object({
+    aggregatedAffinities: v.array(
+      v.object({
+        targetId: v.string(),
+        score: v.number(),
+      }),
+    ),
+    seedCategories: v.array(v.string()),
+  }),
+  handler: async (ctx, { tenantSlug }) => {
+    const tenant = await ctx.db
+      .query("tenants")
+      .withIndex("by_slug", (q) => q.eq("slug", tenantSlug))
+      .unique();
+
+    const preferences = await ctx.db.query("userPreferences").collect();
+    const tenantPreferences = preferences.filter(
+      (preference) => preference.tenantSlug === tenantSlug,
+    );
+
+    return {
+      aggregatedAffinities: aggregateCategoryAffinities(tenantPreferences),
+      seedCategories: tenant?.discoverySeedCategories ?? [],
+    };
+  },
+});
+
+export const runDiscoveryIngestion = internalAction({
+  args: {},
+  returns: v.object({
+    tenantsProcessed: v.number(),
+    totalUpserted: v.number(),
+  }),
+  handler: async (ctx) => {
+    const tenants: Array<{
+      slug: string;
+      discoverySeedCategories?: string[];
+    }> = await ctx.runQuery(internal.discovery.ingest.listTenantsForIngestion, {});
+
+    let tenantsProcessed = 0;
+    let totalUpserted = 0;
+
+    for (const tenant of tenants) {
+      const inputs: {
+        aggregatedAffinities: Array<{ targetId: string; score: number }>;
+        seedCategories: string[];
+      } = await ctx.runQuery(internal.discovery.ingest.getTenantIngestionInputs, {
+        tenantSlug: tenant.slug,
+      });
+
+      const demand = computeFetchDemand(
+        inputs.aggregatedAffinities,
+        inputs.seedCategories,
+      );
+
+      if (demand.categories.length === 0) {
+        continue;
+      }
+
+      tenantsProcessed += 1;
+
+      for (const provider of PROVIDERS) {
+        if (provider.source === "cms") {
+          continue;
+        }
+
+        const result: { upserted: number } = await provider.ingest(ctx, {
+          tenantSlug: tenant.slug,
+          demand,
+        });
+        totalUpserted += result.upserted;
+      }
+    }
+
+    return { tenantsProcessed, totalUpserted };
   },
 });

@@ -9,6 +9,7 @@ describe("computeFetchDemand", () => {
     });
 
     expect(demand.categories).toEqual(["science", "history", "culture"]);
+    expect(demand.coldStart).toBe(true);
   });
 
   it("ranks top categories by aggregate score", () => {

@@ -1,14 +1,14 @@
 import { query } from "../_generated/server";
-import { requireMember } from "../entitlements/authz";
+import { requireAuth } from "../entitlements/authz";
 
 export const listBookmarks = query({
   args: {},
   handler: async (ctx) => {
-    const entitlement = await requireMember(ctx);
+    const identity = await requireAuth(ctx);
     const bookmarks = await ctx.db
       .query("bookmarks")
       .withIndex("by_tokenIdentifier_and_createdAt", (q) =>
-        q.eq("tokenIdentifier", entitlement.tokenIdentifier),
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
       )
       .order("desc")
       .take(100);

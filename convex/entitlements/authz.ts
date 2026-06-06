@@ -1,8 +1,23 @@
+import type { UserIdentity } from "convex/server";
+
 import type { Doc } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { isProFromEntitlement } from "./model";
 
 type EntitlementCtx = QueryCtx | MutationCtx;
+
+// Guard for signed-in-only functions that do NOT require membership. Throws for
+// guests; returns the identity otherwise. Free member-account features keyed by
+// `tokenIdentifier` (e.g. bookmarks, which the roadmap makes free for any
+// signed-in account — `bookmark = gratuit`) gate on this, NOT on requireMember.
+export async function requireAuth(ctx: EntitlementCtx): Promise<UserIdentity> {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) {
+    throw new Error("Unauthenticated");
+  }
+
+  return identity;
+}
 
 // Resolves the entitlement row for the *currently signed-in* identity. Mirrors
 // the user-lookup fallback used elsewhere (tokenIdentifier first, then the raw

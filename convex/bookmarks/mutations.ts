@@ -1,13 +1,13 @@
 import { v } from "convex/values";
 
 import { mutation } from "../_generated/server";
-import { requireMember } from "../entitlements/authz";
+import { requireAuth } from "../entitlements/authz";
 import { resolveToggleBookmark } from "./model";
 
 export const toggleBookmark = mutation({
   args: { contentId: v.id("contents") },
   handler: async (ctx, args) => {
-    const entitlement = await requireMember(ctx);
+    const identity = await requireAuth(ctx);
     const content = await ctx.db.get(args.contentId);
 
     if (!content || content.status !== "published") {
@@ -17,7 +17,7 @@ export const toggleBookmark = mutation({
     const existingBookmark = await ctx.db
       .query("bookmarks")
       .withIndex("by_tokenIdentifier_and_contentId", (q) =>
-        q.eq("tokenIdentifier", entitlement.tokenIdentifier).eq("contentId", args.contentId),
+        q.eq("tokenIdentifier", identity.tokenIdentifier).eq("contentId", args.contentId),
       )
       .unique();
 
@@ -31,7 +31,7 @@ export const toggleBookmark = mutation({
     }
 
     await ctx.db.insert("bookmarks", {
-      tokenIdentifier: entitlement.tokenIdentifier,
+      tokenIdentifier: identity.tokenIdentifier,
       contentId: args.contentId,
       createdAt: Date.now(),
     });

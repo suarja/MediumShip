@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet } from "react-native";
 
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useBookmarks } from "../../features/bookmarks/use-bookmarks";
@@ -7,21 +7,9 @@ import { useClerkAuth } from "../../features/auth/use-clerk-auth";
 import type { ContentActionsFocus } from "../../features/content/content-actions-sheet-provider";
 import { useContentActionsSheet } from "../../features/content/content-actions-sheet-provider";
 import { useResponsive } from "../../features/responsive/use-responsive";
-import { withAlpha } from "../../features/theme/contrast";
-import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
-type ActionButtonProps = {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  active?: boolean;
-  loading?: boolean;
-  onPress: () => void;
-  accessibilityLabel: string;
-  testID?: string;
-};
-
-/** Inline like toggle for the discovery feature card. */
+/** Inline like toggle — icon only. */
 export function ContentCardLikeAction({
   isLiked,
   onPress,
@@ -32,10 +20,9 @@ export function ContentCardLikeAction({
   accessibilityLabel: string;
 }) {
   return (
-    <CardActionButton
+    <CardIconAction
       testID="discover-like-button"
       icon={isLiked ? "heart" : "heart-outline"}
-      label={accessibilityLabel}
       active={isLiked}
       onPress={onPress}
       accessibilityLabel={accessibilityLabel}
@@ -43,7 +30,7 @@ export function ContentCardLikeAction({
   );
 }
 
-/** Inline bookmark (Favoris) toggle for the discovery feature card. */
+/** Inline bookmark (Favoris) toggle — icon only. */
 export function ContentCardFavoriteAction({
   contentId,
   accessibilityLabel,
@@ -58,10 +45,9 @@ export function ContentCardFavoriteAction({
   const isSaved = bookmarks.some((bookmark) => bookmark.content._id === contentId);
 
   return (
-    <CardActionButton
+    <CardIconAction
       testID="discover-favorite-button"
       icon={isSaved ? "bookmark" : "bookmark-outline"}
-      label={isSaved ? savedAccessibilityLabel : accessibilityLabel}
       active={isSaved}
       loading={isSignedIn && isBookmarksLoading}
       onPress={() => {
@@ -75,7 +61,7 @@ export function ContentCardFavoriteAction({
   );
 }
 
-/** Opens the shared content actions sheet from the discovery card. */
+/** Opens the shared content actions sheet — icon only. */
 export function ContentCardOverflowAction({
   contentId,
   focus = "discovery",
@@ -85,45 +71,36 @@ export function ContentCardOverflowAction({
   focus?: ContentActionsFocus;
   accessibilityLabel: string;
 }) {
-  const { theme } = useAppTheme();
-  const { scaleFont } = useResponsive();
   const { openContentActions } = useContentActionsSheet();
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
+    <CardIconAction
       testID="discover-overflow-button"
-      hitSlop={8}
+      icon="ellipsis-horizontal"
       onPress={() => openContentActions(contentId, focus)}
-      style={({ pressed }) => [
-        styles.overflowButton,
-        {
-          borderRadius: theme.radii.sm,
-        },
-        pressed && styles.pressed,
-      ]}
-    >
-      <Ionicons
-        color={theme.colors.textMuted}
-        name="ellipsis-horizontal"
-        size={18 * scaleFont}
-      />
-    </Pressable>
+      accessibilityLabel={accessibilityLabel}
+    />
   );
 }
 
-function CardActionButton({
+function CardIconAction({
   icon,
-  label,
   active = false,
   loading = false,
   onPress,
   accessibilityLabel,
   testID,
-}: ActionButtonProps) {
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  active?: boolean;
+  loading?: boolean;
+  onPress: () => void;
+  accessibilityLabel: string;
+  testID?: string;
+}) {
   const { theme } = useAppTheme();
-  const { scaleFont, scaleSpace } = useResponsive();
+  const { scaleFont } = useResponsive();
+  const color = active ? theme.colors.accent : theme.colors.textMuted;
 
   return (
     <Pressable
@@ -131,65 +108,30 @@ function CardActionButton({
       accessibilityLabel={accessibilityLabel}
       testID={testID}
       disabled={loading}
+      hitSlop={6}
       onPress={onPress}
       style={({ pressed }) => [
-        styles.action,
-        {
-          gap: 6 * scaleSpace,
-          borderRadius: theme.radii.md,
-          backgroundColor: active
-            ? withAlpha(theme.colors.accent, 0.12)
-            : withAlpha(theme.colors.heading, 0.03),
-          paddingHorizontal: 12 * scaleSpace,
-          paddingVertical: 8 * scaleSpace,
-        },
+        styles.iconButton,
         pressed && styles.pressed,
       ]}
     >
       {loading ? (
         <ActivityIndicator color={theme.colors.accent} size="small" />
       ) : (
-        <Ionicons
-          color={active ? theme.colors.accent : theme.colors.textMuted}
-          name={icon}
-          size={18 * scaleFont}
-        />
+        <Ionicons color={color} name={icon} size={20 * scaleFont} />
       )}
-      <Text
-        numberOfLines={1}
-        style={[
-          styles.actionLabel,
-          {
-            color: active ? theme.colors.accent : theme.colors.textMuted,
-            fontSize: 12 * scaleFont,
-          },
-        ]}
-      >
-        {label}
-      </Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  action: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-    minWidth: 0,
-  },
-  actionLabel: {
-    fontFamily: fontFamilies.bodySemiBold,
-    flexShrink: 1,
-  },
-  overflowButton: {
-    width: 40,
-    height: 40,
+  iconButton: {
+    width: 32,
+    height: 32,
     alignItems: "center",
     justifyContent: "center",
-    flexShrink: 0,
   },
   pressed: {
-    opacity: 0.72,
+    opacity: 0.65,
   },
 });

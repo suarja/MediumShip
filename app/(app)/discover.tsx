@@ -173,8 +173,8 @@ function DiscoverFeedSection({
         </Text>
       </View>
 
-      <View style={{ gap: theme.spacing.xs * scaleSpace }}>
-        {items.map((item, index) => {
+      <View>
+        {items.map((item) => {
           const card = toContentCardModel(item);
 
           return (
@@ -184,7 +184,7 @@ function DiscoverFeedSection({
               item={card}
               kicker={cardKicker(card, tHome)}
               meta={cardMeta(card, tHome)}
-              divider={index > 0}
+              divider={false}
               actions={
                 isSignedIn ? (
                   <>

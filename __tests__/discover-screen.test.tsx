@@ -273,10 +273,11 @@ describe("discover screen", () => {
     expect(screen.getByText("Economie du soin")).toBeTruthy();
   });
 
-  it("renders the FR Favoris label on the inline bookmark control", () => {
+  it("exposes the FR Favoris label on the bookmark icon accessibility", () => {
     render(<DiscoverScreen />);
 
-    expect(screen.getAllByText("Favoris").length).toBeGreaterThan(0);
+    const favoriteButtons = screen.getAllByTestId("discover-favorite-button");
+    expect(favoriteButtons[0]?.props.accessibilityLabel).toBe("Favoris");
   });
 
   it("opens the shared actions sheet in discovery context from overflow", () => {

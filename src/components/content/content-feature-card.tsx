@@ -5,32 +5,31 @@ import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { KIND_GLYPH, PREMIUM_ON_FILL } from "../../features/content/card-presentation";
 import type { ContentCardModel } from "../../features/content/types";
 import { useResponsive } from "../../features/responsive/use-responsive";
-import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 /**
- * Social-feed style discovery card: a media band over a surface body with an
- * optional inline action row. Instagram/Facebook reference — prominent artwork,
- * comfortable title stack, room for like / save / overflow controls.
+ * Compact discovery card — continuous feed rhythm (no dividers, no boxed chrome):
+ * a small square thumb beside kicker / title / summary / meta, with a light
+ * icon-only action row tucked underneath. Instagram/Facebook scroll reference.
  */
 export function ContentFeatureCard({
   item,
   kicker,
   meta,
-  divider = true,
   actions,
 }: {
   item: ContentCardModel;
   kicker: string;
   meta: string;
+  /** @deprecated Feature cards never draw inter-item dividers. */
   divider?: boolean;
   actions?: ReactNode;
 }) {
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
   const accentTone = item.isPremium ? theme.colors.premium : theme.colors.accent;
-  const mediaHeight = 168 * scaleSpace;
+  const thumb = 72 * scaleSpace;
 
   return (
     <View
@@ -38,58 +37,44 @@ export function ContentFeatureCard({
       style={[
         styles.card,
         {
-          marginTop: divider ? theme.spacing.md * scaleSpace : 0,
-          paddingTop: divider ? theme.spacing.md * scaleSpace : 0,
-          borderTopWidth: divider ? StyleSheet.hairlineWidth : 0,
-          borderTopColor: theme.colors.border,
+          gap: theme.spacing.xs * scaleSpace,
+          paddingVertical: theme.spacing.sm * scaleSpace,
         },
       ]}
     >
-      <View
-        style={[
-          styles.surface,
-          {
-            borderRadius: theme.radii.lg,
-            borderColor: theme.colors.border,
-            backgroundColor: theme.colors.surface,
-            shadowColor: theme.colors.heading,
-          },
-        ]}
-      >
-        <Link href={item.href as never} asChild>
-          <Pressable
-            accessibilityRole="link"
-            style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
-          >
-            <View style={[styles.media, { height: mediaHeight }]}>
+      <Link href={item.href as never} asChild>
+        <Pressable
+          accessibilityRole="link"
+          style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
+        >
+          <View style={[styles.row, { gap: theme.spacing.md * scaleSpace }]}>
+            <View
+              style={[
+                styles.thumb,
+                {
+                  width: thumb,
+                  height: thumb,
+                  borderRadius: theme.radii.sm,
+                  backgroundColor: theme.colors.accentSoft,
+                },
+              ]}
+            >
               {item.coverImageUrl ? (
                 <Image
-                  accessibilityLabel={`${item.title} cover`}
+                  accessibilityLabel={`${item.title} thumbnail`}
                   source={{ uri: item.coverImageUrl }}
-                  style={styles.cover}
+                  style={styles.thumbnail}
                 />
               ) : (
-                <>
-                  <View
-                    style={[
-                      styles.glow,
-                      {
-                        backgroundColor: accentTone,
-                        opacity: theme.isDark ? 0.28 : 0.18,
-                      },
-                    ]}
-                  />
-                  <Text
-                    style={[
-                      styles.watermark,
-                      { color: theme.colors.heading, fontSize: 56 * scaleFont },
-                    ]}
-                  >
-                    {KIND_GLYPH[item.kind]}
-                  </Text>
-                </>
+                <Text
+                  style={[
+                    styles.glyph,
+                    { color: accentTone, fontSize: 24 * scaleFont },
+                  ]}
+                >
+                  {KIND_GLYPH[item.kind]}
+                </Text>
               )}
-
               {item.isPremium ? (
                 <View
                   style={[styles.premiumBadge, { backgroundColor: theme.colors.premium }]}
@@ -101,13 +86,8 @@ export function ContentFeatureCard({
 
             <View
               style={[
-                styles.body,
-                {
-                  paddingHorizontal: theme.spacing.md * scaleSpace,
-                  paddingTop: theme.spacing.md * scaleSpace,
-                  paddingBottom: actions ? 0 : theme.spacing.md * scaleSpace,
-                  gap: theme.spacing.xs * scaleSpace,
-                },
+                styles.copy,
+                { gap: 3 * scaleSpace, paddingTop: 1 * scaleSpace },
               ]}
             >
               <Text
@@ -120,18 +100,34 @@ export function ContentFeatureCard({
                 {kicker}
               </Text>
               <Text
-                numberOfLines={3}
+                numberOfLines={2}
                 style={[
                   styles.title,
                   {
                     color: theme.colors.heading,
-                    fontSize: 20 * scaleFont,
-                    lineHeight: 24 * scaleFont,
+                    fontSize: 17 * scaleFont,
+                    lineHeight: 21 * scaleFont,
                   },
                 ]}
               >
                 {item.title}
               </Text>
+              {item.summary ? (
+                <Text
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                  style={[
+                    styles.summary,
+                    {
+                      color: theme.colors.textMuted,
+                      fontSize: 13 * scaleFont,
+                      lineHeight: 18 * scaleFont,
+                    },
+                  ]}
+                >
+                  {item.summary}
+                </Text>
+              ) : null}
               {meta ? (
                 <Text
                   numberOfLines={1}
@@ -144,91 +140,75 @@ export function ContentFeatureCard({
                 </Text>
               ) : null}
             </View>
-          </Pressable>
-        </Link>
-
-        {actions ? (
-          <View
-            testID="content-card-actions"
-            style={[
-              styles.actions,
-              {
-                borderTopColor: withAlpha(theme.colors.border, 0.8),
-                paddingHorizontal: theme.spacing.sm * scaleSpace,
-                paddingVertical: theme.spacing.sm * scaleSpace,
-                gap: theme.spacing.xs * scaleSpace,
-              },
-            ]}
-          >
-            {actions}
           </View>
-        ) : null}
-      </View>
+        </Pressable>
+      </Link>
+
+      {actions ? (
+        <View
+          testID="content-card-actions"
+          style={[
+            styles.actions,
+            {
+              gap: theme.spacing.xs * scaleSpace,
+              paddingLeft: thumb + theme.spacing.md * scaleSpace,
+            },
+          ]}
+        >
+          {actions}
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {},
-  surface: {
-    overflow: "hidden",
-    borderWidth: StyleSheet.hairlineWidth,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 14,
-    elevation: 3,
-  },
   pressable: {},
-  pressed: { opacity: 0.94 },
-  media: {
-    width: "100%",
-    position: "relative",
+  pressed: { opacity: 0.88 },
+  row: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  thumb: {
+    alignItems: "center",
+    justifyContent: "center",
     overflow: "hidden",
+    flexShrink: 0,
   },
-  cover: { width: "100%", height: "100%" },
-  glow: {
-    position: "absolute",
-    right: -40,
-    top: -50,
-    width: 180,
-    height: 180,
-    borderRadius: 999,
-  },
-  watermark: {
-    position: "absolute",
-    right: 16,
-    bottom: 8,
-    opacity: 0.14,
-    fontWeight: "700",
-  },
+  thumbnail: { width: "100%", height: "100%" },
+  glyph: { fontWeight: "700" },
   premiumBadge: {
     position: "absolute",
-    top: 10,
-    right: 10,
-    width: 22,
-    height: 22,
-    borderRadius: 6,
+    top: 4,
+    right: 4,
+    width: 16,
+    height: 16,
+    borderRadius: 5,
     alignItems: "center",
     justifyContent: "center",
   },
-  premiumStar: { fontSize: 10, fontWeight: "700" },
-  body: {},
+  premiumStar: { fontSize: 8, fontWeight: "700" },
+  copy: { flex: 1, minWidth: 0 },
   kicker: {
     fontFamily: fontFamilies.mono,
     textTransform: "uppercase",
-    letterSpacing: 1.4,
+    letterSpacing: 1.3,
   },
   title: {
     fontFamily: fontFamilies.display,
     letterSpacing: -0.2,
   },
+  summary: {
+    fontFamily: fontFamilies.body,
+  },
   meta: {
     fontFamily: fontFamilies.mono,
-    letterSpacing: 0.4,
+    letterSpacing: 0.3,
+    marginTop: 1,
   },
   actions: {
     flexDirection: "row",
     alignItems: "center",
-    borderTopWidth: StyleSheet.hairlineWidth,
   },
 });

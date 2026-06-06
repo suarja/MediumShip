@@ -98,7 +98,7 @@ describe("ContentCard", () => {
     expect(onLike).toHaveBeenCalledTimes(1);
   });
 
-  it('variant="feature" renders the bigger media-forward layout', () => {
+  it('variant="feature" renders a compact row with summary ellipsis', () => {
     render(
       <ContentCard
         variant="feature"
@@ -110,6 +110,7 @@ describe("ContentCard", () => {
 
     expect(screen.getByTestId("content-card-feature")).toBeTruthy();
     expect(screen.getByText("Economie du soin")).toBeTruthy();
+    expect(screen.getByText("Une analyse approfondie")).toBeTruthy();
     expect(screen.queryByTestId("content-card-compact")).toBeNull();
   });
 

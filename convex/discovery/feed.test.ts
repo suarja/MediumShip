@@ -7,6 +7,7 @@ import schema from "../schema";
 import { modules } from "../../convexTestModules";
 
 const TENANT = "demo-media";
+const MEMBER = { subject: "member_1", tokenIdentifier: "token_member" };
 
 async function seedTenant(
   t: ReturnType<typeof convexTest>,
@@ -136,5 +137,148 @@ describe("getDiscoveryFeed guest path", () => {
     });
 
     expect(feed).toHaveLength(10);
+  });
+});
+
+describe("getDiscoveryFeed authenticated path", () => {
+  it("ranks category-matching content above unmatched content", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t, ["articles", "discover"]);
+    const asMember = t.withIdentity(MEMBER);
+
+    const politiqueId = await insertPublishedContent(t, {
+      title: "Politique story",
+      publishedAt: "2026-06-01T08:00:00.000Z",
+      category: "Politique",
+    });
+    await insertPublishedContent(t, {
+      title: "Culture story",
+      publishedAt: "2026-06-01T08:00:00.000Z",
+      category: "Culture",
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("userPreferences", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        tenantSlug: TENANT,
+        targetType: "category",
+        targetId: "politique",
+        score: 200,
+        updatedAt: 1,
+      });
+    });
+
+    const feed = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+      feedSeed: 3,
+    });
+
+    expect(feed[0]?._id).toBe(politiqueId);
+    expect(feed.some((item) => item.reason === "personalized")).toBe(true);
+  });
+
+  it("excludes content the member has hidden", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t, ["articles", "discover"]);
+    const asMember = t.withIdentity(MEMBER);
+
+    const hiddenId = await insertPublishedContent(t, {
+      title: "Hidden story",
+      publishedAt: "2026-06-01T08:00:00.000Z",
+    });
+    await insertPublishedContent(t, {
+      title: "Visible story",
+      publishedAt: "2026-06-02T08:00:00.000Z",
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("contentInteractions", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        tenantSlug: TENANT,
+        contentId: hiddenId,
+        type: "hide",
+        createdAt: 1,
+      });
+    });
+
+    const feed = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+    });
+
+    expect(feed.map((item) => item.title)).toEqual(["Visible story"]);
+  });
+
+  it("sinks content the member has already opened or finished", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t, ["articles", "discover"]);
+    const asMember = t.withIdentity(MEMBER);
+
+    const seenId = await insertPublishedContent(t, {
+      title: "Already opened",
+      publishedAt: "2026-06-05T08:00:00.000Z",
+    });
+    const freshId = await insertPublishedContent(t, {
+      title: "Still fresh",
+      publishedAt: "2026-06-04T08:00:00.000Z",
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("contentInteractions", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        tenantSlug: TENANT,
+        contentId: seenId,
+        type: "open",
+        createdAt: 1,
+      });
+    });
+
+    const feed = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+      feedSeed: 1,
+    });
+
+    const seenIndex = feed.findIndex((item) => item._id === seenId);
+    const freshIndex = feed.findIndex((item) => item._id === freshId);
+
+    expect(seenIndex).toBeGreaterThan(freshIndex);
+  });
+
+  it("uses the full 60/20/10/10 mix for authenticated members", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t, ["articles", "discover"]);
+    const asMember = t.withIdentity(MEMBER);
+
+    for (let index = 0; index < 40; index += 1) {
+      await insertPublishedContent(t, {
+        title: `Story ${index}`,
+        publishedAt: `2026-05-${String((index % 28) + 1).padStart(2, "0")}T08:00:00.000Z`,
+      });
+    }
+
+    const feed = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+      feedSeed: 11,
+      limit: 40,
+    });
+
+    const counts = {
+      personalized: feed.filter((item) => item.reason === "personalized").length,
+      archive: feed.filter((item) => item.reason === "archive").length,
+      editorial: feed.filter((item) => item.reason === "editorial").length,
+      random: feed.filter((item) => item.reason === "random").length,
+    };
+
+    expect(counts.personalized).toBeGreaterThanOrEqual(22);
+    expect(counts.personalized).toBeLessThanOrEqual(26);
+    expect(counts.archive).toBeGreaterThanOrEqual(6);
+    expect(counts.archive).toBeLessThanOrEqual(10);
+    expect(counts.editorial).toBeGreaterThanOrEqual(2);
+    expect(counts.editorial).toBeLessThanOrEqual(6);
+    expect(counts.random).toBeGreaterThanOrEqual(2);
+    expect(counts.random).toBeLessThanOrEqual(6);
   });
 });

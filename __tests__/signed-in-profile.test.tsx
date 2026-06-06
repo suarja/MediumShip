@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
-import { render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import ProfileScreen from "../app/(app)/profile";
 import { changeAppLanguage, initI18n } from "../src/i18n";
+
+const mockOpenPaywall = jest.fn();
+const mockPush = jest.fn();
 
 jest.mock("convex/react", () => ({
   useConvexAuth: () => ({ isAuthenticated: true }),
@@ -12,7 +15,7 @@ jest.mock("convex/react", () => ({
 
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: ReactNode }) => children,
-  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
+  useRouter: () => ({ push: mockPush, replace: jest.fn() }),
 }));
 
 jest.mock("../src/features/auth/use-clerk-auth", () => ({
@@ -27,12 +30,14 @@ jest.mock("../src/features/auth/use-clerk-auth", () => ({
   }),
 }));
 
+const mockUseBookmarks = jest.fn(() => ({
+  bookmarks: [{ content: {}, createdAt: 1 }, { content: {}, createdAt: 2 }],
+  isMember: false,
+  isMembershipLoading: false,
+}));
+
 jest.mock("../src/features/bookmarks/use-bookmarks", () => ({
-  useBookmarks: () => ({
-    bookmarks: [{ content: {}, createdAt: 1 }, { content: {}, createdAt: 2 }],
-    isMember: false,
-    isMembershipLoading: false,
-  }),
+  useBookmarks: () => mockUseBookmarks(),
 }));
 
 jest.mock("../src/features/downloads/use-downloads", () => ({
@@ -55,12 +60,23 @@ jest.mock("../src/features/media/persistent-media-player", () => ({
   usePersistentMediaPlayerSpace: () => 0,
 }));
 
+jest.mock("../src/features/paywall/paywall-sheet-provider", () => ({
+  usePaywallSheet: () => ({ openPaywall: mockOpenPaywall, closePaywall: jest.fn() }),
+}));
+
 describe("signed-in profile", () => {
   beforeAll(async () => {
     await initI18n();
   });
 
   beforeEach(async () => {
+    mockOpenPaywall.mockClear();
+    mockPush.mockClear();
+    mockUseBookmarks.mockReturnValue({
+      bookmarks: [{ content: {}, createdAt: 1 }, { content: {}, createdAt: 2 }],
+      isMember: false,
+      isMembershipLoading: false,
+    });
     await changeAppLanguage("en");
   });
 
@@ -85,5 +101,53 @@ describe("signed-in profile", () => {
 
     // The banner-hero composition is gone
     expect(screen.queryByText("Your profile")).toBeNull();
+  });
+
+  it("opens the lists paywall when a non-premium member taps My lists", () => {
+    render(<ProfileScreen />);
+
+    fireEvent.press(screen.getByText("My lists"));
+
+    expect(mockOpenPaywall).toHaveBeenCalledWith("lists");
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it("opens the offline paywall when a non-premium member taps Downloads", () => {
+    render(<ProfileScreen />);
+
+    fireEvent.press(screen.getByText("Downloads"));
+
+    expect(mockOpenPaywall).toHaveBeenCalledWith("offline");
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it("navigates to /lists when a premium member taps My lists", () => {
+    mockUseBookmarks.mockReturnValue({
+      bookmarks: [{ content: {}, createdAt: 1 }, { content: {}, createdAt: 2 }],
+      isMember: true,
+      isMembershipLoading: false,
+    });
+
+    render(<ProfileScreen />);
+
+    fireEvent.press(screen.getByText("My lists"));
+
+    expect(mockPush).toHaveBeenCalledWith("/lists");
+    expect(mockOpenPaywall).not.toHaveBeenCalled();
+  });
+
+  it("navigates to /library when a premium member taps Downloads", () => {
+    mockUseBookmarks.mockReturnValue({
+      bookmarks: [{ content: {}, createdAt: 1 }, { content: {}, createdAt: 2 }],
+      isMember: true,
+      isMembershipLoading: false,
+    });
+
+    render(<ProfileScreen />);
+
+    fireEvent.press(screen.getByText("Downloads"));
+
+    expect(mockPush).toHaveBeenCalledWith("/library");
+    expect(mockOpenPaywall).not.toHaveBeenCalled();
   });
 });

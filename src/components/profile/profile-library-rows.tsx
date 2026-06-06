@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { GateBadge, type GateTone } from "../library/gate-badge";
+import { usePaywallSheet } from "../../features/paywall/paywall-sheet-provider";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
@@ -35,6 +36,23 @@ export function ProfileLibraryRows({
   const { theme } = useAppTheme();
   const { scaleSpace } = useResponsive();
   const router = useRouter();
+  const { openPaywall } = usePaywallSheet();
+
+  const openLists = () => {
+    if (isMember) {
+      router.push("/lists");
+      return;
+    }
+    openPaywall("lists");
+  };
+
+  const openDownloads = () => {
+    if (isMember) {
+      router.push("/library");
+      return;
+    }
+    openPaywall("offline");
+  };
 
   return (
     <View style={{ gap: theme.spacing.lg * scaleSpace }}>
@@ -58,15 +76,17 @@ export function ProfileLibraryRows({
               ? t("rows.downloads.subMember", { count: downloadCount })
               : t("rows.downloads.sub")
           }
-          onPress={() => router.push("/library")}
+          onPress={openDownloads}
         />
         <ProfileRow
           icon="list-outline"
           title={t("rows.lists.title")}
           gate="premium"
           gateLabel={t("badges.premium")}
-          subtitle={t("rows.lists.sub")}
-          onPress={() => router.push("/library")}
+          subtitle={
+            isMember ? t("rows.lists.subMember") : t("rows.lists.sub")
+          }
+          onPress={openLists}
         />
         <ProfileRow
           icon="time-outline"

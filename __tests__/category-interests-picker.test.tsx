@@ -9,7 +9,7 @@ const initialMetrics = {
   insets: { top: 47, left: 0, right: 0, bottom: 34 },
 };
 
-const mockToggleCategory = jest.fn().mockResolvedValue(undefined);
+const mockApplyCategoryInterests = jest.fn().mockResolvedValue(undefined);
 
 const mockUseCategoryInterests = jest.fn(() => ({
   options: [
@@ -20,7 +20,8 @@ const mockUseCategoryInterests = jest.fn(() => ({
   selectedKeys: new Set(["science"]),
   isLoading: false,
   isSignedIn: true,
-  toggleCategory: mockToggleCategory,
+  canPersistInterests: true,
+  applyCategoryInterests: mockApplyCategoryInterests,
 }));
 
 jest.mock("../src/features/categories/use-category-interests", () => ({
@@ -68,7 +69,7 @@ describe("category interests picker", () => {
   });
 
   beforeEach(() => {
-    mockToggleCategory.mockClear();
+    mockApplyCategoryInterests.mockClear();
     mockUseCategoryInterests.mockImplementation(() => ({
       options: [
         { label: "Science", icon: "⨁", iconKey: "science" },
@@ -78,7 +79,8 @@ describe("category interests picker", () => {
       selectedKeys: new Set(["science"]),
       isLoading: false,
       isSignedIn: true,
-      toggleCategory: mockToggleCategory,
+      canPersistInterests: true,
+      applyCategoryInterests: mockApplyCategoryInterests,
     }));
   });
 
@@ -107,7 +109,9 @@ describe("category interests picker", () => {
     fireEvent.press(await screen.findByText("Philosophie"));
 
     await waitFor(() => {
-      expect(mockToggleCategory).toHaveBeenCalledWith("Philosophie");
+      expect(mockApplyCategoryInterests).toHaveBeenCalledWith(
+        new Set(["philosophie", "science"]),
+      );
     });
   });
 
@@ -120,7 +124,8 @@ describe("category interests picker", () => {
       selectedKeys: new Set<string>(),
       isLoading: false,
       isSignedIn: false,
-      toggleCategory: mockToggleCategory,
+      canPersistInterests: false,
+      applyCategoryInterests: mockApplyCategoryInterests,
     }));
 
     render(
@@ -132,6 +137,6 @@ describe("category interests picker", () => {
     fireEvent.press(screen.getByText("Category interests"));
 
     expect(await screen.findByText("Sign in to pick categories")).toBeTruthy();
-    expect(mockToggleCategory).not.toHaveBeenCalled();
+    expect(mockApplyCategoryInterests).not.toHaveBeenCalled();
   });
 });

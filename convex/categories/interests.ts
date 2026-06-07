@@ -1,3 +1,4 @@
+import { ConvexError } from "convex/values";
 import { v } from "convex/values";
 
 import { mutation, query, type QueryCtx } from "../_generated/server";
@@ -35,7 +36,7 @@ export const setCategoryInterests = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      return null;
+      throw new ConvexError("Unauthorized");
     }
 
     const tokenIdentifier = identity.tokenIdentifier;

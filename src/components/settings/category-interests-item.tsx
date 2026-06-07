@@ -21,7 +21,7 @@ export function CategoryInterestsItem({ isLast = false }: { isLast?: boolean }) 
   const { t } = useTranslation("settings");
   const { theme } = useAppTheme();
   const [open, setOpen] = useState(false);
-  const { options, selectedKeys, isLoading, isSignedIn, toggleCategory } =
+  const { options, selectedKeys, isLoading, isSignedIn, applyCategoryInterests } =
     useCategoryInterests();
   const treeNodes = useCategoryInterestTreeNodes();
 
@@ -62,12 +62,14 @@ export function CategoryInterestsItem({ isLast = false }: { isLast?: boolean }) 
             ]}
             onPress={() => {}}
           >
-            <Text style={[styles.sheetTitle, { color: theme.colors.heading }]}>
-              {t("interests.label")}
-            </Text>
-            <Text style={[styles.sheetSubtitle, { color: theme.colors.textMuted }]}>
-              {t("interests.pickerDescription")}
-            </Text>
+            <View style={styles.sheetHeader}>
+              <Text style={[styles.sheetTitle, { color: theme.colors.heading }]}>
+                {t("interests.label")}
+              </Text>
+              <Text style={[styles.sheetSubtitle, { color: theme.colors.textMuted }]}>
+                {t("interests.pickerDescription")}
+              </Text>
+            </View>
 
             {!isSignedIn ? (
               <View
@@ -92,9 +94,9 @@ export function CategoryInterestsItem({ isLast = false }: { isLast?: boolean }) 
                 showsVerticalScrollIndicator={false}
               >
                 <CategoryInterestsPicker
+                  applyCategoryInterests={applyCategoryInterests}
                   options={options}
                   selectedKeys={selectedKeys}
-                  toggleCategory={toggleCategory}
                   treeNodes={treeNodes}
                 />
               </ScrollView>
@@ -113,13 +115,16 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   sheet: {
-    gap: 18,
+    gap: 10,
     maxHeight: "85%",
     padding: 22,
     shadowOpacity: 0.14,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 16 },
     elevation: 10,
+  },
+  sheetHeader: {
+    gap: 4,
   },
   sheetTitle: {
     fontFamily: fontFamilies.displayBold,
@@ -129,7 +134,7 @@ const styles = StyleSheet.create({
   sheetSubtitle: {
     fontFamily: fontFamilies.body,
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   guestBanner: {
     paddingHorizontal: 16,

@@ -6,10 +6,16 @@ const mockSetCategoryInterests = jest.fn().mockResolvedValue(undefined);
 const mockRequestDiscoveryFeedRefresh = jest.fn();
 
 let mockIsSignedIn = true;
+let mockIsAuthenticated = true;
+let mockIsConvexAuthLoading = false;
 
 jest.mock("convex/react", () => ({
   useMutation: () => mockSetCategoryInterests,
   useQuery: jest.fn(),
+  useConvexAuth: () => ({
+    isAuthenticated: mockIsAuthenticated,
+    isLoading: mockIsConvexAuthLoading,
+  }),
 }));
 
 jest.mock("../src/features/auth/use-clerk-auth", () => ({
@@ -33,6 +39,8 @@ describe("useCategoryInterests", () => {
     mockSetCategoryInterests.mockClear();
     mockRequestDiscoveryFeedRefresh.mockClear();
     mockIsSignedIn = true;
+    mockIsAuthenticated = true;
+    mockIsConvexAuthLoading = false;
 
     useQuery.mockImplementation((_ref: unknown, args: unknown) => {
       if (args === "skip") {
@@ -54,30 +62,39 @@ describe("useCategoryInterests", () => {
     });
   });
 
-  it("persists toggles and reloads the discovery feed", async () => {
+  it("persists an explicit key set when Convex auth is ready", async () => {
     const { result } = renderHook(() => useCategoryInterests());
 
     await act(async () => {
-      await result.current.toggleCategory("Philosophie");
+      await result.current.applyCategoryInterests(new Set(["science", "philosophie"]));
     });
 
     expect(mockSetCategoryInterests).toHaveBeenCalledWith({
       tenantSlug: "demo-media",
-      categoryKeys: ["Philosophie", "Science"],
+      categoryKeys: ["philosophie", "science"],
     });
     expect(mockRequestDiscoveryFeedRefresh).toHaveBeenCalled();
   });
 
-  it("skips writes for guests", async () => {
-    mockIsSignedIn = false;
+  it("throws when Convex auth is not ready", async () => {
+    mockIsAuthenticated = false;
 
     const { result } = renderHook(() => useCategoryInterests());
 
-    await act(async () => {
-      await result.current.toggleCategory("Science");
-    });
-
+    await expect(
+      result.current.applyCategoryInterests(new Set(["science"])),
+    ).rejects.toThrow("authenticated Convex session");
     expect(mockSetCategoryInterests).not.toHaveBeenCalled();
-    expect(mockRequestDiscoveryFeedRefresh).not.toHaveBeenCalled();
+  });
+
+  it("skips the interests query until Convex auth is ready", () => {
+    mockIsAuthenticated = false;
+
+    renderHook(() => useCategoryInterests());
+
+    expect(useQuery).toHaveBeenCalledWith(
+      expect.anything(),
+      "skip",
+    );
   });
 });

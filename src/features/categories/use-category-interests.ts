@@ -1,8 +1,7 @@
 import { useCallback, useMemo } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
 
 import { api } from "../../../convex/_generated/api";
-import { normalizeScoringKey } from "../../../convex/discovery/scoring";
 import { useClerkAuth } from "../auth/use-clerk-auth";
 import { requestDiscoveryFeedRefresh } from "../discovery/discovery-feed-refresh";
 import { useAppTheme } from "../theme/theme-provider";
@@ -19,17 +18,19 @@ export function useCategoryInterests(): {
   selectedKeys: Set<string>;
   isLoading: boolean;
   isSignedIn: boolean;
-  toggleCategory: (label: string) => Promise<void>;
+  canPersistInterests: boolean;
+  applyCategoryInterests: (keys: ReadonlySet<string>) => Promise<void>;
 } {
   const { tenantSlug } = useAppTheme();
   const { isSignedIn } = useClerkAuth();
+  const { isAuthenticated, isLoading: isConvexAuthLoading } = useConvexAuth();
 
   const rawOptions = useQuery(api.categories.queries.listCategoryOptions, { tenantSlug });
   const options = Array.isArray(rawOptions) ? rawOptions : [];
 
   const interestKeys = useQuery(
     api.categories.interests.getMyCategoryInterests,
-    isSignedIn ? { tenantSlug } : "skip",
+    isAuthenticated ? { tenantSlug } : "skip",
   );
   const setCategoryInterests = useMutation(api.categories.interests.setCategoryInterests);
 
@@ -38,38 +39,29 @@ export function useCategoryInterests(): {
     [interestKeys],
   );
 
-  const toggleCategory = useCallback(
-    async (label: string) => {
-      if (!isSignedIn) {
-        return;
+  const applyCategoryInterests = useCallback(
+    async (keys: ReadonlySet<string>) => {
+      if (!isAuthenticated) {
+        throw new Error("Category interests require an authenticated Convex session");
       }
 
-      const key = normalizeScoringKey(label);
-      const nextKeys = new Set(selectedKeys);
-
-      if (nextKeys.has(key)) {
-        nextKeys.delete(key);
-      } else {
-        nextKeys.add(key);
-      }
-
-      const categoryKeys = options
-        .filter((option) => nextKeys.has(normalizeScoringKey(option.label)))
-        .map((option) => option.label)
-        .sort((left, right) => left.localeCompare(right));
+      const categoryKeys = [...keys].sort((left, right) => left.localeCompare(right));
 
       await setCategoryInterests({ tenantSlug, categoryKeys });
       requestDiscoveryFeedRefresh();
     },
-    [isSignedIn, options, selectedKeys, setCategoryInterests, tenantSlug],
+    [isAuthenticated, setCategoryInterests, tenantSlug],
   );
 
   return {
     options,
     selectedKeys,
-    isLoading: interestKeys === undefined,
+    isLoading:
+      (isSignedIn && isConvexAuthLoading) ||
+      (isAuthenticated && interestKeys === undefined),
     isSignedIn,
-    toggleCategory,
+    canPersistInterests: isAuthenticated,
+    applyCategoryInterests,
   };
 }
 

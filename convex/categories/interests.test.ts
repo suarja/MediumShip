@@ -57,24 +57,15 @@ describe("category interests", () => {
     expect(interests.sort()).toEqual(["philosophie", "science"]);
   });
 
-  it("is a no-op for guests", async () => {
+  it("rejects unauthenticated writes", async () => {
     const t = convexTest(schema, modules);
 
-    await t.mutation(api.categories.interests.setCategoryInterests, {
-      tenantSlug: TENANT,
-      categoryKeys: ["Science"],
-    });
-
-    const interests = await t.query(api.categories.interests.getMyCategoryInterests, {
-      tenantSlug: TENANT,
-    });
-
-    expect(interests).toEqual([]);
-
-    const rows = await t.run(async (ctx) =>
-      ctx.db.query("categoryInterests").collect(),
-    );
-    expect(rows).toHaveLength(0);
+    await expect(
+      t.mutation(api.categories.interests.setCategoryInterests, {
+        tenantSlug: TENANT,
+        categoryKeys: ["Science"],
+      }),
+    ).rejects.toThrow("Unauthorized");
   });
 
   it("does not touch userPreferences or contentInteractions when interests change", async () => {

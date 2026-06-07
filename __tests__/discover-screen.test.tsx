@@ -134,7 +134,7 @@ function defaultFeedMock(overrides: Record<string, unknown> = {}) {
     isLoading: false,
     isRefreshing: false,
     isLoadingMore: false,
-    isRecycling: false,
+    isSeekingFresh: false,
     isSignedIn: true,
     recordLike: mockRecordLike,
     recordHide: mockRecordHide,
@@ -215,17 +215,18 @@ describe("discover screen", () => {
     expect(screen.getByText("Second page story")).toBeTruthy();
   });
 
-  it("shows the more-incoming affordance when the feed is recycling", () => {
+  it("shows the seeking-fresh affordance when the feed is exhausted", () => {
     mockUseDiscoveryFeed.mockReturnValue(
       defaultFeedMock({
-        isRecycling: true,
+        isSeekingFresh: true,
       }),
     );
 
     render(<DiscoverScreen />);
 
-    expect(screen.getByTestId("discover-more-incoming")).toBeTruthy();
-    expect(screen.getByText(/on en cherche d'autres/i)).toBeTruthy();
+    const footer = screen.getByTestId("discover-more-incoming");
+    expect(footer).toBeTruthy();
+    expect(footer).toHaveTextContent(/on cherche du neuf/i);
     expect(screen.queryByTestId("discover-end-state")).toBeNull();
   });
 
@@ -386,12 +387,12 @@ describe("shouldRequestDiscoveryRefill", () => {
     expect(
       shouldRequestDiscoveryRefill({
         itemCount: 3,
-        recycling: false,
+        seekingFresh: false,
       }),
     ).toBe(true);
   });
 
-  it("requests refill when the feed enters recycling", () => {
+  it("requests refill when the feed is seeking fresh content", () => {
     const { shouldRequestDiscoveryRefill } = jest.requireActual(
       "../src/features/discovery/use-discovery-feed",
     );
@@ -399,7 +400,7 @@ describe("shouldRequestDiscoveryRefill", () => {
     expect(
       shouldRequestDiscoveryRefill({
         itemCount: 20,
-        recycling: true,
+        seekingFresh: true,
       }),
     ).toBe(true);
   });

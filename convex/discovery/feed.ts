@@ -103,39 +103,20 @@ export function hashFeedSeed(tokenIdentifier: string, feedSeed: number): number 
   return hash;
 }
 
-export function parseFeedCursor(cursor: string | null | undefined): {
-  offset: number;
-  wrapCycle: number;
-} {
+export function parseFeedCursor(cursor: string | null | undefined): number {
   if (cursor === null || cursor === undefined || cursor === "") {
-    return { offset: 0, wrapCycle: 0 };
+    return 0;
   }
 
   const atIndex = cursor.indexOf("@");
-  if (atIndex === -1) {
-    const offset = Number.parseInt(cursor, 10);
-    return {
-      offset: Number.isFinite(offset) && offset >= 0 ? offset : 0,
-      wrapCycle: 0,
-    };
-  }
+  const raw = atIndex === -1 ? cursor : cursor.slice(0, atIndex);
+  const offset = Number.parseInt(raw, 10);
 
-  const offset = Number.parseInt(cursor.slice(0, atIndex), 10);
-  const wrapCycle = Number.parseInt(cursor.slice(atIndex + 1), 10);
-
-  return {
-    offset: Number.isFinite(offset) && offset >= 0 ? offset : 0,
-    wrapCycle: Number.isFinite(wrapCycle) && wrapCycle >= 0 ? wrapCycle : 0,
-  };
+  return Number.isFinite(offset) && offset >= 0 ? offset : 0;
 }
 
-export function encodeFeedCursor(offset: number, wrapCycle: number): string {
-  return wrapCycle === 0 ? String(offset) : `${offset}@${wrapCycle}`;
-}
-
-/** Derives a deterministic sub-seed for each wrap cycle so recycled pages reshuffle. */
-export function hashWrapSeed(feedSeed: number, wrapCycle: number): number {
-  return (feedSeed + Math.imul(wrapCycle, 2_654_435_761)) >>> 0;
+export function encodeFeedCursor(offset: number): string {
+  return String(offset);
 }
 
 async function loadLikedContentIds(
@@ -206,7 +187,7 @@ async function loadAffinities(
   }));
 }
 
-/** Builds a stable, paginated feed: unseen bucket mix first, then recycled seen archive. */
+/** Builds a fresh-scored feed from unseen eligible content (no repeat recycling). */
 export function buildOrderedDiscoveryFeed(args: {
   visible: readonly Doc<"contents">[];
   tokenIdentifier: string | null;
@@ -214,17 +195,11 @@ export function buildOrderedDiscoveryFeed(args: {
   hiddenIds: Set<Id<"contents">>;
   seenIds: Set<Id<"contents">>;
   affinities: Affinity[];
-  wrapCycle?: number;
-}): { ordered: OrderedFeedEntry[]; unseenCount: number } {
-  const effectiveSeed =
-    args.wrapCycle && args.wrapCycle > 0
-      ? hashWrapSeed(args.feedSeed, args.wrapCycle)
-      : args.feedSeed;
-
+}): { ordered: OrderedFeedEntry[] } {
   const referenceTime = referenceTimeFrom(args.visible);
 
   if (!args.tokenIdentifier) {
-    const guestRng = createSeededRng(effectiveSeed);
+    const guestRng = createSeededRng(args.feedSeed);
     const scored = args.visible.map((content) => ({
       id: content._id,
       content,
@@ -236,19 +211,15 @@ export function buildOrderedDiscoveryFeed(args: {
         content: item.content,
         reason: item.reason,
       })),
-      unseenCount: mixed.length,
     };
   }
 
-  const rng = createSeededRng(
-    hashFeedSeed(args.tokenIdentifier, effectiveSeed),
-  );
+  const rng = createSeededRng(hashFeedSeed(args.tokenIdentifier, args.feedSeed));
   const eligible = args.visible.filter(
     (content) => !args.hiddenIds.has(content._id),
   );
 
   const unseen = eligible.filter((content) => !args.seenIds.has(content._id));
-  const seen = eligible.filter((content) => args.seenIds.has(content._id));
 
   const unseenScored = unseen.map((content) => ({
     id: content._id,
@@ -258,139 +229,32 @@ export function buildOrderedDiscoveryFeed(args: {
 
   const unseenMixed = bucketFeed(unseenScored, MEMBER_FEED_MIX, rng);
 
-  const seenScored = seen
-    .map((content) => ({
-      content,
-      score: scoreContent(content, args.affinities, referenceTime, {
-        seen: true,
-        rng,
-      }),
-    }))
-    .sort((left, right) => left.score - right.score);
-
-  const ordered: OrderedFeedEntry[] = [
-    ...unseenMixed.map((item) => ({
+  return {
+    ordered: unseenMixed.map((item) => ({
       content: item.content,
       reason: item.reason,
     })),
-    ...seenScored.map((item) => ({
-      content: item.content,
-      reason: "archive" as const,
-    })),
-  ];
-
-  return { ordered, unseenCount: unseenMixed.length };
+  };
 }
 
 export function paginateOrderedFeed(args: {
   ordered: readonly OrderedFeedEntry[];
-  unseenCount: number;
   cursor: string | null | undefined;
   limit: number;
 }): {
   items: OrderedFeedEntry[];
   nextCursor: string | null;
-  isExhausted: boolean;
+  seekingFresh: boolean;
 } {
-  const { offset, wrapCycle } = parseFeedCursor(args.cursor);
+  const offset = parseFeedCursor(args.cursor);
   const page = args.ordered.slice(offset, offset + args.limit);
   const nextOffset = offset + page.length;
   const hasMore = nextOffset < args.ordered.length;
-  const crossedUnseenBoundary =
-    offset < args.unseenCount &&
-    nextOffset >= args.unseenCount &&
-    args.unseenCount > 0;
-  const finishedUnseen =
-    args.unseenCount === 0 || offset >= args.unseenCount || crossedUnseenBoundary;
 
   return {
     items: page,
-    nextCursor: hasMore ? encodeFeedCursor(nextOffset, wrapCycle) : null,
-    isExhausted: finishedUnseen,
-  };
-}
-
-/** Paginates through the ordered feed indefinitely, wrapping with a fresh sub-seed. */
-export function paginateContinuousDiscoveryFeed(args: {
-  visible: readonly Doc<"contents">[];
-  tokenIdentifier: string | null;
-  feedSeed: number;
-  hiddenIds: Set<Id<"contents">>;
-  seenIds: Set<Id<"contents">>;
-  affinities: Affinity[];
-  cursor: string | null | undefined;
-  limit: number;
-}): {
-  items: OrderedFeedEntry[];
-  nextCursor: string | null;
-  recycling: boolean;
-} {
-  const { offset: startOffset, wrapCycle: startWrapCycle } = parseFeedCursor(
-    args.cursor,
-  );
-
-  let wrapCycle = startWrapCycle;
-  let offset = startOffset;
-  let current = buildOrderedDiscoveryFeed({
-    visible: args.visible,
-    tokenIdentifier: args.tokenIdentifier,
-    feedSeed: args.feedSeed,
-    hiddenIds: args.hiddenIds,
-    seenIds: args.seenIds,
-    affinities: args.affinities,
-    wrapCycle,
-  });
-
-  if (current.ordered.length === 0) {
-    return { items: [], nextCursor: null, recycling: false };
-  }
-
-  // Cursor landed at the end of a cycle — advance to the next sub-seed.
-  if (offset >= current.ordered.length) {
-    wrapCycle += 1;
-    offset = 0;
-    current = buildOrderedDiscoveryFeed({
-      visible: args.visible,
-      tokenIdentifier: args.tokenIdentifier,
-      feedSeed: args.feedSeed,
-      hiddenIds: args.hiddenIds,
-      seenIds: args.seenIds,
-      affinities: args.affinities,
-      wrapCycle,
-    });
-
-    if (current.ordered.length === 0) {
-      return { items: [], nextCursor: null, recycling: false };
-    }
-  }
-
-  const items: OrderedFeedEntry[] = [];
-  const initialUnseenCount = current.unseenCount;
-  let enteredRecycling =
-    startWrapCycle > 0 || startOffset >= initialUnseenCount;
-
-  while (items.length < args.limit && offset < current.ordered.length) {
-    if (offset >= current.unseenCount && current.unseenCount > 0) {
-      enteredRecycling = true;
-    }
-
-    items.push(current.ordered[offset]!);
-    offset += 1;
-  }
-
-  const crossedUnseenBoundary =
-    startOffset < initialUnseenCount &&
-    offset >= initialUnseenCount &&
-    initialUnseenCount > 0;
-
-  if (crossedUnseenBoundary) {
-    enteredRecycling = true;
-  }
-
-  return {
-    items,
-    nextCursor: encodeFeedCursor(offset, wrapCycle),
-    recycling: enteredRecycling,
+    nextCursor: hasMore ? encodeFeedCursor(nextOffset) : null,
+    seekingFresh: !hasMore && args.ordered.length > 0,
   };
 }
 
@@ -405,7 +269,7 @@ export const getDiscoveryFeed = query({
   returns: v.object({
     items: v.array(discoveryFeedItemValidator),
     nextCursor: v.union(v.string(), v.null()),
-    recycling: v.boolean(),
+    seekingFresh: v.boolean(),
   }),
   handler: async (ctx, args) => {
     const limit = args.limit ?? DEFAULT_LIMIT;
@@ -446,13 +310,17 @@ export const getDiscoveryFeed = query({
       ? await loadAffinities(ctx, tokenIdentifier)
       : [];
 
-    const page = paginateContinuousDiscoveryFeed({
+    const { ordered } = buildOrderedDiscoveryFeed({
       visible,
       tokenIdentifier,
       feedSeed,
       hiddenIds,
       seenIds,
       affinities,
+    });
+
+    const page = paginateOrderedFeed({
+      ordered,
       cursor: args.cursor,
       limit,
     });
@@ -464,7 +332,7 @@ export const getDiscoveryFeed = query({
         isLiked: likedIds.has(item.content._id),
       })),
       nextCursor: page.nextCursor,
-      recycling: page.recycling,
+      seekingFresh: page.seekingFresh,
     };
   },
 });

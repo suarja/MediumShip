@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   cmsProvider,
@@ -29,7 +29,19 @@ describe("PROVIDERS registry", () => {
     expect(PROVIDERS.map((provider) => provider.source)).toContain("wikipedia");
   });
 
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it("iterates any adapter registered in the same registry shape", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ query: { random: [] } }),
+      }),
+    );
+
     const fakeProvider: ContentProvider = {
       source: "fake",
       ingest: async () => ({ upserted: 3 }),

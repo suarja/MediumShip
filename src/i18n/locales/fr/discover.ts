@@ -3,8 +3,8 @@ export default {
   subtitle: "Un fil pour parcourir l'actualité et redécouvrir la bibliothèque.",
   loading: "Chargement du fil…",
   loadingMore: "Chargement…",
-  moreIncoming: "On en cherche d'autres pour vous…",
-  recyclingNote: "Vous avez parcouru les nouveautés — continuez à défiler.",
+  moreIncoming: "On cherche du neuf pour vous…",
+  seekingFreshNote: "On cherche du neuf — continuez à défiler pendant qu'on élargit le fil.",
   emptyTitle: "Rien à découvrir pour le moment",
   emptyBody: "Revenez bientôt : de nouveaux contenus arrivent régulièrement.",
   actions: {

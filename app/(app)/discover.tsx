@@ -45,7 +45,7 @@ export default function DiscoverScreen() {
     isLoading,
     isRefreshing,
     isLoadingMore,
-    isRecycling,
+    isSeekingFresh,
     isSignedIn,
     recordLike,
     refresh,
@@ -110,7 +110,7 @@ export default function DiscoverScreen() {
       <FlatList
         testID="discover-list"
         data={items}
-        keyExtractor={(item, index) => discoveryFeedItemKey(item, index)}
+        keyExtractor={(item) => discoveryFeedItemKey(item)}
         renderItem={renderItem}
         contentContainerStyle={listContentStyle}
         showsVerticalScrollIndicator={false}
@@ -161,7 +161,7 @@ export default function DiscoverScreen() {
           items.length > 0 ? (
             <DiscoverFeedFooter
               isLoadingMore={isLoadingMore}
-              isRecycling={isRecycling}
+              isSeekingFresh={isSeekingFresh}
             />
           ) : null
         }
@@ -172,10 +172,10 @@ export default function DiscoverScreen() {
 
 function DiscoverFeedFooter({
   isLoadingMore,
-  isRecycling,
+  isSeekingFresh,
 }: {
   isLoadingMore: boolean;
-  isRecycling: boolean;
+  isSeekingFresh: boolean;
 }) {
   const { t } = useTranslation("discover");
   const { theme } = useAppTheme();
@@ -204,7 +204,7 @@ function DiscoverFeedFooter({
     );
   }
 
-  if (!isRecycling) {
+  if (!isSeekingFresh) {
     return null;
   }
 
@@ -241,7 +241,7 @@ function DiscoverFeedFooter({
           },
         ]}
       >
-        {t("recyclingNote")}
+        {t("seekingFreshNote")}
       </Text>
     </View>
   );

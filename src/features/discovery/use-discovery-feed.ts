@@ -19,11 +19,33 @@ export const DISCOVERY_LOW_WATERMARK = 5;
 type DiscoveryFeedPage = {
   items: DiscoveryFeedItem[];
   nextCursor: string | null;
-  recycling: boolean;
+  seekingFresh: boolean;
 };
 
-export function discoveryFeedItemKey(item: DiscoveryFeedItem, index: number): string {
-  return `${index}-${item._id}`;
+export function discoveryFeedItemKey(item: DiscoveryFeedItem): string {
+  return item._id;
+}
+
+export function mergeDiscoveryFeedItems(
+  previous: DiscoveryFeedItem[],
+  incoming: DiscoveryFeedItem[],
+  reset: boolean,
+): DiscoveryFeedItem[] {
+  const seen = new Set(
+    reset ? [] : previous.map((item) => item._id),
+  );
+  const next = reset ? [] : [...previous];
+
+  for (const item of incoming) {
+    if (seen.has(item._id)) {
+      continue;
+    }
+
+    seen.add(item._id);
+    next.push(item);
+  }
+
+  return next;
 }
 
 export function normalizeDiscoveryFeedPage(
@@ -37,7 +59,7 @@ export function normalizeDiscoveryFeedPage(
     return {
       items: data,
       nextCursor: null,
-      recycling: false,
+      seekingFresh: false,
     };
   }
 
@@ -46,11 +68,11 @@ export function normalizeDiscoveryFeedPage(
 
 export function shouldRequestDiscoveryRefill(args: {
   itemCount: number;
-  recycling: boolean;
+  seekingFresh: boolean;
   watermark?: number;
 }): boolean {
   const watermark = args.watermark ?? DISCOVERY_LOW_WATERMARK;
-  return args.recycling || args.itemCount < watermark;
+  return args.seekingFresh || args.itemCount < watermark;
 }
 
 export function useDiscoveryFeed(): {
@@ -58,7 +80,7 @@ export function useDiscoveryFeed(): {
   isLoading: boolean;
   isRefreshing: boolean;
   isLoadingMore: boolean;
-  isRecycling: boolean;
+  isSeekingFresh: boolean;
   isSignedIn: boolean;
   recordLike: (contentId: Id<"contents">) => void;
   recordHide: (contentId: Id<"contents">) => void;
@@ -75,7 +97,7 @@ export function useDiscoveryFeed(): {
   const [fetchCursor, setFetchCursor] = useState<string | null>(null);
   const [allItems, setAllItems] = useState<DiscoveryFeedItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [isRecycling, setIsRecycling] = useState(false);
+  const [isSeekingFresh, setIsSeekingFresh] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const refillRequestedRef = useRef(false);
   const pendingAppendRef = useRef<string | null>(null);
@@ -100,7 +122,7 @@ export function useDiscoveryFeed(): {
     setFetchCursor(null);
     setAllItems([]);
     setNextCursor(null);
-    setIsRecycling(false);
+    setIsSeekingFresh(false);
     setIsLoadingMore(false);
     refillRequestedRef.current = false;
     pendingAppendRef.current = null;
@@ -118,9 +140,9 @@ export function useDiscoveryFeed(): {
     setIsRefreshing(false);
     setIsLoadingMore(false);
     setNextCursor(page.nextCursor);
-    setIsRecycling(page.recycling);
+    setIsSeekingFresh(page.seekingFresh);
 
-    if (page.recycling) {
+    if (page.seekingFresh) {
       refillRequestedRef.current = false;
     }
 
@@ -131,16 +153,15 @@ export function useDiscoveryFeed(): {
     // grows (refill), new content is picked up via pull-to-refresh (new
     // feedSeed) or the page-0 reactive append below — never by cursor reset.
 
-    // The feed query is reactive: the CURRENT page re-runs whenever the corpus
-    // grows (refill). Append a given cursor's page at most once, otherwise the
-    // reactive re-run re-appends it and the same article shows up twice within
-    // a few items. loadMore advances the cursor, so genuinely new pages (incl.
-    // intentional recycled repeats with a different cursor) still append.
     const cursorKey = fetchCursor ?? "__page0__";
     if (lastAppendedCursorRef.current !== cursorKey) {
       lastAppendedCursorRef.current = cursorKey;
       setAllItems((previous) =>
-        fetchCursor === null ? page.items : [...previous, ...page.items],
+        mergeDiscoveryFeedItems(
+          previous,
+          page.items,
+          fetchCursor === null,
+        ),
       );
     }
 
@@ -151,7 +172,7 @@ export function useDiscoveryFeed(): {
     if (
       !shouldRequestDiscoveryRefill({
         itemCount: allItems.length,
-        recycling: isRecycling,
+        seekingFresh: isSeekingFresh,
       }) ||
       refillRequestedRef.current
     ) {
@@ -160,7 +181,7 @@ export function useDiscoveryFeed(): {
 
     refillRequestedRef.current = true;
     void requestRefill({ tenantSlug });
-  }, [allItems.length, isRecycling, requestRefill, tenantSlug]);
+  }, [allItems.length, isSeekingFresh, requestRefill, tenantSlug]);
 
   const recordLike = useCallback(
     (contentId: Id<"contents">) => {
@@ -225,7 +246,7 @@ export function useDiscoveryFeed(): {
     isLoading: page === undefined && allItems.length === 0,
     isRefreshing,
     isLoadingMore,
-    isRecycling,
+    isSeekingFresh,
     isSignedIn: isAuthenticated,
     recordLike,
     recordHide,

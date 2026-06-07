@@ -3,8 +3,8 @@ export default {
   subtitle: "Browse what's new and revisit stories from the library.",
   loading: "Loading the feed…",
   loadingMore: "Loading more…",
-  moreIncoming: "Finding more stories for you…",
-  recyclingNote: "You've seen the latest — keep scrolling for more picks.",
+  moreIncoming: "Finding fresh stories for you…",
+  seekingFreshNote: "Looking for something new — keep scrolling while we widen the feed.",
   emptyTitle: "Nothing to discover yet",
   emptyBody: "Check back soon — new stories land here regularly.",
   actions: {

@@ -42,6 +42,8 @@ export function CategoriesTab({
     [items, query],
   );
 
+  // Keep selection only when the chosen row is still visible.
+  // Never auto-pick the first row — the editor opens only after an explicit list click.
   useEffect(() => {
     if (filteredItems.length === 0) {
       if (selectedId !== null) {
@@ -50,8 +52,8 @@ export function CategoriesTab({
       return;
     }
 
-    if (!selectedId || !filteredItems.some((item) => item._id === selectedId)) {
-      onSelect(filteredItems[0]._id);
+    if (selectedId && !filteredItems.some((item) => item._id === selectedId)) {
+      onSelect(null);
     }
   }, [filteredItems, onSelect, selectedId]);
 

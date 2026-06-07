@@ -11,7 +11,11 @@ Idées soulevées mais non planifiées. Rangées ici pendant que **Slice H** (la
 
 ---
 
-## 🎯 Richesse du feed / scoring
+## 🌐 Langue & providers (Wikipedia)
+
+- **Langue des articles Wikipedia alignée sur la langue app.** Aujourd'hui le provider Wikipedia pointe en dur sur `en.wikipedia.org`. Réutiliser la sélection de langue déjà présente dans Réglages (`language-item` / `useSelectedLanguage`) pour piloter les requêtes du provider (articles en français, en anglais, etc.). Pas de nouvel écran dédié pour l'instant — s'appuyer sur le groupe langue existant. Candidat onboarding plus tard (nucloud d'affinités), mais hors scope immédiat.
+
+---
 
 - **imageBoost** (inspiré du README de Xikipedia : valeurs par défaut par post). Bonifier le score d'un `Content` qui a une `heroImageUrl`, pour que le feed remonte plus d'articles illustrés (~70 % des articles Wikipedia ingérés n'ont pas d'image aujourd'hui). Petit tweak dans la `ScoringPolicy`. Candidat à une passe « tuning du scoring ».
 

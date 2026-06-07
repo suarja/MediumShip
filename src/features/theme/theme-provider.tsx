@@ -47,10 +47,12 @@ const fallbackValue: ThemeContextValue = {
   enabledModules: defaultTenant.enabledModules,
   featureConfigs: resolveEffectiveFeatureConfigs({
     enabledModules: defaultTenant.enabledModules,
+    navOrder: defaultTenant.navOrder,
   }),
   effectiveNavigation: resolveEffectiveNavigation(
     resolveEffectiveFeatureConfigs({
       enabledModules: defaultTenant.enabledModules,
+      navOrder: defaultTenant.navOrder,
     }),
     defaultTenant.navOrder,
   ),
@@ -72,11 +74,12 @@ export function AppThemeProvider({ children }: PropsWithChildren) {
     const enabledModules = normalizeEnabledModules(
       tenant?.enabledModules ?? defaultTenant.enabledModules,
     );
+    const navOrder = tenant?.navOrder ?? defaultTenant.navOrder;
     const featureConfigs = resolveEffectiveFeatureConfigs({
       featureConfigs: tenant?.featureConfigs,
       enabledModules,
+      navOrder,
     });
-    const navOrder = tenant?.navOrder ?? defaultTenant.navOrder;
     const effectiveNavigation = resolveEffectiveNavigation(featureConfigs, navOrder);
     const feedSections = tenant?.feedSections ?? defaultTenant.feedSections;
 

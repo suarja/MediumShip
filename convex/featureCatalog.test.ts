@@ -5,8 +5,10 @@ import {
   FEATURE_CATALOG,
   FEATURE_CATALOG_GROUPS,
   NAV_TAB_CAP,
+  NAV_TAB_KEYS,
   buildDefaultFeatureConfigs,
   buildDefaultNavOrder,
+  clampNavTabsInConfigs,
   countEnabledNavTabs,
   deriveEnabledModules,
   normalizeFeatureConfigs,
@@ -20,14 +22,21 @@ describe("featureCatalog", () => {
     expect(FEATURE_CATALOG.length).toBeGreaterThan(0);
     expect(FEATURE_CATALOG_GROUPS.some((group) => group.group === "Contenu")).toBe(true);
     expect(FEATURE_CATALOG_GROUPS.some((group) => group.group === "Tables")).toBe(true);
+    expect(FEATURE_CATALOG_GROUPS.some((group) => group.group === "Surfaces")).toBe(true);
     expect(FEATURE_CATALOG_GROUPS.some((group) => group.group === "Capacités membres")).toBe(
       true,
     );
 
+    const tables = FEATURE_CATALOG_GROUPS.find((group) => group.group === "Tables");
+    expect(tables?.features.map((feature) => feature.key).sort()).toEqual(
+      [...NAV_TAB_KEYS].sort(),
+    );
+    expect(tables?.features).toHaveLength(NAV_TAB_CAP);
+
     const articles = FEATURE_CATALOG.find((feature) => feature.key === "articles");
     const premium = FEATURE_CATALOG.find((feature) => feature.key === "premium");
     const home = FEATURE_CATALOG.find((feature) => feature.key === "home");
-    const discover = FEATURE_CATALOG.find((feature) => feature.key === "discover");
+    const collections = FEATURE_CATALOG.find((feature) => feature.key === "collections");
 
     expect(articles?.nature).toBe("content");
     expect(articles?.core).toBe(true);
@@ -36,7 +45,8 @@ describe("featureCatalog", () => {
     expect(premium?.defaultAccess).toBe("premium");
     expect(home?.nature).toBe("navTab");
     expect(home?.core).toBe(true);
-    expect(discover?.nature).toBe("navTab");
+    expect(collections?.nature).toBe("capability");
+    expect(collections?.group).toBe("Surfaces");
   });
 
   it("includes home, explore, library and profile as navTab features", () => {
@@ -98,10 +108,10 @@ describe("featureCatalog", () => {
       "articles",
       "videos",
       "home",
-      "profile",
       "discover",
       "explore",
       "library",
+      "profile",
     ]);
   });
 
@@ -126,11 +136,12 @@ describe("featureCatalog", () => {
     expect(defaults.home.enabled).toBe(true);
     expect(defaults.profile.enabled).toBe(true);
     expect(defaults.collections.enabled).toBe(false);
+    expect(countEnabledNavTabs(defaults)).toBe(NAV_TAB_CAP);
   });
 
   it("builds a default nav order with home first", () => {
     expect(buildDefaultNavOrder()[0]).toBe("home");
-    expect(buildDefaultNavOrder()).toContain("profile");
+    expect(buildDefaultNavOrder()).toEqual([...NAV_TAB_KEYS]);
   });
 
   it("resolveEffectiveNavigation returns enabled nav tabs ordered with home first and capped", () => {
@@ -140,8 +151,6 @@ describe("featureCatalog", () => {
       explore: { enabled: true },
       library: { enabled: true },
       profile: { enabled: true },
-      collections: { enabled: true },
-      agenda: { enabled: true },
     });
 
     const nav = resolveEffectiveNavigation(configs, [
@@ -150,15 +159,14 @@ describe("featureCatalog", () => {
       "discover",
       "explore",
       "profile",
-      "collections",
-      "agenda",
     ]);
 
     expect(nav[0]).toBe("home");
     expect(nav).toContain("profile");
-    expect(nav.length).toBeLessThanOrEqual(NAV_TAB_CAP);
+    expect(nav.length).toBe(NAV_TAB_CAP);
     expect(nav).not.toContain("articles");
     expect(nav).not.toContain("bookmarks");
+    expect(nav).not.toContain("collections");
   });
 
   it("resolveEffectiveNavigation omits disabled nav tabs", () => {
@@ -188,14 +196,31 @@ describe("featureCatalog", () => {
     expect(nav).toContain("profile");
   });
 
+  it("clampNavTabsInConfigs enforces the five-table ceiling", () => {
+    const configs = normalizeFeatureConfigs({
+      home: { enabled: true },
+      discover: { enabled: true },
+      explore: { enabled: true },
+      library: { enabled: true },
+      profile: { enabled: true },
+      collections: { enabled: true },
+      agenda: { enabled: true },
+    });
+
+    const clamped = clampNavTabsInConfigs(configs, buildDefaultNavOrder());
+    expect(countEnabledNavTabs(clamped)).toBeLessThanOrEqual(NAV_TAB_CAP);
+    expect(clamped.home.enabled).toBe(true);
+    expect(clamped.profile.enabled).toBe(true);
+    expect(clamped.collections.enabled).toBe(true);
+  });
+
   it("normalizeNavOrder deduplicates and forces home first", () => {
     expect(normalizeNavOrder(["discover", "home", "home", "profile"])).toEqual([
       "home",
       "discover",
       "profile",
-      ...buildDefaultNavOrder().filter(
-        (key) => key !== "home" && key !== "discover" && key !== "profile",
-      ),
+      "explore",
+      "library",
     ]);
   });
 
@@ -210,6 +235,6 @@ describe("featureCatalog", () => {
       articles: { enabled: true },
     });
 
-    expect(countEnabledNavTabs(configs)).toBe(6);
+    expect(countEnabledNavTabs(configs)).toBe(5);
   });
 });

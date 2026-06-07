@@ -55,10 +55,10 @@ describe("cms/mutations — updateModuleSettings", () => {
       "videos",
       "premium",
       "home",
-      "profile",
       "discover",
       "explore",
       "library",
+      "profile",
     ]);
     expect(tenant.featureConfigs?.articles).toEqual({
       enabled: true,
@@ -96,21 +96,29 @@ describe("cms/mutations — updateModuleSettings", () => {
     const tenant = await asAdmin.query(api.cms.queries.getTenantSettings, {});
     expect(tenant.navOrder).toEqual(customOrder);
 
-    await expect(
-      asAdmin.mutation(api.cms.mutations.updateModuleSettings, {
-        featureConfigs: {
-          home: { enabled: true },
-          discover: { enabled: true },
-          explore: { enabled: true },
-          library: { enabled: true },
-          profile: { enabled: true },
-          collections: { enabled: true },
-          agenda: { enabled: true },
-        },
-        feedSections: defaultTenant.feedSections ?? [],
-        navOrder: buildDefaultNavOrder(),
-      }),
-    ).rejects.toThrow(/navigation tabs/i);
+    await asAdmin.mutation(api.cms.mutations.updateModuleSettings, {
+      featureConfigs: {
+        home: { enabled: true },
+        discover: { enabled: true },
+        explore: { enabled: true },
+        library: { enabled: true },
+        profile: { enabled: true },
+        collections: { enabled: true },
+        agenda: { enabled: true },
+      },
+      feedSections: defaultTenant.feedSections ?? [],
+      navOrder: buildDefaultNavOrder(),
+    });
+
+    const clamped = await asAdmin.query(api.cms.queries.getTenantSettings, {});
+    expect(clamped.featureConfigs?.home?.enabled).toBe(true);
+    expect(clamped.featureConfigs?.profile?.enabled).toBe(true);
+    expect(
+      (["home", "discover", "explore", "library", "profile"] as const).filter(
+        (key) => clamped.featureConfigs?.[key]?.enabled,
+      ).length,
+    ).toBe(5);
+    expect(clamped.featureConfigs?.collections?.enabled).toBe(true);
   });
 
   it("cannot disable a core feature or override locked access", async () => {

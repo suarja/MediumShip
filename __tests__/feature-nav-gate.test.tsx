@@ -76,7 +76,7 @@ describe("app layout feature navigation", () => {
     for (const tab of effectiveNavigation) {
       expect(getByTestId(`tab-${tab}`).props.accessibilityLabel).toBe("visible");
     }
-    expect(getByTestId("tab-collections").props.accessibilityLabel).toBe("hidden");
+    expect(getByTestId("tab-discover").props.accessibilityLabel).toBe("visible");
   });
 
   it("hides discover when the table is disabled", () => {

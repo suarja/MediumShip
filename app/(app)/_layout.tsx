@@ -10,10 +10,9 @@ const ALL_TAB_ROUTE_NAMES = [
   "explore",
   "library",
   "profile",
-  "agenda",
-  "community",
-  "collections",
 ] as const satisfies readonly FeatureKey[];
+
+const DEEP_LINK_ROUTE_NAMES = ["agenda", "community", "collections"] as const;
 
 const HIDDEN_ROUTE_NAMES = ["premium", "settings"] as const;
 
@@ -21,7 +20,10 @@ function tabHref(
   routeName: string,
   effectiveNavigation: readonly FeatureKey[],
 ): string | null | undefined {
-  if ((HIDDEN_ROUTE_NAMES as readonly string[]).includes(routeName)) {
+  if (
+    (HIDDEN_ROUTE_NAMES as readonly string[]).includes(routeName) ||
+    (DEEP_LINK_ROUTE_NAMES as readonly string[]).includes(routeName)
+  ) {
     return null;
   }
 
@@ -40,6 +42,7 @@ export default function AppLayout() {
   const orderedRoutes = [
     ...effectiveNavigation,
     ...ALL_TAB_ROUTE_NAMES.filter((route) => !navSet.has(route)),
+    ...DEEP_LINK_ROUTE_NAMES,
     ...HIDDEN_ROUTE_NAMES,
   ];
 

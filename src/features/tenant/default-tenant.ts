@@ -6,9 +6,10 @@ import { defaultThemeConfig } from "../theme/palette-catalog";
 import {
   CAPABILITIES,
   DEFAULT_FEED_SECTIONS,
-  PUBLIC_CONTENT_MODULES,
   OPTIONAL_PUBLIC_MODULES,
-  NAVIGATION_MODULES,
+  PUBLIC_CONTENT_MODULES,
+  SURFACE_MODULES,
+  TAB_BAR_MODULES,
 } from "./public-config";
 
 export const defaultTenant = {
@@ -19,7 +20,8 @@ export const defaultTenant = {
   enabledModules: [
     ...PUBLIC_CONTENT_MODULES,
     ...OPTIONAL_PUBLIC_MODULES,
-    ...NAVIGATION_MODULES,
+    ...TAB_BAR_MODULES,
+    ...SURFACE_MODULES,
     ...CAPABILITIES,
   ],
   themeConfig: defaultThemeConfig,

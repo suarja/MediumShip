@@ -517,12 +517,13 @@ export const updateModuleSettings = mutation({
     await requireCmsAdmin(ctx);
 
     const tenant = await getOrCreateTenant(ctx);
+    const navOrder = normalizeNavOrder(args.navOrder ?? tenant.navOrder);
     const featureConfigs = normalizeFeatureConfigs(
       args.featureConfigs as Record<string, TenantFeatureConfigInput>,
       tenant.enabledModules,
+      navOrder,
     );
     assertNavTabCap(featureConfigs);
-    const navOrder = normalizeNavOrder(args.navOrder ?? tenant.navOrder);
     const enabledModules = deriveEnabledModules(featureConfigs);
     const feedSections = normalizeFeedSections(args.feedSections, enabledModules);
 

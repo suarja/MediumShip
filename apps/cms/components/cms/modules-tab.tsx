@@ -8,12 +8,14 @@ import {
   CORE_NAV_TAB_KEYS,
   FEATURE_CATALOG_GROUPS,
   NAV_TAB_CAP,
+  NAV_TAB_KEYS,
   countEnabledNavTabs,
   normalizeNavOrder,
   resolveEffectiveFeatureConfigs,
   type AccessLevel,
   type FeatureDefinition,
   type FeatureKey,
+  type NavTabKey,
   type TenantFeatureConfig,
 } from "../../../../convex/featureCatalog";
 import {
@@ -22,7 +24,6 @@ import {
   type CategoryIconKey,
 } from "../../../../src/features/categories/category-icon-catalog";
 import {
-  contentKindToModule,
   createDefaultFeedSection,
   moduleToContentKind,
   PUBLIC_CONTENT_MODULES,
@@ -51,16 +52,15 @@ const KIND_LABELS: Record<FeedSectionConfig["kind"], string> = {
   video: "Vidéo",
 };
 
-const NAV_ICON_KEYS = new Set<FeatureKey>([
-  "home",
-  "discover",
-  "explore",
-  "library",
-  "profile",
-  "collections",
-  "agenda",
-  "community",
-]);
+const TAB_ICON_KEYS = new Set<NavTabKey>(["discover", "explore", "library"]);
+
+function tenantFeatureConfigs(tenant: ModulesTabProps["tenant"]) {
+  return resolveEffectiveFeatureConfigs({
+    featureConfigs: tenant.featureConfigs,
+    enabledModules: tenant.enabledModules,
+    navOrder: tenant.navOrder,
+  });
+}
 
 function AccessSegment({
   value,
@@ -108,15 +108,19 @@ function ModuleToggle({
   locked,
   disabled,
   onChange,
+  onLabel = "Activé",
+  offLabel = "Désactivé",
 }: {
   checked: boolean;
   locked?: boolean;
   disabled?: boolean;
   onChange: (checked: boolean) => void;
+  onLabel?: string;
+  offLabel?: string;
 }) {
   return (
     <div className="mod-toggle-cell">
-      <span className="lbl">{checked ? "Activé" : "Désactivé"}</span>
+      <span className="lbl">{checked ? onLabel : offLabel}</span>
       <label className="toggle">
         <input
           checked={checked}
@@ -136,7 +140,6 @@ function NavTabComposer({
   navOrder,
   onToggle,
   onMove,
-  onAccessChange,
   onIconChange,
   expandedIconKey,
   setExpandedIconKey,
@@ -146,7 +149,6 @@ function NavTabComposer({
   navOrder: string[];
   onToggle: (key: FeatureKey, enabled: boolean) => void;
   onMove: (key: FeatureKey, direction: -1 | 1) => void;
-  onAccessChange: (key: FeatureKey, access: AccessLevel) => void;
   onIconChange: (key: FeatureKey, iconKey: CategoryIconKey) => void;
   expandedIconKey: FeatureKey | null;
   setExpandedIconKey: (key: FeatureKey | null) => void;
@@ -168,8 +170,9 @@ function NavTabComposer({
       }
     }
 
-    for (const feature of features) {
-      if (!seen.has(feature.key)) {
+    for (const key of NAV_TAB_KEYS) {
+      const feature = byKey.get(key);
+      if (feature && !seen.has(key)) {
         ordered.push(feature);
       }
     }
@@ -179,25 +182,22 @@ function NavTabComposer({
 
   return (
     <div className="nav-composer">
-      <div className="nav-composer__cap">
-        <span className="nav-composer__cap-label">Barre d&apos;onglets</span>
-        <span className={`nav-composer__cap-count ${atCap ? "nav-composer__cap-count--full" : ""}`}>
-          {enabledCount}/{NAV_TAB_CAP} actifs
-          {freeSlots > 0 ? ` · ${freeSlots} place${freeSlots > 1 ? "s" : ""} libre${freeSlots > 1 ? "s" : ""}` : null}
-        </span>
-      </div>
-
-      {atCap ? (
-        <p className="nav-composer__note">
-          Plafond atteint — désactivez une table pour en ajouter une autre.{" "}
-          <b>Accueil</b> et <b>Profil</b> restent toujours dans la barre.
-        </p>
-      ) : (
-        <p className="nav-composer__note">
-          Réordonnez et activez les tables visibles dans la barre mobile.{" "}
-          <b>Accueil</b> et <b>Profil</b> sont épinglés.
-        </p>
-      )}
+      <p className="nav-composer__note">
+        {atCap ? (
+          <>
+            Plafond atteint ({NAV_TAB_CAP}/{NAV_TAB_CAP}) — désactivez une table pour en activer une
+            autre. <b>Accueil</b> et <b>Profil</b> restent toujours dans la barre.
+          </>
+        ) : (
+          <>
+            {enabledCount}/{NAV_TAB_CAP} dans la barre
+            {freeSlots > 0
+              ? ` · ${freeSlots} place${freeSlots > 1 ? "s" : ""} libre${freeSlots > 1 ? "s" : ""}`
+              : null}
+            . Réordonnez les onglets ; seuls <b>Accueil</b> et <b>Profil</b> sont épinglés.
+          </>
+        )}
+      </p>
 
       <div className="nav-composer__list">
         {orderedFeatures.map((feature, index) => {
@@ -207,7 +207,7 @@ function NavTabComposer({
           );
           const isEnabled = config?.enabled ?? false;
           const blockEnable = !isEnabled && atCap;
-          const showIconPicker = NAV_ICON_KEYS.has(feature.key);
+          const showIconPicker = TAB_ICON_KEYS.has(feature.key as NavTabKey);
 
           return (
             <div
@@ -262,40 +262,33 @@ function NavTabComposer({
                 ) : null}
               </div>
 
-              <AccessSegment
-                disabled={!isEnabled}
-                locked={feature.lockAccess}
-                onChange={(access) => onAccessChange(feature.key, access)}
-                value={config.access}
-              />
-
-              <div className="nav-composer__actions">
-                <div className="ord">
-                  <button
-                    aria-label={`Monter ${feature.label}`}
-                    disabled={index === 0 || feature.key === "home"}
-                    onClick={() => onMove(feature.key, -1)}
-                    type="button"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    aria-label={`Descendre ${feature.label}`}
-                    disabled={index === orderedFeatures.length - 1 || feature.key === "home"}
-                    onClick={() => onMove(feature.key, 1)}
-                    type="button"
-                  >
-                    ↓
-                  </button>
-                </div>
-
-                <ModuleToggle
-                  checked={isEnabled}
-                  disabled={blockEnable}
-                  locked={isCore}
-                  onChange={(enabled) => onToggle(feature.key, enabled)}
-                />
+              <div className="ord nav-composer__ord">
+                <button
+                  aria-label={`Monter ${feature.label}`}
+                  disabled={index === 0 || feature.key === "home"}
+                  onClick={() => onMove(feature.key, -1)}
+                  type="button"
+                >
+                  ↑
+                </button>
+                <button
+                  aria-label={`Descendre ${feature.label}`}
+                  disabled={index === orderedFeatures.length - 1 || feature.key === "home"}
+                  onClick={() => onMove(feature.key, 1)}
+                  type="button"
+                >
+                  ↓
+                </button>
               </div>
+
+              <ModuleToggle
+                checked={isEnabled}
+                disabled={blockEnable}
+                locked={isCore}
+                offLabel="Hors barre"
+                onChange={(enabled) => onToggle(feature.key, enabled)}
+                onLabel="Dans la barre"
+              />
             </div>
           );
         })}
@@ -307,7 +300,7 @@ function NavTabComposer({
 export function ModulesTab({ tenant }: ModulesTabProps) {
   const updateModuleSettings = useMutation(api.cms.mutations.updateModuleSettings);
   const [featureConfigs, setFeatureConfigs] = useState<Record<FeatureKey, TenantFeatureConfig>>(
-    () => resolveEffectiveFeatureConfigs(tenant),
+    () => tenantFeatureConfigs(tenant),
   );
   const [navOrder, setNavOrder] = useState<string[]>(() =>
     normalizeNavOrder(tenant.navOrder),
@@ -319,7 +312,7 @@ export function ModulesTab({ tenant }: ModulesTabProps) {
   const [expandedIconKey, setExpandedIconKey] = useState<FeatureKey | null>(null);
 
   useEffect(() => {
-    setFeatureConfigs(resolveEffectiveFeatureConfigs(tenant));
+    setFeatureConfigs(tenantFeatureConfigs(tenant));
     setNavOrder(normalizeNavOrder(tenant.navOrder));
     setFeedSections(tenant.feedSections ?? []);
     setSaveLabel("Enregistrer");
@@ -476,7 +469,7 @@ export function ModulesTab({ tenant }: ModulesTabProps) {
   };
 
   const reset = () => {
-    setFeatureConfigs(resolveEffectiveFeatureConfigs(tenant));
+    setFeatureConfigs(tenantFeatureConfigs(tenant));
     setNavOrder(normalizeNavOrder(tenant.navOrder));
     setFeedSections(tenant.feedSections ?? []);
     setExpandedIconKey(null);
@@ -513,7 +506,6 @@ export function ModulesTab({ tenant }: ModulesTabProps) {
                   featureConfigs={featureConfigs}
                   features={group.features}
                   navOrder={navOrder}
-                  onAccessChange={(key, access) => updateFeature(key, { access })}
                   onIconChange={(key, iconKey) => updateFeature(key, { iconKey })}
                   onMove={moveNavTab}
                   onToggle={toggleNavTab}
@@ -697,9 +689,8 @@ export function ModulesTab({ tenant }: ModulesTabProps) {
           <div className="mod-summary__card">
             <div className="h">— Comment ça marche</div>
             <p className="mod-note">
-              Pour les <b>tables</b>, le toggle place ou retire l&apos;onglet dans la barre
-              (max {NAV_TAB_CAP}). Le <b>sélecteur d&apos;accès</b> définit qui peut ouvrir la
-              table. Contenus et capacités gardent le modèle Slice&nbsp;N.
+              Les <b>tables</b> ({NAV_TAB_KEYS.join(", ")}) pilotent la barre mobile (max{" "}
+              {NAV_TAB_CAP}). Les <b>surfaces</b>, contenus et capacités restent hors barre.
             </p>
           </div>
 

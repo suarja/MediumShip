@@ -29,23 +29,37 @@ export type WikipediaPageRaw = {
 
 export const MAX_WIKIPEDIA_TAGS_PER_ITEM = 8;
 
-const MAINTENANCE_CATEGORY_PREFIXES = [
-  "articles_with_",
-  "cs1_",
-  "wikipedia_",
-  "all_",
-  "use_",
-  "webarchive_",
-] as const;
+/** Ask MediaWiki to omit hidden/maintenance categories at the source. */
+export const WIKIPEDIA_CATEGORY_QUERY_PARAMS = {
+  cllimit: "max",
+  clshow: "!hidden",
+} as const;
 
-/** Filters hidden/maintenance Wikipedia categories (Articles_with_*, CS1_*, etc.). */
-export function isMaintenanceWikipediaCategory(categoryTitle: string): boolean {
-  const name = categoryTitle.replace(/^Category:/i, "").replace(/ /g, "_");
-  const upper = name.toUpperCase();
-
-  return MAINTENANCE_CATEGORY_PREFIXES.some((prefix) =>
-    upper.startsWith(prefix.toUpperCase()),
+/** Year buckets, stubs, and similar meta — visible but useless as affinity dimensions. */
+export function isLowSignalWikipediaCategory(categoryTitle: string): boolean {
+  const tag = normalizeScoringKey(
+    categoryTitle.replace(/^Category:/i, "").replace(/_/g, " "),
   );
+  if (!tag) {
+    return true;
+  }
+
+  if (/^\d{3,4}s?-(births|deaths|establishments)(-|$)/.test(tag)) {
+    return true;
+  }
+  if (/^\d{4}-(births|deaths)$/.test(tag)) {
+    return true;
+  }
+  if (/-stubs?$/.test(tag) || /-album-stubs$/.test(tag)) {
+    return true;
+  }
+
+  return false;
+}
+
+function wikipediaCategoryToTag(categoryTitle: string): string {
+  const label = categoryTitle.replace(/^Category:/i, "").replace(/_/g, " ");
+  return normalizeScoringKey(label);
 }
 
 /** Normalizes real page categories into scoring tags, capped per item. */
@@ -61,12 +75,11 @@ export function extractWikipediaTags(
   const seen = new Set<string>();
 
   for (const category of categories) {
-    if (isMaintenanceWikipediaCategory(category.title)) {
+    if (isLowSignalWikipediaCategory(category.title)) {
       continue;
     }
 
-    const label = category.title.replace(/^Category:/i, "").replace(/_/g, " ");
-    const tag = normalizeScoringKey(label);
+    const tag = wikipediaCategoryToTag(category.title);
     if (!tag || seen.has(tag)) {
       continue;
     }
@@ -79,6 +92,28 @@ export function extractWikipediaTags(
   }
 
   return tags;
+}
+
+/** Picks a thematic category label for serendipity items (not year/stub buckets). */
+export function pickSerendipityCategoryTag(
+  categories: readonly WikipediaCategoryRaw[] | undefined,
+): string | null {
+  const tags = extractWikipediaTags(categories);
+  if (tags.length === 0) {
+    return null;
+  }
+
+  const ranked = [...tags].sort((left, right) => {
+    const leftYearLed = /^\d{4}/.test(left) ? 1 : 0;
+    const rightYearLed = /^\d{4}/.test(right) ? 1 : 0;
+    if (leftYearLed !== rightYearLed) {
+      return leftYearLed - rightYearLed;
+    }
+
+    return right.split("-").length - left.split("-").length;
+  });
+
+  return ranked[0] ?? null;
 }
 
 export type NormalizedWikipediaPage = {
@@ -205,7 +240,7 @@ export async function fetchWikipediaPagesViaSearch(
       prop: "extracts|pageimages|info|categories",
       exintro: "1",
       explaintext: "1",
-      cllimit: "max",
+      ...WIKIPEDIA_CATEGORY_QUERY_PARAMS,
       piprop: "thumbnail",
       pithumbsize: "400",
       inprop: "url",
@@ -256,7 +291,7 @@ export async function fetchWikipediaPagesViaCategoryMembers(
       prop: "extracts|pageimages|info|categories",
       exintro: "1",
       explaintext: "1",
-      cllimit: "max",
+      ...WIKIPEDIA_CATEGORY_QUERY_PARAMS,
       piprop: "thumbnail",
       pithumbsize: "400",
       inprop: "url",
@@ -364,7 +399,7 @@ export async function fetchWikipediaRandomPages(
       prop: "extracts|pageimages|info|categories",
       exintro: "1",
       explaintext: "1",
-      cllimit: "max",
+      ...WIKIPEDIA_CATEGORY_QUERY_PARAMS,
       piprop: "thumbnail",
       pithumbsize: "400",
       inprop: "url",
@@ -376,9 +411,9 @@ export async function fetchWikipediaRandomPages(
 }
 
 function categoryLabelForSerendipityPage(page: WikipediaPageRaw): string {
-  const tags = extractWikipediaTags(page.categories);
-  if (tags.length > 0) {
-    return tags[0]!;
+  const thematic = pickSerendipityCategoryTag(page.categories);
+  if (thematic) {
+    return thematic;
   }
 
   return slugFromWikipediaTitle(page.title, page.pageid);

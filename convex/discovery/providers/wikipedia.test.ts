@@ -11,10 +11,12 @@ import {
   fetchWikipediaArticleBody,
   fetchWikipediaCategoryPages,
   fetchWikipediaRandomPages,
-  isMaintenanceWikipediaCategory,
+  isLowSignalWikipediaCategory,
   normalizeWikipediaPage,
+  pickSerendipityCategoryTag,
   slugFromWikipediaTitle,
   toWikipediaCategoryTitle,
+  WIKIPEDIA_CATEGORY_QUERY_PARAMS,
   WIKIPEDIA_USER_AGENT,
   wikipediaProvider,
 } from "./wikipedia";
@@ -37,16 +39,13 @@ function makeWikiCategories(titles: string[]) {
 }
 
 describe("extractWikipediaTags", () => {
-  it("normalizes real categories and filters maintenance labels", () => {
+  it("normalizes thematic categories and drops low-signal buckets", () => {
     const tags = extractWikipediaTags(
       makeWikiCategories([
         "Category:Physics",
-        "Category:Articles_with_short_description",
-        "Category:CS1_maint:_others",
-        "Category:Wikipedia_indefinitely_move-protected_pages",
-        "Category:All_articles_with_unsourced_statements",
-        "Category:Use_dmy_dates_from_January_2020",
-        "Category:Webarchive_template_wayback_links",
+        "Category:1740s_births",
+        "Category:1877_births",
+        "Category:1970s_country_album_stubs",
         "Category:Quantum_mechanics",
       ]),
     );
@@ -68,19 +67,43 @@ describe("extractWikipediaTags", () => {
   it("returns empty when no usable categories remain", () => {
     expect(
       extractWikipediaTags(
-        makeWikiCategories(["Category:Articles_with_hCards", "Category:CS1_errors"]),
+        makeWikiCategories(["Category:1740s_births", "Category:Album_stubs"]),
       ),
     ).toEqual([]);
     expect(extractWikipediaTags(undefined)).toEqual([]);
   });
 });
 
-describe("isMaintenanceWikipediaCategory", () => {
-  it("flags known maintenance prefixes", () => {
-    expect(isMaintenanceWikipediaCategory("Category:Articles_with_short_description")).toBe(
+describe("isLowSignalWikipediaCategory", () => {
+  it("flags year buckets and stub categories", () => {
+    expect(isLowSignalWikipediaCategory("Category:1740s_births")).toBe(true);
+    expect(isLowSignalWikipediaCategory("Category:1970s_country_album_stubs")).toBe(
       true,
     );
-    expect(isMaintenanceWikipediaCategory("Category:Physics")).toBe(false);
+    expect(isLowSignalWikipediaCategory("Category:Physics")).toBe(false);
+  });
+});
+
+describe("pickSerendipityCategoryTag", () => {
+  it("prefers a thematic category over year/stub buckets", () => {
+    expect(
+      pickSerendipityCategoryTag(
+        makeWikiCategories([
+          "Category:1740s_births",
+          "Category:German_composers",
+          "Category:1970s_country_album_stubs",
+        ]),
+      ),
+    ).toBe("german-composers");
+  });
+});
+
+describe("WIKIPEDIA_CATEGORY_QUERY_PARAMS", () => {
+  it("requests non-hidden categories from MediaWiki", () => {
+    expect(WIKIPEDIA_CATEGORY_QUERY_PARAMS).toEqual({
+      cllimit: "max",
+      clshow: "!hidden",
+    });
   });
 });
 
@@ -114,7 +137,7 @@ describe("normalizeWikipediaPage", () => {
       makeWikiPage({
         categories: makeWikiCategories([
           "Category:Physics",
-          "Category:Articles_with_short_description",
+          "Category:1740s_births",
           "Category:Quantum_mechanics",
         ]),
       }),
@@ -235,6 +258,7 @@ describe("wikipediaProvider.ingest", () => {
     )?.[0] as string;
     expect(categoryRequest).toContain("en.wikipedia.org/w/api.php");
     expect(new URL(categoryRequest).searchParams.get("prop")).toContain("categories");
+    expect(new URL(categoryRequest).searchParams.get("clshow")).toBe("!hidden");
     expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
       headers: expect.objectContaining({
         "User-Agent": expect.stringContaining("MediumShip"),
@@ -539,6 +563,7 @@ describe("fetchWikipediaRandomPages", () => {
     const detailsUrl = new URL(fetchMock.mock.calls[1]![0] as string);
     expect(detailsUrl.searchParams.get("pageids")).toBe("99");
     expect(detailsUrl.searchParams.get("prop")).toContain("categories");
+    expect(detailsUrl.searchParams.get("clshow")).toBe("!hidden");
   });
 });
 

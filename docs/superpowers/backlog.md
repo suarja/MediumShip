@@ -47,7 +47,7 @@ Retours terrain après usage réel (favoris enregistrés, navigation Bibliothèq
 
 ## 🐞 Bugs
 
-- **[CMS] Déconnexion cassée.** Le composant en haut à droite du CMS n'est plus le composant Clerk → impossible de se déconnecter. Régression à corriger (rebrancher le sign-out Clerk dans le shell admin). Candidat à traiter tôt (on va travailler dans le CMS pour la vague en cours).
+- ~~**[CMS] Déconnexion cassée.**~~ **✅ Corrigé** : le bloc user en haut à droite affichait un avatar custom sans sign-out ; restauré via `<UserButton afterSignOutUrl="/">` de Clerk dans `admin-shell.tsx` (et `getViewerInitial` mort supprimé).
 - **Article Wikipedia — flicker de l'extrait au chargement.** À l'ouverture d'un article, l'extrait s'affiche d'abord en gras seul, puis le contenu complet prend le relais — léger flicker visuel. Hypothèse : l'extrait sert de placeholder pendant le fetch du corps. Piste : afficher l'extrait en style light (pas bold) tant que le contenu n'est pas chargé, pour une transition plus seamless.
 
 ### 🚪 CMS — auth, onboarding & landing (groupé)

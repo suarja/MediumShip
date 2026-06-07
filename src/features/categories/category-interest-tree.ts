@@ -8,15 +8,20 @@ export type PickerCategoryNode = {
   depth: number;
 };
 
+function nodeKey(id: Id<"categories">) {
+  return String(id);
+}
+
 export function buildCategoryPickerTree(nodes: PickerCategoryNode[]) {
-  const ids = new Set(nodes.map((node) => node._id));
+  const ids = new Set(nodes.map((node) => nodeKey(node._id)));
   const childrenByParent = new Map<string, PickerCategoryNode[]>();
 
   for (const node of nodes) {
-    if (node.parentId && ids.has(node.parentId)) {
-      const siblings = childrenByParent.get(node.parentId) ?? [];
+    if (node.parentId && ids.has(nodeKey(node.parentId))) {
+      const parentKey = nodeKey(node.parentId);
+      const siblings = childrenByParent.get(parentKey) ?? [];
       siblings.push(node);
-      childrenByParent.set(node.parentId, siblings);
+      childrenByParent.set(parentKey, siblings);
     }
   }
 
@@ -25,7 +30,7 @@ export function buildCategoryPickerTree(nodes: PickerCategoryNode[]) {
   }
 
   const roots = nodes
-    .filter((node) => !node.parentId || !ids.has(node.parentId))
+    .filter((node) => !node.parentId || !ids.has(nodeKey(node.parentId)))
     .sort((left, right) => left.label.localeCompare(right.label));
 
   return { roots, childrenByParent };
@@ -42,13 +47,13 @@ export function buildVisibleCategoryCloud(
   }));
 
   if (focusStack[0]) {
-    for (const node of childrenByParent.get(focusStack[0]) ?? []) {
+    for (const node of childrenByParent.get(nodeKey(focusStack[0])) ?? []) {
       entries.push({ node, level: 1 });
     }
   }
 
   if (focusStack[1]) {
-    for (const node of childrenByParent.get(focusStack[1]) ?? []) {
+    for (const node of childrenByParent.get(nodeKey(focusStack[1])) ?? []) {
       entries.push({ node, level: 2 });
     }
   }
@@ -60,5 +65,5 @@ export function nodeHasChildren(
   nodeId: Id<"categories">,
   childrenByParent: Map<string, PickerCategoryNode[]>,
 ) {
-  return (childrenByParent.get(nodeId)?.length ?? 0) > 0;
+  return (childrenByParent.get(nodeKey(nodeId))?.length ?? 0) > 0;
 }

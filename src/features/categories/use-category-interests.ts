@@ -6,6 +6,7 @@ import { normalizeScoringKey } from "../../../convex/discovery/scoring";
 import { useClerkAuth } from "../auth/use-clerk-auth";
 import { requestDiscoveryFeedRefresh } from "../discovery/discovery-feed-refresh";
 import { useAppTheme } from "../theme/theme-provider";
+import type { PickerCategoryNode } from "./category-interest-tree";
 
 export type CategoryOption = {
   label: string;
@@ -84,7 +85,7 @@ export function useCategoryInterestSearch(query: string) {
   return Array.isArray(results) ? results : [];
 }
 
-export function useCategoryInterestTreeNodes() {
+export function useCategoryInterestTreeNodes(): PickerCategoryNode[] {
   const { tenantSlug } = useAppTheme();
 
   const rows = useQuery(api.categories.queries.listTenantCategoryTree, { tenantSlug });

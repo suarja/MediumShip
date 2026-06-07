@@ -18,24 +18,30 @@ import {
   nodeHasChildren,
   type PickerCategoryNode,
 } from "../../features/categories/category-interest-tree";
+import type { CategoryOption } from "../../features/categories/use-category-interests";
 import { fontFamilies } from "../../features/theme/fonts";
 import { withAlpha } from "../../features/theme/contrast";
 import { useAppTheme } from "../../features/theme/theme-provider";
 import { useResponsive } from "../../features/responsive/use-responsive";
-import {
-  useCategoryInterestSearch,
-  useCategoryInterests,
-  useCategoryInterestTreeNodes,
-} from "../../features/categories/use-category-interests";
+import { useCategoryInterestSearch } from "../../features/categories/use-category-interests";
+
+type CategoryInterestsPickerProps = {
+  options: CategoryOption[];
+  selectedKeys: Set<string>;
+  toggleCategory: (label: string) => Promise<void>;
+  treeNodes: PickerCategoryNode[];
+};
 
 function InterestChip({
   node,
   active,
+  focused,
   busy,
   onPress,
 }: {
   node: PickerCategoryNode;
   active: boolean;
+  focused: boolean;
   busy: boolean;
   onPress: () => void;
 }) {
@@ -50,10 +56,12 @@ function InterestChip({
         styles.chip,
         {
           borderRadius: theme.radii.pill,
-          borderColor: active ? theme.colors.accent : theme.colors.border,
+          borderColor: active || focused ? theme.colors.accent : theme.colors.border,
           backgroundColor: active
             ? withAlpha(theme.colors.accent, theme.isDark ? 0.22 : 0.12)
-            : theme.colors.surfaceMuted,
+            : focused
+              ? withAlpha(theme.colors.accent, theme.isDark ? 0.1 : 0.06)
+              : theme.colors.surfaceMuted,
         },
         pressed && styles.chipPressed,
       ]}
@@ -61,7 +69,7 @@ function InterestChip({
       <Text
         style={[
           styles.chipIcon,
-          { color: active ? theme.colors.accent : theme.colors.textMuted },
+          { color: active || focused ? theme.colors.accent : theme.colors.textMuted },
         ]}
       >
         {icon}
@@ -69,7 +77,7 @@ function InterestChip({
       <Text
         style={[
           styles.chipLabel,
-          { color: active ? theme.colors.accent : theme.colors.heading },
+          { color: active || focused ? theme.colors.accent : theme.colors.heading },
         ]}
       >
         {node.label}
@@ -79,15 +87,18 @@ function InterestChip({
   );
 }
 
-export function CategoryInterestsPicker() {
+export function CategoryInterestsPicker({
+  options,
+  selectedKeys,
+  toggleCategory,
+  treeNodes,
+}: CategoryInterestsPickerProps) {
   const { t } = useTranslation("settings");
   const { theme } = useAppTheme();
   const { scaleSpace } = useResponsive();
   const [searchQuery, setSearchQuery] = useState("");
   const [focusStack, setFocusStack] = useState<Id<"categories">[]>([]);
   const [busyLabel, setBusyLabel] = useState<string | null>(null);
-  const { options, selectedKeys, toggleCategory } = useCategoryInterests();
-  const treeNodes = useCategoryInterestTreeNodes();
   const searchResults = useCategoryInterestSearch(searchQuery);
 
   const { roots, childrenByParent } = useMemo(
@@ -120,33 +131,27 @@ export function CategoryInterestsPicker() {
     }
 
     const wasPicked = selectedKeys.has(normalizeScoringKey(node.label));
-    const isFocused = focusStack[level] === node._id;
     const hasChildren = nodeHasChildren(node._id, childrenByParent);
-
-    if (!isFocused) {
-      if (hasChildren) {
-        setFocusStack((prev) => [...prev.slice(0, level), node._id]);
-      }
-      if (!wasPicked) {
-        try {
-          setBusyLabel(node.label);
-          await toggleCategory(node.label);
-        } finally {
-          setBusyLabel(null);
-        }
-      }
-      return;
-    }
+    const isFocused = focusStack[level] === node._id;
 
     try {
+      if (hasChildren && !isFocused) {
+        setFocusStack((prev) => [...prev.slice(0, level), node._id]);
+        if (!wasPicked) {
+          setBusyLabel(node.label);
+          await toggleCategory(node.label);
+        }
+        return;
+      }
+
       setBusyLabel(node.label);
       await toggleCategory(node.label);
+
+      if (hasChildren && wasPicked) {
+        setFocusStack((prev) => prev.slice(0, level));
+      }
     } finally {
       setBusyLabel(null);
-    }
-
-    if (wasPicked && hasChildren) {
-      setFocusStack((prev) => prev.slice(0, level));
     }
   };
 
@@ -186,6 +191,7 @@ export function CategoryInterestsPicker() {
                 <InterestChip
                   active={active}
                   busy={busy}
+                  focused={false}
                   key={node._id}
                   node={node}
                   onPress={() => void handleChipPress(node, node.depth ?? 0)}
@@ -199,11 +205,13 @@ export function CategoryInterestsPicker() {
           {cloudNodes.map(({ node, level }) => {
             const active = selectedKeys.has(normalizeScoringKey(node.label));
             const busy = busyLabel === node.label;
+            const focused = focusStack[level] === node._id;
 
             return (
               <InterestChip
                 active={active}
                 busy={busy}
+                focused={focused}
                 key={node._id}
                 node={node}
                 onPress={() => void handleChipPress(node, level)}

@@ -13,7 +13,7 @@ import { useTranslation } from "react-i18next";
 import { fontFamilies } from "../../features/theme/fonts";
 import { withAlpha } from "../../features/theme/contrast";
 import { useAppTheme } from "../../features/theme/theme-provider";
-import { useCategoryInterests } from "../../features/categories/use-category-interests";
+import { useCategoryInterests, useCategoryInterestTreeNodes } from "../../features/categories/use-category-interests";
 import { CategoryInterestsPicker } from "./category-interests-picker";
 import { SettingsRow } from "./settings-row";
 
@@ -21,7 +21,9 @@ export function CategoryInterestsItem({ isLast = false }: { isLast?: boolean }) 
   const { t } = useTranslation("settings");
   const { theme } = useAppTheme();
   const [open, setOpen] = useState(false);
-  const { selectedKeys, isLoading, isSignedIn } = useCategoryInterests();
+  const { options, selectedKeys, isLoading, isSignedIn, toggleCategory } =
+    useCategoryInterests();
+  const treeNodes = useCategoryInterestTreeNodes();
 
   const selectedCount = selectedKeys.size;
   const value =
@@ -89,7 +91,12 @@ export function CategoryInterestsItem({ isLast = false }: { isLast?: boolean }) 
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
               >
-                <CategoryInterestsPicker />
+                <CategoryInterestsPicker
+                  options={options}
+                  selectedKeys={selectedKeys}
+                  toggleCategory={toggleCategory}
+                  treeNodes={treeNodes}
+                />
               </ScrollView>
             )}
           </Pressable>

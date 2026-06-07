@@ -59,4 +59,30 @@ describe("category interest tree", () => {
     const cloud = buildVisibleCategoryCloud(roots, childrenByParent, [fictionId]);
     expect(cloud.map(({ node }) => node.label)).toEqual(["Culture", "Fiction", "Roman"]);
   });
+
+  it("reveals children when tapping an already-picked parent", () => {
+    const literatureId = "literature" as Id<"categories">;
+    const romanId = "roman" as Id<"categories">;
+
+    const { roots, childrenByParent } = buildCategoryPickerTree([
+      {
+        _id: literatureId,
+        label: "Littérature",
+        iconKey: "culture",
+        depth: 1,
+      },
+      {
+        _id: romanId,
+        label: "Roman",
+        iconKey: "culture",
+        parentId: literatureId,
+        depth: 2,
+      },
+    ]);
+
+    expect(nodeHasChildren(literatureId, childrenByParent)).toBe(true);
+
+    const cloud = buildVisibleCategoryCloud(roots, childrenByParent, [literatureId]);
+    expect(cloud.map(({ node }) => node.label)).toEqual(["Littérature", "Roman"]);
+  });
 });

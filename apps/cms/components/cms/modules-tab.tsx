@@ -9,7 +9,7 @@ import {
   FEATURE_CATALOG_GROUPS,
   NAV_TAB_CAP,
   NAV_TAB_KEYS,
-  countEnabledNavTabs,
+  countNavTabsInBar,
   normalizeNavOrder,
   resolveEffectiveFeatureConfigs,
   type AccessLevel,
@@ -138,7 +138,8 @@ function NavTabComposer({
   features,
   featureConfigs,
   navOrder,
-  onToggle,
+  onToggleEnabled,
+  onToggleInBar,
   onMove,
   onIconChange,
   expandedIconKey,
@@ -147,15 +148,16 @@ function NavTabComposer({
   features: FeatureDefinition[];
   featureConfigs: Record<FeatureKey, TenantFeatureConfig>;
   navOrder: string[];
-  onToggle: (key: FeatureKey, enabled: boolean) => void;
+  onToggleEnabled: (key: FeatureKey, enabled: boolean) => void;
+  onToggleInBar: (key: FeatureKey, inBar: boolean) => void;
   onMove: (key: FeatureKey, direction: -1 | 1) => void;
   onIconChange: (key: FeatureKey, iconKey: CategoryIconKey) => void;
   expandedIconKey: FeatureKey | null;
   setExpandedIconKey: (key: FeatureKey | null) => void;
 }) {
-  const enabledCount = countEnabledNavTabs(featureConfigs);
-  const freeSlots = Math.max(0, NAV_TAB_CAP - enabledCount);
-  const atCap = enabledCount >= NAV_TAB_CAP;
+  const inBarCount = countNavTabsInBar(featureConfigs);
+  const freeSlots = Math.max(0, NAV_TAB_CAP - inBarCount);
+  const atCap = inBarCount >= NAV_TAB_CAP;
 
   const orderedFeatures = useMemo(() => {
     const byKey = new Map(features.map((feature) => [feature.key, feature]));
@@ -185,12 +187,14 @@ function NavTabComposer({
       <p className="nav-composer__note">
         {atCap ? (
           <>
-            Plafond atteint ({NAV_TAB_CAP}/{NAV_TAB_CAP}) — désactivez une table pour en activer une
-            autre. <b>Accueil</b> et <b>Profil</b> restent toujours dans la barre.
+            Plafond atteint ({NAV_TAB_CAP}/{NAV_TAB_CAP}) — désactivez « Dans la barre » pour une
+            table afin d&apos;en promouvoir une autre.{" "}
+            <b>Accueil</b> et <b>Profil</b> restent toujours dans la barre. Les tables hors barre
+            restent disponibles via l&apos;écran Explorer.
           </>
         ) : (
           <>
-            {enabledCount}/{NAV_TAB_CAP} dans la barre
+            {inBarCount}/{NAV_TAB_CAP} dans la barre
             {freeSlots > 0
               ? ` · ${freeSlots} place${freeSlots > 1 ? "s" : ""} libre${freeSlots > 1 ? "s" : ""}`
               : null}
@@ -206,7 +210,8 @@ function NavTabComposer({
             feature.key as (typeof CORE_NAV_TAB_KEYS)[number],
           );
           const isEnabled = config?.enabled ?? false;
-          const blockEnable = !isEnabled && atCap;
+          const isInBar = config?.inBar ?? false;
+          const blockInBar = !isInBar && atCap;
           const showIconPicker = TAB_ICON_KEYS.has(feature.key as NavTabKey);
 
           return (
@@ -281,14 +286,24 @@ function NavTabComposer({
                 </button>
               </div>
 
-              <ModuleToggle
-                checked={isEnabled}
-                disabled={blockEnable}
-                locked={isCore}
-                offLabel="Hors barre"
-                onChange={(enabled) => onToggle(feature.key, enabled)}
-                onLabel="Dans la barre"
-              />
+              {/* Two-level controls: Disponible (enabled) + Dans la barre (inBar) */}
+              <div className="nav-composer__controls">
+                <ModuleToggle
+                  checked={isEnabled}
+                  locked={isCore}
+                  onChange={(enabled) => onToggleEnabled(feature.key, enabled)}
+                  onLabel="Disponible"
+                  offLabel="Désactivée"
+                />
+                <ModuleToggle
+                  checked={isInBar}
+                  disabled={!isEnabled || blockInBar}
+                  locked={isCore}
+                  onChange={(inBar) => onToggleInBar(feature.key, inBar)}
+                  onLabel="Dans la barre"
+                  offLabel="Hors barre"
+                />
+              </div>
             </div>
           );
         })}
@@ -377,17 +392,23 @@ export function ModulesTab({ tenant }: ModulesTabProps) {
     markDirty();
   };
 
-  const toggleNavTab = (key: FeatureKey, enabled: boolean) => {
+  const toggleNavTabEnabled = (key: FeatureKey, enabled: boolean) => {
+    // If disabling, also remove from bar
     if (!enabled) {
-      updateFeature(key, { enabled });
+      updateFeature(key, { enabled, inBar: false });
       return;
     }
-
-    if (countEnabledNavTabs(featureConfigs) >= NAV_TAB_CAP) {
-      return;
-    }
-
     updateFeature(key, { enabled });
+  };
+
+  const toggleNavTabInBar = (key: FeatureKey, inBar: boolean) => {
+    if (inBar) {
+      // Cannot add to bar if already at cap
+      if (countNavTabsInBar(featureConfigs) >= NAV_TAB_CAP) {
+        return;
+      }
+    }
+    updateFeature(key, { inBar });
   };
 
   const toggleFeature = (key: FeatureKey, enabled: boolean) => {
@@ -495,7 +516,7 @@ export function ModulesTab({ tenant }: ModulesTabProps) {
                 <span className="t serif">{group.group}</span>
                 <span className="c">
                   {group.group === "Tables"
-                    ? `${countEnabledNavTabs(featureConfigs)}/${NAV_TAB_CAP} dans la barre`
+                    ? `${countNavTabsInBar(featureConfigs)}/${NAV_TAB_CAP} dans la barre`
                     : `${group.features.filter((feature) => featureConfigs[feature.key]?.enabled).length}/${group.features.length} actifs`}
                 </span>
               </div>
@@ -508,7 +529,8 @@ export function ModulesTab({ tenant }: ModulesTabProps) {
                   navOrder={navOrder}
                   onIconChange={(key, iconKey) => updateFeature(key, { iconKey })}
                   onMove={moveNavTab}
-                  onToggle={toggleNavTab}
+                  onToggleEnabled={toggleNavTabEnabled}
+                  onToggleInBar={toggleNavTabInBar}
                   setExpandedIconKey={setExpandedIconKey}
                 />
               ) : (
@@ -645,7 +667,7 @@ export function ModulesTab({ tenant }: ModulesTabProps) {
             <div className="mod-stat">
               <span className="k">Tables dans la barre</span>
               <span className="v">
-                {countEnabledNavTabs(featureConfigs)}/{NAV_TAB_CAP}
+                {countNavTabsInBar(featureConfigs)}/{NAV_TAB_CAP}
               </span>
             </div>
             <div className="mod-stat">
@@ -689,8 +711,10 @@ export function ModulesTab({ tenant }: ModulesTabProps) {
           <div className="mod-summary__card">
             <div className="h">— Comment ça marche</div>
             <p className="mod-note">
-              Les <b>tables</b> ({NAV_TAB_KEYS.join(", ")}) pilotent la barre mobile (max{" "}
-              {NAV_TAB_CAP}). Les <b>surfaces</b>, contenus et capacités restent hors barre.
+              Les <b>tables</b> ont deux niveaux : <b>Disponible</b> (route + grille Explorer)
+              et <b>Dans la barre</b> (barre du bas, max {NAV_TAB_CAP}). Le plafond s&apos;applique
+              uniquement à « Dans la barre » — une table peut être disponible sans apparaître dans
+              la barre. Les contenus et capacités n&apos;ont pas d&apos;option « Dans la barre ».
             </p>
           </div>
 

@@ -47,6 +47,8 @@ export type NormalizedYouTubeVideo = {
   tags: string[];
   isPremium: false;
   heroImageUrl?: string;
+  /** YouTube channel name, surfaced as the attribution on the video detail. */
+  author?: string;
   publishedAt: string;
   durationSeconds: number;
   videoSource: {
@@ -62,6 +64,12 @@ export type NormalizedYouTubeVideo = {
 const METADATA_BATCH_SIZE = 50;
 const PLAYLIST_PAGE_SIZE = 50;
 const DEFAULT_PLAYLIST_MAX_PAGES = 3;
+
+/**
+ * Floor (seconds) under which a video is treated as a Short and skipped — the
+ * discovery feed is built around full segments, not vertical Shorts/teasers.
+ */
+export const MIN_VIDEO_DURATION_SECONDS = 60;
 
 function getEnv(name: string): string | undefined {
   return (
@@ -205,6 +213,7 @@ export function normalizeYouTubeVideo(
     tags,
     isPremium: false,
     heroImageUrl: resolveHeroImageUrl(raw.thumbnails),
+    author: raw.channelTitle.trim() || undefined,
     publishedAt: raw.publishedAt,
     durationSeconds: raw.duration ? parseDurationSeconds(raw.duration) : 0,
     videoSource: {
@@ -233,6 +242,9 @@ type YouTubeVideosListItem = {
   contentDetails?: {
     duration?: string;
   };
+  status?: {
+    embeddable?: boolean;
+  };
 };
 
 export function parseYouTubeVideosListResponse(
@@ -245,6 +257,17 @@ export function parseYouTubeVideosListResponse(
     const snippet = item.snippet;
     const duration = item.contentDetails?.duration;
     if (!videoId || !snippet?.title || !duration) {
+      continue;
+    }
+
+    // Channels can disable off-site playback; ingesting those yields a video
+    // that only fails when the user tries to play it. Drop them at the source.
+    if (item.status?.embeddable === false) {
+      continue;
+    }
+
+    // Skip Shorts/teasers — the discovery feed is built around full segments.
+    if (parseDurationSeconds(duration) < MIN_VIDEO_DURATION_SECONDS) {
       continue;
     }
 
@@ -334,7 +357,7 @@ export async function batchFetchVideoMetadata(
     const batch = videoIds.slice(index, index + METADATA_BATCH_SIZE);
     const url =
       `https://www.googleapis.com/youtube/v3/videos` +
-      `?part=snippet,contentDetails` +
+      `?part=snippet,contentDetails,status` +
       `&id=${encodeURIComponent(batch.join(","))}` +
       `&key=${encodeURIComponent(apiKey)}`;
 

@@ -225,6 +225,7 @@ describe("normalizeYouTubeVideo", () => {
     });
     expect(normalized.slug).toBe("quantum-entanglement-explained-abc123");
     expect(normalized.publishedAt).toBe("2024-01-15T10:00:00Z");
+    expect(normalized.author).toBe("Science étonnante");
   });
 
   it("classifies an AI video on a history channel by its own tags, not channel default", () => {
@@ -261,6 +262,64 @@ describe("parseYouTubeVideosListResponse", () => {
     const parsed = parseYouTubeVideosListResponse(videosListPayload(SAMPLE_VIDEO));
 
     expect(parsed).toEqual([SAMPLE_VIDEO]);
+  });
+
+  it("drops Shorts shorter than the minimum duration", () => {
+    const parsed = parseYouTubeVideosListResponse({
+      items: [
+        {
+          id: "short01XYZ",
+          snippet: { title: "A Short", description: "", channelTitle: "Chan" },
+          contentDetails: { duration: "PT45S" },
+        },
+      ],
+    });
+
+    expect(parsed).toEqual([]);
+  });
+
+  it("keeps videos at or above the minimum duration", () => {
+    const parsed = parseYouTubeVideosListResponse({
+      items: [
+        {
+          id: "full01XYZ9",
+          snippet: { title: "Full video", description: "", channelTitle: "Chan" },
+          contentDetails: { duration: "PT2M" },
+        },
+      ],
+    });
+
+    expect(parsed).toHaveLength(1);
+  });
+
+  it("drops videos with embedding disabled", () => {
+    const parsed = parseYouTubeVideosListResponse({
+      items: [
+        {
+          id: "blocked01X",
+          snippet: { title: "No embed", description: "", channelTitle: "Chan" },
+          contentDetails: { duration: "PT5M" },
+          status: { embeddable: false },
+        },
+      ],
+    });
+
+    expect(parsed).toEqual([]);
+  });
+
+  it("keeps videos when embeddable is true or absent", () => {
+    const parsed = parseYouTubeVideosListResponse({
+      items: [
+        {
+          id: "embed01XYZ",
+          snippet: { title: "Embeddable", description: "", channelTitle: "Chan" },
+          contentDetails: { duration: "PT5M" },
+          status: { embeddable: true },
+        },
+      ],
+    });
+
+    expect(parsed).toHaveLength(1);
   });
 });
 

@@ -32,6 +32,8 @@ export type ContentDoc = {
   isPremium: boolean;
   publishedAt?: string;
   heroImageUrl?: string;
+  /** External attribution (e.g. the YouTube channel name) when ingested. */
+  author?: string;
   readingTimeMinutes?: number;
   articleBody?: string;
   audioUrl?: string;

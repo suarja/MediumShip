@@ -97,6 +97,7 @@ export default defineSchema({
     readingTimeMinutes: v.optional(v.number()),
     articleBody: v.optional(v.string()),
     audioUrl: v.optional(v.string()),
+    author: v.optional(v.string()),
     durationSeconds: v.optional(v.number()),
     videoSource: v.optional(
       v.union(

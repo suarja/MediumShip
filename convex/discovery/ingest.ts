@@ -38,6 +38,7 @@ const ingestedContentValidator = v.object({
   isPremium: v.boolean(),
   heroImageUrl: v.optional(v.string()),
   publishedAt: v.optional(v.string()),
+  author: v.optional(v.string()),
   durationSeconds: v.optional(v.number()),
   videoSource: v.optional(
     v.union(

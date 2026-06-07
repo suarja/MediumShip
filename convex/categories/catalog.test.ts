@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { internal } from "../_generated/api";
 import schema from "../schema";
 import { modules } from "../../convexTestModules";
-import { parseIptcJson, type RawIptcNode } from "./catalogImport";
+import { mergeIptcLocalizedNodes, parseIptcJson, type RawIptcNode } from "./catalogImportParse";
 import fixture from "./fixtures/iptc-mediatopic-sample.json";
 
 // ─── parseIptcJson ────────────────────────────────────────────────────────────
@@ -68,6 +68,64 @@ describe("parseIptcJson", () => {
   it("handles empty graph gracefully", () => {
     expect(parseIptcJson({ "@graph": [] })).toEqual([]);
     expect(parseIptcJson({})).toEqual([]);
+  });
+
+  it("merges French labels into English nodes", () => {
+    const merged = mergeIptcLocalizedNodes(
+      [
+        {
+          externalId: "medtop:1",
+          label: "Economy",
+          retired: false,
+        },
+      ],
+      [
+        {
+          externalId: "medtop:1",
+          label: "Économie",
+          retired: false,
+        },
+      ],
+    );
+
+    expect(merged[0]?.label).toBe("Economy");
+    expect(merged[0]?.labelFr).toBe("Économie");
+  });
+
+  it("parses the current IKOS conceptSet format", () => {
+    const ikos = {
+      conceptSet: [
+        {
+          uri: "http://cv.iptc.org/newscodes/mediatopic/01000000",
+          qcode: "medtop:01000000",
+          type: ["http://www.w3.org/2004/02/skos/core#Concept"],
+          prefLabel: { "en-GB": "arts, culture, entertainment and media" },
+        },
+        {
+          uri: "http://cv.iptc.org/newscodes/mediatopic/20000002",
+          qcode: "medtop:20000002",
+          type: ["http://www.w3.org/2004/02/skos/core#Concept"],
+          prefLabel: { "en-GB": "arts and entertainment" },
+          broader: ["http://cv.iptc.org/newscodes/mediatopic/01000000"],
+        },
+        {
+          uri: "http://cv.iptc.org/newscodes/mediatopic/20000030",
+          qcode: "medtop:20000030",
+          type: ["http://www.w3.org/2004/02/skos/core#Concept"],
+          prefLabel: { "en-GB": "retired topic" },
+          retired: "2021-09-30T12:00:00+00:00",
+        },
+      ],
+    };
+
+    const nodes = parseIptcJson(ikos);
+    expect(nodes).toHaveLength(3);
+
+    const child = nodes.find((n) => n.externalId === "medtop:20000002");
+    expect(child?.parentExternalId).toBe("medtop:01000000");
+
+    const retired = nodes.find((n) => n.externalId === "medtop:20000030");
+    expect(retired?.retired).toBe(true);
   });
 });
 

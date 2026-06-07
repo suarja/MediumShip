@@ -17,6 +17,7 @@ import { Link, router } from "expo-router";
 import * as Linking from "expo-linking";
 import { useTranslation } from "react-i18next";
 import * as WebBrowser from "expo-web-browser";
+import { getDefaultAppRoute } from "../../src/features/navigation/default-app-route";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
@@ -28,9 +29,10 @@ type OAuthProvider = "google" | "apple";
 export default function SignInScreen() {
   const { t } = useTranslation("auth");
   const { signIn, setActive, isLoaded } = useSignIn();
-  const { theme, tenantName } = useAppTheme();
+  const { theme, tenantName, effectiveNavigation } = useAppTheme();
   const { startOAuthFlow: startGoogle } = useOAuth({ strategy: "oauth_google" });
   const { startOAuthFlow: startApple } = useOAuth({ strategy: "oauth_apple" });
+  const defaultAppRoute = getDefaultAppRoute(effectiveNavigation);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,7 +54,7 @@ export default function SignInScreen() {
 
         if (createdSessionId && setOAuthActive) {
           await setOAuthActive({ session: createdSessionId });
-          router.replace("/home");
+          router.replace(defaultAppRoute);
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
@@ -64,7 +66,7 @@ export default function SignInScreen() {
         setLoadingProvider(null);
       }
     },
-    [startGoogle, startApple, t],
+    [defaultAppRoute, startGoogle, startApple, t],
   );
 
   const onEmailPassword = useCallback(async () => {
@@ -83,7 +85,7 @@ export default function SignInScreen() {
 
       if (attempt.status === "complete") {
         await setActive({ session: attempt.createdSessionId });
-        router.replace("/home");
+        router.replace(defaultAppRoute);
       } else {
         setError(t("signIn.errors.incomplete"));
       }
@@ -94,7 +96,7 @@ export default function SignInScreen() {
     } finally {
       setSubmitting(false);
     }
-  }, [isLoaded, email, password, signIn, setActive, t]);
+  }, [defaultAppRoute, isLoaded, email, password, signIn, setActive, t]);
 
   const busy = submitting || loadingProvider !== null;
 

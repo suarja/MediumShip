@@ -6,6 +6,7 @@ import {
   resolveEffectiveFeatureConfigs,
   resolveEffectiveNavigation,
   type FeatureKey,
+  type NavTabKey,
   type TenantFeatureConfig,
 } from "../../../convex/featureCatalog";
 import { defaultTenant } from "../tenant/default-tenant";
@@ -31,7 +32,7 @@ type ThemeContextValue = {
   tenantName: string;
   enabledModules: EnabledModule[];
   featureConfigs: Record<FeatureKey, TenantFeatureConfig>;
-  effectiveNavigation: FeatureKey[];
+  effectiveNavigation: NavTabKey[];
   navOrder: string[];
   feedSections: FeedSectionConfig[];
   isLoading: boolean;

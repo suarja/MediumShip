@@ -381,25 +381,25 @@ export function assertNavTabCap(featureConfigs: Record<FeatureKey, TenantFeature
 export function resolveEffectiveNavigation(
   featureConfigs: Record<FeatureKey, TenantFeatureConfig>,
   navOrder?: readonly string[],
-): FeatureKey[] {
+): NavTabKey[] {
   const order = normalizeNavOrder(navOrder);
 
-  const barNavTabs = new Set<FeatureKey>(
+  const barNavTabs = new Set<NavTabKey>(
     FEATURE_DEFINITIONS.filter(
       (feature) =>
         feature.nature === "navTab" &&
         featureConfigs[feature.key]?.enabled &&
         featureConfigs[feature.key]?.inBar,
-    ).map((feature) => feature.key),
+    ).map((feature) => feature.key as NavTabKey),
   );
 
   for (const coreKey of CORE_NAV_TAB_KEYS) {
     barNavTabs.add(coreKey);
   }
 
-  const result: FeatureKey[] = [];
+  const result: NavTabKey[] = [];
   for (const key of order) {
-    const featureKey = key as FeatureKey;
+    const featureKey = key as NavTabKey;
     if (barNavTabs.has(featureKey) && !result.includes(featureKey)) {
       result.push(featureKey);
     }

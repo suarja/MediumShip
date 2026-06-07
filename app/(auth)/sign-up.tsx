@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useSignUp } from "@clerk/clerk-expo";
 import { Link, router } from "expo-router";
 import { useTranslation } from "react-i18next";
+import { getDefaultAppRoute } from "../../src/features/navigation/default-app-route";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
@@ -26,7 +27,8 @@ function clerkErrorMessage(err: unknown, fallback: string): string {
 export default function SignUpScreen() {
   const { t } = useTranslation("auth");
   const { signUp, setActive, isLoaded } = useSignUp();
-  const { theme, tenantName } = useAppTheme();
+  const { theme, tenantName, effectiveNavigation } = useAppTheme();
+  const defaultAppRoute = getDefaultAppRoute(effectiveNavigation);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -66,7 +68,7 @@ export default function SignUpScreen() {
       const attempt = await signUp.attemptEmailAddressVerification({ code });
       if (attempt.status === "complete") {
         await setActive({ session: attempt.createdSessionId });
-        router.replace("/home");
+        router.replace(defaultAppRoute);
       } else {
         setError(t("signUp.errors.verificationIncomplete"));
       }
@@ -75,7 +77,7 @@ export default function SignUpScreen() {
     } finally {
       setSubmitting(false);
     }
-  }, [isLoaded, code, signUp, setActive, t]);
+  }, [defaultAppRoute, isLoaded, code, signUp, setActive, t]);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.canvas }]}>

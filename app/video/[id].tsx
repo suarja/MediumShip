@@ -66,6 +66,15 @@ export default function VideoDetailScreen() {
       : source?.kind === "hosted"
         ? t("hostedProvider")
         : null;
+  const channelName = resolvedContent?.author?.trim();
+  const baseMeta = providerLabel
+    ? t("providerLabel", { provider: providerLabel })
+    : undefined;
+  const detailMeta = channelName
+    ? baseMeta
+      ? `${baseMeta} · ${channelName}`
+      : channelName
+    : baseMeta;
   const playLabel =
     activeSession?.contentId === resolvedContent?._id ? t("resumeVideo") : t("playVideo");
 
@@ -129,7 +138,7 @@ export default function VideoDetailScreen() {
           <DetailHeader
             kicker={resolvedContent.category || t("kicker")}
             title={resolvedContent.title}
-            meta={providerLabel ? t("providerLabel", { provider: providerLabel }) : undefined}
+            meta={detailMeta}
             lede={resolvedContent.summary}
             premium={resolvedContent.isPremium}
           />

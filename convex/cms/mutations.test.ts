@@ -60,8 +60,10 @@ describe("cms/mutations — updateModuleSettings", () => {
       "library",
       "profile",
     ]);
+    // articles is a content feature → inBar is always false
     expect(tenant.featureConfigs?.articles).toEqual({
       enabled: true,
+      inBar: false,
       access: "free",
       iconKey: "analyses",
     });
@@ -73,7 +75,7 @@ describe("cms/mutations — updateModuleSettings", () => {
     ]);
   });
 
-  it("persists nav order and rejects more than five enabled nav tabs", async () => {
+  it("persists nav order and clamps to five inBar tabs when more are requested", async () => {
     const t = convexTest(schema, modules);
     await seedAdmin(t);
     const asAdmin = t.withIdentity(ADMIN);
@@ -82,12 +84,12 @@ describe("cms/mutations — updateModuleSettings", () => {
 
     await asAdmin.mutation(api.cms.mutations.updateModuleSettings, {
       featureConfigs: {
-        home: { enabled: true },
-        discover: { enabled: true },
-        explore: { enabled: true },
-        library: { enabled: true },
-        profile: { enabled: true },
-        collections: { enabled: false },
+        home: { enabled: true, inBar: true },
+        discover: { enabled: true, inBar: true },
+        explore: { enabled: true, inBar: true },
+        library: { enabled: true, inBar: true },
+        profile: { enabled: true, inBar: true },
+        collections: { enabled: false, inBar: false },
       },
       feedSections: defaultTenant.feedSections ?? [],
       navOrder: customOrder,
@@ -97,15 +99,16 @@ describe("cms/mutations — updateModuleSettings", () => {
     // navOrder is normalized (missing nav tabs appended); the custom prefix is preserved.
     expect(tenant.navOrder?.slice(0, customOrder.length)).toEqual(customOrder);
 
+    // Now try to put 7 tabs inBar — the cap should clamp to 5 inBar
     await asAdmin.mutation(api.cms.mutations.updateModuleSettings, {
       featureConfigs: {
-        home: { enabled: true },
-        discover: { enabled: true },
-        explore: { enabled: true },
-        library: { enabled: true },
-        profile: { enabled: true },
-        collections: { enabled: true },
-        agenda: { enabled: true },
+        home: { enabled: true, inBar: true },
+        discover: { enabled: true, inBar: true },
+        explore: { enabled: true, inBar: true },
+        library: { enabled: true, inBar: true },
+        profile: { enabled: true, inBar: true },
+        collections: { enabled: true, inBar: true },
+        agenda: { enabled: true, inBar: true },
       },
       feedSections: defaultTenant.feedSections ?? [],
       navOrder: buildDefaultNavOrder(),
@@ -113,9 +116,13 @@ describe("cms/mutations — updateModuleSettings", () => {
 
     const clamped = await asAdmin.query(api.cms.queries.getTenantSettings, {});
     expect(clamped.featureConfigs?.home?.enabled).toBe(true);
+    expect(clamped.featureConfigs?.home?.inBar).toBe(true);
     expect(clamped.featureConfigs?.profile?.enabled).toBe(true);
-    // 7 nav tabs were requested; the cap keeps exactly five (core + by nav order).
-    const enabledNavTabs = (
+    expect(clamped.featureConfigs?.profile?.inBar).toBe(true);
+    // 7 inBar were requested; the cap keeps exactly 5 inBar (core + by nav order).
+    // Default nav order: home, discover, explore, agenda, community, collections, library, profile
+    // keep = {home(core), profile(core)} → add discover(3), explore(4), agenda(5=cap).
+    const inBarNavTabs = (
       [
         "home",
         "discover",
@@ -126,10 +133,16 @@ describe("cms/mutations — updateModuleSettings", () => {
         "library",
         "profile",
       ] as const
-    ).filter((key) => clamped.featureConfigs?.[key]?.enabled);
-    expect(enabledNavTabs.length).toBe(5);
-    // collections is beyond the cap by nav order → dropped.
-    expect(clamped.featureConfigs?.collections?.enabled).toBe(false);
+    ).filter((key) => clamped.featureConfigs?.[key]?.inBar);
+    expect(inBarNavTabs.length).toBe(5);
+    // agenda is 4th non-core in nav order → fits in bar
+    expect(clamped.featureConfigs?.agenda?.inBar).toBe(true);
+    expect(clamped.featureConfigs?.agenda?.enabled).toBe(true);
+    // collections and library are beyond the cap by nav order → inBar clamped to false, but enabled stays true
+    expect(clamped.featureConfigs?.collections?.inBar).toBe(false);
+    expect(clamped.featureConfigs?.collections?.enabled).toBe(true);
+    expect(clamped.featureConfigs?.library?.inBar).toBe(false);
+    expect(clamped.featureConfigs?.library?.enabled).toBe(true);
   });
 
   it("cannot disable a core feature or override locked access", async () => {

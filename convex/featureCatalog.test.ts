@@ -9,7 +9,7 @@ import {
   buildDefaultFeatureConfigs,
   buildDefaultNavOrder,
   clampNavTabsInConfigs,
-  countEnabledNavTabs,
+  countNavTabsInBar,
   deriveEnabledModules,
   normalizeFeatureConfigs,
   normalizeNavOrder,
@@ -134,9 +134,18 @@ describe("featureCatalog", () => {
     expect(defaults.articles.enabled).toBe(true);
     expect(defaults.premium.access).toBe("premium");
     expect(defaults.home.enabled).toBe(true);
+    expect(defaults.home.inBar).toBe(true);
     expect(defaults.profile.enabled).toBe(true);
-    expect(defaults.collections.enabled).toBe(false);
-    expect(countEnabledNavTabs(defaults)).toBe(NAV_TAB_CAP);
+    expect(defaults.profile.inBar).toBe(true);
+    // agenda/community/collections: enabled but NOT in bar by default
+    expect(defaults.collections.enabled).toBe(true);
+    expect(defaults.collections.inBar).toBe(false);
+    expect(defaults.agenda.enabled).toBe(true);
+    expect(defaults.agenda.inBar).toBe(false);
+    expect(defaults.community.enabled).toBe(true);
+    expect(defaults.community.inBar).toBe(false);
+    // Exactly 5 in the bar by default
+    expect(countNavTabsInBar(defaults)).toBe(NAV_TAB_CAP);
   });
 
   it("builds a default nav order with home first", () => {
@@ -144,13 +153,13 @@ describe("featureCatalog", () => {
     expect(buildDefaultNavOrder()).toEqual([...NAV_TAB_KEYS]);
   });
 
-  it("resolveEffectiveNavigation returns enabled nav tabs ordered with home first and capped", () => {
+  it("resolveEffectiveNavigation returns enabled+inBar nav tabs ordered with home first and capped", () => {
     const configs = normalizeFeatureConfigs({
-      home: { enabled: true },
-      discover: { enabled: true },
-      explore: { enabled: true },
-      library: { enabled: true },
-      profile: { enabled: true },
+      home: { enabled: true, inBar: true },
+      discover: { enabled: true, inBar: true },
+      explore: { enabled: true, inBar: true },
+      library: { enabled: true, inBar: true },
+      profile: { enabled: true, inBar: true },
     });
 
     const nav = resolveEffectiveNavigation(configs, [
@@ -166,7 +175,24 @@ describe("featureCatalog", () => {
     expect(nav.length).toBe(NAV_TAB_CAP);
     expect(nav).not.toContain("articles");
     expect(nav).not.toContain("bookmarks");
+    // collections is enabled but inBar:false → not in the bar navigation
     expect(nav).not.toContain("collections");
+  });
+
+  it("resolveEffectiveNavigation omits tabs that are enabled but not inBar", () => {
+    const configs = normalizeFeatureConfigs({
+      home: { enabled: true, inBar: true },
+      discover: { enabled: true, inBar: false },
+      explore: { enabled: true, inBar: true },
+      library: { enabled: true, inBar: true },
+      profile: { enabled: true, inBar: true },
+    });
+
+    const nav = resolveEffectiveNavigation(configs, buildDefaultNavOrder());
+    // discover is enabled but inBar:false → not in bar navigation
+    expect(nav).not.toContain("discover");
+    expect(nav).toContain("home");
+    expect(nav).toContain("profile");
   });
 
   it("resolveEffectiveNavigation omits disabled nav tabs", () => {
@@ -196,23 +222,61 @@ describe("featureCatalog", () => {
     expect(nav).toContain("profile");
   });
 
-  it("clampNavTabsInConfigs enforces the five-table ceiling", () => {
+  it("a nav tab in the bar requires both enabled:true AND inBar:true", () => {
     const configs = normalizeFeatureConfigs({
-      home: { enabled: true },
-      discover: { enabled: true },
-      explore: { enabled: true },
-      library: { enabled: true },
-      profile: { enabled: true },
-      collections: { enabled: true },
-      agenda: { enabled: true },
+      home: { enabled: true, inBar: true },
+      discover: { enabled: true, inBar: true },
+      explore: { enabled: true, inBar: true },
+      library: { enabled: true, inBar: true },
+      profile: { enabled: true, inBar: true },
+      // enabled but not in bar
+      collections: { enabled: true, inBar: false },
+      // disabled
+      agenda: { enabled: false, inBar: false },
+    });
+
+    // collections is enabled but not in bar
+    expect(configs.collections.enabled).toBe(true);
+    expect(configs.collections.inBar).toBe(false);
+    // agenda is fully disabled
+    expect(configs.agenda.enabled).toBe(false);
+    expect(configs.agenda.inBar).toBe(false);
+    // Only 5 in the bar
+    expect(countNavTabsInBar(configs)).toBe(NAV_TAB_CAP);
+  });
+
+  it("clampNavTabsInConfigs enforces the five-table bar ceiling (inBar, not enabled)", () => {
+    // Attempt to put 7 tabs in the bar; normalizeFeatureConfigs itself clamps first,
+    // then we call clampNavTabsInConfigs directly to verify idempotence.
+    // Default nav order: home, discover, explore, agenda, community, collections, library, profile
+    // keep = {home(core), profile(core)} → add discover(3), explore(4), agenda(5=cap).
+    // So collections and library are the overflow tabs.
+    const configs = normalizeFeatureConfigs({
+      home: { enabled: true, inBar: true },
+      discover: { enabled: true, inBar: true },
+      explore: { enabled: true, inBar: true },
+      library: { enabled: true, inBar: true },
+      profile: { enabled: true, inBar: true },
+      collections: { enabled: true, inBar: true },
+      agenda: { enabled: true, inBar: true },
     });
 
     const clamped = clampNavTabsInConfigs(configs, buildDefaultNavOrder());
-    expect(countEnabledNavTabs(clamped)).toBeLessThanOrEqual(NAV_TAB_CAP);
+    // bar count is capped at 5
+    expect(countNavTabsInBar(clamped)).toBeLessThanOrEqual(NAV_TAB_CAP);
+    // core tabs stay in bar
     expect(clamped.home.enabled).toBe(true);
+    expect(clamped.home.inBar).toBe(true);
     expect(clamped.profile.enabled).toBe(true);
-    // The overflow tables (beyond the cap, by nav order) are dropped.
-    expect(clamped.collections.enabled).toBe(false);
+    expect(clamped.profile.inBar).toBe(true);
+    // agenda is 4th in nav order → it fits in the bar (5th slot after home/profile/discover/explore)
+    expect(clamped.agenda.enabled).toBe(true);
+    expect(clamped.agenda.inBar).toBe(true);
+    // collections and library are beyond the cap by nav order → inBar=false, but enabled stays true
+    expect(clamped.collections.enabled).toBe(true);
+    expect(clamped.collections.inBar).toBe(false);
+    expect(clamped.library.enabled).toBe(true);
+    expect(clamped.library.inBar).toBe(false);
   });
 
   it("normalizeNavOrder deduplicates and forces home first", () => {
@@ -228,17 +292,27 @@ describe("featureCatalog", () => {
     ]);
   });
 
-  it("countEnabledNavTabs counts only enabled navTab features", () => {
+  it("countNavTabsInBar counts only enabled+inBar navTab features", () => {
     const configs = normalizeFeatureConfigs({
-      home: { enabled: true },
-      discover: { enabled: true },
-      explore: { enabled: true },
-      library: { enabled: true },
-      profile: { enabled: true },
-      collections: { enabled: true },
+      home: { enabled: true, inBar: true },
+      discover: { enabled: true, inBar: true },
+      explore: { enabled: true, inBar: true },
+      library: { enabled: true, inBar: true },
+      profile: { enabled: true, inBar: true },
+      // enabled but NOT in bar → should not count
+      collections: { enabled: true, inBar: false },
+      // content feature → never in bar
       articles: { enabled: true },
     });
 
-    expect(countEnabledNavTabs(configs)).toBe(5);
+    expect(countNavTabsInBar(configs)).toBe(5);
+  });
+
+  it("default configs: agenda/community/collections are enabled but inBar:false", () => {
+    const defaults = buildDefaultFeatureConfigs();
+    for (const key of ["agenda", "community", "collections"] as const) {
+      expect(defaults[key].enabled).toBe(true);
+      expect(defaults[key].inBar).toBe(false);
+    }
   });
 });

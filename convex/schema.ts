@@ -113,7 +113,12 @@ export default defineSchema({
       ),
     ),
     source: v.optional(
-      v.union(v.literal("cms"), v.literal("wikipedia"), v.literal("rss")),
+      v.union(
+        v.literal("cms"),
+        v.literal("wikipedia"),
+        v.literal("rss"),
+        v.literal("youtube"),
+      ),
     ),
     externalId: v.optional(v.string()),
     canonicalUrl: v.optional(v.string()),

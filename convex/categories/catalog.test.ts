@@ -70,6 +70,23 @@ describe("parseIptcJson", () => {
     expect(parseIptcJson({})).toEqual([]);
   });
 
+  it("parses FR IPTC IKOS payloads when primary locale is fr", () => {
+    const frOnly = {
+      conceptSet: [
+        {
+          uri: "http://cv.iptc.org/newscodes/mediatopic/01000000",
+          qcode: "medtop:01000000",
+          type: ["http://www.w3.org/2004/02/skos/core#Concept"],
+          prefLabel: { fr: "arts, culture, divertissement et médias" },
+        },
+      ],
+    };
+
+    const nodes = parseIptcJson(frOnly, { primaryLocale: "fr" });
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0]?.label).toBe("arts, culture, divertissement et médias");
+  });
+
   it("merges French labels into English nodes", () => {
     const merged = mergeIptcLocalizedNodes(
       [

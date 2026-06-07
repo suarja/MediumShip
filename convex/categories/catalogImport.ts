@@ -30,20 +30,17 @@ async function fetchIptcJson(url: string): Promise<unknown> {
 
 /**
  * Internal action: fetch IPTC Media Topics JSON (EN + FR), parse, merge, upsert.
- * Run once manually:
- *   npx convex run categories/catalogImport:importIptcMediaTopics
  */
 export const importIptcMediaTopics = internalAction({
   args: {
-    /** Override the IPTC URL (useful for pointing at a cached copy). */
     url: v.optional(v.string()),
   },
   handler: async (
     ctx,
     args,
-  ): Promise<{ parsed: number; imported: number }> => {
+  ): Promise<{ parsed: number; imported: number; frenchLabels: number }> => {
     const enJson = await fetchIptcJson(args.url ?? IPTC_EN_URL);
-    const enNodes = parseIptcJson(enJson);
+    const enNodes = parseIptcJson(enJson, { primaryLocale: "en" });
     if (enNodes.length === 0) {
       throw new Error(
         "IPTC parse returned 0 concepts — the source format may have changed",
@@ -51,14 +48,18 @@ export const importIptcMediaTopics = internalAction({
     }
 
     let nodes: RawIptcNode[] = enNodes;
+    let frenchLabels = enNodes.filter((node) => node.labelFr).length;
+
     if (!args.url) {
-      try {
-        const frJson = await fetchIptcJson(IPTC_FR_URL);
-        const frNodes = parseIptcJson(frJson);
-        nodes = mergeIptcLocalizedNodes(enNodes, frNodes);
-      } catch {
-        // French labels are optional — keep English-only import if FR fetch fails.
+      const frJson = await fetchIptcJson(IPTC_FR_URL);
+      const frNodes = parseIptcJson(frJson, { primaryLocale: "fr" });
+      if (frNodes.length === 0) {
+        throw new Error(
+          "IPTC French fetch parsed 0 concepts — check ?lang=fr endpoint",
+        );
       }
+      nodes = mergeIptcLocalizedNodes(enNodes, frNodes);
+      frenchLabels = nodes.filter((node) => node.labelFr).length;
     }
 
     const imported: number = await ctx.runMutation(
@@ -66,6 +67,6 @@ export const importIptcMediaTopics = internalAction({
       { nodes },
     );
 
-    return { parsed: nodes.length, imported };
+    return { parsed: nodes.length, imported, frenchLabels };
   },
 });

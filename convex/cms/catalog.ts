@@ -7,6 +7,7 @@ import {
   WIKIPEDIA_LOCALES,
 } from "../categories/catalogLocale";
 import {
+  readCategoryCatalogRoots,
   readCategoryCatalogStats,
   searchCategoryCatalogNodes,
 } from "../categories/catalogRead";
@@ -56,6 +57,20 @@ export const searchCategoryCatalogForCms = query({
 });
 
 /**
+ * L1 IPTC families for browse entry (chips). Not addable — use to drill into
+ * sub-themes via search.
+ * CMS admin only.
+ */
+export const listCategoryCatalogRootsForCms = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireCmsAdmin(ctx);
+    const locale = await getTenantCatalogLocale(ctx);
+    return await readCategoryCatalogRoots(ctx, locale);
+  },
+});
+
+/**
  * Discovery locale settings for CMS (catalog labels + Wikipedia ingestion).
  * CMS admin only.
  */
@@ -78,24 +93,36 @@ export const getDiscoveryLocales = query({
 
 export const updateDiscoveryLocales = mutation({
   args: {
-    catalogLocale: v.union(...CATALOG_LOCALES.map((locale) => v.literal(locale))),
-    wikipediaLocale: v.union(
-      ...WIKIPEDIA_LOCALES.map((locale) => v.literal(locale)),
+    catalogLocale: v.optional(
+      v.union(...CATALOG_LOCALES.map((locale) => v.literal(locale))),
+    ),
+    wikipediaLocale: v.optional(
+      v.union(...WIKIPEDIA_LOCALES.map((locale) => v.literal(locale))),
     ),
   },
   handler: async (ctx, args) => {
     await requireCmsAdmin(ctx);
+
+    if (args.catalogLocale === undefined && args.wikipediaLocale === undefined) {
+      throw new Error("At least one locale must be provided");
+    }
 
     const tenant = await ctx.db
       .query("tenants")
       .withIndex("by_slug", (q) => q.eq("slug", defaultTenant.slug))
       .unique();
 
-    if (tenant) {
-      await ctx.db.patch(tenant._id, {
+    const patch = {
+      ...(args.catalogLocale !== undefined && {
         catalogLocale: args.catalogLocale,
+      }),
+      ...(args.wikipediaLocale !== undefined && {
         wikipediaLocale: args.wikipediaLocale,
-      });
+      }),
+    };
+
+    if (tenant) {
+      await ctx.db.patch(tenant._id, patch);
       return tenant._id;
     }
 
@@ -105,8 +132,8 @@ export const updateDiscoveryLocales = mutation({
       enabledModules: defaultTenant.enabledModules,
       feedSections: defaultTenant.feedSections,
       themeConfig: defaultTenant.themeConfig,
-      catalogLocale: args.catalogLocale,
-      wikipediaLocale: args.wikipediaLocale,
+      catalogLocale: args.catalogLocale ?? "en",
+      wikipediaLocale: args.wikipediaLocale ?? "en",
     });
   },
 });
@@ -145,9 +172,10 @@ export const importIptcForCms = action({
   handler: async (
     ctx,
     args,
-  ): Promise<{ parsed: number; imported: number }> => {
+  ): Promise<{ parsed: number; imported: number; frenchLabels: number }> => {
     await ctx.runQuery(internal.cms.authz.assertCmsAdmin, {});
-    const result: { parsed: number; imported: number } = await ctx.runAction(
+    const result: { parsed: number; imported: number; frenchLabels: number } =
+      await ctx.runAction(
       internal.categories.catalogImport.importIptcMediaTopics,
       { url: args.url },
     );

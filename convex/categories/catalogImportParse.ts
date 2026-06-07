@@ -11,8 +11,12 @@ export type RawIptcNode = {
   retired: boolean;
 };
 
+export type ParseIptcOptions = {
+  /** Which prefLabel locale drives the primary `label` field. Default `en`. */
+  primaryLocale?: "en" | "fr";
+};
+
 function toExternalId(uri: string): string {
-  // "http://cv.iptc.org/newscodes/mediatopic/20000344" → "medtop:20000344"
   if (uri.startsWith(IPTC_BASE)) {
     return `medtop:${uri.slice(IPTC_BASE.length)}`;
   }
@@ -67,8 +71,32 @@ function readFrenchLabel(prefLabel: unknown): string | undefined {
   return labels["fr-FR"] ?? labels["fr-BE"] ?? labels.fr;
 }
 
+function readPrimaryLabel(
+  prefLabel: unknown,
+  primaryLocale: "en" | "fr",
+): string | undefined {
+  if (primaryLocale === "fr") {
+    return readFrenchLabel(prefLabel);
+  }
+  return readEnglishLabel(prefLabel);
+}
+
+function readSecondaryLabel(
+  prefLabel: unknown,
+  primaryLocale: "en" | "fr",
+): string | undefined {
+  if (primaryLocale === "fr") {
+    return readEnglishLabel(prefLabel);
+  }
+  return readFrenchLabel(prefLabel);
+}
+
 /** IPTC IKOS format (2025+): top-level `conceptSet` array. */
-function parseIkosConceptSet(data: Record<string, unknown>): RawIptcNode[] {
+function parseIkosConceptSet(
+  data: Record<string, unknown>,
+  options: ParseIptcOptions,
+): RawIptcNode[] {
+  const primaryLocale = options.primaryLocale ?? "en";
   const conceptSet = Array.isArray(data.conceptSet)
     ? (data.conceptSet as unknown[])
     : [];
@@ -85,17 +113,18 @@ function parseIkosConceptSet(data: Record<string, unknown>): RawIptcNode[] {
     }
 
     const externalId = qcode ?? toExternalId(uri!);
-    const enLabel = readEnglishLabel(concept.prefLabel);
-    if (!enLabel) continue;
+    const primaryLabel = readPrimaryLabel(concept.prefLabel, primaryLocale);
+    if (!primaryLabel) continue;
 
-    const frLabel = readFrenchLabel(concept.prefLabel);
+    const secondaryLabel = readSecondaryLabel(concept.prefLabel, primaryLocale);
     const parentExternalId = resolveParentExternalId(concept.broader);
     const retired = concept.retired !== undefined && concept.retired !== false;
 
     nodes.push({
       externalId,
-      label: enLabel,
-      ...(frLabel !== undefined && { labelFr: frLabel }),
+      label: primaryLabel,
+      ...(secondaryLabel !== undefined &&
+        primaryLocale === "en" && { labelFr: secondaryLabel }),
       ...(parentExternalId !== undefined && { parentExternalId }),
       retired,
     });
@@ -105,7 +134,11 @@ function parseIkosConceptSet(data: Record<string, unknown>): RawIptcNode[] {
 }
 
 /** Legacy JSON-LD `@graph` format. */
-function parseJsonLdGraph(data: Record<string, unknown>): RawIptcNode[] {
+function parseJsonLdGraph(
+  data: Record<string, unknown>,
+  options: ParseIptcOptions,
+): RawIptcNode[] {
+  const primaryLocale = options.primaryLocale ?? "en";
   const graph = Array.isArray(data["@graph"])
     ? (data["@graph"] as unknown[])
     : [];
@@ -119,10 +152,13 @@ function parseJsonLdGraph(data: Record<string, unknown>): RawIptcNode[] {
     if (!id || !id.startsWith(IPTC_BASE)) continue;
 
     const externalId = toExternalId(id);
-    const enLabel = readEnglishLabel(concept["skos:prefLabel"]);
-    if (!enLabel) continue;
+    const primaryLabel = readPrimaryLabel(concept["skos:prefLabel"], primaryLocale);
+    if (!primaryLabel) continue;
 
-    const frLabel = readFrenchLabel(concept["skos:prefLabel"]);
+    const secondaryLabel = readSecondaryLabel(
+      concept["skos:prefLabel"],
+      primaryLocale,
+    );
     const broader = concept["skos:broader"];
     const broaderArr = Array.isArray(broader)
       ? (broader as Array<Record<string, string>>)
@@ -140,8 +176,9 @@ function parseJsonLdGraph(data: Record<string, unknown>): RawIptcNode[] {
 
     nodes.push({
       externalId,
-      label: enLabel,
-      ...(frLabel !== undefined && { labelFr: frLabel }),
+      label: primaryLabel,
+      ...(secondaryLabel !== undefined &&
+        primaryLocale === "en" && { labelFr: secondaryLabel }),
       ...(parentExternalId !== undefined && { parentExternalId }),
       retired,
     });
@@ -154,12 +191,15 @@ function parseJsonLdGraph(data: Record<string, unknown>): RawIptcNode[] {
  * Parse IPTC Media Topics JSON into a flat node list.
  * Supports the current IKOS `conceptSet` format and the legacy JSON-LD `@graph`.
  */
-export function parseIptcJson(json: unknown): RawIptcNode[] {
+export function parseIptcJson(
+  json: unknown,
+  options: ParseIptcOptions = {},
+): RawIptcNode[] {
   const data = json as Record<string, unknown>;
   if (Array.isArray(data.conceptSet)) {
-    return parseIkosConceptSet(data);
+    return parseIkosConceptSet(data, options);
   }
-  return parseJsonLdGraph(data);
+  return parseJsonLdGraph(data, options);
 }
 
 /** Merge French labels from a localized IPTC fetch into English-primary nodes. */

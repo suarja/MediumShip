@@ -123,8 +123,8 @@ Regroupement éditorial organisant des contenus en série ou en package cohéren
 _Avoid_: Playlist, folder
 
 **Category**:
-Axe éditorial visible servant à structurer l'architecture d'information publique du produit.
-_Avoid_: Section when it means layout only
+Axe éditorial **géré par le `Tenant`** : une taxonomie qu'il possède (liste par défaut au setup, extensible), assignée à son contenu, et source de vérité unique pour l'architecture d'information publique (Explore), l'amorçage de la découverte, et la personnalisation du `Member`. Peut contenir des catégories qui n'ont pas encore de contenu. À distinguer d'une simple catégorie dérivée du contenu existant.
+_Avoid_: Section (when layout only), catégorie dérivée du contenu, Tag
 
 **Tag**:
 Étiquette thématique transverse reliant des contenus apparentés au-delà des catégories et collections.
@@ -181,8 +181,8 @@ _Avoid_: Donor when the product meaning is broader
 ### Personnes Et Usage
 
 **Member**:
-Utilisateur connecté et connu du produit.
-_Avoid_: User, account holder
+Utilisateur connecté et connu du produit — l'individu côté audience (le « fan ») qui consomme et personnalise son feed, par opposition au `Creator`/`Tenant` (notre client, qui possède le tenant et sa taxonomie de `Category`).
+_Avoid_: User, account holder, Fan (comme terme distinct)
 
 **Creator**:
 Propriétaire ou principal éditeur d'un tenant.

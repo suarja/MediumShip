@@ -8,10 +8,21 @@ import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
-const TAB_META: Record<string, { icon: string; labelKey: string }> = {
+type TabMeta = {
+  icon: string;
+  labelKey: string;
+  /** Optical size — the ⌕ loupe reads smaller than circle glyphs at equal font metrics. */
+  iconSize?: number;
+};
+
+const TAB_ICON_SIZE = 16;
+/** Matches the Explore search-card loupe scale; keeps the tab glyph visually even. */
+const EXPLORE_TAB_ICON_SIZE = 20;
+
+const TAB_META: Record<string, TabMeta> = {
   home: { icon: "◉", labelKey: "home" },
   discover: { icon: "◎", labelKey: "discover" },
-  explore: { icon: "⌕", labelKey: "explore" },
+  explore: { icon: "⌕", labelKey: "explore", iconSize: EXPLORE_TAB_ICON_SIZE },
   library: { icon: "▤", labelKey: "library" },
   profile: { icon: "○", labelKey: "profile" },
 };
@@ -91,6 +102,8 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
             });
           };
 
+          const iconSize = (meta.iconSize ?? TAB_ICON_SIZE) * scaleFont;
+
           return (
             <Pressable
               key={route.key}
@@ -114,11 +127,12 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
               ]}
             >
               <Text
+                testID={`tab-icon-${route.name}`}
                 style={[
                   styles.icon,
                   {
-                    fontSize: 16 * scaleFont,
-                    lineHeight: 16 * scaleFont,
+                    fontSize: iconSize,
+                    lineHeight: iconSize,
                     color: isFocused ? theme.colors.surface : theme.colors.tabInactive,
                   },
                 ]}

@@ -94,7 +94,7 @@ describe("app tab bar", () => {
     expect(screen.queryByText("Settings")).toBeNull();
   });
 
-  it("sizes tab icons to the mockup 16px scale", () => {
+  it("sizes tab icons to the mockup 16px scale, with a larger explore loupe", () => {
     render(
       <AppTabBar
         descriptors={{
@@ -125,12 +125,22 @@ describe("app tab bar", () => {
       />,
     );
 
-    const homeIcon = screen.getByText("◉");
+    const homeIcon = screen.getByTestId("tab-icon-home");
+    const exploreIcon = screen.getByTestId("tab-icon-explore");
+
     expect(homeIcon.props.style).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           fontSize: 16,
           lineHeight: 16,
+        }),
+      ]),
+    );
+    expect(exploreIcon.props.style).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fontSize: 20,
+          lineHeight: 20,
         }),
       ]),
     );

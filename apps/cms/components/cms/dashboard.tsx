@@ -130,7 +130,7 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
             onTabChange={setActiveTab}
           >
             {activeTab === "developer" ? (
-              <DeveloperTab />
+              <DeveloperTab ready={isAdmin} />
             ) : contents && categories && collections && events && tenant ? (
               activeTab === "contents" ? (
                 <ContentsTab
@@ -145,6 +145,7 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
               ) : activeTab === "categories" ? (
                 <CategoriesTab
                   items={categories}
+                  ready={isAdmin}
                   onCreate={async () => {
                     const id = await createCategory({
                       label: "Sans titre",

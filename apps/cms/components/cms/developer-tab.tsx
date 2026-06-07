@@ -1,28 +1,112 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useAction, useMutation, useQuery } from "convex/react";
+import { useEffect, useState } from "react";
 
 import { api } from "../../../../convex/_generated/api";
-import { CatalogSearchResults } from "./catalog-search-results";
+import { CatalogSearchPanel } from "./catalog-search-panel";
 
-// ── Import IPTC panel ──────────────────────────────────────────────────────────
+type ImportState = "idle" | "importing" | "success" | "error";
 
-function IptcImportPanel() {
-  const stats = useQuery(api.cms.catalog.getCategoryCatalogStats, {});
-  const triggerImport = useMutation(api.cms.catalog.triggerIptcImport);
+function DiscoveryLocalesPanel({ ready }: { ready: boolean }) {
+  const locales = useQuery(api.cms.catalog.getDiscoveryLocales, ready ? {} : "skip");
+  const updateLocales = useMutation(api.cms.catalog.updateDiscoveryLocales);
+  const [catalogLocale, setCatalogLocale] = useState<"en" | "fr">("en");
+  const [wikipediaLocale, setWikipediaLocale] = useState<"en" | "fr">("en");
+  const [saved, setSaved] = useState(false);
 
-  const [importState, setImportState] = useState<
-    "idle" | "triggering" | "pending" | "error"
-  >("idle");
+  useEffect(() => {
+    if (!locales) return;
+    setCatalogLocale(locales.catalogLocale);
+    setWikipediaLocale(locales.wikipediaLocale);
+  }, [locales]);
+
+  const handleSave = async () => {
+    await updateLocales({ catalogLocale, wikipediaLocale });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  };
+
+  return (
+    <section className="panel dev-panel">
+      <div className="panel-header">
+        <div>
+          <p className="page__crumb">Langues discovery</p>
+          <h2 className="panel-title">Catalogue & Wikipedia</h2>
+        </div>
+      </div>
+
+      <p className="empty-copy">
+        L&apos;import IPTC charge l&apos;anglais et le français. Choisis la
+        langue d&apos;affichage du catalogue CMS et l&apos;édition Wikipedia
+        pour l&apos;ingestion.
+      </p>
+
+      <div className="dev-locale-grid">
+        <label className="field">
+          <span className="field__lbl">Catalogue CMS</span>
+          <select
+            className="dev-search-input"
+            disabled={!ready}
+            onChange={(e) => setCatalogLocale(e.target.value as "en" | "fr")}
+            value={catalogLocale}
+          >
+            <option value="en">Anglais (IPTC)</option>
+            <option value="fr">Français</option>
+          </select>
+        </label>
+
+        <label className="field">
+          <span className="field__lbl">Wikipedia ingestion</span>
+          <select
+            className="dev-search-input"
+            disabled={!ready}
+            onChange={(e) => setWikipediaLocale(e.target.value as "en" | "fr")}
+            value={wikipediaLocale}
+          >
+            <option value="en">en.wikipedia.org</option>
+            <option value="fr">fr.wikipedia.org</option>
+          </select>
+        </label>
+      </div>
+
+      <div className="stack-actions" style={{ marginTop: 16 }}>
+        <button
+          className="primary-button"
+          disabled={!ready}
+          onClick={() => void handleSave()}
+          type="button"
+        >
+          Enregistrer les langues
+        </button>
+        {saved && <span className="dev-success-copy">✓ Langues enregistrées</span>}
+      </div>
+    </section>
+  );
+}
+
+function IptcImportPanel({ ready }: { ready: boolean }) {
+  const stats = useQuery(
+    api.cms.catalog.getCategoryCatalogStats,
+    ready ? {} : "skip",
+  );
+  const importIptc = useAction(api.cms.catalog.importIptcForCms);
+
+  const [importState, setImportState] = useState<ImportState>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [importResult, setImportResult] = useState<{
+    parsed: number;
+    imported: number;
+  } | null>(null);
 
   const handleImport = async () => {
-    setImportState("triggering");
+    setImportState("importing");
     setErrorMsg("");
+    setImportResult(null);
     try {
-      await triggerImport({});
-      setImportState("pending");
+      const result = await importIptc({});
+      setImportResult(result);
+      setImportState("success");
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Erreur inconnue");
       setImportState("error");
@@ -51,47 +135,48 @@ function IptcImportPanel() {
         )}
       </div>
 
-      {stats === undefined && (
+      {!ready && <p className="empty-copy">Connexion au backend…</p>}
+
+      {ready && stats === undefined && (
         <p className="empty-copy">Chargement des statistiques…</p>
       )}
 
-      {isEmpty && importState === "idle" && (
+      {ready && isEmpty && importState === "idle" && (
         <div className="dev-empty-state">
           <p className="empty-copy">
-            Le catalogue est vide. Importe les nœuds IPTC Media Topics pour
-            commencer à enrichir la taxonomie tenant.
+            Le catalogue est vide. Importe les nœuds IPTC (EN + FR) pour
+            alimenter le réservoir utilisé dans l&apos;onglet Catégories.
           </p>
         </div>
       )}
 
       {hasData && importState === "idle" && (
         <p className="empty-copy">
-          Catalogue présent · relance l&apos;import pour mettre à jour.
+          Catalogue présent · relance l&apos;import pour mettre à jour les
+          libellés.
         </p>
       )}
 
-      {importState === "pending" && (
+      {importState === "success" && importResult && (
         <p className="dev-success-copy">
-          ✓ Import planifié — les nœuds apparaîtront dans les statistiques dans
-          quelques secondes.
+          ✓ Import terminé — {importResult.imported} nœuds IPTC enregistrés (
+          {importResult.parsed} parsés, EN + FR).
         </p>
       )}
 
       {importState === "error" && (
-        <p className="dev-error-copy">
-          Erreur : {errorMsg}
-        </p>
+        <p className="dev-error-copy">Erreur : {errorMsg}</p>
       )}
 
       <div className="stack-actions" style={{ marginTop: 16 }}>
         <button
           className="primary-button"
-          disabled={importState === "triggering"}
+          disabled={!ready || importState === "importing"}
           onClick={() => void handleImport()}
           type="button"
         >
-          {importState === "triggering"
-            ? "Planification…"
+          {importState === "importing"
+            ? "Import en cours…"
             : isEmpty
               ? "Importer depuis IPTC"
               : "Réimporter depuis IPTC"}
@@ -111,106 +196,7 @@ function IptcImportPanel() {
   );
 }
 
-// ── Catalog search panel ───────────────────────────────────────────────────────
-
-function CatalogSearchPanel() {
-  const [rawQuery, setRawQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleQueryChange = (value: string) => {
-    setRawQuery(value);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => setDebouncedQuery(value), 300);
-  };
-
-  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
-
-  const isEmpty = !debouncedQuery.trim();
-
-  const roots = useQuery(api.cms.catalog.listCategoryCatalogRootsForCms, {});
-  const searchResults = useQuery(
-    api.cms.catalog.searchCategoryCatalogForCms,
-    isEmpty ? "skip" : { query: debouncedQuery },
-  );
-
-  // Load tenant categories to detect already-present slugs
-  const tenantCategories = useQuery(api.cms.categories.listCmsCategories, {});
-  const tenantSlugs = useMemo(
-    () => new Set((tenantCategories ?? []).map((c) => c.slug)),
-    [tenantCategories],
-  );
-
-  const addFromCatalog = useMutation(api.cms.categories.addCategoryFromCatalog);
-
-  const handleAdd = useCallback(
-    async (catalogNodeId: string, includeDescendants: boolean) => {
-      return await addFromCatalog({ catalogNodeId: catalogNodeId as never, includeDescendants });
-    },
-    [addFromCatalog],
-  );
-
-  const showChips = isEmpty && roots && roots.length > 0;
-  const showResults = !isEmpty && searchResults !== undefined;
-
-  return (
-    <section className="panel dev-panel">
-      <div className="panel-header">
-        <div>
-          <p className="page__crumb">Recherche catalogue</p>
-          <h2 className="panel-title">Ajouter à la taxonomie</h2>
-        </div>
-      </div>
-
-      <div className="dev-search-bar">
-        <input
-          className="dev-search-input"
-          onChange={(e) => handleQueryChange(e.target.value)}
-          placeholder="Rechercher — ex. Économie, Sport, Politique…"
-          type="search"
-          value={rawQuery}
-        />
-      </div>
-
-      {showChips && (
-        <div className="dev-root-chips">
-          {roots.map((root) => (
-            <button
-              className="chip"
-              key={root._id}
-              onClick={() => handleQueryChange(root.label)}
-              type="button"
-            >
-              {root.label}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {showResults && searchResults.length === 0 && (
-        <p className="empty-copy">Aucun résultat pour « {debouncedQuery} ».</p>
-      )}
-
-      {showResults && searchResults.length > 0 && (
-        <CatalogSearchResults
-          nodes={searchResults}
-          onAdd={handleAdd}
-          tenantSlugs={tenantSlugs}
-        />
-      )}
-
-      {!showChips && !showResults && isEmpty && (
-        <p className="empty-copy">
-          Tape un terme pour rechercher dans le catalogue IPTC.
-        </p>
-      )}
-    </section>
-  );
-}
-
-// ── Main tab ───────────────────────────────────────────────────────────────────
-
-export function DeveloperTab() {
+export function DeveloperTab({ ready }: { ready: boolean }) {
   return (
     <main className="page">
       <div className="page__head">
@@ -220,14 +206,14 @@ export function DeveloperTab() {
             <i>Développeur</i>
           </h1>
           <p className="page__sub">
-            Import IPTC · Catalogue global · Enrichissement taxonomie tenant
+            Import IPTC · Langues discovery · Réservoir global
           </p>
         </div>
       </div>
 
       <div className="dev-grid">
-        <IptcImportPanel />
-        <CatalogSearchPanel />
+        <IptcImportPanel ready={ready} />
+        <DiscoveryLocalesPanel ready={ready} />
       </div>
     </main>
   );

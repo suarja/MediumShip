@@ -5,11 +5,13 @@ import { useState } from "react";
 type CatalogNode = {
   _id: string;
   label: string;
+  displayLabel: string;
   depth: number;
   externalId: string;
   slug: string;
   labelFr?: string;
   retired: boolean;
+  canAdd: boolean;
 };
 
 type AddResult = { created: number; skipped: number };
@@ -59,7 +61,7 @@ export function CatalogSearchResults({
     <ul className="catalog-results">
       {nodes.map((node) => {
         const inTenant = tenantSlugs.has(node.slug);
-        const indentPx = node.depth * 20;
+        const indentPx = Math.max(0, node.depth - 1) * 20;
         const fb = feedback.get(node._id);
 
         return (
@@ -69,10 +71,17 @@ export function CatalogSearchResults({
             style={{ paddingLeft: `${indentPx + 14}px` }}
           >
             <div className="catalog-result-info">
-              <span className="catalog-result-label">{node.label}</span>
-              {node.labelFr && node.labelFr !== node.label && (
-                <span className="catalog-result-fr">{node.labelFr}</span>
-              )}
+              <span className="catalog-result-label">{node.displayLabel}</span>
+              {node.labelFr &&
+                node.labelFr !== node.label &&
+                node.displayLabel !== node.label && (
+                  <span className="catalog-result-fr">{node.label}</span>
+                )}
+              {node.labelFr &&
+                node.labelFr !== node.label &&
+                node.displayLabel !== node.labelFr && (
+                  <span className="catalog-result-fr">{node.labelFr}</span>
+                )}
               <span className="catalog-result-ext">{node.externalId}</span>
               {inTenant && (
                 <span className="catalog-badge-tenant">Déjà dans le tenant</span>
@@ -81,7 +90,7 @@ export function CatalogSearchResults({
 
             {fb ? (
               <span className="catalog-result-fb">{fb}</span>
-            ) : (
+            ) : node.canAdd ? (
               <div className="catalog-result-actions">
                 <button
                   className="ghost-button catalog-add-btn"
@@ -95,12 +104,14 @@ export function CatalogSearchResults({
                   className="ghost-button catalog-add-btn"
                   disabled={pending !== null}
                   onClick={() => void handleAdd(node._id, true)}
-                  title="Inclut tous les descendants"
+                  title="Inclut tous les descendants (sans les racines IPTC)"
                   type="button"
                 >
                   + dérivés
                 </button>
               </div>
+            ) : (
+              <span className="catalog-result-ext">Racine — non ajoutable</span>
             )}
           </li>
         );

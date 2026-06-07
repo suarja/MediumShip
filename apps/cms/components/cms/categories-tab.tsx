@@ -3,11 +3,13 @@
 import type { Doc } from "../../../../convex/_generated/dataModel";
 import { useEffect, useMemo, useState } from "react";
 
+import { CatalogSearchPanel } from "./catalog-search-panel";
 import { CategoryForm } from "./category-form";
 import { CategoryList } from "./category-list";
 
 type CategoriesTabProps = {
   items: Doc<"categories">[];
+  ready: boolean;
   onCreate: () => void;
   onSelect: (id: string | null) => void;
   selectedId: string | null;
@@ -24,6 +26,7 @@ function matchesQuery(item: Doc<"categories">, query: string) {
 
 export function CategoriesTab({
   items,
+  ready,
   onCreate,
   onSelect,
   selectedId,
@@ -62,6 +65,8 @@ export function CategoriesTab({
 
         <CategoryForm key={selectedId ?? "none"} selectedId={selectedId} />
       </div>
+
+      <CatalogSearchPanel ready={ready} />
     </main>
   );
 }

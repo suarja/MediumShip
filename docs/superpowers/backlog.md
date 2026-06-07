@@ -19,7 +19,7 @@ Idées soulevées mais non planifiées. Rangées ici pendant que **Slice H** (la
 
 Ça fonctionne aujourd'hui, mais ça ne scale pas : chaque nouveau provider voudrait empiler ses propres params (`youtubeChannelId`, clés API…) sur le port partagé. **C'est la dette à traiter AVANT d'ajouter un vrai 2ᵉ provider**, pour ne pas répliquer le couplage.
 
-- **[GATE] Vérification finale + refactor du seam provider.** Rendre le port agnostique : la config spécifique (locale, channel id, credentials) est résolue **dans l'adapter** depuis un blob `providerConfig` opaque par tenant que l'orchestrateur ne lit jamais. Revue complète du chemin Wikipédia (ingest → demand → adapter → upsert) à la lumière de « est-ce que YouTube réutiliserait ça tel quel ? ». Bloque l'item ci-dessous.
+- **[GATE] Vérification finale + refactor du seam provider** → **planifié : `docs/superpowers/plans/2026-06-07-discovery-slice-m-provider-seam-hardening.md`** (Slice M). Rendre le port agnostique : la config spécifique (locale, channel id, credentials) est résolue **dans l'adapter** depuis un blob `providerConfigs` opaque par tenant que l'orchestrateur ne lit jamais. Prouvé par un 2ᵉ adapter réel (flux RSS, sans clé API). Bloque l'item ci-dessous.
 - **Provider YouTube (chaîne du tenant).** Le 2ᵉ vrai adapter — celui qui *prouve* le seam (1 adapter = couture hypothétique, 2 = couture réelle). À ne lancer **qu'après** le GATE ci-dessus.
 
 ---

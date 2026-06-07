@@ -41,7 +41,27 @@ export async function readCategoryCatalogStats(ctx: QueryCtx) {
   const all = await ctx.db.query("categoryCatalog").take(5000);
   const retired = all.filter((n) => n.retired).length;
   const active = all.length - retired;
-  return { total: all.length, active, retired };
+  const withFrench = all.filter((n) => n.labelFr).length;
+  return { total: all.length, active, retired, withFrench };
+}
+
+export async function readCategoryCatalogRoots(
+  ctx: QueryCtx,
+  locale: CatalogLocale = "en",
+) {
+  const roots = await ctx.db
+    .query("categoryCatalog")
+    .withIndex("by_depth", (q) => q.eq("depth", 0))
+    .take(200);
+
+  return roots
+    .filter((n) => !(n.retired ?? false))
+    .sort((a, b) =>
+      resolveCatalogDisplayLabel(a, locale).localeCompare(
+        resolveCatalogDisplayLabel(b, locale),
+      ),
+    )
+    .map((node) => toSummary(node, locale));
 }
 
 export async function searchCategoryCatalogNodes(

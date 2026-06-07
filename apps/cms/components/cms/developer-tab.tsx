@@ -4,7 +4,6 @@ import { useAction, useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 
 import { api } from "../../../../convex/_generated/api";
-import { CatalogSearchPanel } from "./catalog-search-panel";
 
 type ImportState = "idle" | "importing" | "success" | "error";
 
@@ -14,6 +13,7 @@ function DiscoveryLocalesPanel({ ready }: { ready: boolean }) {
   const [catalogLocale, setCatalogLocale] = useState<"en" | "fr">("en");
   const [wikipediaLocale, setWikipediaLocale] = useState<"en" | "fr">("en");
   const [saved, setSaved] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!locales) return;
@@ -22,9 +22,14 @@ function DiscoveryLocalesPanel({ ready }: { ready: boolean }) {
   }, [locales]);
 
   const handleSave = async () => {
-    await updateLocales({ catalogLocale, wikipediaLocale });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    setErrorMsg(null);
+    try {
+      await updateLocales({ catalogLocale, wikipediaLocale });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Erreur inconnue");
+    }
   };
 
   return (
@@ -37,9 +42,9 @@ function DiscoveryLocalesPanel({ ready }: { ready: boolean }) {
       </div>
 
       <p className="empty-copy">
-        L&apos;import IPTC charge l&apos;anglais et le français. Choisis la
-        langue d&apos;affichage du catalogue CMS et l&apos;édition Wikipedia
-        pour l&apos;ingestion.
+        L&apos;import IPTC charge EN + FR en une passe. Le choix de langue
+        ci-dessous change l&apos;affichage immédiatement — pas besoin de
+        réimporter après un changement de langue.
       </p>
 
       <div className="dev-locale-grid">
@@ -80,6 +85,7 @@ function DiscoveryLocalesPanel({ ready }: { ready: boolean }) {
           Enregistrer les langues
         </button>
         {saved && <span className="dev-success-copy">✓ Langues enregistrées</span>}
+        {errorMsg && <span className="dev-error-copy">{errorMsg}</span>}
       </div>
     </section>
   );
@@ -97,6 +103,7 @@ function IptcImportPanel({ ready }: { ready: boolean }) {
   const [importResult, setImportResult] = useState<{
     parsed: number;
     imported: number;
+    frenchLabels: number;
   } | null>(null);
 
   const handleImport = async () => {
@@ -159,8 +166,8 @@ function IptcImportPanel({ ready }: { ready: boolean }) {
 
       {importState === "success" && importResult && (
         <p className="dev-success-copy">
-          ✓ Import terminé — {importResult.imported} nœuds IPTC enregistrés (
-          {importResult.parsed} parsés, EN + FR).
+          ✓ Import terminé — {importResult.imported} nœuds enregistrés (
+          {importResult.frenchLabels} libellés FR).
         </p>
       )}
 

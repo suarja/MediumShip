@@ -53,7 +53,7 @@ export function CategoriesTab({
 
   return (
     <main className="page">
-      <div className="contents-grid">
+      <div className="contents-grid categories-layout">
         <CategoryList
           items={filteredItems}
           onCreate={onCreate}
@@ -63,10 +63,11 @@ export function CategoriesTab({
           selectedId={selectedId}
         />
 
-        <CategoryForm key={selectedId ?? "none"} selectedId={selectedId} />
+        <div className="categories-right-stack">
+          <CategoryForm key={selectedId ?? "none"} selectedId={selectedId} />
+          <CatalogSearchPanel ready={ready} />
+        </div>
       </div>
-
-      <CatalogSearchPanel ready={ready} />
     </main>
   );
 }

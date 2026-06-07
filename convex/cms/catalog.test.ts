@@ -69,7 +69,7 @@ describe("cms/catalog — getCategoryCatalogStats", () => {
 
     const asAdmin = t.withIdentity(ADMIN);
     const stats = await asAdmin.query(api.cms.catalog.getCategoryCatalogStats, {});
-    expect(stats).toEqual({ total: 0, active: 0, retired: 0 });
+    expect(stats).toEqual({ total: 0, active: 0, retired: 0, withFrench: 0 });
   });
 
   it("throws when unauthenticated", async () => {
@@ -185,6 +185,51 @@ describe("cms/catalog — updateDiscoveryLocales", () => {
       catalogLocale: "fr",
       wikipediaLocale: "fr",
     });
+  });
+
+  it("allows updating only catalogLocale", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+
+    const asAdmin = t.withIdentity(ADMIN);
+    await asAdmin.mutation(api.cms.catalog.updateDiscoveryLocales, {
+      catalogLocale: "fr",
+      wikipediaLocale: "en",
+    });
+    await asAdmin.mutation(api.cms.catalog.updateDiscoveryLocales, {
+      catalogLocale: "en",
+    });
+
+    const locales = await asAdmin.query(api.cms.catalog.getDiscoveryLocales, {});
+    expect(locales).toEqual({
+      catalogLocale: "en",
+      wikipediaLocale: "en",
+    });
+  });
+});
+
+describe("cms/catalog — listCategoryCatalogRootsForCms", () => {
+  it("returns localized L1 families for browse chips", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    await seedCatalogNodes(t);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("tenants", {
+        slug: "demo-media",
+        name: "Demo",
+        enabledModules: [],
+        catalogLocale: "en",
+      });
+    });
+
+    const asAdmin = t.withIdentity(ADMIN);
+    const roots = await asAdmin.query(
+      api.cms.catalog.listCategoryCatalogRootsForCms,
+      {},
+    );
+    expect(roots.every((r) => r.depth === 0)).toBe(true);
+    expect(roots.every((r) => !r.canAdd)).toBe(true);
+    expect(roots.map((r) => r.label)).toContain("Economy");
   });
 });
 

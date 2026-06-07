@@ -19,12 +19,14 @@ export type FeatureDefinition = {
 
 export type TenantFeatureConfig = {
   enabled: boolean;
+  inBar: boolean;
   access: AccessLevel;
   iconKey: string;
 };
 
 export type TenantFeatureConfigInput = {
   enabled?: boolean;
+  inBar?: boolean;
   access?: AccessLevel;
   iconKey?: string;
 };
@@ -170,6 +172,7 @@ export function assertFeatureIconKey(iconKey: string) {
 function defaultConfigForFeature(feature: FeatureDefinition): TenantFeatureConfig {
   return {
     enabled: feature.core ?? true,
+    inBar: false,
     access: feature.defaultAccess,
     iconKey: feature.defaultIconKey,
   };
@@ -222,6 +225,7 @@ export function normalizeFeatureConfigs(
 
     normalized[feature.key] = {
       enabled,
+      inBar: patch?.inBar ?? base.inBar,
       access,
       iconKey,
     };

@@ -1,4 +1,5 @@
 import type { ActionCtx } from "../_generated/server";
+import type { WikipediaLocale } from "../categories/catalogLocale";
 import type { FetchDemand } from "./fetchDemand";
 import { wikipediaProvider } from "./providers/wikipedia";
 
@@ -6,7 +7,11 @@ export interface ContentProvider {
   readonly source: string;
   ingest(
     ctx: ActionCtx,
-    args: { tenantSlug: string; demand: FetchDemand },
+    args: {
+      tenantSlug: string;
+      demand: FetchDemand;
+      wikipediaLocale?: WikipediaLocale;
+    },
   ): Promise<{ upserted: number }>;
 }
 

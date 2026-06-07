@@ -2,12 +2,17 @@ import { internal } from "../../_generated/api";
 import type { ActionCtx } from "../../_generated/server";
 import type { FetchDemand } from "../fetchDemand";
 import type { ContentProvider } from "../provider";
+import {
+  type WikipediaLocale,
+  wikipediaApiUrlForLocale,
+} from "../../categories/catalogLocale";
 import { normalizeScoringKey } from "../scoring";
 
 export const WIKIPEDIA_USER_AGENT =
   "MediumShip/1.0 (https://mediumship.app; discovery-ingestion)";
 
-export const WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php";
+/** Default English API — use `wikipediaApiUrlForLocale` for tenant locale. */
+export const WIKIPEDIA_API_URL = wikipediaApiUrlForLocale("en");
 
 const PAGES_PER_CATEGORY = 12;
 
@@ -186,8 +191,11 @@ export function toWikipediaSearchTerm(categorySlug: string): string {
   return categorySlug.split("-").filter(Boolean).join(" ");
 }
 
-function buildApiUrl(params: Record<string, string>): string {
-  const url = new URL(WIKIPEDIA_API_URL);
+function buildApiUrl(
+  params: Record<string, string>,
+  apiUrl: string = WIKIPEDIA_API_URL,
+): string {
+  const url = new URL(apiUrl);
   for (const [key, value] of Object.entries(params)) {
     url.searchParams.set(key, value);
   }
@@ -197,8 +205,9 @@ function buildApiUrl(params: Record<string, string>): string {
 export async function mediaWikiFetch(
   params: Record<string, string>,
   fetchImpl: typeof fetch = fetch,
+  apiUrl: string = WIKIPEDIA_API_URL,
 ): Promise<unknown> {
-  const response = await fetchImpl(buildApiUrl(params), {
+  const response = await fetchImpl(buildApiUrl(params, apiUrl), {
     headers: {
       "User-Agent": WIKIPEDIA_USER_AGENT,
     },
@@ -227,6 +236,7 @@ export async function fetchWikipediaPagesViaSearch(
   categorySlug: string,
   fetchImpl: typeof fetch = fetch,
   offset = 0,
+  apiUrl: string = WIKIPEDIA_API_URL,
 ): Promise<WikipediaPageRaw[]> {
   const data = await mediaWikiFetch(
     {
@@ -246,6 +256,7 @@ export async function fetchWikipediaPagesViaSearch(
       inprop: "url",
     },
     fetchImpl,
+    apiUrl,
   );
 
   return pagesFromQueryResponse(data);
@@ -254,6 +265,7 @@ export async function fetchWikipediaPagesViaSearch(
 export async function fetchWikipediaPagesViaCategoryMembers(
   categorySlug: string,
   fetchImpl: typeof fetch = fetch,
+  apiUrl: string = WIKIPEDIA_API_URL,
 ): Promise<WikipediaPageRaw[]> {
   const categoryTitle = toWikipediaCategoryTitle(categorySlug);
 
@@ -268,6 +280,7 @@ export async function fetchWikipediaPagesViaCategoryMembers(
       cmtype: "page",
     },
     fetchImpl,
+    apiUrl,
   );
 
   const members =
@@ -297,6 +310,7 @@ export async function fetchWikipediaPagesViaCategoryMembers(
       inprop: "url",
     },
     fetchImpl,
+    apiUrl,
   );
 
   return pagesFromQueryResponse(detailsData);
@@ -305,6 +319,7 @@ export async function fetchWikipediaPagesViaCategoryMembers(
 export async function fetchWikipediaArticleBody(
   pageId: number | string,
   fetchImpl: typeof fetch = fetch,
+  apiUrl: string = WIKIPEDIA_API_URL,
 ): Promise<string> {
   const data = await mediaWikiFetch(
     {
@@ -316,6 +331,7 @@ export async function fetchWikipediaArticleBody(
       explaintext: "1",
     },
     fetchImpl,
+    apiUrl,
   );
 
   const pages = (
@@ -336,14 +352,16 @@ export async function fetchWikipediaArticleBody(
 export async function fetchWikipediaCategoryPages(
   categorySlug: string,
   fetchImpl: typeof fetch = fetch,
-  options: { coldStart?: boolean; offset?: number } = {},
+  options: { coldStart?: boolean; offset?: number; apiUrl?: string } = {},
 ): Promise<WikipediaPageRaw[]> {
   const offset = options.offset ?? 0;
+  const apiUrl = options.apiUrl ?? WIKIPEDIA_API_URL;
 
   if (options.coldStart) {
     const members = await fetchWikipediaPagesViaCategoryMembers(
       categorySlug,
       fetchImpl,
+      apiUrl,
     );
     if (members.length > 0) {
       return members;
@@ -354,17 +372,19 @@ export async function fetchWikipediaCategoryPages(
     categorySlug,
     fetchImpl,
     offset,
+    apiUrl,
   );
   if (searchPages.length > 0) {
     return searchPages;
   }
 
-  return fetchWikipediaPagesViaCategoryMembers(categorySlug, fetchImpl);
+  return fetchWikipediaPagesViaCategoryMembers(categorySlug, fetchImpl, apiUrl);
 }
 
 export async function fetchWikipediaRandomPages(
   count: number,
   fetchImpl: typeof fetch = fetch,
+  apiUrl: string = WIKIPEDIA_API_URL,
 ): Promise<WikipediaPageRaw[]> {
   const randomData = await mediaWikiFetch(
     {
@@ -376,6 +396,7 @@ export async function fetchWikipediaRandomPages(
       rnlimit: String(count),
     },
     fetchImpl,
+    apiUrl,
   );
 
   const randomPages =
@@ -405,6 +426,7 @@ export async function fetchWikipediaRandomPages(
       inprop: "url",
     },
     fetchImpl,
+    apiUrl,
   );
 
   return pagesFromQueryResponse(detailsData);
@@ -421,9 +443,14 @@ function categoryLabelForSerendipityPage(page: WikipediaPageRaw): string {
 
 async function ingestWikipediaDemand(
   ctx: ActionCtx,
-  args: { tenantSlug: string; demand: FetchDemand },
+  args: {
+    tenantSlug: string;
+    demand: FetchDemand;
+    wikipediaLocale?: WikipediaLocale;
+  },
   fetchImpl: typeof fetch = fetch,
 ): Promise<{ upserted: number }> {
+  const apiUrl = wikipediaApiUrlForLocale(args.wikipediaLocale ?? "en");
   let totalUpserted = 0;
 
   for (const category of args.demand.categories) {
@@ -439,6 +466,7 @@ async function ingestWikipediaDemand(
     const pages = await fetchWikipediaCategoryPages(category, fetchImpl, {
       coldStart: args.demand.coldStart,
       offset,
+      apiUrl,
     });
     const normalized = pages.map((page) =>
       normalizeWikipediaPage(page, {
@@ -468,7 +496,11 @@ async function ingestWikipediaDemand(
 
   const serendipityCount = args.demand.serendipityCount ?? 0;
   if (serendipityCount > 0) {
-    const randomPages = await fetchWikipediaRandomPages(serendipityCount, fetchImpl);
+    const randomPages = await fetchWikipediaRandomPages(
+      serendipityCount,
+      fetchImpl,
+      apiUrl,
+    );
     const serendipityItems = randomPages.map((page) =>
       normalizeWikipediaPage(page, {
         tenantSlug: args.tenantSlug,

@@ -47,7 +47,14 @@ Retours terrain après usage réel (favoris enregistrés, navigation Bibliothèq
 
 ## 🐞 Bugs
 
+- **[CMS] Déconnexion cassée.** Le composant en haut à droite du CMS n'est plus le composant Clerk → impossible de se déconnecter. Régression à corriger (rebrancher le sign-out Clerk dans le shell admin). Candidat à traiter tôt (on va travailler dans le CMS pour la vague en cours).
 - **Article Wikipedia — flicker de l'extrait au chargement.** À l'ouverture d'un article, l'extrait s'affiche d'abord en gras seul, puis le contenu complet prend le relais — léger flicker visuel. Hypothèse : l'extrait sert de placeholder pendant le fetch du corps. Piste : afficher l'extrait en style light (pas bold) tant que le contenu n'est pas chargé, pour une transition plus seamless.
+
+### 🚪 CMS — auth, onboarding & landing (groupé)
+
+- **Logique d'accès à l'arrivée** : à l'ouverture du CMS, clarifier le flux « si tu n'es pas admin, tu n'as pas accès à cet écran » (états : non connecté / connecté non-admin / admin / bootstrap premier admin). Aujourd'hui la sélection/gating à l'arrivée est confuse.
+- **Onboarding première arrivée CMS** : flux de premier lancement propre (claim du premier admin, repère visuel de l'état).
+- **Landing page CMS** : à faire d'après la **maquette** (`docs/podapp/project/cms/`). Page d'accueil publique avant connexion.
 
 ---
 
@@ -70,7 +77,12 @@ Retours terrain après usage réel (favoris enregistrés, navigation Bibliothèq
 
 ### 🧱 Couche méta « développeur » (au-dessus du tenant) — candidat ADR
 
-- Des flags `is_enabled` par module (collections, agenda, …) contrôlés par **le développeur (nous)**, un cran **au-dessus** de la config du tenant. À distinguer du `enabledModules` du tenant. Nécessite une décision de design : **hiérarchie de config** développeur → tenant → membre.
+> Idée encore **floue / non tranchée** (capturée pour ne rien perdre). On ne s'y lance pas maintenant.
+
+- **Une couche de config un cran AU-DESSUS du tenant**, contrôlée par **le développeur (nous)**, qui décide quelles **options/features** du CMS sont **activées** pour un tenant donné. À distinguer du `enabledModules` du tenant. Décision de design : **hiérarchie de config** développeur → tenant → membre.
+- **Onglet Développeur accessible aussi aux clients (tenants).** Aujourd'hui l'onglet Développeur (catalogue IPTC + langues discovery) est pour nous ; on veut qu'un client puisse y accéder pour ses **connexions API / clés API** — modèle **Be Viral / Mobile de Soi** (onglet Développeurs avec clés + intégrations). Implique un **rôle « développeur »** assignable.
+- **Features activables = packages vendables par le créateur.** Quelles features rendre optionnelles (et facturables) ? Pistes : **Notifications** (claire, certaine) ; **couche Premium** via un flag `is_premium_enabled` (filtrage premium/non-premium dans l'app) — mais config potentiellement complexe côté nous → **commencer par une couche premium gratuite** (flag activé, sans paiement) avant d'y brancher le paiement.
+- Croise la section parquée « API publique tenant — clés API » (même onglet Développeur).
 
 ### 🔌 API publique tenant — clés API (onglet Développeur CMS) — PARQUÉ (pas maintenant)
 

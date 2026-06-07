@@ -1,5 +1,6 @@
 "use client";
 
+import { UserButton } from "@clerk/nextjs";
 import type { ReactNode } from "react";
 import { startTransition } from "react";
 
@@ -33,11 +34,6 @@ const NAV_ITEMS: ReadonlyArray<{
 
 export function isCmsTab(value: string | null | undefined): value is CmsTab {
   return (CMS_TABS as readonly string[]).includes(value ?? "");
-}
-
-function getViewerInitial(name: string | null, email: string | null) {
-  const seed = name?.trim() || email?.trim() || "M";
-  return seed.charAt(0).toUpperCase();
 }
 
 export function AdminShell({
@@ -103,7 +99,7 @@ export function AdminShell({
             <div className="nm">{name ?? "Admin CMS"}</div>
             <div className="em">{email ?? "Session interne"}</div>
           </div>
-          <span className="user__av">{getViewerInitial(name, email)}</span>
+          <UserButton afterSignOutUrl="/" />
         </div>
       </header>
 

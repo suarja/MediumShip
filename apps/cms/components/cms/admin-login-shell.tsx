@@ -3,10 +3,12 @@
 import type { ReactNode } from "react";
 
 export function AdminLoginShell({
+  eyebrow,
   title,
   subtitle,
   children,
 }: {
+  eyebrow?: string;
   title: string;
   subtitle: string;
   children: ReactNode;
@@ -17,14 +19,9 @@ export function AdminLoginShell({
 
       <div className="admin-login-inner">
         <div className="admin-login-brand">
-          <div aria-hidden="true" className="admin-brand-mark">
-            <svg width={14} height={14} viewBox="0 0 20 20" fill="none">
-              <path
-                d="M10 3l1.3 3.7L15 8l-3.7 1.3L10 13l-1.3-3.7L5 8l3.7-1.3L10 3z"
-                fill="white"
-              />
-            </svg>
-          </div>
+          <span aria-hidden="true" className="admin-brand-mark">
+            M
+          </span>
           <div className="admin-brand-copy">
             <span>MediumShip</span>
             <span>CMS</span>
@@ -33,6 +30,7 @@ export function AdminLoginShell({
 
         <div className="admin-login-card">
           <div className="admin-login-copy">
+            {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
             <h1>{title}</h1>
             <p>{subtitle}</p>
           </div>

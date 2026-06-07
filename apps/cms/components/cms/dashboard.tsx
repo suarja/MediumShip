@@ -97,19 +97,26 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
   };
 
   if (!viewer) {
-    return <main className="admin-login-root">Loading CMS…</main>;
+    return (
+      <main className="admin-login-root">
+        <div className="admin-login-inner">
+          <p className="admin-login-footnote">Chargement…</p>
+        </div>
+      </main>
+    );
   }
 
   return (
     <>
       <SignedOut>
         <AdminLoginShell
-          title="Operable editorial cockpit"
-          subtitle="Connecte-toi avec Clerk. Convex garde l'autorisation reelle du CMS."
+          eyebrow="Connexion"
+          subtitle="Accédez à l'espace d'administration pour gérer vos contenus, votre identité de marque et votre équipe."
+          title="Connectez-vous au CMS"
         >
           <SignInButton mode="modal">
             <button className="primary-button" type="button">
-              Sign in
+              Se connecter
             </button>
           </SignInButton>
         </AdminLoginShell>
@@ -189,27 +196,29 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
             ) : (
               <main className="page">
                 <section className="panel">
-                  <p className="empty-copy">Loading protected CMS data…</p>
+                  <p className="empty-copy">Chargement des données…</p>
                 </section>
               </main>
             )}
           </AdminShell>
         ) : viewer.canBootstrapAdmin ? (
           <AdminLoginShell
-            title="Claim the first admin seat"
-            subtitle="Aucun admin CMS n'existe encore sur ce deployment Convex. Cette session peut devenir le premier admin."
+            eyebrow="Mise en place"
+            subtitle="Aucun administrateur n'est encore configuré pour cet espace. Vous pouvez en revendiquer l'accès pour terminer la configuration initiale."
+            title="Premier accès administrateur"
           >
             <button className="primary-button" onClick={() => void bootstrapAdmin({})} type="button">
-              Become first admin
+              Devenir administrateur
             </button>
           </AdminLoginShell>
         ) : (
           <AdminLoginShell
-            title="Access denied"
-            subtitle="La session Clerk est valide, mais l'utilisateur n'a pas le role admin cote Convex."
+            eyebrow="Accès refusé"
+            subtitle="Votre compte est connecté, mais il ne dispose pas des droits d'administration de ce CMS."
+            title="Accès non autorisé"
           >
             <p className="empty-copy">
-              Promeut l'utilisateur via `users.cmsRole` ou repars d'un deployment local neuf pour le bootstrap initial.
+              Demandez à un administrateur existant de vous accorder les droits, ou connectez-vous avec un autre compte.
             </p>
           </AdminLoginShell>
         )}

@@ -43,11 +43,12 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
   const events = useQuery(api.cms.events.listCmsEvents, isAdmin ? {} : "skip");
   const tenant = useQuery(api.cms.queries.getTenantSettings, isAdmin ? {} : "skip");
 
-  useEffect(() => {
-    if (!selectedId && contents && contents.length > 0) {
-      setSelectedId(contents[0]._id);
-    }
-  }, [contents, selectedId]);
+  // Content selection is owned by ContentsTab, which is filter-aware: it
+  // selects the first *filtered* item and clears the selection when the search
+  // matches nothing. A dashboard-level "select the first global content" effect
+  // fought it — on a search with no matching first item, one cleared the
+  // selection and the other re-selected the global first, ping-ponging forever
+  // (infinite loop). Do NOT reintroduce a content auto-select here.
 
   useEffect(() => {
     if (!selectedCategoryId && categories && categories.length > 0) {

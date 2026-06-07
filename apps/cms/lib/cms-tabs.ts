@@ -3,6 +3,7 @@ export const CMS_TABS = [
   "categories",
   "collections",
   "events",
+  "modules",
   "tenant",
   "users",
   "developer",

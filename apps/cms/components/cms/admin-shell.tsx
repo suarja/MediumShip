@@ -17,6 +17,7 @@ const NAV_ITEMS: ReadonlyArray<{
   { icon: "◎", label: "Catégories", value: "categories" },
   { icon: "▣", label: "Collections", value: "collections" },
   { icon: "◷", label: "Agenda", value: "events" },
+  { icon: "⬢", label: "Modules", value: "modules" },
   { icon: "⚙", label: "Tenant", value: "tenant" },
   { icon: "◉", label: "Membres", value: "users" },
   { icon: "⬡", label: "Développeur", value: "developer" },

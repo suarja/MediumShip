@@ -12,6 +12,7 @@ import { CollectionsTab } from "./collections-tab";
 import { ContentsTab } from "./contents-tab";
 import { DeveloperTab } from "./developer-tab";
 import { EventsTab } from "./events-tab";
+import { ModulesTab } from "./modules-tab";
 import { TenantTab } from "./tenant-tab";
 import { UsersTab } from "./users-tab";
 
@@ -188,6 +189,8 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
                   onSelect={setSelectedEventId}
                   selectedId={selectedEventId}
                 />
+              ) : activeTab === "modules" ? (
+                <ModulesTab tenant={tenant} />
               ) : activeTab === "tenant" ? (
                 <TenantTab tenant={tenant} />
               ) : activeTab === "users" ? (

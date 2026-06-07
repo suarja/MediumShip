@@ -6,15 +6,6 @@ import { useEffect, useMemo, useState } from "react";
 
 import { api } from "../../../../convex/_generated/api";
 import {
-  createDefaultFeedSection,
-  ENABLED_MODULES,
-  contentKindToModule,
-  moduleToContentKind,
-  PUBLIC_CONTENT_MODULES,
-  type ContentModule,
-  type FeedSectionConfig,
-} from "../../../../src/features/tenant/public-config";
-import {
   isThemePaletteName,
   resolveTheme,
   themePaletteNames,
@@ -24,34 +15,10 @@ type TenantSettingsFormProps = {
   tenant: {
     appIconUrl?: string;
     brandLogoUrl?: string;
-    enabledModules: string[];
-    feedSections?: FeedSectionConfig[];
     name: string;
     slug: string;
     themeConfig?: { paletteName: string };
   };
-};
-
-const MODULE_LABELS: Record<(typeof ENABLED_MODULES)[number], string> = {
-  articles: "Articles",
-  episodes: "Épisodes",
-  videos: "Vidéos",
-  premium: "Premium",
-  discover: "Découverte",
-  collections: "Collections",
-  agenda: "Agenda",
-  community: "Communauté",
-  bookmarks: "Favoris",
-  progressSync: "Progression",
-  offline: "Mode hors-ligne",
-  personalLists: "Listes",
-  membersRoom: "Salon membres",
-};
-
-const KIND_LABELS: Record<FeedSectionConfig["kind"], string> = {
-  article: "Article",
-  episode: "Épisode",
-  video: "Vidéo",
 };
 
 function titleCase(value: string) {
@@ -107,27 +74,17 @@ function BrandLogoMark({
 
 function TenantMobileMockup({
   appIconUrl,
-  enabledModules,
-  feedSections,
   logoUrl,
   name,
   paletteName,
 }: {
   appIconUrl: string;
-  enabledModules: string[];
-  feedSections: FeedSectionConfig[];
   logoUrl: string;
   name: string;
   paletteName: string;
 }) {
   const safePalette = isThemePaletteName(paletteName) ? paletteName : "brick";
   const theme = resolveTheme({ paletteName: safePalette });
-  const visibleSections = feedSections.filter((section) =>
-    enabledModules.includes(contentKindToModule(section.kind)),
-  );
-  const sections = visibleSections;
-  const hero = sections[0];
-  const rest = sections.slice(1, 4);
 
   return (
     <div
@@ -148,76 +105,30 @@ function TenantMobileMockup({
       <div className="phone__notch" />
       <div className="phone__home" />
       <div className="phone__screen">
-        <div className="phone__sb">
-          <span>9:41</span>
-          <span>● ● ●</span>
+        <div className="mhead">
+          <BrandLogoMark logoUrl={logoUrl} name={name} />
         </div>
         <div className="mfeed">
-          <div className="mfeed__hdr">
-            <div className="mfeed__logo">
-              <BrandLogoMark logoUrl={logoUrl} name={name} />
-            </div>
-            <div
-              className="mfeed__av"
-              style={
-                appIconUrl
-                  ? {
-                      backgroundImage: `url(${appIconUrl})`,
-                      backgroundPosition: "center",
-                      backgroundSize: "cover",
-                    }
-                  : undefined
-              }
-            />
-          </div>
-
-          <div className="mfeed__tabs">
-            {sections.length > 0 ? (
-              sections.slice(0, 4).map((section, index) => (
-                <span className={index === 0 ? "on" : ""} key={`${section.kind}-${section.title}`}>
-                  {section.title}
-                </span>
-              ))
-            ) : (
-              <span className="on">Aucun module actif</span>
-            )}
-          </div>
-
-          {hero ? (
-            <div className="mfeed__hero">
-              <span className="k">◉ {KIND_LABELS[hero.kind].toUpperCase()}</span>
-              <span className="t">{hero.title}</span>
-              <span className="m">
-                <span className="pl">▶</span>
-                <span>{MODULE_LABELS[contentKindToModule(hero.kind)]}</span>
-              </span>
-            </div>
-          ) : (
-            <div className="mfeed__hero">
-              <span className="k">◉ CONFIG</span>
-              <span className="t">Activez au moins un module public.</span>
-              <span className="m">
-                <span className="pl">•</span>
-                <span>Feed vide</span>
-              </span>
-            </div>
-          )}
-
-          <div className="mfeed__list">
-            {rest.map((section, index) => (
-              <div className="mfeed__item" key={`${section.kind}-${section.title}-${index}`}>
-                <div className={`ph ${index === 1 ? "alt" : index === 2 ? "dk" : ""}`} />
-                <div className="meta">
-                  <span className="k">{KIND_LABELS[section.kind].toUpperCase()}</span>
-                  <span className="t">{section.title}</span>
-                  <span className="d">
-                    {MODULE_LABELS[contentKindToModule(section.kind)]}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <div className="mhero" />
+          <div className="mrow" />
+          <div className="mrow" />
         </div>
+        <div className="mtab">
+          <span className="on" />
+          <span />
+          <span />
+          <span />
+        </div>
+        {appIconUrl ? (
+          <div
+            className="mappicon"
+            style={{
+              backgroundImage: `url(${appIconUrl})`,
+              backgroundPosition: "center",
+              backgroundSize: "cover",
+            }}
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -229,12 +140,6 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
   const [paletteName, setPaletteName] = useState(
     tenant.themeConfig?.paletteName ?? "brick",
   );
-  const [enabledModules, setEnabledModules] = useState<string[]>(
-    tenant.enabledModules,
-  );
-  const [feedSections, setFeedSections] = useState<FeedSectionConfig[]>(
-    tenant.feedSections ?? [],
-  );
   const [logoUrl, setLogoUrl] = useState(tenant.brandLogoUrl ?? "");
   const [appIconUrl, setAppIconUrl] = useState(tenant.appIconUrl ?? "");
   const [saveLabel, setSaveLabel] = useState("Enregistrer");
@@ -242,8 +147,6 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
   useEffect(() => {
     setName(tenant.name);
     setPaletteName(tenant.themeConfig?.paletteName ?? "brick");
-    setEnabledModules(tenant.enabledModules);
-    setFeedSections(tenant.feedSections ?? []);
     setLogoUrl(tenant.brandLogoUrl ?? "");
     setAppIconUrl(tenant.appIconUrl ?? "");
     setSaveLabel("Enregistrer");
@@ -254,95 +157,12 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
     [paletteName],
   );
 
-  const enabledPublicModules = useMemo(
-    () =>
-      enabledModules.filter((module): module is (typeof PUBLIC_CONTENT_MODULES)[number] =>
-        PUBLIC_CONTENT_MODULES.includes(module as (typeof PUBLIC_CONTENT_MODULES)[number]),
-      ),
-    [enabledModules],
-  );
-
-  const addableKinds = useMemo(() => {
-    const usedKinds = new Set(feedSections.map((section) => section.kind));
-    return enabledPublicModules
-      .map((module) => moduleToContentKind(module))
-      .filter((kind) => !usedKinds.has(kind));
-  }, [enabledPublicModules, feedSections]);
-
-  const toggleModule = (module: (typeof ENABLED_MODULES)[number]) => {
-    const isEnabled = enabledModules.includes(module);
-
-    setEnabledModules((current) =>
-      isEnabled
-        ? current.filter((value) => value !== module)
-        : [...current, module],
-    );
-
-    if (module === "articles" || module === "episodes" || module === "videos") {
-      const kind = moduleToContentKind(module);
-      setFeedSections((current) => {
-        if (isEnabled) {
-          return current.filter((section) => section.kind !== kind);
-        }
-
-        return current.some((section) => section.kind === kind)
-          ? current
-          : [...current, createDefaultFeedSection(kind)];
-      });
-    }
-
-    setSaveLabel("Enregistrer");
-  };
-
-  const updateSection = (index: number, patch: Partial<FeedSectionConfig>) => {
-    setFeedSections((current) =>
-      current.map((section, currentIndex) =>
-        currentIndex === index ? { ...section, ...patch } : section,
-      ),
-    );
-    setSaveLabel("Enregistrer");
-  };
-
-  const moveSection = (index: number, direction: -1 | 1) => {
-    setFeedSections((current) => {
-      const nextIndex = index + direction;
-      if (nextIndex < 0 || nextIndex >= current.length) {
-        return current;
-      }
-
-      const next = [...current];
-      const [section] = next.splice(index, 1);
-      next.splice(nextIndex, 0, section);
-      return next;
-    });
-    setSaveLabel("Enregistrer");
-  };
-
-  const addSection = () => {
-    const nextKind = addableKinds[0];
-    if (!nextKind) {
-      return;
-    }
-
-    setFeedSections((current) => [...current, createDefaultFeedSection(nextKind)]);
-    setSaveLabel("Enregistrer");
-  };
-
-  const removeSection = (index: number) => {
-    setFeedSections((current) =>
-      current.filter((_, currentIndex) => currentIndex !== index),
-    );
-    setSaveLabel("Enregistrer");
-  };
-
   const save = async () => {
     await updateTenantSettings({
       name,
       brandLogoUrl: logoUrl,
       appIconUrl,
       paletteName: safePalette,
-      enabledModules,
-      feedSections,
     });
     setSaveLabel("Enregistré");
   };
@@ -492,108 +312,6 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
             })}
           </div>
         </section>
-
-        <section className="tenant-section">
-          <div className="tenant-section__h">— Modules</div>
-          <h3 className="tenant-section__t">
-            Visibilité <i>publique.</i>
-          </h3>
-          <div className="visibility-grid">
-            {ENABLED_MODULES.map((module) => (
-              <label className="check" key={module}>
-                <input
-                  checked={enabledModules.includes(module)}
-                  onChange={() => toggleModule(module)}
-                  type="checkbox"
-                />
-                <span className="check__box" />
-                {MODULE_LABELS[module]}
-              </label>
-            ))}
-          </div>
-        </section>
-
-        <section className="tenant-section">
-          <div className="tenant-section__h">— Sections du feed</div>
-          <div
-            style={{
-              alignItems: "end",
-              display: "flex",
-              justifyContent: "space-between",
-              marginBottom: 10,
-            }}
-          >
-            <h3 className="tenant-section__t" style={{ marginBottom: 0 }}>
-              Architecture <i>du home.</i>
-            </h3>
-            <button
-              className="btn btn--surface btn--sm"
-              disabled={addableKinds.length === 0}
-              onClick={addSection}
-              type="button"
-            >
-              Ajouter
-            </button>
-          </div>
-          <p className="tenant-note" style={{ marginBottom: 10 }}>
-            Les modules activent les formats publics. Les sections du feed choisissent
-            lesquels apparaissent sur le home et dans quel ordre.
-          </p>
-          <div className="feed-list">
-            {feedSections.map((section, index) => (
-              <div className="feed-row" key={`${section.kind}-${index}`}>
-                <span className="grip">⋮⋮</span>
-                <select
-                  className="select"
-                  onChange={(event) =>
-                    updateSection(index, {
-                      kind: event.currentTarget.value as FeedSectionConfig["kind"],
-                    })
-                  }
-                  value={section.kind}
-                >
-                  {enabledPublicModules
-                    .map((module) => moduleToContentKind(module))
-                    .filter(
-                      (kind) =>
-                        kind === section.kind ||
-                        !feedSections.some(
-                          (existing, existingIndex) =>
-                            existingIndex !== index && existing.kind === kind,
-                        ),
-                    )
-                    .map((kind) => (
-                      <option key={kind} value={kind}>
-                        {KIND_LABELS[kind]}
-                      </option>
-                    ))}
-                </select>
-                <input
-                  className="input"
-                  onChange={(event) =>
-                    updateSection(index, { title: event.currentTarget.value })
-                  }
-                  value={section.title}
-                />
-                <div className="ord">
-                  <button onClick={() => moveSection(index, -1)} type="button">
-                    ↑
-                  </button>
-                  <button onClick={() => moveSection(index, 1)} type="button">
-                    ↓
-                  </button>
-                </div>
-                <button
-                  className="btn btn--danger btn--sm"
-                  onClick={() => removeSection(index)}
-                  type="button"
-                >
-                  Retirer
-                </button>
-              </div>
-            ))}
-          </div>
-        </section>
       </div>
 
       <div className="tenant-col tenant-col--right">
@@ -605,14 +323,12 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
 
           <TenantMobileMockup
             appIconUrl={appIconUrl}
-            enabledModules={enabledModules}
-            feedSections={feedSections}
             logoUrl={logoUrl}
             name={name}
             paletteName={safePalette}
           />
 
-          <button className="btn btn--primary btn--block" onClick={save} type="button">
+          <button className="btn btn--primary btn--block" onClick={() => void save()} type="button">
             {saveLabel}
           </button>
         </div>

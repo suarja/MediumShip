@@ -7,7 +7,7 @@ export default {
     guestContinueCta: "Continuer en invite",
     signedInTitle: "Bibliotheque",
     signedInBody:
-      "Les enregistrements, la reprise, le hors ligne et les listes personnelles vivent ici une fois connecte.",
+      "Les favoris, la reprise, le hors ligne et les listes personnelles vivent ici une fois connecte.",
     filters: {
       all: "Tout",
       articles: "Articles",
@@ -16,7 +16,7 @@ export default {
     },
     sections: {
       resume: "Reprendre",
-      saved: "Enregistres",
+      saved: "Favoris",
       lists: "Listes",
       offline: "Hors ligne",
     },
@@ -37,6 +37,15 @@ export default {
     offlineTitle: "Telecharger pour ecouter sans reseau",
     offlineBody:
       "Le premium debloque les telechargements hors ligne pour les articles, episodes et videos hebergees.",
+    seeAll: "Voir tout",
+  },
+  favoritesScreen: {
+    back: "Retour",
+    title: "Tous mes favoris",
+  },
+  downloadsScreen: {
+    back: "Retour",
+    title: "Tous mes telechargements",
   },
   listsScreen: {
     back: "Retour",
@@ -97,12 +106,12 @@ export default {
     rowMetaPremium: "Premium · pret a retrouver",
     guestTitle: "Gardez ce qui merite de revenir",
     guestHint: "Connectez-vous pour construire votre bibliotheque personnelle au fil de vos lectures et ecoutes.",
-    memberTitle: "Les enregistrements sont inclus",
+    memberTitle: "Les favoris sont inclus",
     memberHint:
-      "Chaque compte connecte peut garder des bookmarks persistants sur ses appareils.",
-    emptyTitle: "Votre bibliotheque attend son premier repere",
+      "Chaque compte connecte peut garder des favoris persistants sur ses appareils.",
+    emptyTitle: "Votre bibliotheque attend son premier favori",
     empty:
-      "Enregistrez un article, un episode ou une video hebergee pour les retrouver ici avec leurs couvertures.",
+      "Ajoutez un article, un episode ou une video hebergee a vos favoris pour les retrouver ici avec leurs couvertures.",
     exploreCta: "Explorer le catalogue",
   },
   downloads: {

@@ -7,7 +7,7 @@ export default {
     guestContinueCta: "Continue as guest",
     signedInTitle: "Library",
     signedInBody:
-      "Saved items, resume state, offline copies, and personal lists live here once you are signed in.",
+      "Favorites, resume state, offline copies, and personal lists live here once you are signed in.",
     filters: {
       all: "All",
       articles: "Articles",
@@ -16,7 +16,7 @@ export default {
     },
     sections: {
       resume: "Resume",
-      saved: "Saved",
+      saved: "Favorites",
       lists: "Lists",
       offline: "Offline",
     },
@@ -37,6 +37,15 @@ export default {
     offlineTitle: "Download to listen without a network",
     offlineBody:
       "Premium unlocks offline downloads for articles, episodes, and hosted videos.",
+    seeAll: "See all",
+  },
+  favoritesScreen: {
+    back: "Back",
+    title: "All favorites",
+  },
+  downloadsScreen: {
+    back: "Back",
+    title: "All downloads",
   },
   listsScreen: {
     back: "Back",
@@ -98,12 +107,12 @@ export default {
     guestTitle: "Keep what deserves a return visit",
     guestHint:
       "Sign in to build your personal library as you read, watch, and listen.",
-    memberTitle: "Saved items are included",
+    memberTitle: "Favorites are included",
     memberHint:
-      "Every signed-in account can keep persistent bookmarks across devices.",
-    emptyTitle: "Your library is waiting for its first marker",
+      "Every signed-in account can keep persistent favorites across devices.",
+    emptyTitle: "Your library is waiting for its first favorite",
     empty:
-      "Save an article, episode, or hosted video to see it here with its cover art.",
+      "Add an article, episode, or hosted video to favorites to see it here with its cover art.",
     exploreCta: "Explore the catalogue",
   },
   downloads: {

@@ -85,10 +85,12 @@ describe("signed-in library screen", () => {
     expect(screen.queryByText("Your library, everywhere")).toBeNull();
   });
 
-  it("shows gate badges on saved, lists, and offline section headers", () => {
+  it("labels the saved section Favorites without a free gate badge", () => {
     render(<LibraryScreen />);
 
-    expect(screen.getByText("Free")).toBeTruthy();
+    expect(screen.getByText("Favorites")).toBeTruthy();
+    expect(screen.queryByText("Saved")).toBeNull();
+    expect(screen.queryByText("Free")).toBeNull();
     expect(screen.getAllByText("Premium")).toHaveLength(2);
   });
 

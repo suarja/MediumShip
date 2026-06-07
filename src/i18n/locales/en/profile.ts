@@ -14,8 +14,8 @@ export default {
   heroMetaGuest: "Open reading · account optional",
   heroMetaSignedIn: "Signed in · member options available",
   heroMetaMember: "Active member · sync ready",
-  heroChipSaved_one: "{{count}} saved",
-  heroChipSaved_other: "{{count}} saved",
+  heroChipSaved_one: "{{count}} favorite",
+  heroChipSaved_other: "{{count}} favorites",
   heroChipDownloaded_one: "{{count}} offline",
   heroChipDownloaded_other: "{{count}} offline",
   createAccount: "Create an account",
@@ -31,7 +31,7 @@ export default {
     upgrade: "Free account · go Premium",
   },
   stats: {
-    savedLabel: "Saved",
+    savedLabel: "Favorites",
     savedHint: "See Library",
     offlineLabel: "Offline",
     historyLabel: "History",
@@ -54,9 +54,9 @@ export default {
   },
   rows: {
     saved: {
-      title: "Saved items",
-      sub_one: "{{count}} item set aside",
-      sub_other: "{{count}} items set aside",
+      title: "Favorites",
+      sub_one: "{{count}} favorite",
+      sub_other: "{{count}} favorites",
     },
     downloads: {
       title: "Downloads",

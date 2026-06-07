@@ -14,8 +14,8 @@ export default {
   heroMetaGuest: "Lecture ouverte · compte optionnel",
   heroMetaSignedIn: "Compte connecte · options membres disponibles",
   heroMetaMember: "Membre actif · synchro prete",
-  heroChipSaved_one: "{{count}} enregistre",
-  heroChipSaved_other: "{{count}} enregistres",
+  heroChipSaved_one: "{{count}} favori",
+  heroChipSaved_other: "{{count}} favoris",
   heroChipDownloaded_one: "{{count}} hors ligne",
   heroChipDownloaded_other: "{{count}} hors ligne",
   createAccount: "Creer un compte",
@@ -31,7 +31,7 @@ export default {
     upgrade: "Compte gratuit · passez Premium",
   },
   stats: {
-    savedLabel: "Enregistres",
+    savedLabel: "Favoris",
     savedHint: "Voir Bibliotheque",
     offlineLabel: "Hors-ligne",
     historyLabel: "Historique",
@@ -54,9 +54,9 @@ export default {
   },
   rows: {
     saved: {
-      title: "Enregistrements",
-      sub_one: "{{count}} contenu mis de cote",
-      sub_other: "{{count}} contenus mis de cote",
+      title: "Favoris",
+      sub_one: "{{count}} favori",
+      sub_other: "{{count}} favoris",
     },
     downloads: {
       title: "Telechargements",

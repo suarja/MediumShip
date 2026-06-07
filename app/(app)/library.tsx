@@ -309,7 +309,6 @@ function SignedInLibraryContent({
         {canBookmark ? (
           <View style={styles.sectionBlock}>
             <LibrarySectionHeader
-              gate="free"
               title={t("library:screen.sections.saved")}
             />
             <SavedLibrarySection />

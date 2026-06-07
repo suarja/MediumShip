@@ -96,13 +96,15 @@ describe("signed-in profile", () => {
     expect(screen.getByText("Camille Renard")).toBeTruthy();
 
     // Three compact stats
-    expect(screen.getByText("Saved")).toBeTruthy();
+    expect(screen.getAllByText("Favorites").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText("Saved")).toBeNull();
     expect(screen.getByText("Offline")).toBeTruthy();
     expect(screen.getByText("History")).toBeTruthy();
 
     // "My library" nav rows
     expect(screen.getByText("My library")).toBeTruthy();
-    expect(screen.getByText("Saved items")).toBeTruthy();
+    expect(screen.getAllByText("Favorites").length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText("Saved items")).toBeNull();
 
     // The banner-hero composition is gone
     expect(screen.queryByText("Your profile")).toBeNull();

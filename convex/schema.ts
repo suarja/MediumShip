@@ -263,6 +263,14 @@ export default defineSchema({
       "targetId",
     ])
     .index("by_tokenIdentifier", ["tokenIdentifier"]),
+  categoryInterests: defineTable({
+    tokenIdentifier: v.string(),
+    tenantSlug: v.string(),
+    categoryKey: v.string(),
+    updatedAt: v.number(),
+  })
+    .index("by_tokenIdentifier_and_tenant", ["tokenIdentifier", "tenantSlug"])
+    .index("by_tenantSlug", ["tenantSlug"]),
   ingestionThrottle: defineTable({
     tenantSlug: v.string(),
     categoryKey: v.string(),

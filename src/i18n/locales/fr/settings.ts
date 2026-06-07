@@ -56,6 +56,9 @@ export default {
     noneSelected: "Aucune sélection",
     selectedCount: "{{count}} sélectionnée(s)",
     signInPrompt: "Connectez-vous pour choisir des catégories",
+    searchPlaceholder: "Rechercher une catégorie…",
+    searchEmpty: "Aucune catégorie pour « {{query}} ».",
+    subthemesOf: "Sous {{label}}",
   },
   account: {
     status: "Statut",

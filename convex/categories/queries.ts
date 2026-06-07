@@ -99,13 +99,37 @@ export const listTenantCategoryRoots = query({
   args: { tenantSlug: v.string() },
   handler: async (ctx, args) => {
     const all = await loadTenantCategories(ctx, args.tenantSlug);
-    return all
-      .filter(
-        (c) => !c.parentId && (c.isSelectable ?? true),
-      )
+    const selectable = all.filter((c) => c.isSelectable ?? true);
+    const ids = new Set(selectable.map((c) => c._id));
+
+    return selectable
+      .filter((c) => !c.parentId || !ids.has(c.parentId))
       .sort(
         (a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label),
       );
+  },
+});
+
+/**
+ * Flat tenant category rows for the mobile interest picker (tree built client-side).
+ */
+export const listTenantCategoryTree = query({
+  args: { tenantSlug: v.string() },
+  handler: async (ctx, args) => {
+    const all = await loadTenantCategories(ctx, args.tenantSlug);
+
+    return all
+      .filter((c) => c.isSelectable ?? true)
+      .sort(
+        (a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label),
+      )
+      .map((category) => ({
+        _id: category._id,
+        label: category.label,
+        iconKey: category.iconKey,
+        parentId: category.parentId,
+        depth: category.depth ?? 0,
+      }));
   },
 });
 

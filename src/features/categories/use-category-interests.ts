@@ -1,5 +1,5 @@
-import { useMutation, useQuery } from "convex/react";
 import { useCallback, useMemo } from "react";
+import { useMutation, useQuery } from "convex/react";
 
 import { api } from "../../../convex/_generated/api";
 import { normalizeScoringKey } from "../../../convex/discovery/scoring";
@@ -22,8 +22,10 @@ export function useCategoryInterests(): {
 } {
   const { tenantSlug } = useAppTheme();
   const { isSignedIn } = useClerkAuth();
+
   const rawOptions = useQuery(api.categories.queries.listCategoryOptions, { tenantSlug });
   const options = Array.isArray(rawOptions) ? rawOptions : [];
+
   const interestKeys = useQuery(
     api.categories.interests.getMyCategoryInterests,
     isSignedIn ? { tenantSlug } : "skip",
@@ -68,4 +70,24 @@ export function useCategoryInterests(): {
     isSignedIn,
     toggleCategory,
   };
+}
+
+export function useCategoryInterestSearch(query: string) {
+  const { tenantSlug } = useAppTheme();
+  const trimmed = query.trim();
+
+  const results = useQuery(
+    api.categories.queries.searchTenantCategories,
+    trimmed ? { tenantSlug, query: trimmed } : "skip",
+  );
+
+  return Array.isArray(results) ? results : [];
+}
+
+export function useCategoryInterestTreeNodes() {
+  const { tenantSlug } = useAppTheme();
+
+  const rows = useQuery(api.categories.queries.listTenantCategoryTree, { tenantSlug });
+
+  return Array.isArray(rows) ? rows : [];
 }

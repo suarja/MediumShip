@@ -123,6 +123,43 @@ describe("listTenantCategoryRoots", () => {
     expect(roots).toHaveLength(1);
     expect(roots[0]?.label).toBe("Legacy");
   });
+
+  it("includes orphan nodes whose parent is missing from the tenant", async () => {
+    const t = convexTest(schema, modules);
+
+    const orphanId = await t.run(async (ctx) => {
+      const missingParentId = await ctx.db.insert("categories", {
+        tenantSlug: TENANT,
+        label: "Missing parent placeholder",
+        slug: "missing-parent",
+        iconKey: "default",
+        sortOrder: 0,
+        updatedAt: Date.now(),
+        isSelectable: true,
+      });
+      await ctx.db.delete(missingParentId);
+
+      return await ctx.db.insert("categories", {
+        tenantSlug: TENANT,
+        label: "Roman",
+        slug: "roman",
+        iconKey: "culture",
+        sortOrder: 1,
+        updatedAt: Date.now(),
+        parentId: missingParentId,
+        depth: 2,
+        isSelectable: true,
+      });
+    });
+
+    const roots = await t.query(api.categories.queries.listTenantCategoryRoots, {
+      tenantSlug: TENANT,
+    });
+
+    expect(roots).toHaveLength(1);
+    expect(roots[0]?._id).toBe(orphanId);
+    expect(roots[0]?.label).toBe("Roman");
+  });
 });
 
 // ─── listTenantCategoryChildren ───────────────────────────────────────────────
@@ -304,6 +341,7 @@ describe("addCategoryFromCatalog", () => {
     expect(tenantRows[0]?.catalogNodeId).toBe(investments._id);
     expect(tenantRows[0]?.depth).toBe(1);
     expect(tenantRows[0]?.isSelectable).toBe(true);
+    expect(tenantRows[0]?.iconKey).not.toBe("default");
   });
 
   it("rejects IPTC root nodes (depth 0)", async () => {
@@ -351,6 +389,9 @@ describe("addCategoryFromCatalog", () => {
     const etfTenant = tenantRows.find((r) => r.label === "ETF")!;
     expect(etfTenant?.parentId).toBe(investmentsTenant?._id);
     expect(etfTenant?.depth).toBe(2);
+    expect(investmentsTenant?.iconKey).not.toBe("default");
+    expect(etfTenant?.iconKey).not.toBe("default");
+    expect(investmentsTenant?.iconKey).not.toBe(etfTenant?.iconKey);
   });
 
   it("skips duplicate slugs on re-run (idempotent)", async () => {

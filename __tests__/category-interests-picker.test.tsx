@@ -25,6 +25,8 @@ const mockUseCategoryInterests = jest.fn(() => ({
 
 jest.mock("../src/features/categories/use-category-interests", () => ({
   useCategoryInterests: () => mockUseCategoryInterests(),
+  useCategoryInterestSearch: () => [],
+  useCategoryInterestTreeNodes: () => [],
 }));
 
 jest.mock("convex/react", () => ({

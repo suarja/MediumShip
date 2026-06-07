@@ -39,9 +39,11 @@ describe("useCategoryInterests", () => {
         return undefined;
       }
 
-      const priorCalls = useQuery.mock.calls.length - 1;
+      const activeCalls = useQuery.mock.calls.filter(
+        (call) => call[1] !== "skip",
+      ).length;
 
-      if (priorCalls % 2 === 0) {
+      if (activeCalls === 1) {
         return [
           { label: "Science", icon: "⨁", iconKey: "science" },
           { label: "Philosophie", icon: "◉", iconKey: "default" },

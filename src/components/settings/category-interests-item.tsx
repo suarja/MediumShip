@@ -3,47 +3,31 @@ import {
   ActivityIndicator,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import { useTranslation } from "react-i18next";
 
-import { normalizeScoringKey } from "../../../convex/discovery/scoring";
 import { fontFamilies } from "../../features/theme/fonts";
 import { withAlpha } from "../../features/theme/contrast";
 import { useAppTheme } from "../../features/theme/theme-provider";
-import { useResponsive } from "../../features/responsive/use-responsive";
 import { useCategoryInterests } from "../../features/categories/use-category-interests";
+import { CategoryInterestsPicker } from "./category-interests-picker";
 import { SettingsRow } from "./settings-row";
 
 export function CategoryInterestsItem({ isLast = false }: { isLast?: boolean }) {
   const { t } = useTranslation("settings");
   const { theme } = useAppTheme();
-  const { scaleSpace } = useResponsive();
   const [open, setOpen] = useState(false);
-  const [busyLabel, setBusyLabel] = useState<string | null>(null);
-  const { options, selectedKeys, isLoading, isSignedIn, toggleCategory } =
-    useCategoryInterests();
+  const { selectedKeys, isLoading, isSignedIn } = useCategoryInterests();
 
   const selectedCount = selectedKeys.size;
   const value =
     selectedCount === 0
       ? t("interests.noneSelected")
       : t("interests.selectedCount", { count: selectedCount });
-
-  const handleToggle = async (label: string) => {
-    if (!isSignedIn || busyLabel !== null) {
-      return;
-    }
-
-    try {
-      setBusyLabel(label);
-      await toggleCategory(label);
-    } finally {
-      setBusyLabel(null);
-    }
-  };
 
   return (
     <>
@@ -101,58 +85,12 @@ export function CategoryInterestsItem({ isLast = false }: { isLast?: boolean }) 
             ) : isLoading ? (
               <ActivityIndicator color={theme.colors.accent} />
             ) : (
-              <View
-                style={[
-                  styles.chipCloud,
-                  { gap: 10 * scaleSpace },
-                ]}
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
               >
-                {options.map((option) => {
-                  const active = selectedKeys.has(normalizeScoringKey(option.label));
-                  const busy = busyLabel === option.label;
-
-                  return (
-                    <Pressable
-                      key={option.label}
-                      disabled={busyLabel !== null}
-                      onPress={() => void handleToggle(option.label)}
-                      style={({ pressed }) => [
-                        styles.chip,
-                        {
-                          borderRadius: theme.radii.pill,
-                          borderColor: active
-                            ? theme.colors.accent
-                            : theme.colors.border,
-                          backgroundColor: active
-                            ? withAlpha(theme.colors.accent, theme.isDark ? 0.22 : 0.12)
-                            : theme.colors.surfaceMuted,
-                        },
-                        pressed && styles.chipPressed,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.chipIcon,
-                          { color: active ? theme.colors.accent : theme.colors.textMuted },
-                        ]}
-                      >
-                        {option.icon}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.chipLabel,
-                          { color: active ? theme.colors.accent : theme.colors.heading },
-                        ]}
-                      >
-                        {option.label}
-                      </Text>
-                      {busy ? (
-                        <ActivityIndicator size="small" color={theme.colors.accent} />
-                      ) : null}
-                    </Pressable>
-                  );
-                })}
-              </View>
+                <CategoryInterestsPicker />
+              </ScrollView>
             )}
           </Pressable>
         </Pressable>
@@ -169,6 +107,7 @@ const styles = StyleSheet.create({
   },
   sheet: {
     gap: 18,
+    maxHeight: "85%",
     padding: 22,
     shadowOpacity: 0.14,
     shadowRadius: 24,
@@ -194,28 +133,5 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.bodySemiBold,
     fontSize: 14,
     lineHeight: 20,
-  },
-  chipCloud: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderWidth: 1,
-  },
-  chipPressed: {
-    opacity: 0.86,
-  },
-  chipIcon: {
-    fontFamily: fontFamilies.body,
-    fontSize: 14,
-  },
-  chipLabel: {
-    fontFamily: fontFamilies.bodySemiBold,
-    fontSize: 14,
   },
 });

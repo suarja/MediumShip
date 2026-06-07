@@ -55,6 +55,9 @@ export default {
     noneSelected: "None selected",
     selectedCount: "{{count}} selected",
     signInPrompt: "Sign in to pick categories",
+    searchPlaceholder: "Search categories…",
+    searchEmpty: "No categories for “{{query}}”.",
+    subthemesOf: "Under {{label}}",
   },
   account: {
     status: "Status",

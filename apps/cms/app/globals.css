@@ -178,7 +178,7 @@ a {
   gap: 4px;
   background: var(--surface);
   border: 1px solid var(--rule-2);
-  border-radius: var(--r-pill);
+  border-radius: var(--r-sm);
   padding: 4px;
   width: fit-content;
   justify-self: center;
@@ -189,7 +189,7 @@ a {
   background: transparent;
   border: 0;
   padding: 8px 18px;
-  border-radius: var(--r-pill);
+  border-radius: var(--r-sm);
   color: var(--ink-soft);
   font-size: 13px;
   font-weight: 500;

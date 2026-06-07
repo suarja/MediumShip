@@ -1,0 +1,64 @@
+{
+  "@context": {
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "dc": "http://purl.org/dc/elements/1.1/"
+  },
+  "@graph": [
+    {
+      "@id": "http://cv.iptc.org/newscodes/mediatopic/20000000",
+      "@type": ["http://www.w3.org/2004/02/skos/core#ConceptScheme"],
+      "dc:title": [{ "@value": "IPTC Media Topic NewsCodes" }]
+    },
+    {
+      "@id": "http://cv.iptc.org/newscodes/mediatopic/20000344",
+      "@type": ["skos:Concept"],
+      "skos:prefLabel": [
+        { "@language": "en", "@value": "Economy, Business and Finance" },
+        { "@language": "fr", "@value": "Économie, Commerce et Finance" }
+      ]
+    },
+    {
+      "@id": "http://cv.iptc.org/newscodes/mediatopic/20000346",
+      "@type": ["skos:Concept"],
+      "skos:prefLabel": [
+        { "@language": "en", "@value": "Investments" },
+        { "@language": "fr", "@value": "Investissements" }
+      ],
+      "skos:broader": [
+        { "@id": "http://cv.iptc.org/newscodes/mediatopic/20000344" }
+      ]
+    },
+    {
+      "@id": "http://cv.iptc.org/newscodes/mediatopic/20000347",
+      "@type": ["skos:Concept"],
+      "skos:prefLabel": [
+        { "@language": "en", "@value": "ETF" }
+      ],
+      "skos:broader": [
+        { "@id": "http://cv.iptc.org/newscodes/mediatopic/20000346" }
+      ],
+      "owl:deprecated": true
+    },
+    {
+      "@id": "http://cv.iptc.org/newscodes/mediatopic/20000001",
+      "@type": ["skos:Concept"],
+      "skos:prefLabel": [
+        { "@language": "en", "@value": "Arts, Culture and Entertainment" },
+        { "@language": "fr", "@value": "Arts, Culture et Divertissement" }
+      ]
+    },
+    {
+      "@id": "http://cv.iptc.org/newscodes/mediatopic/20000002",
+      "@type": ["skos:Concept"],
+      "skos:prefLabel": [
+        { "@language": "en", "@value": "Film" },
+        { "@language": "fr", "@value": "Cinéma" }
+      ],
+      "skos:broader": [
+        { "@id": "http://cv.iptc.org/newscodes/mediatopic/20000001" }
+      ]
+    }
+  ]
+}

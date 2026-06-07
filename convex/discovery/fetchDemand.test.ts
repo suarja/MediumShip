@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { computeFetchDemand, SCHEDULED_INGESTION_DEMAND_OPTIONS } from "./fetchDemand";
+import {
+  aggregateInterestCategories,
+  computeFetchDemand,
+  mergeCategoryAffinities,
+  SCHEDULED_INGESTION_DEMAND_OPTIONS,
+} from "./fetchDemand";
 
 describe("computeFetchDemand", () => {
   it("returns tenant seed categories on cold start with no affinities", () => {
@@ -86,5 +91,21 @@ describe("computeFetchDemand", () => {
     expect(demand.categories).toHaveLength(8);
     expect(demand.categories).toContain("science");
     expect(demand.categories).toContain("sports");
+  });
+
+  it("folds picked interest categories into demand alongside affinities", () => {
+    const affinities = mergeCategoryAffinities(
+      [{ targetId: "history", score: 80 }],
+      aggregateInterestCategories([{ categoryKey: "science" }]),
+    );
+
+    const demand = computeFetchDemand(affinities, ["economy"], {
+      maxCategories: 3,
+      diversitySlots: 1,
+    });
+
+    expect(demand.categories).toContain("science");
+    expect(demand.categories).toContain("history");
+    expect(demand.categories.length).toBeLessThanOrEqual(3);
   });
 });

@@ -209,7 +209,6 @@ export const seedDemoContent = mutation({
         themeConfig: defaultTenant.themeConfig,
         enabledModules: defaultTenant.enabledModules,
         feedSections: defaultTenant.feedSections,
-        discoverySeedCategories: ["Science", "Philosophy"],
       });
     } else {
       // Seed = restore the demo tenant to a known state, including the full
@@ -219,7 +218,6 @@ export const seedDemoContent = mutation({
       await ctx.db.patch(existingTenant._id, {
         enabledModules: defaultTenant.enabledModules,
         feedSections: existingTenant.feedSections ?? defaultTenant.feedSections,
-        discoverySeedCategories: ["Science", "Philosophy"],
       });
     }
 
@@ -271,6 +269,8 @@ export const seedDemoContent = mutation({
       { label: "Bibliothèque", slug: "bibliotheque", iconKey: "library", sortOrder: 4 },
       { label: "Économie", slug: "economie", iconKey: "economy", sortOrder: 5 },
       { label: "Culture", slug: "culture", iconKey: "culture", sortOrder: 6 },
+      { label: "Science", slug: "science", iconKey: "science", sortOrder: 7 },
+      { label: "Philosophie", slug: "philosophie", iconKey: "default", sortOrder: 8 },
     ] as const;
 
     for (const category of demoCategories) {

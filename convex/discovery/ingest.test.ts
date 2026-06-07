@@ -28,7 +28,7 @@ describe("aggregateCategoryAffinities", () => {
 });
 
 describe("getTenantIngestionInputs", () => {
-  it("aggregates tenant preferences and returns seed categories", async () => {
+  it("aggregates tenant preferences and returns taxonomy seed categories", async () => {
     const t = convexTest(schema, modules);
 
     await t.run(async (ctx) => {
@@ -36,7 +36,22 @@ describe("getTenantIngestionInputs", () => {
         slug: TENANT,
         name: "Demo",
         enabledModules: ["discover"],
-        discoverySeedCategories: ["Culture", "Economy"],
+      });
+      await ctx.db.insert("categories", {
+        tenantSlug: TENANT,
+        label: "Culture",
+        slug: "culture",
+        iconKey: "culture",
+        sortOrder: 1,
+        updatedAt: 1,
+      });
+      await ctx.db.insert("categories", {
+        tenantSlug: TENANT,
+        label: "Economy",
+        slug: "economy",
+        iconKey: "economy",
+        sortOrder: 0,
+        updatedAt: 1,
       });
       await ctx.db.insert("userPreferences", {
         tokenIdentifier: "member-a",
@@ -68,10 +83,77 @@ describe("getTenantIngestionInputs", () => {
       tenantSlug: TENANT,
     });
 
-    expect(inputs.seedCategories).toEqual(["Culture", "Economy"]);
+    expect(inputs.seedCategories).toEqual(["Economy", "Culture"]);
     expect(inputs.aggregatedAffinities).toEqual([
       { targetId: "science", score: 55 },
     ]);
+  });
+
+  it("includes picked interest categories in aggregated affinities", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("tenants", {
+        slug: TENANT,
+        name: "Demo",
+        enabledModules: ["discover"],
+      });
+      await ctx.db.insert("categoryInterests", {
+        tokenIdentifier: "member-a",
+        tenantSlug: TENANT,
+        categoryKey: "philosophie",
+        updatedAt: 1,
+      });
+      await ctx.db.insert("categoryInterests", {
+        tokenIdentifier: "member-b",
+        tenantSlug: TENANT,
+        categoryKey: "philosophie",
+        updatedAt: 2,
+      });
+      await ctx.db.insert("categoryInterests", {
+        tokenIdentifier: "member-b",
+        tenantSlug: TENANT,
+        categoryKey: "science",
+        updatedAt: 3,
+      });
+    });
+
+    const inputs = await t.query(internal.discovery.ingest.getTenantIngestionInputs, {
+      tenantSlug: TENANT,
+    });
+
+    expect(inputs.aggregatedAffinities).toEqual([
+      { targetId: "philosophie", score: 300 },
+      { targetId: "science", score: 150 },
+    ]);
+    expect(inputs.seedCategories).toEqual([]);
+  });
+
+  it("cold-starts from taxonomy seeds when there are no affinities or interests", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("tenants", {
+        slug: TENANT,
+        name: "Demo",
+        enabledModules: ["discover"],
+      });
+      await ctx.db.insert("categories", {
+        tenantSlug: TENANT,
+        label: "Science",
+        slug: "science",
+        iconKey: "science",
+        sortOrder: 0,
+        updatedAt: 1,
+      });
+    });
+
+    const inputs = await t.query(internal.discovery.ingest.getTenantIngestionInputs, {
+      tenantSlug: TENANT,
+    });
+
+    expect(inputs.aggregatedAffinities).toEqual([]);
+    expect(inputs.seedCategories).toEqual(["Science"]);
   });
 });
 
@@ -92,9 +174,16 @@ describe("runDiscoveryIngestion serendipity", () => {
     await t.run(async (ctx) => {
       await ctx.db.insert("tenants", {
         slug: TENANT,
-        name: "Demo",
+        name: "Demo Media",
         enabledModules: ["discover"],
-        discoverySeedCategories: ["science"],
+      });
+      await ctx.db.insert("categories", {
+        tenantSlug: TENANT,
+        label: "Science",
+        slug: "science",
+        iconKey: "science",
+        sortOrder: 0,
+        updatedAt: 1,
       });
     });
 

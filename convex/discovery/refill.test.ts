@@ -15,7 +15,22 @@ async function seedTenantForRefill(t: ReturnType<typeof convexTest>) {
       slug: TENANT,
       name: "Demo Media",
       enabledModules: ["discover"],
-      discoverySeedCategories: ["Science", "History"],
+    });
+    await ctx.db.insert("categories", {
+      tenantSlug: TENANT,
+      label: "Science",
+      slug: "science",
+      iconKey: "science",
+      sortOrder: 0,
+      updatedAt: 1,
+    });
+    await ctx.db.insert("categories", {
+      tenantSlug: TENANT,
+      label: "History",
+      slug: "history",
+      iconKey: "default",
+      sortOrder: 1,
+      updatedAt: 1,
     });
   });
 }

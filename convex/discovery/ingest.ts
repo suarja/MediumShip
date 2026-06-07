@@ -8,7 +8,9 @@ import {
 } from "../_generated/server";
 import {
   aggregateCategoryAffinities,
+  aggregateInterestCategories,
   computeFetchDemand,
+  mergeCategoryAffinities,
   SCHEDULED_INGESTION_DEMAND_OPTIONS,
 } from "./fetchDemand";
 import { PROVIDERS } from "./provider";
@@ -122,7 +124,6 @@ export const listTenantsForIngestion = internalQuery({
   returns: v.array(
     v.object({
       slug: v.string(),
-      discoverySeedCategories: v.optional(v.array(v.string())),
     }),
   ),
   handler: async (ctx) => {
@@ -130,7 +131,6 @@ export const listTenantsForIngestion = internalQuery({
 
     return tenants.map((tenant) => ({
       slug: tenant.slug,
-      discoverySeedCategories: tenant.discoverySeedCategories,
     }));
   },
 });
@@ -147,19 +147,36 @@ export const getTenantIngestionInputs = internalQuery({
     seedCategories: v.array(v.string()),
   }),
   handler: async (ctx, { tenantSlug }) => {
-    const tenant = await ctx.db
-      .query("tenants")
-      .withIndex("by_slug", (q) => q.eq("slug", tenantSlug))
-      .unique();
+    const taxonomyRows = await ctx.db
+      .query("categories")
+      .withIndex("by_tenantSlug", (q) => q.eq("tenantSlug", tenantSlug))
+      .collect();
+
+    const seedCategories = taxonomyRows
+      .sort(
+        (left, right) =>
+          left.sortOrder - right.sortOrder || left.label.localeCompare(right.label),
+      )
+      .map((category) => category.label);
 
     const preferences = await ctx.db.query("userPreferences").collect();
     const tenantPreferences = preferences.filter(
       (preference) => preference.tenantSlug === tenantSlug,
     );
 
+    const interestRows = await ctx.db
+      .query("categoryInterests")
+      .withIndex("by_tenantSlug", (q) => q.eq("tenantSlug", tenantSlug))
+      .collect();
+
+    const aggregatedAffinities = mergeCategoryAffinities(
+      aggregateCategoryAffinities(tenantPreferences),
+      aggregateInterestCategories(interestRows),
+    );
+
     return {
-      aggregatedAffinities: aggregateCategoryAffinities(tenantPreferences),
-      seedCategories: tenant?.discoverySeedCategories ?? [],
+      aggregatedAffinities,
+      seedCategories,
     };
   },
 });
@@ -171,10 +188,10 @@ export const runDiscoveryIngestion = internalAction({
     totalUpserted: v.number(),
   }),
   handler: async (ctx) => {
-    const tenants: Array<{
-      slug: string;
-      discoverySeedCategories?: string[];
-    }> = await ctx.runQuery(internal.discovery.ingest.listTenantsForIngestion, {});
+    const tenants: Array<{ slug: string }> = await ctx.runQuery(
+      internal.discovery.ingest.listTenantsForIngestion,
+      {},
+    );
 
     let tenantsProcessed = 0;
     let totalUpserted = 0;

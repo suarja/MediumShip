@@ -55,6 +55,47 @@ export function aggregateCategoryAffinities(
     .sort((left, right) => right.score - left.score);
 }
 
+/** Member-picked categories from Settings — folded into ingestion demand. */
+export const INTEREST_DEMAND_SCORE = 150;
+
+export function aggregateInterestCategories(
+  interests: readonly { categoryKey: string }[],
+): AggregatedCategoryAffinity[] {
+  const totals = new Map<string, number>();
+
+  for (const interest of interests) {
+    const targetId = normalizeScoringKey(interest.categoryKey);
+    if (!targetId) {
+      continue;
+    }
+
+    totals.set(targetId, (totals.get(targetId) ?? 0) + INTEREST_DEMAND_SCORE);
+  }
+
+  return [...totals.entries()]
+    .map(([targetId, score]) => ({ targetId, score }))
+    .sort((left, right) => right.score - left.score);
+}
+
+export function mergeCategoryAffinities(
+  ...groups: readonly (readonly AggregatedCategoryAffinity[])[]
+): AggregatedCategoryAffinity[] {
+  const totals = new Map<string, number>();
+
+  for (const group of groups) {
+    for (const affinity of group) {
+      totals.set(
+        affinity.targetId,
+        (totals.get(affinity.targetId) ?? 0) + affinity.score,
+      );
+    }
+  }
+
+  return [...totals.entries()]
+    .map(([targetId, score]) => ({ targetId, score }))
+    .sort((left, right) => right.score - left.score);
+}
+
 export function computeFetchDemand(
   aggregatedAffinities: readonly AggregatedCategoryAffinity[],
   seedCategories: readonly string[],

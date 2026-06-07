@@ -68,7 +68,6 @@ export function AdminShell({
             <span className="brand__name">{brandName}</span>
             <span className="brand__kind">CMS</span>
           </div>
-          <span className="tag-interne">Interne</span>
         </button>
 
         <nav aria-label="CMS tabs" className="tabs">
@@ -94,8 +93,8 @@ export function AdminShell({
 
         <div className="user">
           <div className="user__info">
-            <div className="nm">{name ?? "Admin CMS"}</div>
-            <div className="em">{email ?? "Session interne"}</div>
+            <div className="nm">{name ?? "Administrateur"}</div>
+            <div className="em">{email ?? "—"}</div>
           </div>
           <UserButton afterSignOutUrl="/" />
         </div>

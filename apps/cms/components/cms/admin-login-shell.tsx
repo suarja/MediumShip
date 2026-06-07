@@ -39,7 +39,7 @@ export function AdminLoginShell({
           {children}
         </div>
 
-        <p className="admin-login-footnote">Acces interne · Mono-tenant CMS</p>
+        <p className="admin-login-footnote">Administration éditoriale sécurisée</p>
       </div>
     </div>
   );

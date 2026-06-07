@@ -45,6 +45,7 @@ export default defineSchema({
         v.string(),
         v.object({
           enabled: v.boolean(),
+          inBar: v.boolean(),
           access: v.union(
             v.literal("free"),
             v.literal("member"),

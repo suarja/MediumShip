@@ -1,7 +1,14 @@
 import { render, screen } from "@testing-library/react-native";
 
 import CollectionsScreen from "../app/(app)/collections";
+import { resolveEffectiveFeatureConfigs } from "../convex/featureCatalog";
 import { changeAppLanguage, initI18n } from "../src/i18n";
+
+const mockUseAppTheme = jest.fn();
+
+jest.mock("../src/features/theme/theme-provider", () => ({
+  useAppTheme: () => mockUseAppTheme(),
+}));
 
 const MOCK_COLLECTIONS = [
   { _id: "coll-1", slug: "le-grand-entretien", title: "Le grand entretien", summary: "La série phare.", itemCount: 14 },
@@ -44,6 +51,24 @@ describe("collections index screen", () => {
 
   beforeEach(async () => {
     await changeAppLanguage("en");
+    mockUseAppTheme.mockReturnValue({
+      enabledModules: ["collections"],
+      featureConfigs: resolveEffectiveFeatureConfigs({ enabledModules: ["collections"] }),
+      theme: {
+        colors: {
+          heading: "#111",
+          text: "#111",
+          textMuted: "#666",
+          border: "#ddd",
+          surface: "#fff",
+          accent: "#00f",
+          canvas: "#fff",
+        },
+        spacing: { lg: 16, sm: 8, xs: 4 },
+        radii: { pill: 99, md: 8 },
+        isDark: false,
+      },
+    });
   });
 
   it("renders at least one fixture collection", () => {

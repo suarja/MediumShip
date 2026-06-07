@@ -1,13 +1,12 @@
 import { Tabs } from "expo-router";
 
 import { AppTabBar } from "../../src/components/navigation/app-tab-bar";
-import { isModuleEnabled } from "../../src/features/tenant/public-config";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 // Public tab shell: reading surfaces stay available without authentication.
 export default function AppLayout() {
-  const { enabledModules } = useAppTheme();
-  const discoverHref = isModuleEnabled(enabledModules, "discover") ? undefined : null;
+  const { featureConfigs } = useAppTheme();
+  const discoverHref = featureConfigs.discover?.enabled ? undefined : null;
 
   return (
     <Tabs

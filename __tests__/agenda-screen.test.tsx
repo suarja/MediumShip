@@ -1,7 +1,14 @@
 import { render, screen, fireEvent } from "@testing-library/react-native";
 
 import AgendaScreen from "../app/(app)/agenda";
+import { resolveEffectiveFeatureConfigs } from "../convex/featureCatalog";
 import { changeAppLanguage, initI18n } from "../src/i18n";
+
+const mockUseAppTheme = jest.fn();
+
+jest.mock("../src/features/theme/theme-provider", () => ({
+  useAppTheme: () => mockUseAppTheme(),
+}));
 import type { AppEvent } from "../src/features/events/types";
 
 const MOCK_EVENTS: AppEvent[] = [
@@ -53,6 +60,24 @@ describe("agenda screen", () => {
 
   beforeEach(async () => {
     await changeAppLanguage("en");
+    mockUseAppTheme.mockReturnValue({
+      enabledModules: ["agenda"],
+      featureConfigs: resolveEffectiveFeatureConfigs({ enabledModules: ["agenda"] }),
+      theme: {
+        colors: {
+          heading: "#111",
+          text: "#111",
+          textMuted: "#666",
+          border: "#ddd",
+          surface: "#fff",
+          accent: "#00f",
+          canvas: "#fff",
+        },
+        spacing: { lg: 16, sm: 8, xs: 4 },
+        radii: { pill: 99, md: 8 },
+        isDark: false,
+      },
+    });
   });
 
   it("renders events", () => {

@@ -2,12 +2,16 @@ import { createContext, PropsWithChildren, useContext, useMemo } from "react";
 import { useQuery } from "convex/react";
 
 import { api } from "../../../convex/_generated/api";
+import {
+  resolveEffectiveFeatureConfigs,
+  type FeatureKey,
+  type TenantFeatureConfig,
+} from "../../../convex/featureCatalog";
 import { defaultTenant } from "../tenant/default-tenant";
 import {
   type EnabledModule,
   type FeedSectionConfig,
   normalizeEnabledModules,
-  normalizeFeedSections,
 } from "../tenant/public-config";
 import {
   AppTheme,
@@ -25,6 +29,7 @@ type ThemeContextValue = {
   tenantSlug: string;
   tenantName: string;
   enabledModules: EnabledModule[];
+  featureConfigs: Record<FeatureKey, TenantFeatureConfig>;
   feedSections: FeedSectionConfig[];
   isLoading: boolean;
 };
@@ -37,6 +42,9 @@ const fallbackValue: ThemeContextValue = {
   tenantSlug: defaultTenant.slug,
   tenantName: defaultTenant.name,
   enabledModules: defaultTenant.enabledModules,
+  featureConfigs: resolveEffectiveFeatureConfigs({
+    enabledModules: defaultTenant.enabledModules,
+  }),
   feedSections: defaultTenant.feedSections,
   isLoading: false,
 };
@@ -54,7 +62,11 @@ export function AppThemeProvider({ children }: PropsWithChildren) {
     const enabledModules = normalizeEnabledModules(
       tenant?.enabledModules ?? defaultTenant.enabledModules,
     );
-    const feedSections = normalizeFeedSections(tenant?.feedSections, enabledModules);
+    const featureConfigs = resolveEffectiveFeatureConfigs({
+      featureConfigs: tenant?.featureConfigs,
+      enabledModules,
+    });
+    const feedSections = tenant?.feedSections ?? defaultTenant.feedSections;
 
     return {
       appIconUrl: tenant?.appIconUrl ?? defaultTenant.appIconUrl,
@@ -64,6 +76,7 @@ export function AppThemeProvider({ children }: PropsWithChildren) {
       tenantSlug: tenant?.slug ?? defaultTenant.slug,
       tenantName: tenant?.name ?? defaultTenant.name,
       enabledModules,
+      featureConfigs,
       feedSections,
       isLoading: tenant === undefined,
     };

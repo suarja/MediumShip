@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import DiscoverScreen from "../app/(app)/discover";
+import { resolveEffectiveFeatureConfigs } from "../convex/featureCatalog";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 import type { DiscoveryFeedItem } from "../src/features/discovery/use-discovery-feed";
 
@@ -59,6 +60,7 @@ function makeTheme(enabledModules: string[]) {
   return {
     tenantSlug: "demo-media",
     enabledModules,
+    featureConfigs: resolveEffectiveFeatureConfigs({ enabledModules }),
     feedSections: [],
     theme: {
       colors: {
@@ -165,12 +167,13 @@ describe("discover screen", () => {
     await changeAppLanguage("fr");
   });
 
-  it("renders nothing when discover is absent from enabledModules", () => {
+  it("shows unavailable state when discover is absent from enabledModules", () => {
     mockUseAppTheme.mockReturnValue(makeTheme(["articles", "episodes", "videos"]));
 
-    const { toJSON } = render(<DiscoverScreen />);
+    render(<DiscoverScreen />);
 
-    expect(toJSON()).toBeNull();
+    expect(screen.getByText(/module is unavailable|module n'est pas disponible/i)).toBeTruthy();
+    expect(screen.queryByTestId("discover-list")).toBeNull();
   });
 
   it("renders a flat list of feature cards without section headers", () => {

@@ -38,6 +38,10 @@ jest.mock("../src/features/network/use-network-status", () => ({
   useNetworkStatus: () => ({ state: "offline" }),
 }));
 
+jest.mock("../src/features/membership/use-is-member", () => ({
+  useIsMember: () => ({ isMember: false, isLoading: false }),
+}));
+
 jest.mock("../src/features/auth/use-clerk-auth", () => ({
   useClerkAuth: () => ({
     isLoaded: true,

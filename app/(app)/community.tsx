@@ -9,7 +9,8 @@ import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
 import { useIsMember } from "../../src/features/membership/use-is-member";
-import { hasCapability, isModuleEnabled } from "../../src/features/tenant/public-config";
+import { FeatureAccessGate } from "../../src/components/navigation/feature-access-gate";
+import { hasCapability } from "../../src/features/tenant/public-config";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
@@ -34,18 +35,6 @@ export default function CommunityScreen() {
   const { isMember } = useIsMember();
   const canMembersRoom = hasCapability(enabledModules, "membersRoom");
 
-  if (!isModuleEnabled(enabledModules, "community")) {
-    return (
-      <Screen>
-        <View style={styles.center}>
-          <Text style={[styles.centerText, { color: theme.colors.textMuted, fontSize: 14 * scaleFont }]}>
-            Module unavailable.
-          </Text>
-        </View>
-      </Screen>
-    );
-  }
-
   const handleMembersRoom = () => {
     if (!isMember) {
       openPaywall("members");
@@ -58,6 +47,7 @@ export default function CommunityScreen() {
   };
 
   return (
+    <FeatureAccessGate featureKey="community">
     <Screen>
       <View
         style={[
@@ -176,6 +166,7 @@ export default function CommunityScreen() {
         ) : null}
       </ScrollView>
     </Screen>
+    </FeatureAccessGate>
   );
 }
 

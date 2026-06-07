@@ -4,6 +4,7 @@ import LibraryScreen from "../app/(app)/library";
 import CommunityScreen from "../app/(app)/community";
 import { ContentActionsBar } from "../src/components/content/content-actions-bar";
 import type { ContentDoc } from "../src/features/content/types";
+import { resolveEffectiveFeatureConfigs } from "../convex/featureCatalog";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
 const mockUseAppTheme = jest.fn();
@@ -115,9 +116,15 @@ const mockArticle: ContentDoc = {
 };
 
 function makeTheme(enabledModules: string[]) {
+  const featureConfigs = resolveEffectiveFeatureConfigs({ enabledModules });
+  if (featureConfigs.community?.enabled) {
+    featureConfigs.community = { ...featureConfigs.community, access: "free" };
+  }
+
   return {
     tenantSlug: "demo-media",
     enabledModules,
+    featureConfigs,
     feedSections: [],
     theme: {
       colors: {

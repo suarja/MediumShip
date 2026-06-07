@@ -8,7 +8,7 @@ import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import { useCollections } from "../../src/features/collections/use-collections";
 import type { Collection } from "../../src/features/collections/types";
-import { isModuleEnabled } from "../../src/features/tenant/public-config";
+import { FeatureAccessGate } from "../../src/components/navigation/feature-access-gate";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
@@ -16,7 +16,7 @@ import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 export default function CollectionsScreen() {
   const { t } = useTranslation("explore");
-  const { theme, enabledModules } = useAppTheme();
+  const { theme } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
@@ -24,19 +24,8 @@ export default function CollectionsScreen() {
   const insets = useSafeAreaInsets();
   const { collections } = useCollections();
 
-  if (!isModuleEnabled(enabledModules, "collections")) {
-    return (
-      <Screen>
-        <View style={styles.center}>
-          <Text style={[styles.unavailable, { color: theme.colors.textMuted, fontSize: 14 * scaleFont }]}>
-            Module unavailable.
-          </Text>
-        </View>
-      </Screen>
-    );
-  }
-
   return (
+    <FeatureAccessGate featureKey="collections">
     <Screen>
       <View
         style={[
@@ -91,6 +80,7 @@ export default function CollectionsScreen() {
         showsVerticalScrollIndicator={false}
       />
     </Screen>
+    </FeatureAccessGate>
   );
 }
 

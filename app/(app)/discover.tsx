@@ -28,7 +28,7 @@ import {
 } from "../../src/features/discovery/use-discovery-feed";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
-import { isModuleEnabled } from "../../src/features/tenant/public-config";
+import { FeatureAccessGate } from "../../src/components/navigation/feature-access-gate";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
@@ -36,7 +36,7 @@ import { useAppTheme } from "../../src/features/theme/theme-provider";
 export default function DiscoverScreen() {
   const { t } = useTranslation("discover");
   const { t: tHome } = useTranslation("home");
-  const { theme, enabledModules } = useAppTheme();
+  const { theme } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace, contentMaxWidth } = useResponsive();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
@@ -51,10 +51,6 @@ export default function DiscoverScreen() {
     refresh,
     loadMore,
   } = useDiscoveryFeed();
-
-  if (!isModuleEnabled(enabledModules, "discover")) {
-    return null;
-  }
 
   const maxWidth = contentMaxWidth ?? (isTablet ? 640 : undefined);
   const listContentStyle = [
@@ -106,6 +102,7 @@ export default function DiscoverScreen() {
   };
 
   return (
+    <FeatureAccessGate featureKey="discover">
     <Screen>
       <FlatList
         testID="discover-list"
@@ -167,6 +164,7 @@ export default function DiscoverScreen() {
         }
       />
     </Screen>
+    </FeatureAccessGate>
   );
 }
 

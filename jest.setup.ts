@@ -18,6 +18,12 @@ jest.mock("./src/features/auth/use-clerk-auth", () => ({
   }),
 }));
 
+// Default member entitlement for feature-access gates. Override locally when a
+// test needs a guest or loading membership state.
+jest.mock("./src/features/membership/use-is-member", () => ({
+  useIsMember: () => ({ isMember: true, isLoading: false }),
+}));
+
 // Default paywall sheet mock for component tests. Tests that want to assert on
 // openPaywall calls override this locally with their own jest.mock.
 jest.mock("./src/features/paywall/paywall-sheet-provider", () => ({

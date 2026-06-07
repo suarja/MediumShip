@@ -1,7 +1,14 @@
 import { render, screen, fireEvent } from "@testing-library/react-native";
 
 import CommunityScreen from "../app/(app)/community";
+import { resolveEffectiveFeatureConfigs } from "../convex/featureCatalog";
 import { changeAppLanguage, initI18n } from "../src/i18n";
+
+const mockUseAppTheme = jest.fn();
+
+jest.mock("../src/features/theme/theme-provider", () => ({
+  useAppTheme: () => mockUseAppTheme(),
+}));
 
 jest.mock("../src/components/navigation/app-tab-bar", () => ({
   useTabBarSpace: () => 96,
@@ -53,6 +60,29 @@ describe("community screen", () => {
   beforeEach(async () => {
     mockOpenPaywall.mockClear();
     await changeAppLanguage("fr");
+    mockUseAppTheme.mockReturnValue({
+      enabledModules: ["community", "membersRoom"],
+      featureConfigs: {
+        ...resolveEffectiveFeatureConfigs({ enabledModules: ["community", "membersRoom"] }),
+        community: { enabled: true, access: "free", iconKey: "community" },
+      },
+      theme: {
+        colors: {
+          heading: "#111111",
+          text: "#111111",
+          textMuted: "#666666",
+          border: "#dddddd",
+          surface: "#ffffff",
+          accent: "#0000ff",
+          accentContrast: "#ffffff",
+          premium: "#c8964a",
+          canvas: "#ffffff",
+        },
+        spacing: { lg: 16, sm: 8, xs: 4 },
+        radii: { pill: 99, md: 8 },
+        isDark: false,
+      },
+    });
   });
 
   it("renders hero and community cards", () => {

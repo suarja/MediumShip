@@ -9,7 +9,7 @@ import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import type { AppEvent, EventFilter } from "../../src/features/events/types";
 import { useEvents } from "../../src/features/events/use-events";
-import { isModuleEnabled } from "../../src/features/tenant/public-config";
+import { FeatureAccessGate } from "../../src/components/navigation/feature-access-gate";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
@@ -41,7 +41,7 @@ function formatEventDate(iso: string): { day: string; month: string } {
 
 export default function AgendaScreen() {
   const { t } = useTranslation("explore");
-  const { theme, enabledModules } = useAppTheme();
+  const { theme } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
@@ -51,18 +51,6 @@ export default function AgendaScreen() {
   const [filter, setFilter] = useState<EventFilter>("upcoming");
   const { events } = useEvents(filter);
 
-  if (!isModuleEnabled(enabledModules, "agenda")) {
-    return (
-      <Screen>
-        <View style={styles.emptyWrap}>
-          <Text style={[styles.emptyLabel, { color: theme.colors.textMuted, fontSize: 14 * scaleFont }]}>
-            Module unavailable.
-          </Text>
-        </View>
-      </Screen>
-    );
-  }
-
   const FILTER_OPTIONS: { key: EventFilter; label: string }[] = [
     { key: "upcoming", label: "À venir" },
     { key: "online", label: "En ligne" },
@@ -70,6 +58,7 @@ export default function AgendaScreen() {
   ];
 
   return (
+    <FeatureAccessGate featureKey="agenda">
     <Screen>
       <View
         style={[
@@ -159,6 +148,7 @@ export default function AgendaScreen() {
         }
       />
     </Screen>
+    </FeatureAccessGate>
   );
 }
 

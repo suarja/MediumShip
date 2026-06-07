@@ -2,6 +2,7 @@ import { ScrollView, StyleSheet, Text, Pressable } from "react-native";
 
 import type { ContentKind } from "../../features/content/types";
 import { useResponsive } from "../../features/responsive/use-responsive";
+import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
@@ -37,9 +38,14 @@ export function FeedFilterChips({
     >
       {chips.map((chip) => {
         const selected = chip.key === active;
+        const inactiveBorder = withAlpha(
+          theme.colors.heading,
+          theme.isDark ? 0.28 : 0.2,
+        );
         return (
           <Pressable
             key={chip.key}
+            testID={`feed-filter-chip-${chip.key}`}
             accessibilityRole="button"
             accessibilityState={selected ? { selected: true } : {}}
             onPress={() => onSelect(chip.key)}
@@ -49,8 +55,8 @@ export function FeedFilterChips({
                 borderRadius: theme.radii.pill,
                 paddingHorizontal: theme.spacing.md * scaleSpace,
                 paddingVertical: theme.spacing.xs * 1.5 * scaleSpace,
-                borderColor: selected ? theme.colors.heading : theme.colors.border,
-                backgroundColor: selected ? theme.colors.heading : "transparent",
+                borderColor: selected ? theme.colors.heading : inactiveBorder,
+                backgroundColor: selected ? theme.colors.heading : theme.colors.surface,
               },
               pressed && !selected && styles.pressed,
             ]}
@@ -59,7 +65,7 @@ export function FeedFilterChips({
               style={[
                 styles.label,
                 {
-                  color: selected ? theme.colors.canvas : theme.colors.textMuted,
+                  color: selected ? theme.colors.canvas : theme.colors.text,
                   fontSize: 10 * scaleFont,
                 },
               ]}

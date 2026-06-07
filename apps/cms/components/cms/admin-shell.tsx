@@ -11,6 +11,7 @@ export const CMS_TABS = [
   "tenant",
   "users",
   "preview",
+  "developer",
 ] as const;
 
 export type CmsTab = (typeof CMS_TABS)[number];
@@ -27,6 +28,7 @@ const NAV_ITEMS: ReadonlyArray<{
   { icon: "⚙", label: "Tenant", value: "tenant" },
   { icon: "◉", label: "Membres", value: "users" },
   { icon: "▶", label: "Preview", value: "preview" },
+  { icon: "⬡", label: "Développeur", value: "developer" },
 ];
 
 export function isCmsTab(value: string | null | undefined): value is CmsTab {

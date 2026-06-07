@@ -10,6 +10,7 @@ import { AdminShell, isCmsTab, type CmsTab } from "./admin-shell";
 import { CategoriesTab } from "./categories-tab";
 import { CollectionsTab } from "./collections-tab";
 import { ContentsTab } from "./contents-tab";
+import { DeveloperTab } from "./developer-tab";
 import { EventsTab } from "./events-tab";
 import { PreviewTab } from "./preview-tab";
 import { TenantTab } from "./tenant-tab";
@@ -128,7 +129,9 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
             name={viewer.name}
             onTabChange={setActiveTab}
           >
-            {contents && categories && collections && events && tenant ? (
+            {activeTab === "developer" ? (
+              <DeveloperTab />
+            ) : contents && categories && collections && events && tenant ? (
               activeTab === "contents" ? (
                 <ContentsTab
                   items={contents}

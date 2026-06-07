@@ -6,7 +6,7 @@ import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "MediumShip CMS",
-  description: "Internal editorial control room for MediumShip.",
+  description: "Espace d'administration éditoriale MediumShip.",
 };
 
 export default function RootLayout({ children }: PropsWithChildren) {

@@ -4,17 +4,9 @@ import { UserButton } from "@clerk/nextjs";
 import type { ReactNode } from "react";
 import { startTransition } from "react";
 
-export const CMS_TABS = [
-  "contents",
-  "categories",
-  "collections",
-  "events",
-  "tenant",
-  "users",
-  "developer",
-] as const;
+import { type CmsTab } from "../../lib/cms-tabs";
 
-export type CmsTab = (typeof CMS_TABS)[number];
+export { CMS_TABS, type CmsTab, isCmsTab } from "../../lib/cms-tabs";
 
 const NAV_ITEMS: ReadonlyArray<{
   icon: string;
@@ -29,10 +21,6 @@ const NAV_ITEMS: ReadonlyArray<{
   { icon: "◉", label: "Membres", value: "users" },
   { icon: "⬡", label: "Développeur", value: "developer" },
 ];
-
-export function isCmsTab(value: string | null | undefined): value is CmsTab {
-  return (CMS_TABS as readonly string[]).includes(value ?? "");
-}
 
 export function AdminShell({
   activeTab,

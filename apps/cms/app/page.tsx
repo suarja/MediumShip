@@ -1,5 +1,5 @@
 import { Dashboard } from "../components/cms/dashboard";
-import { isCmsTab } from "../components/cms/admin-shell";
+import { isCmsTab } from "../lib/cms-tabs";
 
 type PageProps = {
   searchParams?: Promise<{

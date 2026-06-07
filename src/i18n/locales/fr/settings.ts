@@ -47,6 +47,16 @@ export default {
       },
     },
   },
+  interests: {
+    label: "Centres d'intérêt",
+    description:
+      "Choisissez des catégories à prioriser dans Découvrir et les prochains fetchs.",
+    pickerDescription:
+      "Les catégories choisies boostent le feed immédiatement. Likes et historique restent intacts.",
+    noneSelected: "Aucune sélection",
+    selectedCount: "{{count}} sélectionnée(s)",
+    signInPrompt: "Connectez-vous pour choisir des catégories",
+  },
   account: {
     status: "Statut",
     guest: "Invite",

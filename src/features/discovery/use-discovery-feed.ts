@@ -6,6 +6,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import type { FeedReason } from "../../../convex/discovery/scoring";
 import { useClerkAuth } from "../auth/use-clerk-auth";
 import type { ContentDoc } from "../content/types";
+import { subscribeDiscoveryFeedRefresh } from "./discovery-feed-refresh";
 import { useAppTheme } from "../theme/theme-provider";
 
 export type DiscoveryFeedItem = ContentDoc & {
@@ -223,6 +224,8 @@ export function useDiscoveryFeed(): {
     setIsRefreshing(true);
     setFeedSeed((current) => current + 1);
   }, []);
+
+  useEffect(() => subscribeDiscoveryFeedRefresh(refresh), [refresh]);
 
   const loadMore = useCallback(() => {
     if (

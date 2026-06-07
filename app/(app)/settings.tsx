@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Screen } from "../../src/components/layout/screen";
 import { StatusBannerStack } from "../../src/components/content/status-banner-stack";
 import { LanguageItem } from "../../src/components/settings/language-item";
+import { CategoryInterestsItem } from "../../src/components/settings/category-interests-item";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { SettingsRow } from "../../src/components/settings/settings-row";
 import { SettingsSection } from "../../src/components/settings/settings-section";
@@ -69,6 +70,7 @@ export default function SettingsScreen() {
 
         <SettingsSection title={t("settings:sections.general")}>
           <LanguageItem />
+          <CategoryInterestsItem />
           <ThemePaletteItem isLast />
         </SettingsSection>
 

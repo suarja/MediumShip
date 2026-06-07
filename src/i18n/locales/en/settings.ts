@@ -47,6 +47,15 @@ export default {
       },
     },
   },
+  interests: {
+    label: "Category interests",
+    description: "Pick categories to prioritize in Discover and future fetches.",
+    pickerDescription:
+      "Selected categories boost your feed immediately. Likes and history stay intact.",
+    noneSelected: "None selected",
+    selectedCount: "{{count}} selected",
+    signInPrompt: "Sign in to pick categories",
+  },
   account: {
     status: "Status",
     guest: "Guest",

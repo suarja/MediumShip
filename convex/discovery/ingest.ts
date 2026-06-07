@@ -38,7 +38,7 @@ const ingestedContentValidator = v.object({
   isPremium: v.boolean(),
   heroImageUrl: v.optional(v.string()),
   publishedAt: v.optional(v.string()),
-  source: v.union(v.literal("cms"), v.literal("wikipedia")),
+  source: v.union(v.literal("cms"), v.literal("wikipedia"), v.literal("rss")),
   externalId: v.string(),
   canonicalUrl: v.string(),
 });

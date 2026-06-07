@@ -43,6 +43,7 @@ import type * as discovery_ingest from "../discovery/ingest.js";
 import type * as discovery_interactions from "../discovery/interactions.js";
 import type * as discovery_provider from "../discovery/provider.js";
 import type * as discovery_providerConfig from "../discovery/providerConfig.js";
+import type * as discovery_providers_rss from "../discovery/providers/rss.js";
 import type * as discovery_providers_wikipedia from "../discovery/providers/wikipedia.js";
 import type * as discovery_refill from "../discovery/refill.js";
 import type * as discovery_scoring from "../discovery/scoring.js";
@@ -113,6 +114,7 @@ declare const fullApi: ApiFromModules<{
   "discovery/interactions": typeof discovery_interactions;
   "discovery/provider": typeof discovery_provider;
   "discovery/providerConfig": typeof discovery_providerConfig;
+  "discovery/providers/rss": typeof discovery_providers_rss;
   "discovery/providers/wikipedia": typeof discovery_providers_wikipedia;
   "discovery/refill": typeof discovery_refill;
   "discovery/scoring": typeof discovery_scoring;

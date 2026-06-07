@@ -1,5 +1,6 @@
 import type { ActionCtx } from "../_generated/server";
 import type { FetchDemand } from "./fetchDemand";
+import { rssProvider } from "./providers/rss";
 import { wikipediaProvider } from "./providers/wikipedia";
 
 export interface ContentProvider {
@@ -23,4 +24,5 @@ export const cmsProvider: ContentProvider = {
 export const PROVIDERS: readonly ContentProvider[] = [
   cmsProvider,
   wikipediaProvider,
+  rssProvider,
 ];

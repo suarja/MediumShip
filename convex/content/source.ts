@@ -1,4 +1,4 @@
-export type ContentSource = "cms" | "wikipedia";
+export type ContentSource = "cms" | "wikipedia" | "rss";
 
 export function resolveContentSource(content: {
   source?: ContentSource;
@@ -7,5 +7,5 @@ export function resolveContentSource(content: {
 }
 
 export function isEditorialContent(content: { source?: ContentSource }): boolean {
-  return resolveContentSource(content) !== "wikipedia";
+  return resolveContentSource(content) === "cms";
 }

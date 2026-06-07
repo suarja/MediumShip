@@ -7,6 +7,7 @@ import schema from "../schema";
 import { modules } from "../../convexTestModules";
 import { aggregateCategoryAffinities } from "./fetchDemand";
 import { SERENDIPITY_PER_RUN } from "./ingest";
+import { rssProvider } from "./providers/rss";
 import { wikipediaProvider, WIKIPEDIA_PAGES_PER_CATEGORY } from "./providers/wikipedia";
 
 const TENANT = "demo-media";
@@ -226,6 +227,51 @@ describe("provider-agnostic orchestration", () => {
 describe("scheduled ingestion depth", () => {
   it("requests a larger Wikipedia batch per category", () => {
     expect(WIKIPEDIA_PAGES_PER_CATEGORY).toBeGreaterThanOrEqual(10);
+  });
+});
+
+describe("runDiscoveryIngestion multi-provider seam", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("drives wikipedia and rss with the same demand; rss no-ops when unconfigured", async () => {
+    const t = convexTest(schema, modules);
+    const wikipediaSpy = vi
+      .spyOn(wikipediaProvider, "ingest")
+      .mockResolvedValue({ upserted: 1 });
+    const rssSpy = vi.spyOn(rssProvider, "ingest").mockResolvedValue({ upserted: 0 });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("tenants", {
+        slug: TENANT,
+        name: "Demo Media",
+        enabledModules: ["discover"],
+      });
+      await ctx.db.insert("categories", {
+        tenantSlug: TENANT,
+        label: "Science",
+        slug: "science",
+        iconKey: "science",
+        sortOrder: 0,
+        updatedAt: 1,
+      });
+    });
+
+    const result = await t.action(internal.discovery.ingest.runDiscoveryIngestion, {});
+
+    expect(result.tenantsProcessed).toBe(1);
+    expect(result.totalUpserted).toBe(1);
+
+    expect(wikipediaSpy).toHaveBeenCalledOnce();
+    expect(rssSpy).toHaveBeenCalledOnce();
+
+    const wikipediaArgs = wikipediaSpy.mock.calls[0]![1];
+    const rssArgs = rssSpy.mock.calls[0]![1];
+    expect(wikipediaArgs).toEqual(rssArgs);
+    expect(wikipediaArgs.demand.categories).toContain("science");
+    expect(wikipediaArgs).not.toHaveProperty("wikipediaLocale");
   });
 });
 

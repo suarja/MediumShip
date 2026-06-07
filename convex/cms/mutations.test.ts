@@ -52,6 +52,7 @@ describe("cms/mutations — updateModuleSettings", () => {
     expect(tenant.enabledModules).toEqual(["articles", "videos", "premium", "discover"]);
     expect(tenant.featureConfigs?.articles).toEqual({
       enabled: true,
+      inBar: false,
       access: "free",
       iconKey: "analyses",
     });

@@ -69,6 +69,7 @@ export default defineSchema({
       ),
     ),
     discoverySeedCategories: v.optional(v.array(v.string())),
+    navOrder: v.optional(v.array(v.string())),
     /** Preferred catalog label locale in CMS (en = IPTC English, fr = labelFr). */
     catalogLocale: v.optional(v.union(v.literal("en"), v.literal("fr"))),
     providerConfigs: v.optional(v.record(v.string(), v.any())),
@@ -112,7 +113,12 @@ export default defineSchema({
       ),
     ),
     source: v.optional(
-      v.union(v.literal("cms"), v.literal("wikipedia"), v.literal("rss")),
+      v.union(
+        v.literal("cms"),
+        v.literal("wikipedia"),
+        v.literal("rss"),
+        v.literal("youtube"),
+      ),
     ),
     externalId: v.optional(v.string()),
     canonicalUrl: v.optional(v.string()),

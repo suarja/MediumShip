@@ -30,6 +30,38 @@ type CatalogSearchResultsProps = {
   ) => Promise<void>;
 };
 
+function CatalogChevron({ expanded }: { expanded: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className="catalog-collapse-icon"
+      height={12}
+      viewBox="0 0 16 16"
+      width={12}
+    >
+      {expanded ? (
+        <path
+          d="M3.5 6.25 8 10.75l4.5-4.5"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2.25"
+        />
+      ) : (
+        <path
+          d="M6.25 3.5 10.75 8l-4.5 4.5"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2.25"
+        />
+      )}
+    </svg>
+  );
+}
+
 export function CatalogSearchResults({
   nodes,
   onToggle,
@@ -111,7 +143,7 @@ export function CatalogSearchResults({
                   onClick={() => toggleCollapsed(node._id)}
                   type="button"
                 >
-                  {isCollapsed ? "▸" : "▾"}
+                  <CatalogChevron expanded={!isCollapsed} />
                 </button>
               ) : (
                 <span aria-hidden="true" className="catalog-collapse-spacer" />

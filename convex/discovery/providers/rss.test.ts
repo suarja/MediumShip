@@ -111,8 +111,33 @@ describe("normalizeRssEntry", () => {
       tags: [],
       isPremium: false,
     });
-    expect(normalized.slug).toBe("first-article");
+    expect(normalized.slug).toMatch(/^first-article-/);
     expect(normalized.publishedAt).toBeTruthy();
+  });
+
+  it("adds a deterministic suffix so same-title items do not collide", () => {
+    const first = normalizeRssEntry(
+      {
+        title: "Daily Brief",
+        link: "https://example.com/articles/first",
+        guid: "rss-guid-1",
+        summary: "First summary.",
+      },
+      { tenantSlug: TENANT },
+    );
+    const second = normalizeRssEntry(
+      {
+        title: "Daily Brief",
+        link: "https://example.com/articles/second",
+        guid: "rss-guid-2",
+        summary: "Second summary.",
+      },
+      { tenantSlug: TENANT },
+    );
+
+    expect(first.slug).toMatch(/^daily-brief-/);
+    expect(second.slug).toMatch(/^daily-brief-/);
+    expect(first.slug).not.toBe(second.slug);
   });
 
   it("falls back to link when guid is absent", () => {
@@ -260,6 +285,48 @@ describe("rssProvider.ingest", () => {
 
     expect(result.upserted).toBe(2);
     expect(fetchMock).toHaveBeenCalled();
+  });
+
+  it("skips one bad feed URL and still ingests the remaining configured feeds", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("tenants", {
+        slug: TENANT,
+        name: "Demo",
+        enabledModules: ["discover"],
+        providerConfigs: {
+          rss: {
+            feeds: ["https://example.com/bad.xml", "https://example.com/good.xml"],
+          },
+        },
+      });
+    });
+
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "https://example.com/bad.xml") {
+        return {
+          ok: false,
+          status: 500,
+          text: async () => "",
+        };
+      }
+
+      return {
+        ok: true,
+        text: async () => SAMPLE_RSS,
+      };
+    });
+
+    const ctx = makeIngestCtx(t);
+    const result = await ingestRssDemand(
+      ctx,
+      { tenantSlug: TENANT, demand: { categories: [] } },
+      fetchMock as typeof fetch,
+    );
+
+    expect(result.upserted).toBe(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
 

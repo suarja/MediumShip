@@ -78,6 +78,16 @@ function splitFeedBlocks(xml: string): string[] {
   return blocks;
 }
 
+function stableSlugSuffix(externalId: string): string {
+  let hash = 0;
+
+  for (let index = 0; index < externalId.length; index += 1) {
+    hash = (hash * 31 + externalId.charCodeAt(index)) >>> 0;
+  }
+
+  return hash.toString(36).slice(0, 6).padStart(6, "0");
+}
+
 export function parseRssFeed(xml: string): RssEntryRaw[] {
   const entries: RssEntryRaw[] = [];
 
@@ -110,11 +120,8 @@ export function parseRssFeed(xml: string): RssEntryRaw[] {
 
 function slugFromRssTitle(title: string, externalId: string): string {
   const base = normalizeScoringKey(title);
-  if (base.length > 0) {
-    return base;
-  }
-
-  return normalizeScoringKey(externalId) || "rss-item";
+  const prefix = base.length > 0 ? base : normalizeScoringKey(externalId) || "rss-item";
+  return `${prefix}-${stableSlugSuffix(externalId)}`;
 }
 
 function normalizePublishedAt(publishedAt?: string): string {
@@ -199,8 +206,14 @@ export async function ingestRssDemand(
   const normalized: NormalizedRssEntry[] = [];
 
   for (const feedUrl of feedUrls) {
-    const xml = await fetchRssFeed(feedUrl, fetchImpl);
-    const entries = parseRssFeed(xml);
+    let entries: RssEntryRaw[] = [];
+
+    try {
+      const xml = await fetchRssFeed(feedUrl, fetchImpl);
+      entries = parseRssFeed(xml);
+    } catch {
+      continue;
+    }
 
     for (const entry of entries) {
       normalized.push(

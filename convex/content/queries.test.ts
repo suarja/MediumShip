@@ -57,7 +57,7 @@ describe("listPublishedByCategory", () => {
 });
 
 describe("editorial source isolation", () => {
-  it("excludes wikipedia content from listPublishedFeed and category reads", async () => {
+  it("excludes wikipedia and rss content from listPublishedFeed and category reads", async () => {
     const t = convexTest(schema, modules);
 
     await t.run(async (ctx) => {
@@ -97,6 +97,20 @@ describe("editorial source isolation", () => {
         source: "wikipedia",
         externalId: "123",
         canonicalUrl: "https://en.wikipedia.org/wiki/Example",
+      });
+      await ctx.db.insert("contents", {
+        tenantSlug: "demo-media",
+        kind: "article",
+        status: "published",
+        slug: "rss-story-abcd1234",
+        title: "RSS story",
+        summary: "External feed only",
+        category: "Analyses",
+        tags: [],
+        isPremium: false,
+        source: "rss",
+        externalId: "rss-123",
+        canonicalUrl: "https://example.com/rss-story",
       });
     });
 

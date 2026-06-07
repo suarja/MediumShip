@@ -54,6 +54,15 @@ export function CatalogSearchPanel({ ready }: CatalogSearchPanelProps) {
     () => new Set((tenantCategories ?? []).map((c) => c.slug)),
     [tenantCategories],
   );
+  const tenantCatalogNodeIds = useMemo(
+    () =>
+      new Set(
+        (tenantCategories ?? [])
+          .filter((c) => c.catalogNodeId)
+          .map((c) => c.catalogNodeId as string),
+      ),
+    [tenantCategories],
+  );
 
   const addFromCatalog = useMutation(api.cms.categories.addCategoryFromCatalog);
 
@@ -184,6 +193,7 @@ export function CatalogSearchPanel({ ready }: CatalogSearchPanelProps) {
           <CatalogSearchResults
             nodes={searchResults}
             onAdd={handleAdd}
+            tenantCatalogNodeIds={tenantCatalogNodeIds}
             tenantSlugs={tenantSlugs}
           />
         )}

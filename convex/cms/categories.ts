@@ -2,6 +2,7 @@ import { v } from "convex/values";
 
 import { mutation, query, type MutationCtx } from "../_generated/server";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
+import { pickCategoryIconKeyForSeed } from "../../src/features/categories/category-icon-catalog";
 import {
   assertCategoryIconKey,
   slugifyCategoryLabel,
@@ -257,7 +258,7 @@ export const addCategoryFromCatalog = mutation({
         tenantSlug,
         label: tenantLabel,
         slug,
-        iconKey: catalogNode.iconKey ?? "default",
+        iconKey: pickCategoryIconKeyForSeed(catalogNode._id as string),
         sortOrder: baseSortOrder + sortOffset,
         updatedAt: Date.now(),
         catalogNodeId: catalogNode._id,

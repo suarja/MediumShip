@@ -51,11 +51,8 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
   // selection and the other re-selected the global first, ping-ponging forever
   // (infinite loop). Do NOT reintroduce a content auto-select here.
 
-  useEffect(() => {
-    if (!selectedCategoryId && categories && categories.length > 0) {
-      setSelectedCategoryId(categories[0]._id);
-    }
-  }, [categories, selectedCategoryId]);
+  // Category selection is owned by CategoriesTab (filter-aware, alphabetical default).
+  // Do NOT reintroduce a dashboard-level category auto-select here.
 
   useEffect(() => {
     if (!selectedCollectionId && collections && collections.length > 0) {

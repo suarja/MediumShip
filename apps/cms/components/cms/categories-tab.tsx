@@ -24,6 +24,10 @@ function matchesQuery(item: Doc<"categories">, query: string) {
   return haystack.includes(query.trim().toLowerCase());
 }
 
+function sortAlphabetically(items: Doc<"categories">[]) {
+  return [...items].sort((left, right) => left.label.localeCompare(right.label, "fr"));
+}
+
 export function CategoriesTab({
   items,
   ready,
@@ -34,7 +38,7 @@ export function CategoriesTab({
   const [query, setQuery] = useState("");
 
   const filteredItems = useMemo(
-    () => items.filter((item) => matchesQuery(item, query)),
+    () => sortAlphabetically(items.filter((item) => matchesQuery(item, query))),
     [items, query],
   );
 
@@ -64,7 +68,9 @@ export function CategoriesTab({
         />
 
         <div className="categories-right-stack">
-          <CategoryForm key={selectedId ?? "none"} selectedId={selectedId} />
+          {selectedId ? (
+            <CategoryForm key={selectedId} selectedId={selectedId} />
+          ) : null}
           <CatalogSearchPanel ready={ready} />
         </div>
       </div>

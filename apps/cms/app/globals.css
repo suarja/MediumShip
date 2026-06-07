@@ -2925,6 +2925,11 @@ a {
   white-space: nowrap;
 }
 
+.catalog-badge-tenant--added {
+  background: var(--surface-muted);
+  color: var(--ink-mute);
+}
+
 .catalog-result-actions {
   display: flex;
   gap: 5px;
@@ -2935,6 +2940,18 @@ a {
   height: 28px;
   padding: 0 9px;
   font-size: 12px;
+}
+
+.catalog-add-btn--added:disabled {
+  opacity: 1;
+  cursor: default;
+  color: var(--ink-mute);
+  border-color: var(--border);
+  background: var(--surface-muted);
+}
+
+.catalog-result-fb--error {
+  color: var(--danger);
 }
 
 .catalog-result-fb {

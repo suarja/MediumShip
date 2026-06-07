@@ -19,37 +19,32 @@ type AddResult = { created: number; skipped: number };
 type CatalogSearchResultsProps = {
   nodes: CatalogNode[];
   tenantSlugs: Set<string>;
+  tenantCatalogNodeIds: Set<string>;
   onAdd: (catalogNodeId: string, includeDescendants: boolean) => Promise<AddResult>;
 };
 
 export function CatalogSearchResults({
   nodes,
   tenantSlugs,
+  tenantCatalogNodeIds,
   onAdd,
 }: CatalogSearchResultsProps) {
   const [pending, setPending] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<Map<string, string>>(new Map());
+  const [errorFeedback, setErrorFeedback] = useState<Map<string, string>>(new Map());
 
   const handleAdd = async (nodeId: string, includeDescendants: boolean) => {
     const key = `${nodeId}:${includeDescendants ? "d" : "n"}`;
     setPending(key);
     try {
-      const result = await onAdd(nodeId, includeDescendants);
-      const msg =
-        result.created > 0
-          ? `✓ ${result.created} ajouté${result.created > 1 ? "s" : ""}${result.skipped > 0 ? `, ${result.skipped} ignoré${result.skipped > 1 ? "s" : ""}` : ""}`
-          : `Déjà présent (${result.skipped} ignoré${result.skipped > 1 ? "s" : ""})`;
-      setFeedback((prev) => new Map(prev).set(nodeId, msg));
-      setTimeout(() => {
-        setFeedback((prev) => {
-          const next = new Map(prev);
-          next.delete(nodeId);
-          return next;
-        });
-      }, 3500);
+      await onAdd(nodeId, includeDescendants);
+      setErrorFeedback((prev) => {
+        const next = new Map(prev);
+        next.delete(nodeId);
+        return next;
+      });
     } catch (err) {
       const msg = `Erreur : ${err instanceof Error ? err.message : "inconnue"}`;
-      setFeedback((prev) => new Map(prev).set(nodeId, msg));
+      setErrorFeedback((prev) => new Map(prev).set(nodeId, msg));
     } finally {
       setPending(null);
     }
@@ -60,9 +55,11 @@ export function CatalogSearchResults({
   return (
     <ul className="catalog-results">
       {nodes.map((node) => {
-        const inTenant = tenantSlugs.has(node.slug);
+        const inTenant =
+          tenantCatalogNodeIds.has(node._id) || tenantSlugs.has(node.slug);
         const indentPx = Math.max(0, node.depth - 1) * 20;
-        const fb = feedback.get(node._id);
+        const fb = errorFeedback.get(node._id);
+        const isPending = pending?.startsWith(`${node._id}:`) ?? false;
 
         return (
           <li
@@ -84,30 +81,38 @@ export function CatalogSearchResults({
                 )}
               <span className="catalog-result-ext">{node.externalId}</span>
               {inTenant && (
-                <span className="catalog-badge-tenant">Déjà dans le tenant</span>
+                <span className="catalog-badge-tenant catalog-badge-tenant--added">
+                  Ajouté au tenant
+                </span>
               )}
             </div>
 
             {fb ? (
-              <span className="catalog-result-fb">{fb}</span>
+              <span className="catalog-result-fb catalog-result-fb--error">{fb}</span>
             ) : node.canAdd ? (
               <div className="catalog-result-actions">
                 <button
-                  className="ghost-button catalog-add-btn"
-                  disabled={pending !== null}
+                  aria-disabled={inTenant}
+                  className={`ghost-button catalog-add-btn${inTenant ? " catalog-add-btn--added" : ""}`}
+                  disabled={inTenant || pending !== null}
                   onClick={() => void handleAdd(node._id, false)}
                   type="button"
                 >
-                  Ajouter
+                  {inTenant ? "Ajouté" : isPending && pending?.endsWith(":n") ? "…" : "Ajouter"}
                 </button>
                 <button
-                  className="ghost-button catalog-add-btn"
-                  disabled={pending !== null}
+                  aria-disabled={inTenant}
+                  className={`ghost-button catalog-add-btn${inTenant ? " catalog-add-btn--added" : ""}`}
+                  disabled={inTenant || pending !== null}
                   onClick={() => void handleAdd(node._id, true)}
                   title="Inclut tous les descendants (sans les racines IPTC)"
                   type="button"
                 >
-                  + dérivés
+                  {inTenant
+                    ? "Ajouté"
+                    : isPending && pending?.endsWith(":d")
+                      ? "…"
+                      : "+ dérivés"}
                 </button>
               </div>
             ) : (

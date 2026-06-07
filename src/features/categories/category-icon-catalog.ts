@@ -39,3 +39,19 @@ export function getCategoryIconGlyph(iconKey: string): string {
 }
 
 export const CATEGORY_ICON_KEYS = CATEGORY_ICON_CATALOG.map((entry) => entry.key);
+
+const SELECTABLE_ICON_KEYS = CATEGORY_ICON_CATALOG.map((entry) => entry.key).filter(
+  (key) => key !== "default",
+) as Exclude<CategoryIconKey, "default">[];
+
+/** Stable pseudo-random icon from a seed (e.g. catalog node id). */
+export function pickCategoryIconKeyForSeed(seed: string): CategoryIconKey {
+  let hash = 2_166_136_261;
+
+  for (let index = 0; index < seed.length; index += 1) {
+    hash ^= seed.charCodeAt(index);
+    hash = Math.imul(hash, 1_677_761_9);
+  }
+
+  return SELECTABLE_ICON_KEYS[Math.abs(hash) % SELECTABLE_ICON_KEYS.length] ?? "default";
+}

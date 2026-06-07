@@ -10,6 +10,7 @@ const initialMetrics = {
 };
 
 jest.mock("convex/react", () => ({
+  useConvexAuth: () => ({ isAuthenticated: false, isLoading: false }),
   useMutation: () => jest.fn().mockResolvedValue(undefined),
   useQuery: () => ({
     name: "Demo Media",

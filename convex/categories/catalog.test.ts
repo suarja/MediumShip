@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { internal } from "../_generated/api";
 import schema from "../schema";
 import { modules } from "../../convexTestModules";
-import { parseIptcJson, type RawIptcNode } from "./catalog-import";
+import { parseIptcJson, type RawIptcNode } from "./catalogImport";
 import fixture from "./fixtures/iptc-mediatopic-sample.json";
 
 // ─── parseIptcJson ────────────────────────────────────────────────────────────

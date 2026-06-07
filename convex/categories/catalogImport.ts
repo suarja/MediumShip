@@ -101,25 +101,30 @@ const IPTC_DEFAULT_URL = "http://cv.iptc.org/newscodes/mediatopic/?format=json";
 /**
  * Internal action: fetch IPTC Media Topics JSON, parse it, and upsert into
  * the `categoryCatalog` table.  Run once manually:
- *   npx convex run categories/catalog-import:importIptcMediaTopics
+ *   npx convex run categories/catalogImport:importIptcMediaTopics
  */
 export const importIptcMediaTopics = internalAction({
   args: {
     /** Override the IPTC URL (useful for pointing at a cached copy). */
     url: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ parsed: number; imported: number }> => {
     const url = args.url ?? IPTC_DEFAULT_URL;
     const response = await fetch(url, {
       headers: { Accept: "application/json" },
     });
     if (!response.ok) {
-      throw new Error(`IPTC fetch failed: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `IPTC fetch failed: ${response.status} ${response.statusText}`,
+      );
     }
     const json = (await response.json()) as unknown;
     const nodes = parseIptcJson(json);
 
-    const imported = await ctx.runMutation(
+    const imported: number = await ctx.runMutation(
       internal.categories.catalog.upsertCatalogNodes,
       { nodes },
     );

@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { api, internal } from "../_generated/api";
 import schema from "../schema";
 import { modules } from "../../convexTestModules";
-import { parseIptcJson } from "./catalog-import";
+import { parseIptcJson, type RawIptcNode } from "./catalogImport";
 import fixture from "./fixtures/iptc-mediatopic-sample.json";
 
 const TENANT = "demo-media";
@@ -24,9 +24,7 @@ async function seedAdmin(t: ReturnType<typeof convexTest>) {
 
 /** Seed the catalog from the fixture and return the catalog rows. */
 async function seedCatalog(t: ReturnType<typeof convexTest>) {
-  const nodes = parseIptcJson(fixture) as Parameters<
-    typeof internal.categories.catalog.upsertCatalogNodes
-  >[0]["nodes"];
+  const nodes = parseIptcJson(fixture) as RawIptcNode[];
   await t.mutation(internal.categories.catalog.upsertCatalogNodes, { nodes });
   return t.run((ctx) => ctx.db.query("categoryCatalog").collect());
 }

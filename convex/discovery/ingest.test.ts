@@ -9,6 +9,7 @@ import { aggregateCategoryAffinities } from "./fetchDemand";
 import { SERENDIPITY_PER_RUN } from "./ingest";
 import { rssProvider } from "./providers/rss";
 import { wikipediaProvider, WIKIPEDIA_PAGES_PER_CATEGORY } from "./providers/wikipedia";
+import { youtubeProvider } from "./providers/youtube";
 
 const TENANT = "demo-media";
 
@@ -236,12 +237,15 @@ describe("runDiscoveryIngestion multi-provider seam", () => {
     vi.restoreAllMocks();
   });
 
-  it("drives wikipedia and rss with the same demand; rss no-ops when unconfigured", async () => {
+  it("drives wikipedia, rss, and youtube with the same demand; rss/youtube no-op when unconfigured paths apply", async () => {
     const t = convexTest(schema, modules);
     const wikipediaSpy = vi
       .spyOn(wikipediaProvider, "ingest")
       .mockResolvedValue({ upserted: 1 });
     const rssSpy = vi.spyOn(rssProvider, "ingest").mockResolvedValue({ upserted: 0 });
+    const youtubeSpy = vi
+      .spyOn(youtubeProvider, "ingest")
+      .mockResolvedValue({ upserted: 0 });
 
     await t.run(async (ctx) => {
       await ctx.db.insert("tenants", {
@@ -266,10 +270,13 @@ describe("runDiscoveryIngestion multi-provider seam", () => {
 
     expect(wikipediaSpy).toHaveBeenCalledOnce();
     expect(rssSpy).toHaveBeenCalledOnce();
+    expect(youtubeSpy).toHaveBeenCalledOnce();
 
     const wikipediaArgs = wikipediaSpy.mock.calls[0]![1];
     const rssArgs = rssSpy.mock.calls[0]![1];
+    const youtubeArgs = youtubeSpy.mock.calls[0]![1];
     expect(wikipediaArgs).toEqual(rssArgs);
+    expect(youtubeArgs).toEqual(rssArgs);
     expect(wikipediaArgs.demand.categories).toContain("science");
     expect(wikipediaArgs).not.toHaveProperty("wikipediaLocale");
   });

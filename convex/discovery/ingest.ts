@@ -38,7 +38,27 @@ const ingestedContentValidator = v.object({
   isPremium: v.boolean(),
   heroImageUrl: v.optional(v.string()),
   publishedAt: v.optional(v.string()),
-  source: v.union(v.literal("cms"), v.literal("wikipedia"), v.literal("rss")),
+  durationSeconds: v.optional(v.number()),
+  videoSource: v.optional(
+    v.union(
+      v.object({
+        kind: v.literal("youtube"),
+        youtubeVideoId: v.string(),
+        youtubeUrl: v.string(),
+      }),
+      v.object({
+        kind: v.literal("hosted"),
+        uploadKey: v.string(),
+        playbackUrl: v.string(),
+      }),
+    ),
+  ),
+  source: v.union(
+    v.literal("cms"),
+    v.literal("wikipedia"),
+    v.literal("rss"),
+    v.literal("youtube"),
+  ),
   externalId: v.string(),
   canonicalUrl: v.string(),
 });
@@ -69,6 +89,66 @@ export const upsertIngested = internalMutation({
     }
 
     return { upserted };
+  },
+});
+
+export const filterNewExternalIds = internalQuery({
+  args: {
+    tenantSlug: v.string(),
+    source: v.union(
+      v.literal("cms"),
+      v.literal("wikipedia"),
+      v.literal("rss"),
+      v.literal("youtube"),
+    ),
+    externalIds: v.array(v.string()),
+  },
+  returns: v.array(v.string()),
+  handler: async (ctx, { tenantSlug, source, externalIds }) => {
+    const novel: string[] = [];
+
+    for (const externalId of externalIds) {
+      const existing = await ctx.db
+        .query("contents")
+        .withIndex("by_tenant_source_external", (q) =>
+          q
+            .eq("tenantSlug", tenantSlug)
+            .eq("source", source)
+            .eq("externalId", externalId),
+        )
+        .unique();
+
+      if (!existing) {
+        novel.push(externalId);
+      }
+    }
+
+    return novel;
+  },
+});
+
+export const listIngestedExternalIds = internalQuery({
+  args: {
+    tenantSlug: v.string(),
+    source: v.union(
+      v.literal("cms"),
+      v.literal("wikipedia"),
+      v.literal("rss"),
+      v.literal("youtube"),
+    ),
+  },
+  returns: v.array(v.string()),
+  handler: async (ctx, { tenantSlug, source }) => {
+    const rows = await ctx.db
+      .query("contents")
+      .withIndex("by_tenant_source_external", (q) =>
+        q.eq("tenantSlug", tenantSlug).eq("source", source),
+      )
+      .collect();
+
+    return rows
+      .map((row) => row.externalId)
+      .filter((id): id is string => typeof id === "string" && id.length > 0);
   },
 });
 

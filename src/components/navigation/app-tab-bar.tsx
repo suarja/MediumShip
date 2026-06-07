@@ -8,12 +8,25 @@ import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
-const TAB_META: Record<string, { icon: string; labelKey: string }> = {
+type TabLabelKey =
+  | "home"
+  | "discover"
+  | "explore"
+  | "library"
+  | "profile"
+  | "collections"
+  | "agenda"
+  | "community";
+
+const TAB_META: Record<string, { icon: string; labelKey: TabLabelKey }> = {
   home: { icon: "◉", labelKey: "home" },
   discover: { icon: "◎", labelKey: "discover" },
   explore: { icon: "⌕", labelKey: "explore" },
   library: { icon: "▤", labelKey: "library" },
   profile: { icon: "○", labelKey: "profile" },
+  collections: { icon: "▦", labelKey: "collections" },
+  agenda: { icon: "◷", labelKey: "agenda" },
+  community: { icon: "◈", labelKey: "community" },
 };
 
 const PILL_HEIGHT = 72;

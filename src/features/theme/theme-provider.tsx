@@ -4,6 +4,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import {
   resolveEffectiveFeatureConfigs,
+  resolveEffectiveNavigation,
   type FeatureKey,
   type TenantFeatureConfig,
 } from "../../../convex/featureCatalog";
@@ -30,6 +31,8 @@ type ThemeContextValue = {
   tenantName: string;
   enabledModules: EnabledModule[];
   featureConfigs: Record<FeatureKey, TenantFeatureConfig>;
+  effectiveNavigation: FeatureKey[];
+  navOrder: string[];
   feedSections: FeedSectionConfig[];
   isLoading: boolean;
 };
@@ -45,6 +48,13 @@ const fallbackValue: ThemeContextValue = {
   featureConfigs: resolveEffectiveFeatureConfigs({
     enabledModules: defaultTenant.enabledModules,
   }),
+  effectiveNavigation: resolveEffectiveNavigation(
+    resolveEffectiveFeatureConfigs({
+      enabledModules: defaultTenant.enabledModules,
+    }),
+    defaultTenant.navOrder,
+  ),
+  navOrder: defaultTenant.navOrder,
   feedSections: defaultTenant.feedSections,
   isLoading: false,
 };
@@ -66,6 +76,8 @@ export function AppThemeProvider({ children }: PropsWithChildren) {
       featureConfigs: tenant?.featureConfigs,
       enabledModules,
     });
+    const navOrder = tenant?.navOrder ?? defaultTenant.navOrder;
+    const effectiveNavigation = resolveEffectiveNavigation(featureConfigs, navOrder);
     const feedSections = tenant?.feedSections ?? defaultTenant.feedSections;
 
     return {
@@ -77,6 +89,8 @@ export function AppThemeProvider({ children }: PropsWithChildren) {
       tenantName: tenant?.name ?? defaultTenant.name,
       enabledModules,
       featureConfigs,
+      effectiveNavigation,
+      navOrder,
       feedSections,
       isLoading: tenant === undefined,
     };

@@ -2522,6 +2522,26 @@ a {
   }
 }
 
+.dev-checkbox-field {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.dev-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.dev-checkbox-row input {
+  width: 16px;
+  height: 16px;
+}
+
 .panel-title {
   font-family: var(--font-display);
   font-size: 22px;

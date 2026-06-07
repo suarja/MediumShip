@@ -4,6 +4,9 @@ export type CatalogLocale = (typeof CATALOG_LOCALES)[number];
 export const WIKIPEDIA_LOCALES = ["en", "fr"] as const;
 export type WikipediaLocale = (typeof WIKIPEDIA_LOCALES)[number];
 
+export const YOUTUBE_LOCALES = ["en", "fr"] as const;
+export type YouTubeLocale = (typeof YOUTUBE_LOCALES)[number];
+
 export function resolveCatalogDisplayLabel(
   node: { label: string; labelFr?: string },
   locale: CatalogLocale,

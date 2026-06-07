@@ -21,6 +21,18 @@ describe("cmsProvider", () => {
 
     expect(result).toEqual({ upserted: 0 });
   });
+
+  it("ingest port accepts only tenantSlug and demand", async () => {
+    const args = {
+      tenantSlug: "demo-media",
+      demand: { categories: ["science"], coldStart: true },
+    };
+
+    const result = await cmsProvider.ingest(noopCtx, args);
+
+    expect(result).toEqual({ upserted: 0 });
+    expect(args).not.toHaveProperty("wikipediaLocale");
+  });
 });
 
 describe("PROVIDERS registry", () => {

@@ -7,7 +7,7 @@ import schema from "../schema";
 import { modules } from "../../convexTestModules";
 import { aggregateCategoryAffinities } from "./fetchDemand";
 import { SERENDIPITY_PER_RUN } from "./ingest";
-import { WIKIPEDIA_PAGES_PER_CATEGORY } from "./providers/wikipedia";
+import { wikipediaProvider, WIKIPEDIA_PAGES_PER_CATEGORY } from "./providers/wikipedia";
 
 const TENANT = "demo-media";
 
@@ -154,6 +154,68 @@ describe("getTenantIngestionInputs", () => {
 
     expect(inputs.aggregatedAffinities).toEqual([]);
     expect(inputs.seedCategories).toEqual(["Science"]);
+  });
+
+  it("returns only aggregatedAffinities and seedCategories (no provider locale)", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("tenants", {
+        slug: TENANT,
+        name: "Demo",
+        enabledModules: ["discover"],
+        wikipediaLocale: "fr",
+      });
+    });
+
+    const inputs = await t.query(internal.discovery.ingest.getTenantIngestionInputs, {
+      tenantSlug: TENANT,
+    });
+
+    expect(Object.keys(inputs).sort()).toEqual([
+      "aggregatedAffinities",
+      "seedCategories",
+    ]);
+    expect(inputs).not.toHaveProperty("wikipediaLocale");
+  });
+});
+
+describe("provider-agnostic orchestration", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("runRefillIngestion calls provider.ingest without wikipediaLocale", async () => {
+    const t = convexTest(schema, modules);
+    const ingestSpy = vi
+      .spyOn(wikipediaProvider, "ingest")
+      .mockResolvedValue({ upserted: 0 });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("tenants", {
+        slug: TENANT,
+        name: "Demo",
+        enabledModules: ["discover"],
+        wikipediaLocale: "fr",
+      });
+    });
+
+    await t.action(internal.discovery.ingest.runRefillIngestion, {
+      tenantSlug: TENANT,
+      category: "science",
+    });
+
+    expect(ingestSpy).toHaveBeenCalledOnce();
+    const [, ingestArgs] = ingestSpy.mock.calls[0]!;
+    expect(ingestArgs).toEqual({
+      tenantSlug: TENANT,
+      demand: {
+        categories: ["science"],
+        coldStart: undefined,
+      },
+    });
+    expect(ingestArgs).not.toHaveProperty("wikipediaLocale");
   });
 });
 

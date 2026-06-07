@@ -145,14 +145,8 @@ export const getTenantIngestionInputs = internalQuery({
       }),
     ),
     seedCategories: v.array(v.string()),
-    wikipediaLocale: v.union(v.literal("en"), v.literal("fr")),
   }),
   handler: async (ctx, { tenantSlug }) => {
-    const tenant = await ctx.db
-      .query("tenants")
-      .withIndex("by_slug", (q) => q.eq("slug", tenantSlug))
-      .unique();
-
     const taxonomyRows = await ctx.db
       .query("categories")
       .withIndex("by_tenantSlug", (q) => q.eq("tenantSlug", tenantSlug))
@@ -183,7 +177,6 @@ export const getTenantIngestionInputs = internalQuery({
     return {
       aggregatedAffinities,
       seedCategories,
-      wikipediaLocale: tenant?.wikipediaLocale ?? "en",
     };
   },
 });
@@ -207,7 +200,6 @@ export const runDiscoveryIngestion = internalAction({
       const inputs: {
         aggregatedAffinities: Array<{ targetId: string; score: number }>;
         seedCategories: string[];
-        wikipediaLocale: "en" | "fr";
       } = await ctx.runQuery(internal.discovery.ingest.getTenantIngestionInputs, {
         tenantSlug: tenant.slug,
       });
@@ -237,7 +229,6 @@ export const runDiscoveryIngestion = internalAction({
         const result: { upserted: number } = await provider.ingest(ctx, {
           tenantSlug: tenant.slug,
           demand,
-          wikipediaLocale: inputs.wikipediaLocale,
         });
         totalUpserted += result.upserted;
       }
@@ -255,11 +246,6 @@ export const runRefillIngestion = internalAction({
   },
   returns: v.object({ upserted: v.number() }),
   handler: async (ctx, args) => {
-    const inputs: { wikipediaLocale: "en" | "fr" } = await ctx.runQuery(
-      internal.discovery.ingest.getTenantIngestionInputs,
-      { tenantSlug: args.tenantSlug },
-    );
-
     for (const provider of PROVIDERS) {
       if (provider.source === "cms") {
         continue;
@@ -271,7 +257,6 @@ export const runRefillIngestion = internalAction({
           categories: [args.category],
           coldStart: args.coldStart,
         },
-        wikipediaLocale: inputs.wikipediaLocale,
       });
 
       return result;

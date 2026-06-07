@@ -1,3 +1,4 @@
+import { internalQuery } from "../_generated/server";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 
 type CmsCtx = QueryCtx | MutationCtx;
@@ -59,3 +60,12 @@ export async function requireCmsAdmin(ctx: CmsCtx) {
 
   return viewer;
 }
+
+/** Auth gate for CMS actions that call `ctx.runQuery` before side effects. */
+export const assertCmsAdmin = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    await requireCmsAdmin(ctx);
+    return true;
+  },
+});

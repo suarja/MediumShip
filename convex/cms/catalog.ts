@@ -1,8 +1,25 @@
 import { v } from "convex/values";
 
-import { mutation, query } from "../_generated/server";
+import { action, mutation, query } from "../_generated/server";
 import { internal } from "../_generated/api";
+import {
+  CATALOG_LOCALES,
+  WIKIPEDIA_LOCALES,
+} from "../categories/catalogLocale";
+import {
+  readCategoryCatalogStats,
+  searchCategoryCatalogNodes,
+} from "../categories/catalogRead";
+import { defaultTenant } from "../../src/features/tenant/default-tenant";
 import { requireCmsAdmin } from "./authz";
+
+async function getTenantCatalogLocale(ctx: Parameters<typeof requireCmsAdmin>[0]) {
+  const tenant = await ctx.db
+    .query("tenants")
+    .withIndex("by_slug", (q) => q.eq("slug", defaultTenant.slug))
+    .unique();
+  return tenant?.catalogLocale ?? "en";
+}
 
 /**
  * Returns aggregate stats for the global `categoryCatalog`.
@@ -12,103 +29,95 @@ export const getCategoryCatalogStats = query({
   args: {},
   handler: async (ctx) => {
     await requireCmsAdmin(ctx);
-
-    const all = await ctx.db.query("categoryCatalog").take(5000);
-    const retired = all.filter((n) => n.retired).length;
-    const active = all.length - retired;
-
-    return { total: all.length, active, retired };
+    return await readCategoryCatalogStats(ctx);
   },
 });
 
 /**
  * Search the global catalog by label (accent-insensitive, depth cap 3).
- * Returns an empty array when `query` is blank.
+ * Root nodes (depth 0) are excluded — too broad for tenant taxonomy.
  * CMS admin only.
  */
 export const searchCategoryCatalogForCms = query({
   args: {
     query: v.string(),
   },
-  handler: async (ctx, args): Promise<
-    Array<{
-      _id: string;
-      label: string;
-      depth: number;
-      externalId: string;
-      slug: string;
-      labelFr?: string;
-      retired: boolean;
-    }>
-  > => {
+  handler: async (ctx, args) => {
     await requireCmsAdmin(ctx);
-
     if (!args.query.trim()) return [];
 
-    const results = await ctx.runQuery(
-      internal.categories.catalog.searchCategoryCatalog,
-      { query: args.query, maxDepth: 3 },
-    );
-
-    return (results.filter(Boolean) as NonNullable<(typeof results)[number]>[]).map(
-      (n) => ({
-        _id: n._id as string,
-        label: n.label,
-        depth: n.depth,
-        externalId: n.externalId,
-        slug: n.slug,
-        ...(n.labelFr !== undefined && { labelFr: n.labelFr }),
-        retired: n.retired ?? false,
-      }),
-    );
+    const locale = await getTenantCatalogLocale(ctx);
+    return await searchCategoryCatalogNodes(ctx, args.query, {
+      maxDepth: 3,
+      minDepth: 1,
+      locale,
+    });
   },
 });
 
 /**
- * List depth-0 (root) catalog nodes for the L1-chip hybrid entry.
+ * Discovery locale settings for CMS (catalog labels + Wikipedia ingestion).
  * CMS admin only.
  */
-export const listCategoryCatalogRootsForCms = query({
+export const getDiscoveryLocales = query({
   args: {},
-  handler: async (ctx): Promise<
-    Array<{
-      _id: string;
-      label: string;
-      depth: number;
-      externalId: string;
-      slug: string;
-      labelFr?: string;
-      retired: boolean;
-    }>
-  > => {
+  handler: async (ctx) => {
     await requireCmsAdmin(ctx);
 
-    const roots = await ctx.runQuery(
-      internal.categories.catalog.listCategoryCatalogRoots,
-      {},
-    );
+    const tenant = await ctx.db
+      .query("tenants")
+      .withIndex("by_slug", (q) => q.eq("slug", defaultTenant.slug))
+      .unique();
 
-    return roots.map((n) => ({
-      _id: n._id as string,
-      label: n.label,
-      depth: n.depth,
-      externalId: n.externalId,
-      slug: n.slug,
-      ...(n.labelFr !== undefined && { labelFr: n.labelFr }),
-      retired: n.retired ?? false,
-    }));
+    return {
+      catalogLocale: tenant?.catalogLocale ?? "en",
+      wikipediaLocale: tenant?.wikipediaLocale ?? "en",
+    };
+  },
+});
+
+export const updateDiscoveryLocales = mutation({
+  args: {
+    catalogLocale: v.union(...CATALOG_LOCALES.map((locale) => v.literal(locale))),
+    wikipediaLocale: v.union(
+      ...WIKIPEDIA_LOCALES.map((locale) => v.literal(locale)),
+    ),
+  },
+  handler: async (ctx, args) => {
+    await requireCmsAdmin(ctx);
+
+    const tenant = await ctx.db
+      .query("tenants")
+      .withIndex("by_slug", (q) => q.eq("slug", defaultTenant.slug))
+      .unique();
+
+    if (tenant) {
+      await ctx.db.patch(tenant._id, {
+        catalogLocale: args.catalogLocale,
+        wikipediaLocale: args.wikipediaLocale,
+      });
+      return tenant._id;
+    }
+
+    return await ctx.db.insert("tenants", {
+      slug: defaultTenant.slug,
+      name: defaultTenant.name,
+      enabledModules: defaultTenant.enabledModules,
+      feedSections: defaultTenant.feedSections,
+      themeConfig: defaultTenant.themeConfig,
+      catalogLocale: args.catalogLocale,
+      wikipediaLocale: args.wikipediaLocale,
+    });
   },
 });
 
 /**
  * Schedule an async IPTC Media Topics import into `categoryCatalog`.
- * The import runs in a Node action (network + large write); this mutation
- * only enqueues it so the CMS response stays fast.
+ * Prefer `importIptcForCms` from the CMS UI for immediate success/error feedback.
  * CMS admin only.
  */
 export const triggerIptcImport = mutation({
   args: {
-    /** Override the IPTC URL — useful for pointing at a cached JSON copy. */
     url: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -121,5 +130,27 @@ export const triggerIptcImport = mutation({
     );
 
     return { scheduled: true };
+  },
+});
+
+/**
+ * Fetch IPTC Media Topics and upsert them into `categoryCatalog`.
+ * Runs synchronously so the CMS can surface fetch/parse failures immediately.
+ * CMS admin only.
+ */
+export const importIptcForCms = action({
+  args: {
+    url: v.optional(v.string()),
+  },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ parsed: number; imported: number }> => {
+    await ctx.runQuery(internal.cms.authz.assertCmsAdmin, {});
+    const result: { parsed: number; imported: number } = await ctx.runAction(
+      internal.categories.catalogImport.importIptcMediaTopics,
+      { url: args.url },
+    );
+    return result;
   },
 });

@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { api, internal } from "../_generated/api";
 import schema from "../schema";
 import { modules } from "../../convexTestModules";
-import { parseIptcJson, type RawIptcNode } from "./catalogImport";
+import { parseIptcJson, type RawIptcNode } from "./catalogImportParse";
 import fixture from "./fixtures/iptc-mediatopic-sample.json";
 
 const TENANT = "demo-media";
@@ -275,18 +275,18 @@ describe("searchTenantCategories", () => {
 // ─── addCategoryFromCatalog ───────────────────────────────────────────────────
 
 describe("addCategoryFromCatalog", () => {
-  it("copies a single catalog node into tenant categories", async () => {
+  it("copies a depth-1 catalog node into tenant categories", async () => {
     const t = convexTest(schema, modules);
     await seedAdmin(t);
     const catalogRows = await seedCatalog(t);
 
-    const economy = catalogRows.find((r) => r.externalId === "medtop:20000344")!;
-    expect(economy).toBeDefined();
+    const investments = catalogRows.find((r) => r.externalId === "medtop:20000346")!;
+    expect(investments).toBeDefined();
 
     const asAdmin = t.withIdentity(ADMIN);
     const result = await asAdmin.mutation(api.cms.categories.addCategoryFromCatalog, {
       tenantSlug: TENANT,
-      catalogNodeId: economy._id,
+      catalogNodeId: investments._id,
       includeDescendants: false,
     });
 
@@ -300,10 +300,25 @@ describe("addCategoryFromCatalog", () => {
         .collect(),
     );
     expect(tenantRows).toHaveLength(1);
-    expect(tenantRows[0]?.label).toBe("Economy, Business and Finance");
-    expect(tenantRows[0]?.catalogNodeId).toBe(economy._id);
-    expect(tenantRows[0]?.depth).toBe(0);
+    expect(tenantRows[0]?.label).toBe("Investments");
+    expect(tenantRows[0]?.catalogNodeId).toBe(investments._id);
+    expect(tenantRows[0]?.depth).toBe(1);
     expect(tenantRows[0]?.isSelectable).toBe(true);
+  });
+
+  it("rejects IPTC root nodes (depth 0)", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const catalogRows = await seedCatalog(t);
+    const economy = catalogRows.find((r) => r.externalId === "medtop:20000344")!;
+    const asAdmin = t.withIdentity(ADMIN);
+
+    await expect(
+      asAdmin.mutation(api.cms.categories.addCategoryFromCatalog, {
+        tenantSlug: TENANT,
+        catalogNodeId: economy._id,
+      }),
+    ).rejects.toThrow("trop larges");
   });
 
   it("copies a subtree with includeDescendants=true, remapping parentId", async () => {
@@ -311,12 +326,12 @@ describe("addCategoryFromCatalog", () => {
     await seedAdmin(t);
     const catalogRows = await seedCatalog(t);
 
-    const economy = catalogRows.find((r) => r.externalId === "medtop:20000344")!;
+    const investments = catalogRows.find((r) => r.externalId === "medtop:20000346")!;
     const asAdmin = t.withIdentity(ADMIN);
 
     await asAdmin.mutation(api.cms.categories.addCategoryFromCatalog, {
       tenantSlug: TENANT,
-      catalogNodeId: economy._id,
+      catalogNodeId: investments._id,
       includeDescendants: true,
     });
 
@@ -327,17 +342,15 @@ describe("addCategoryFromCatalog", () => {
         .collect(),
     );
 
-    // economy + investments (ETF is retired but still in catalog with depth=2,
-    // since we copy from catalog regardless of retired flag for creator use)
     const labels = tenantRows.map((r) => r.label);
-    expect(labels).toContain("Economy, Business and Finance");
     expect(labels).toContain("Investments");
+    expect(labels).toContain("ETF");
+    expect(labels).not.toContain("Economy, Business and Finance");
 
-    // Verify parent linking
-    const economyTenant = tenantRows.find((r) => r.label === "Economy, Business and Finance")!;
     const investmentsTenant = tenantRows.find((r) => r.label === "Investments")!;
-    expect(investmentsTenant?.parentId).toBe(economyTenant?._id);
-    expect(investmentsTenant?.depth).toBe(1);
+    const etfTenant = tenantRows.find((r) => r.label === "ETF")!;
+    expect(etfTenant?.parentId).toBe(investmentsTenant?._id);
+    expect(etfTenant?.depth).toBe(2);
   });
 
   it("skips duplicate slugs on re-run (idempotent)", async () => {
@@ -345,16 +358,16 @@ describe("addCategoryFromCatalog", () => {
     await seedAdmin(t);
     const catalogRows = await seedCatalog(t);
 
-    const economy = catalogRows.find((r) => r.externalId === "medtop:20000344")!;
+    const investments = catalogRows.find((r) => r.externalId === "medtop:20000346")!;
     const asAdmin = t.withIdentity(ADMIN);
 
     const first = await asAdmin.mutation(api.cms.categories.addCategoryFromCatalog, {
       tenantSlug: TENANT,
-      catalogNodeId: economy._id,
+      catalogNodeId: investments._id,
     });
     const second = await asAdmin.mutation(api.cms.categories.addCategoryFromCatalog, {
       tenantSlug: TENANT,
-      catalogNodeId: economy._id,
+      catalogNodeId: investments._id,
     });
 
     expect(first.created).toBe(1);
@@ -373,7 +386,7 @@ describe("addCategoryFromCatalog", () => {
   it("rejects non-admin callers", async () => {
     const t = convexTest(schema, modules);
     const catalogRows = await seedCatalog(t);
-    const economy = catalogRows.find((r) => r.externalId === "medtop:20000344")!;
+    const investments = catalogRows.find((r) => r.externalId === "medtop:20000346")!;
 
     const asMember = t.withIdentity({
       subject: "member_1",
@@ -383,7 +396,7 @@ describe("addCategoryFromCatalog", () => {
     await expect(
       asMember.mutation(api.cms.categories.addCategoryFromCatalog, {
         tenantSlug: TENANT,
-        catalogNodeId: economy._id,
+        catalogNodeId: investments._id,
       }),
     ).rejects.toThrow();
   });
@@ -417,13 +430,13 @@ describe("Slice I regression — setCategoryInterests + getDiscoveryFeed", () =>
     await seedAdmin(t);
     const catalogRows = await seedCatalog(t);
 
-    const economy = catalogRows.find((r) => r.externalId === "medtop:20000344")!;
+    const investments = catalogRows.find((r) => r.externalId === "medtop:20000346")!;
     const asAdmin = t.withIdentity(ADMIN);
 
     await asAdmin.mutation(api.cms.categories.addCategoryFromCatalog, {
       tenantSlug: TENANT,
-      catalogNodeId: economy._id,
-      includeDescendants: true,
+      catalogNodeId: investments._id,
+      includeDescendants: false,
     });
 
     const asMember = t.withIdentity({
@@ -433,14 +446,13 @@ describe("Slice I regression — setCategoryInterests + getDiscoveryFeed", () =>
 
     await asMember.mutation(api.categories.interests.setCategoryInterests, {
       tenantSlug: TENANT,
-      categoryKeys: ["Economy, Business and Finance"],
+      categoryKeys: ["Investments"],
     });
 
     const interests = await asMember.query(
       api.categories.interests.getMyCategoryInterests,
       { tenantSlug: TENANT },
     );
-    // normalizeScoringKey("Economy, Business and Finance") → "economy-business-and-finance"
-    expect(interests).toContain("economy-business-and-finance");
+    expect(interests).toContain("investments");
   });
 });

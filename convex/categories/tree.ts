@@ -11,6 +11,8 @@ export type TreeNode = {
   parentId?: string | null;
   depth: number;
   label: string;
+  /** Extra labels to match (e.g. localized alt). Primary display still uses `label`. */
+  altLabels?: string[];
 };
 
 /**
@@ -86,7 +88,12 @@ export function buildSearchResults<T extends TreeNode>(
   if (!normalized) return [];
 
   const matchIds = nodes
-    .filter((n) => normalizeSearchQuery(n.label).includes(normalized))
+    .filter((n) => {
+      const haystacks = [n.label, ...(n.altLabels ?? [])];
+      return haystacks.some((label) =>
+        normalizeSearchQuery(label).includes(normalized),
+      );
+    })
     .map((n) => n.id);
 
   const seen = new Set<string>();

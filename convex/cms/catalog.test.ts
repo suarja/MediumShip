@@ -113,20 +113,50 @@ describe("cms/catalog — searchCategoryCatalogForCms", () => {
     expect(results).toEqual([]);
   });
 
-  it("returns matching nodes (accent-insensitive) with descendants", async () => {
+  it("excludes root nodes and returns addable children", async () => {
     const t = convexTest(schema, modules);
     await seedAdmin(t);
     await seedCatalogNodes(t);
 
     const asAdmin = t.withIdentity(ADMIN);
-    // "econom" should match "Economy" (root) and its child "Finance"
     const results = await asAdmin.query(
       api.cms.catalog.searchCategoryCatalogForCms,
       { query: "econom" },
     );
     expect(results.length).toBeGreaterThanOrEqual(1);
+    expect(results.every((r) => r.depth >= 1)).toBe(true);
+    expect(results.every((r) => r.canAdd)).toBe(true);
     const labels = results.map((r) => r.label);
-    expect(labels).toContain("Economy");
+    expect(labels).toContain("Finance");
+    expect(labels).not.toContain("Economy");
+  });
+
+  it("matches French labels when present", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("categoryCatalog", {
+        externalId: "medtop:20000010",
+        label: "Sport",
+        labelFr: "Sport",
+        slug: "sport",
+        depth: 1,
+        retired: false,
+      });
+      await ctx.db.insert("tenants", {
+        slug: "demo-media",
+        name: "Demo",
+        enabledModules: [],
+        catalogLocale: "fr",
+      });
+    });
+
+    const asAdmin = t.withIdentity(ADMIN);
+    const results = await asAdmin.query(
+      api.cms.catalog.searchCategoryCatalogForCms,
+      { query: "sport" },
+    );
+    expect(results.some((r) => r.displayLabel === "Sport")).toBe(true);
   });
 
   it("throws when unauthenticated", async () => {
@@ -139,32 +169,22 @@ describe("cms/catalog — searchCategoryCatalogForCms", () => {
   });
 });
 
-describe("cms/catalog — listCategoryCatalogRootsForCms", () => {
-  it("returns only depth-0 non-retired nodes", async () => {
+describe("cms/catalog — updateDiscoveryLocales", () => {
+  it("persists catalog and wikipedia locales on tenant", async () => {
     const t = convexTest(schema, modules);
     await seedAdmin(t);
-    await seedCatalogNodes(t);
 
     const asAdmin = t.withIdentity(ADMIN);
-    const roots = await asAdmin.query(
-      api.cms.catalog.listCategoryCatalogRootsForCms,
-      {},
-    );
-    // Should include "Economy" (depth 0, active) but not "OldTopic" (retired) or "Finance" (depth 1)
-    expect(roots.every((r) => r.depth === 0)).toBe(true);
-    expect(roots.every((r) => !r.retired)).toBe(true);
-    const labels = roots.map((r) => r.label);
-    expect(labels).toContain("Economy");
-    expect(labels).not.toContain("Finance");
-  });
+    await asAdmin.mutation(api.cms.catalog.updateDiscoveryLocales, {
+      catalogLocale: "fr",
+      wikipediaLocale: "fr",
+    });
 
-  it("throws when unauthenticated", async () => {
-    const t = convexTest(schema, modules);
-    await seedAdmin(t);
-
-    await expect(
-      t.query(api.cms.catalog.listCategoryCatalogRootsForCms, {}),
-    ).rejects.toThrow("Unauthenticated");
+    const locales = await asAdmin.query(api.cms.catalog.getDiscoveryLocales, {});
+    expect(locales).toEqual({
+      catalogLocale: "fr",
+      wikipediaLocale: "fr",
+    });
   });
 });
 

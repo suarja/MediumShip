@@ -9,6 +9,7 @@ import {
 import { requireCmsAdmin } from "./authz";
 import type { Id } from "../_generated/dataModel";
 import { buildSubtree, type TreeNode } from "../categories/tree";
+import { resolveCatalogDisplayLabel } from "../categories/catalogLocale";
 
 async function ensureUniqueCategorySlug(
   ctx: MutationCtx,
@@ -173,6 +174,17 @@ export const addCategoryFromCatalog = mutation({
     // Load the source node(s) from the catalog
     const catalogRoot = await ctx.db.get(args.catalogNodeId);
     if (!catalogRoot) throw new Error("Catalog node not found");
+    if (catalogRoot.depth === 0) {
+      throw new Error(
+        "Les racines IPTC (niveau 1) sont trop larges — choisis un sous-thème",
+      );
+    }
+
+    const tenant = await ctx.db
+      .query("tenants")
+      .withIndex("by_slug", (q) => q.eq("slug", tenantSlug))
+      .unique();
+    const catalogLocale = tenant?.catalogLocale ?? "en";
 
     let catalogNodesToCopy: typeof catalogRoot[] = [catalogRoot];
 
@@ -193,6 +205,9 @@ export const addCategoryFromCatalog = mutation({
         subtreeIds.has(n._id as string),
       );
     }
+
+    // Never copy depth-0 nodes even when descendants are requested.
+    catalogNodesToCopy = catalogNodesToCopy.filter((node) => node.depth > 0);
 
     // Load existing tenant slugs to skip duplicates
     const existingTenantRows = await ctx.db
@@ -219,8 +234,9 @@ export const addCategoryFromCatalog = mutation({
     let sortOffset = 0;
 
     for (const catalogNode of catalogNodesToCopy) {
+      const tenantLabel = resolveCatalogDisplayLabel(catalogNode, catalogLocale);
       const slug =
-        slugifyCategoryLabel(catalogNode.label) || catalogNode.slug;
+        slugifyCategoryLabel(tenantLabel) || catalogNode.slug;
 
       if (existingSlugs.has(slug)) {
         // Already exists — record the existing ID for parentId remapping
@@ -239,7 +255,7 @@ export const addCategoryFromCatalog = mutation({
 
       const newId = await ctx.db.insert("categories", {
         tenantSlug,
-        label: catalogNode.label,
+        label: tenantLabel,
         slug,
         iconKey: catalogNode.iconKey ?? "default",
         sortOrder: baseSortOrder + sortOffset,

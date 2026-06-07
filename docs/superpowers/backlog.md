@@ -13,14 +13,14 @@ Idées soulevées mais non planifiées. Rangées ici pendant que **Slice H** (la
 
 ## 🧱 Architecture providers — GATE avant un 2ᵉ provider
 
-**Inquiétude soulevée : le seam d'ingestion est-il vraiment générique / hexagonal ?** Vérification : le port `ContentProvider` est sain (registry `PROVIDERS`, adapter identité `cmsProvider`, adapter `wikipediaProvider`), **mais du Wikipédia a fui dans le cœur générique** :
-- `ContentProvider.ingest()` (`convex/discovery/provider.ts`) porte un paramètre `wikipediaLocale?: WikipediaLocale` → le port partagé importe un type spécifique provider.
-- L'orchestrateur générique `runDiscoveryIngestion` / `getTenantIngestionInputs` (`convex/discovery/ingest.ts`) lit `tenant.wikipediaLocale` et le pousse vers **tous** les providers.
+**Inquiétude soulevée : le seam d'ingestion est-il vraiment générique / hexagonal ?** Vérification historique : le port `ContentProvider` était sain (registry `PROVIDERS`, adapter identité `cmsProvider`, adapter `wikipediaProvider`), **mais du Wikipédia avait fui dans le cœur générique** :
+- `ContentProvider.ingest()` (`convex/discovery/provider.ts`) portait un paramètre `wikipediaLocale?: WikipediaLocale` → le port partagé importait un type spécifique provider.
+- L'orchestrateur générique `runDiscoveryIngestion` / `getTenantIngestionInputs` (`convex/discovery/ingest.ts`) lisait `tenant.wikipediaLocale` et le poussait vers **tous** les providers.
 
-Ça fonctionne aujourd'hui, mais ça ne scale pas : chaque nouveau provider voudrait empiler ses propres params (`youtubeChannelId`, clés API…) sur le port partagé. **C'est la dette à traiter AVANT d'ajouter un vrai 2ᵉ provider**, pour ne pas répliquer le couplage.
+Ça fonctionnait, mais ça ne scalait pas : chaque nouveau provider aurait voulu empiler ses propres params (`youtubeChannelId`, clés API…) sur le port partagé. **C'était la dette à traiter AVANT d'ajouter un vrai 2ᵉ provider**, pour ne pas répliquer le couplage.
 
 - ~~**[GATE] Vérification finale + refactor du seam provider** → **planifié : `docs/superpowers/plans/2026-06-07-discovery-slice-m-provider-seam-hardening.md`** (Slice M). Rendre le port agnostique : la config spécifique (locale, channel id, credentials) est résolue **dans l'adapter** depuis un blob `providerConfigs` opaque par tenant que l'orchestrateur ne lit jamais. Prouvé par un 2ᵉ adapter réel (flux RSS, sans clé API). Bloque l'item ci-dessous.~~ **✅ Fait** (`feat/discovery-slice-m-provider-seam-hardening`) : port réduit à `{ tenantSlug, demand }`, `providerConfigs` opaque par source/tenant, locale Wikipedia auto-résolue dans l'adapter, migration du champ legacy, et 2ᵉ adapter réel `rss` branché dans `PROVIDERS`.
-- **Provider YouTube (chaîne du tenant).** Le 2ᵉ vrai adapter produit, désormais **débloqué** par le GATE ci-dessus : il peut se brancher sur le seam prouvé via `providerConfigs.youtube`, sans réintroduire de paramètres spécifiques dans le port partagé.
+- **Provider YouTube (chaîne du tenant).** Le prochain vrai adapter produit, désormais **débloqué** par le GATE ci-dessus : il peut se brancher sur le seam prouvé via `providerConfigs.youtube`, sans réintroduire de paramètres spécifiques dans le port partagé.
 
 ---
 

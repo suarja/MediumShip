@@ -16,15 +16,26 @@ export const OPTIONAL_PUBLIC_MODULES = ["premium"] as const;
 
 export type ContentModule = (typeof PUBLIC_CONTENT_MODULES)[number];
 
-// ─── Navigation modules ───────────────────────────────────────────────────────
+// ─── Navigation modules (tab bar tables) ──────────────────────────────────────
 
-export const NAVIGATION_MODULES = [
+export const CORE_TAB_MODULES = ["home", "profile"] as const;
+export type CoreTabModule = (typeof CORE_TAB_MODULES)[number];
+
+export const TAB_BAR_MODULES = [
+  "home",
+  "profile",
   "discover",
+  "explore",
+  "library",
   "collections",
   "agenda",
   "community",
 ] as const;
-export type NavigationModule = (typeof NAVIGATION_MODULES)[number];
+export type TabBarModule = (typeof TAB_BAR_MODULES)[number];
+
+/** @deprecated Use TAB_BAR_MODULES */
+export const NAVIGATION_MODULES = TAB_BAR_MODULES;
+export type NavigationModule = TabBarModule;
 
 /**
  * Strict allowlist: a navigation module is enabled iff it is present in the

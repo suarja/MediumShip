@@ -3,8 +3,10 @@ import { v } from "convex/values";
 import { mutation, type MutationCtx } from "../_generated/server";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
 import {
+  assertNavTabCap,
   deriveEnabledModules,
   normalizeFeatureConfigs,
+  normalizeNavOrder,
   type TenantFeatureConfigInput,
 } from "../featureCatalog";
 import { normalizeFeedSections } from "../../src/features/tenant/public-config";
@@ -509,6 +511,7 @@ export const updateModuleSettings = mutation({
   args: {
     featureConfigs: featureConfigInputValidator,
     feedSections: v.array(feedSectionValidator),
+    navOrder: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     await requireCmsAdmin(ctx);
@@ -518,6 +521,8 @@ export const updateModuleSettings = mutation({
       args.featureConfigs as Record<string, TenantFeatureConfigInput>,
       tenant.enabledModules,
     );
+    assertNavTabCap(featureConfigs);
+    const navOrder = normalizeNavOrder(args.navOrder ?? tenant.navOrder);
     const enabledModules = deriveEnabledModules(featureConfigs);
     const feedSections = normalizeFeedSections(args.feedSections, enabledModules);
 
@@ -525,6 +530,7 @@ export const updateModuleSettings = mutation({
       featureConfigs,
       enabledModules,
       feedSections,
+      navOrder,
     });
     return tenant._id;
   },

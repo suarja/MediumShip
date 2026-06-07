@@ -4,35 +4,63 @@ import { describe, expect, it } from "vitest";
 import {
   FEATURE_CATALOG,
   FEATURE_CATALOG_GROUPS,
+  NAV_TAB_CAP,
   buildDefaultFeatureConfigs,
+  buildDefaultNavOrder,
+  countEnabledNavTabs,
   deriveEnabledModules,
   normalizeFeatureConfigs,
+  normalizeNavOrder,
   resolveEffectiveFeatureConfigs,
+  resolveEffectiveNavigation,
 } from "./featureCatalog";
 
 describe("featureCatalog", () => {
-  it("exposes grouped features with core and lockAccess flags", () => {
+  it("exposes grouped features with nature, core and lockAccess flags", () => {
     expect(FEATURE_CATALOG.length).toBeGreaterThan(0);
     expect(FEATURE_CATALOG_GROUPS.some((group) => group.group === "Contenu")).toBe(true);
+    expect(FEATURE_CATALOG_GROUPS.some((group) => group.group === "Tables")).toBe(true);
+    expect(FEATURE_CATALOG_GROUPS.some((group) => group.group === "Capacités membres")).toBe(
+      true,
+    );
 
     const articles = FEATURE_CATALOG.find((feature) => feature.key === "articles");
     const premium = FEATURE_CATALOG.find((feature) => feature.key === "premium");
+    const home = FEATURE_CATALOG.find((feature) => feature.key === "home");
+    const discover = FEATURE_CATALOG.find((feature) => feature.key === "discover");
 
+    expect(articles?.nature).toBe("content");
     expect(articles?.core).toBe(true);
+    expect(premium?.nature).toBe("content");
     expect(premium?.lockAccess).toBe(true);
     expect(premium?.defaultAccess).toBe("premium");
+    expect(home?.nature).toBe("navTab");
+    expect(home?.core).toBe(true);
+    expect(discover?.nature).toBe("navTab");
+  });
+
+  it("includes home, explore, library and profile as navTab features", () => {
+    for (const key of ["home", "explore", "library", "profile"] as const) {
+      const feature = FEATURE_CATALOG.find((entry) => entry.key === key);
+      expect(feature?.nature).toBe("navTab");
+    }
+
+    expect(FEATURE_CATALOG.find((entry) => entry.key === "home")?.core).toBe(true);
+    expect(FEATURE_CATALOG.find((entry) => entry.key === "profile")?.core).toBe(true);
   });
 
   it("keeps core features enabled even when tenant disables them", () => {
     const effective = resolveEffectiveFeatureConfigs({
       featureConfigs: {
         articles: { enabled: false, access: "member" },
+        home: { enabled: false, access: "free", iconKey: "news" },
       },
       enabledModules: [],
     });
 
     expect(effective.articles.enabled).toBe(true);
     expect(effective.articles.access).toBe("member");
+    expect(effective.home.enabled).toBe(true);
   });
 
   it("keeps lockAccess features on their catalog access level", () => {
@@ -51,7 +79,11 @@ describe("featureCatalog", () => {
       episodes: { enabled: false },
       videos: { enabled: true },
       premium: { enabled: false },
+      home: { enabled: true },
       discover: { enabled: true },
+      explore: { enabled: true },
+      library: { enabled: true },
+      profile: { enabled: true },
       collections: { enabled: false },
       agenda: { enabled: false },
       community: { enabled: false },
@@ -62,7 +94,15 @@ describe("featureCatalog", () => {
       membersRoom: { enabled: false },
     });
 
-    expect(deriveEnabledModules(configs)).toEqual(["articles", "videos", "discover"]);
+    expect(deriveEnabledModules(configs)).toEqual([
+      "articles",
+      "videos",
+      "home",
+      "profile",
+      "discover",
+      "explore",
+      "library",
+    ]);
   });
 
   it("migrates legacy enabledModules when featureConfigs are absent", () => {
@@ -83,5 +123,93 @@ describe("featureCatalog", () => {
     );
     expect(defaults.articles.enabled).toBe(true);
     expect(defaults.premium.access).toBe("premium");
+    expect(defaults.home.enabled).toBe(true);
+    expect(defaults.profile.enabled).toBe(true);
+    expect(defaults.collections.enabled).toBe(false);
+  });
+
+  it("builds a default nav order with home first", () => {
+    expect(buildDefaultNavOrder()[0]).toBe("home");
+    expect(buildDefaultNavOrder()).toContain("profile");
+  });
+
+  it("resolveEffectiveNavigation returns enabled nav tabs ordered with home first and capped", () => {
+    const configs = normalizeFeatureConfigs({
+      home: { enabled: true },
+      discover: { enabled: true },
+      explore: { enabled: true },
+      library: { enabled: true },
+      profile: { enabled: true },
+      collections: { enabled: true },
+      agenda: { enabled: true },
+    });
+
+    const nav = resolveEffectiveNavigation(configs, [
+      "home",
+      "library",
+      "discover",
+      "explore",
+      "profile",
+      "collections",
+      "agenda",
+    ]);
+
+    expect(nav[0]).toBe("home");
+    expect(nav).toContain("profile");
+    expect(nav.length).toBeLessThanOrEqual(NAV_TAB_CAP);
+    expect(nav).not.toContain("articles");
+    expect(nav).not.toContain("bookmarks");
+  });
+
+  it("resolveEffectiveNavigation omits disabled nav tabs", () => {
+    const configs = normalizeFeatureConfigs({
+      home: { enabled: true },
+      discover: { enabled: false },
+      explore: { enabled: true },
+      library: { enabled: true },
+      profile: { enabled: true },
+    });
+
+    const nav = resolveEffectiveNavigation(configs, buildDefaultNavOrder());
+    expect(nav).not.toContain("discover");
+    expect(nav).toContain("home");
+    expect(nav).toContain("profile");
+  });
+
+  it("resolveEffectiveNavigation always keeps core nav tabs even if disabled in input", () => {
+    const configs = normalizeFeatureConfigs({
+      home: { enabled: false },
+      profile: { enabled: false },
+      explore: { enabled: true },
+    });
+
+    const nav = resolveEffectiveNavigation(configs, ["explore", "profile", "home"]);
+    expect(nav[0]).toBe("home");
+    expect(nav).toContain("profile");
+  });
+
+  it("normalizeNavOrder deduplicates and forces home first", () => {
+    expect(normalizeNavOrder(["discover", "home", "home", "profile"])).toEqual([
+      "home",
+      "discover",
+      "profile",
+      ...buildDefaultNavOrder().filter(
+        (key) => key !== "home" && key !== "discover" && key !== "profile",
+      ),
+    ]);
+  });
+
+  it("countEnabledNavTabs counts only enabled navTab features", () => {
+    const configs = normalizeFeatureConfigs({
+      home: { enabled: true },
+      discover: { enabled: true },
+      explore: { enabled: true },
+      library: { enabled: true },
+      profile: { enabled: true },
+      collections: { enabled: true },
+      articles: { enabled: true },
+    });
+
+    expect(countEnabledNavTabs(configs)).toBe(6);
   });
 });

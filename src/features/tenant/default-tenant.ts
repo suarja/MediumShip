@@ -1,4 +1,7 @@
-import { buildDefaultFeatureConfigs } from "../../../convex/featureCatalog";
+import {
+  buildDefaultFeatureConfigs,
+  buildDefaultNavOrder,
+} from "../../../convex/featureCatalog";
 import { defaultThemeConfig } from "../theme/palette-catalog";
 import {
   CAPABILITIES,
@@ -21,5 +24,6 @@ export const defaultTenant = {
   ],
   themeConfig: defaultThemeConfig,
   featureConfigs: buildDefaultFeatureConfigs(),
+  navOrder: buildDefaultNavOrder(),
   feedSections: DEFAULT_FEED_SECTIONS,
 };

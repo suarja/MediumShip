@@ -3,6 +3,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
 
 import { api } from "../_generated/api";
+import { buildDefaultNavOrder } from "../featureCatalog";
 import schema from "../schema";
 import { modules } from "../../convexTestModules";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
@@ -49,7 +50,16 @@ describe("cms/mutations — updateModuleSettings", () => {
     });
 
     const tenant = await asAdmin.query(api.cms.queries.getTenantSettings, {});
-    expect(tenant.enabledModules).toEqual(["articles", "videos", "premium", "discover"]);
+    expect(tenant.enabledModules).toEqual([
+      "articles",
+      "videos",
+      "premium",
+      "home",
+      "profile",
+      "discover",
+      "explore",
+      "library",
+    ]);
     expect(tenant.featureConfigs?.articles).toEqual({
       enabled: true,
       access: "free",
@@ -61,6 +71,46 @@ describe("cms/mutations — updateModuleSettings", () => {
       { kind: "video", title: "À regarder", visible: true },
       { kind: "article", title: "Dernières analyses", visible: false },
     ]);
+  });
+
+  it("persists nav order and rejects more than five enabled nav tabs", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const asAdmin = t.withIdentity(ADMIN);
+
+    const customOrder = ["home", "library", "discover", "explore", "profile"];
+
+    await asAdmin.mutation(api.cms.mutations.updateModuleSettings, {
+      featureConfigs: {
+        home: { enabled: true },
+        discover: { enabled: true },
+        explore: { enabled: true },
+        library: { enabled: true },
+        profile: { enabled: true },
+        collections: { enabled: false },
+      },
+      feedSections: defaultTenant.feedSections ?? [],
+      navOrder: customOrder,
+    });
+
+    const tenant = await asAdmin.query(api.cms.queries.getTenantSettings, {});
+    expect(tenant.navOrder).toEqual(customOrder);
+
+    await expect(
+      asAdmin.mutation(api.cms.mutations.updateModuleSettings, {
+        featureConfigs: {
+          home: { enabled: true },
+          discover: { enabled: true },
+          explore: { enabled: true },
+          library: { enabled: true },
+          profile: { enabled: true },
+          collections: { enabled: true },
+          agenda: { enabled: true },
+        },
+        feedSections: defaultTenant.feedSections ?? [],
+        navOrder: buildDefaultNavOrder(),
+      }),
+    ).rejects.toThrow(/navigation tabs/i);
   });
 
   it("cannot disable a core feature or override locked access", async () => {

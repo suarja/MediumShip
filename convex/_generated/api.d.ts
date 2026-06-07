@@ -18,6 +18,7 @@ import type * as categories_model from "../categories/model.js";
 import type * as categories_queries from "../categories/queries.js";
 import type * as categories_tree from "../categories/tree.js";
 import type * as cms_authz from "../cms/authz.js";
+import type * as cms_catalog from "../cms/catalog.js";
 import type * as cms_categories from "../cms/categories.js";
 import type * as cms_collections from "../cms/collections.js";
 import type * as cms_events from "../cms/events.js";
@@ -80,6 +81,7 @@ declare const fullApi: ApiFromModules<{
   "categories/queries": typeof categories_queries;
   "categories/tree": typeof categories_tree;
   "cms/authz": typeof cms_authz;
+  "cms/catalog": typeof cms_catalog;
   "cms/categories": typeof cms_categories;
   "cms/collections": typeof cms_collections;
   "cms/events": typeof cms_events;

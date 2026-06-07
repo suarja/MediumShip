@@ -79,7 +79,7 @@ describe("ContentCard", () => {
     expect(screen.queryByTestId("content-card-feature")).toBeNull();
   });
 
-  it('variant="feature" renders a compact row with summary ellipsis', () => {
+  it('variant="feature" renders a compact row with up to four summary lines', () => {
     render(
       <ContentCard
         variant="feature"
@@ -93,6 +93,7 @@ describe("ContentCard", () => {
     expect(screen.getByTestId("content-card-feature")).toBeTruthy();
     expect(screen.getByText("Economie du soin")).toBeTruthy();
     expect(screen.getByText("Une analyse approfondie")).toBeTruthy();
+    expect(screen.getByText("Une analyse approfondie").props.numberOfLines).toBe(4);
     expect(screen.getByTestId("content-card-title-category")).toHaveTextContent("Analyse");
     expect(screen.getByTestId("content-card-actions")).toBeTruthy();
     expect(screen.queryByTestId("content-card-compact")).toBeNull();

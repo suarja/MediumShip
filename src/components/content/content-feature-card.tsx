@@ -127,7 +127,7 @@ export function ContentFeatureCard({
                 </View>
                 {item.summary ? (
                   <Text
-                    numberOfLines={2}
+                    numberOfLines={4}
                     ellipsizeMode="tail"
                     style={[
                       styles.summary,

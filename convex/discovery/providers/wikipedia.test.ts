@@ -6,9 +6,13 @@ import { internal } from "../../_generated/api";
 import schema from "../../schema";
 import { modules } from "../../../convexTestModules";
 import {
+  extractWikipediaTags,
   fetchWikipediaArticleBody,
   fetchWikipediaCategoryPages,
+  fetchWikipediaRandomPages,
+  isMaintenanceWikipediaCategory,
   normalizeWikipediaPage,
+  SERENDIPITY_PER_RUN,
   slugFromWikipediaTitle,
   toWikipediaCategoryTitle,
   WIKIPEDIA_USER_AGENT,
@@ -27,6 +31,58 @@ function makeWikiPage(overrides: Partial<Parameters<typeof normalizeWikipediaPag
     ...overrides,
   };
 }
+
+function makeWikiCategories(titles: string[]) {
+  return titles.map((title) => ({ ns: 14, title }));
+}
+
+describe("extractWikipediaTags", () => {
+  it("normalizes real categories and filters maintenance labels", () => {
+    const tags = extractWikipediaTags(
+      makeWikiCategories([
+        "Category:Physics",
+        "Category:Articles_with_short_description",
+        "Category:CS1_maint:_others",
+        "Category:Wikipedia_indefinitely_move-protected_pages",
+        "Category:All_articles_with_unsourced_statements",
+        "Category:Use_dmy_dates_from_January_2020",
+        "Category:Webarchive_template_wayback_links",
+        "Category:Quantum_mechanics",
+      ]),
+    );
+
+    expect(tags).toEqual(["physics", "quantum-mechanics"]);
+  });
+
+  it("caps tags per item", () => {
+    const tags = extractWikipediaTags(
+      makeWikiCategories(
+        Array.from({ length: 12 }, (_, index) => `Category:Topic_${index}`),
+      ),
+      8,
+    );
+
+    expect(tags).toHaveLength(8);
+  });
+
+  it("returns empty when no usable categories remain", () => {
+    expect(
+      extractWikipediaTags(
+        makeWikiCategories(["Category:Articles_with_hCards", "Category:CS1_errors"]),
+      ),
+    ).toEqual([]);
+    expect(extractWikipediaTags(undefined)).toEqual([]);
+  });
+});
+
+describe("isMaintenanceWikipediaCategory", () => {
+  it("flags known maintenance prefixes", () => {
+    expect(isMaintenanceWikipediaCategory("Category:Articles_with_short_description")).toBe(
+      true,
+    );
+    expect(isMaintenanceWikipediaCategory("Category:Physics")).toBe(false);
+  });
+});
 
 describe("normalizeWikipediaPage", () => {
   it("maps a MediaWiki page into a contents insert shape", () => {
@@ -51,6 +107,22 @@ describe("normalizeWikipediaPage", () => {
     });
     expect(normalized.slug).toBe("quantum-mechanics");
     expect(normalized.publishedAt).toBeTruthy();
+  });
+
+  it("populates tags from real Wikipedia categories", () => {
+    const normalized = normalizeWikipediaPage(
+      makeWikiPage({
+        categories: makeWikiCategories([
+          "Category:Physics",
+          "Category:Articles_with_short_description",
+          "Category:Quantum_mechanics",
+        ]),
+      }),
+      { tenantSlug: TENANT, category: "science" },
+    );
+
+    expect(normalized.tags).toEqual(["physics", "quantum-mechanics"]);
+    expect(normalized.category).toBe("science");
   });
 
   it("falls back to a wiki slug when the title normalizes empty", () => {
@@ -125,10 +197,21 @@ describe("wikipediaProvider.ingest", () => {
         },
       },
     };
+    const randomListResponse = { query: { random: [] } };
 
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => searchResponse,
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      const params = new URL(url).searchParams;
+      if (params.get("list") === "random") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => randomListResponse,
+        });
+      }
+
+      return Promise.resolve({
+        ok: true,
+        json: async () => searchResponse,
+      });
     });
     vi.stubGlobal("fetch", fetchMock);
 
@@ -147,13 +230,154 @@ describe("wikipediaProvider.ingest", () => {
     expect(second.upserted).toBe(0);
     expect(fetchMock).toHaveBeenCalled();
 
-    const request = fetchMock.mock.calls[0]?.[0] as string;
-    expect(request).toContain("en.wikipedia.org/w/api.php");
+    const categoryRequest = fetchMock.mock.calls.find(
+      (call) => new URL(call[0] as string).searchParams.get("gsrsearch") !== null,
+    )?.[0] as string;
+    expect(categoryRequest).toContain("en.wikipedia.org/w/api.php");
+    expect(new URL(categoryRequest).searchParams.get("prop")).toContain("categories");
     expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
       headers: expect.objectContaining({
         "User-Agent": expect.stringContaining("MediumShip"),
       }),
     });
+  });
+
+  it("ingests a bounded serendipity batch with real categories, not a serendipity label", async () => {
+    const t = convexTest(schema, modules);
+
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      const params = new URL(url).searchParams;
+
+      if (params.get("list") === "random") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            query: {
+              random: [
+                { id: 501, title: "Random topic" },
+                { id: 502, title: "Another random" },
+              ],
+            },
+          }),
+        });
+      }
+
+      if (params.get("pageids") === "501|502") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            query: {
+              pages: {
+                "501": makeWikiPage({
+                  pageid: 501,
+                  title: "Random topic",
+                  categories: makeWikiCategories(["Category:Astronomy"]),
+                }),
+                "502": makeWikiPage({
+                  pageid: 502,
+                  title: "Another random",
+                  categories: makeWikiCategories(["Category:History"]),
+                }),
+              },
+            },
+          }),
+        });
+      }
+
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ query: { pages: {} } }),
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const ctx = makeIngestCtx(t);
+    const result = await wikipediaProvider.ingest(ctx, {
+      tenantSlug: TENANT,
+      demand: { categories: [] },
+    });
+
+    expect(result.upserted).toBe(2);
+
+    const randomCalls = fetchMock.mock.calls.filter(
+      (call) => new URL(call[0] as string).searchParams.get("list") === "random",
+    );
+    expect(randomCalls).toHaveLength(1);
+    expect(
+      new URL(randomCalls[0]![0] as string).searchParams.get("rnlimit"),
+    ).toBe(String(SERENDIPITY_PER_RUN));
+
+    const rows = await t.run(async (db) =>
+      db.db
+        .query("contents")
+        .withIndex("by_tenant_and_status", (q) =>
+          q.eq("tenantSlug", TENANT).eq("status", "published"),
+        )
+        .collect(),
+    );
+
+    expect(rows).toHaveLength(2);
+    expect(rows.map((row) => row.category).sort()).toEqual(["astronomy", "history"]);
+    expect(rows.every((row) => row.category !== "serendipity")).toBe(true);
+    expect(rows.every((row) => row.tags.length > 0)).toBe(true);
+  });
+
+  it("deduplicates serendipity pages that overlap demand categories by externalId", async () => {
+    const t = convexTest(schema, modules);
+
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      const params = new URL(url).searchParams;
+
+      if (params.get("list") === "random") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            query: { random: [{ id: 42, title: "Quantum mechanics" }] },
+          }),
+        });
+      }
+
+      if (params.get("pageids") === "42") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            query: {
+              pages: {
+                "42": makeWikiPage({
+                  categories: makeWikiCategories(["Category:Physics"]),
+                }),
+              },
+            },
+          }),
+        });
+      }
+
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          query: { pages: { "42": makeWikiPage() } },
+        }),
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const ctx = makeIngestCtx(t);
+    const result = await wikipediaProvider.ingest(ctx, {
+      tenantSlug: TENANT,
+      demand: { categories: ["science"] },
+    });
+
+    expect(result.upserted).toBe(1);
+
+    const rows = await t.run(async (db) =>
+      db.db
+        .query("contents")
+        .withIndex("by_tenant_source_external", (q) =>
+          q.eq("tenantSlug", TENANT).eq("source", "wikipedia").eq("externalId", "42"),
+        )
+        .collect(),
+    );
+    expect(rows).toHaveLength(1);
   });
 
   it("advances the search offset so a refill returns genuinely new pages", async () => {
@@ -162,7 +386,15 @@ describe("wikipediaProvider.ingest", () => {
     // The mock returns a different page depending on the gsroffset, modelling
     // real Wikipedia pagination: offset 0 → page 1, offset 1 → page 2, etc.
     const fetchMock = vi.fn().mockImplementation((url: string) => {
-      const offset = Number(new URL(url).searchParams.get("gsroffset") ?? "0");
+      const params = new URL(url).searchParams;
+      if (params.get("list") === "random") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ query: { random: [] } }),
+        });
+      }
+
+      const offset = Number(params.get("gsroffset") ?? "0");
       const pageId = offset + 1;
       return Promise.resolve({
         ok: true,
@@ -195,9 +427,9 @@ describe("wikipediaProvider.ingest", () => {
     expect(first.upserted).toBe(1);
     expect(second.upserted).toBe(1);
 
-    const offsets = fetchMock.mock.calls.map((call) =>
-      new URL(call[0] as string).searchParams.get("gsroffset"),
-    );
+    const offsets = fetchMock.mock.calls
+      .map((call) => new URL(call[0] as string).searchParams.get("gsroffset"))
+      .filter((value): value is string => value !== null);
     expect(offsets[0]).toBe("0");
     expect(offsets[1]).toBe("1");
 
@@ -262,6 +494,51 @@ describe("fetchWikipediaArticleBody", () => {
 
     expect(await fetchWikipediaArticleBody(99, fetchMock)).toBe("");
     expect(await fetchWikipediaArticleBody(100, fetchMock)).toBe("");
+  });
+});
+
+describe("fetchWikipediaRandomPages", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("uses list=random then fetches extracts and categories for those pages", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          query: { random: [{ id: 99, title: "Surprise article" }] },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          query: {
+            pages: {
+              "99": makeWikiPage({
+                pageid: 99,
+                title: "Surprise article",
+                categories: makeWikiCategories(["Category:Biology"]),
+              }),
+            },
+          },
+        }),
+      });
+
+    const pages = await fetchWikipediaRandomPages(4, fetchMock);
+
+    expect(pages).toHaveLength(1);
+    expect(pages[0]?.categories?.[0]?.title).toBe("Category:Biology");
+
+    const randomUrl = new URL(fetchMock.mock.calls[0]![0] as string);
+    expect(randomUrl.searchParams.get("list")).toBe("random");
+    expect(randomUrl.searchParams.get("rnnamespace")).toBe("0");
+    expect(randomUrl.searchParams.get("rnlimit")).toBe("4");
+
+    const detailsUrl = new URL(fetchMock.mock.calls[1]![0] as string);
+    expect(detailsUrl.searchParams.get("pageids")).toBe("99");
+    expect(detailsUrl.searchParams.get("prop")).toContain("categories");
   });
 });
 

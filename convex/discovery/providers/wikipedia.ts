@@ -11,7 +11,15 @@ export const WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php";
 
 const PAGES_PER_CATEGORY = 12;
 
+/** Bounded random-pick quota per ingestion run (ADR 0005 step 2). */
+export const SERENDIPITY_PER_RUN = 4;
+
 export { PAGES_PER_CATEGORY as WIKIPEDIA_PAGES_PER_CATEGORY };
+
+export type WikipediaCategoryRaw = {
+  ns: number;
+  title: string;
+};
 
 export type WikipediaPageRaw = {
   pageid: number;
@@ -19,7 +27,62 @@ export type WikipediaPageRaw = {
   extract?: string;
   fullurl?: string;
   thumbnail?: { source?: string };
+  categories?: WikipediaCategoryRaw[];
 };
+
+export const MAX_WIKIPEDIA_TAGS_PER_ITEM = 8;
+
+const MAINTENANCE_CATEGORY_PREFIXES = [
+  "articles_with_",
+  "cs1_",
+  "wikipedia_",
+  "all_",
+  "use_",
+  "webarchive_",
+] as const;
+
+/** Filters hidden/maintenance Wikipedia categories (Articles_with_*, CS1_*, etc.). */
+export function isMaintenanceWikipediaCategory(categoryTitle: string): boolean {
+  const name = categoryTitle.replace(/^Category:/i, "").replace(/ /g, "_");
+  const upper = name.toUpperCase();
+
+  return MAINTENANCE_CATEGORY_PREFIXES.some((prefix) =>
+    upper.startsWith(prefix.toUpperCase()),
+  );
+}
+
+/** Normalizes real page categories into scoring tags, capped per item. */
+export function extractWikipediaTags(
+  categories: readonly WikipediaCategoryRaw[] | undefined,
+  maxTags = MAX_WIKIPEDIA_TAGS_PER_ITEM,
+): string[] {
+  if (!categories?.length) {
+    return [];
+  }
+
+  const tags: string[] = [];
+  const seen = new Set<string>();
+
+  for (const category of categories) {
+    if (isMaintenanceWikipediaCategory(category.title)) {
+      continue;
+    }
+
+    const label = category.title.replace(/^Category:/i, "").replace(/_/g, " ");
+    const tag = normalizeScoringKey(label);
+    if (!tag || seen.has(tag)) {
+      continue;
+    }
+
+    seen.add(tag);
+    tags.push(tag);
+    if (tags.length >= maxTags) {
+      break;
+    }
+  }
+
+  return tags;
+}
 
 export type NormalizedWikipediaPage = {
   tenantSlug: string;
@@ -50,6 +113,7 @@ export function normalizeWikipediaPage(
   const title = rawPage.title;
   const pageId = rawPage.pageid;
   const wikiTitle = title.replace(/ /g, "_");
+  const tags = extractWikipediaTags(rawPage.categories);
 
   return {
     tenantSlug: args.tenantSlug,
@@ -59,7 +123,7 @@ export function normalizeWikipediaPage(
     title,
     summary: rawPage.extract?.trim() ?? "",
     category: args.category,
-    tags: [],
+    tags,
     isPremium: false,
     heroImageUrl: rawPage.thumbnail?.source,
     publishedAt: new Date().toISOString(),
@@ -141,9 +205,10 @@ export async function fetchWikipediaPagesViaSearch(
       gsrsearch: toWikipediaSearchTerm(categorySlug),
       gsrlimit: String(PAGES_PER_CATEGORY),
       gsroffset: String(offset),
-      prop: "extracts|pageimages|info",
+      prop: "extracts|pageimages|info|categories",
       exintro: "1",
       explaintext: "1",
+      cllimit: "max",
       piprop: "thumbnail",
       pithumbsize: "400",
       inprop: "url",
@@ -191,9 +256,10 @@ export async function fetchWikipediaPagesViaCategoryMembers(
       format: "json",
       origin: "*",
       pageids: pageIds,
-      prop: "extracts|pageimages|info",
+      prop: "extracts|pageimages|info|categories",
       exintro: "1",
       explaintext: "1",
+      cllimit: "max",
       piprop: "thumbnail",
       pithumbsize: "400",
       inprop: "url",
@@ -264,6 +330,63 @@ export async function fetchWikipediaCategoryPages(
   return fetchWikipediaPagesViaCategoryMembers(categorySlug, fetchImpl);
 }
 
+export async function fetchWikipediaRandomPages(
+  count: number,
+  fetchImpl: typeof fetch = fetch,
+): Promise<WikipediaPageRaw[]> {
+  const randomData = await mediaWikiFetch(
+    {
+      action: "query",
+      format: "json",
+      origin: "*",
+      list: "random",
+      rnnamespace: "0",
+      rnlimit: String(count),
+    },
+    fetchImpl,
+  );
+
+  const randomPages =
+    (
+      randomData as {
+        query?: { random?: Array<{ id: number; title: string }> };
+      }
+    ).query?.random ?? [];
+
+  if (randomPages.length === 0) {
+    return [];
+  }
+
+  const pageIds = randomPages.map((page) => String(page.id)).join("|");
+  const detailsData = await mediaWikiFetch(
+    {
+      action: "query",
+      format: "json",
+      origin: "*",
+      pageids: pageIds,
+      prop: "extracts|pageimages|info|categories",
+      exintro: "1",
+      explaintext: "1",
+      cllimit: "max",
+      piprop: "thumbnail",
+      pithumbsize: "400",
+      inprop: "url",
+    },
+    fetchImpl,
+  );
+
+  return pagesFromQueryResponse(detailsData);
+}
+
+function categoryLabelForSerendipityPage(page: WikipediaPageRaw): string {
+  const tags = extractWikipediaTags(page.categories);
+  if (tags.length > 0) {
+    return tags[0]!;
+  }
+
+  return slugFromWikipediaTitle(page.title, page.pageid);
+}
+
 async function ingestWikipediaDemand(
   ctx: ActionCtx,
   args: { tenantSlug: string; demand: FetchDemand },
@@ -309,6 +432,22 @@ async function ingestWikipediaDemand(
         by: pages.length,
       });
     }
+  }
+
+  const randomPages = await fetchWikipediaRandomPages(SERENDIPITY_PER_RUN, fetchImpl);
+  const serendipityItems = randomPages.map((page) =>
+    normalizeWikipediaPage(page, {
+      tenantSlug: args.tenantSlug,
+      category: categoryLabelForSerendipityPage(page),
+    }),
+  );
+
+  if (serendipityItems.length > 0) {
+    const result: { upserted: number } = await ctx.runMutation(
+      internal.discovery.ingest.upsertIngested,
+      { items: serendipityItems },
+    );
+    totalUpserted += result.upserted;
   }
 
   return { upserted: totalUpserted };

@@ -12,31 +12,37 @@ type CatalogNode = {
   labelFr?: string;
   retired: boolean;
   canAdd: boolean;
+  inTenant?: boolean;
+  descendantsFullyInTenant?: boolean;
 };
 
-type AddResult = { created: number; skipped: number };
+type ToggleMode = "self" | "descendants";
 
 type CatalogSearchResultsProps = {
   nodes: CatalogNode[];
-  tenantSlugs: Set<string>;
-  tenantCatalogNodeIds: Set<string>;
-  onAdd: (catalogNodeId: string, includeDescendants: boolean) => Promise<AddResult>;
+  onToggle: (
+    catalogNodeId: string,
+    mode: ToggleMode,
+    remove: boolean,
+  ) => Promise<void>;
 };
 
 export function CatalogSearchResults({
   nodes,
-  tenantSlugs,
-  tenantCatalogNodeIds,
-  onAdd,
+  onToggle,
 }: CatalogSearchResultsProps) {
   const [pending, setPending] = useState<string | null>(null);
   const [errorFeedback, setErrorFeedback] = useState<Map<string, string>>(new Map());
 
-  const handleAdd = async (nodeId: string, includeDescendants: boolean) => {
-    const key = `${nodeId}:${includeDescendants ? "d" : "n"}`;
+  const handleToggle = async (
+    nodeId: string,
+    mode: ToggleMode,
+    remove: boolean,
+  ) => {
+    const key = `${nodeId}:${mode}`;
     setPending(key);
     try {
-      await onAdd(nodeId, includeDescendants);
+      await onToggle(nodeId, mode, remove);
       setErrorFeedback((prev) => {
         const next = new Map(prev);
         next.delete(nodeId);
@@ -55,11 +61,12 @@ export function CatalogSearchResults({
   return (
     <ul className="catalog-results">
       {nodes.map((node) => {
-        const inTenant =
-          tenantCatalogNodeIds.has(node._id) || tenantSlugs.has(node.slug);
+        const inTenant = node.inTenant ?? false;
+        const descendantsFullyInTenant = node.descendantsFullyInTenant ?? false;
         const indentPx = Math.max(0, node.depth) * 20;
         const fb = errorFeedback.get(node._id);
-        const isPending = pending?.startsWith(`${node._id}:`) ?? false;
+        const selfPending = pending === `${node._id}:self`;
+        const descendantsPending = pending === `${node._id}:descendants`;
 
         return (
           <li
@@ -92,26 +99,38 @@ export function CatalogSearchResults({
             ) : node.canAdd ? (
               <div className="catalog-result-actions">
                 <button
-                  aria-disabled={inTenant}
                   className={`ghost-button catalog-add-btn${inTenant ? " catalog-add-btn--added" : ""}`}
-                  disabled={inTenant || pending !== null}
-                  onClick={() => void handleAdd(node._id, false)}
+                  disabled={pending !== null}
+                  onClick={() => void handleToggle(node._id, "self", inTenant)}
                   type="button"
                 >
-                  {inTenant ? "Ajouté" : isPending && pending?.endsWith(":n") ? "…" : "Ajouter"}
+                  {selfPending
+                    ? "…"
+                    : inTenant
+                      ? "Retirer"
+                      : "Ajouter"}
                 </button>
                 <button
-                  aria-disabled={inTenant}
-                  className={`ghost-button catalog-add-btn${inTenant ? " catalog-add-btn--added" : ""}`}
-                  disabled={inTenant || pending !== null}
-                  onClick={() => void handleAdd(node._id, true)}
-                  title="Inclut tous les descendants (sans les familles IPTC trop larges)"
+                  className={`ghost-button catalog-add-btn${descendantsFullyInTenant ? " catalog-add-btn--added" : ""}`}
+                  disabled={pending !== null}
+                  onClick={() =>
+                    void handleToggle(
+                      node._id,
+                      "descendants",
+                      descendantsFullyInTenant,
+                    )
+                  }
+                  title={
+                    descendantsFullyInTenant
+                      ? "Retire tous les descendants du tenant"
+                      : "Inclut tous les descendants (sans les familles IPTC trop larges)"
+                  }
                   type="button"
                 >
-                  {inTenant
-                    ? "Ajouté"
-                    : isPending && pending?.endsWith(":d")
-                      ? "…"
+                  {descendantsPending
+                    ? "…"
+                    : descendantsFullyInTenant
+                      ? "Retirer dérivés"
                       : "+ dérivés"}
                 </button>
               </div>

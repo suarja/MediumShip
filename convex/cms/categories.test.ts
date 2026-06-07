@@ -81,6 +81,6 @@ describe("cms categories", () => {
 
     await expect(
       asAdmin.mutation(api.cms.categories.deleteCategory, { id: categoryId }),
-    ).rejects.toThrow("Category is still used by published content");
+    ).rejects.toThrow("est utilisée par du contenu publié");
   });
 });

@@ -12,6 +12,10 @@ import {
   searchCategoryCatalogNodes,
 } from "../categories/catalogRead";
 import { CATALOG_TAXONOMY_MAX_DEPTH } from "../categories/catalogLabelPolicy";
+import {
+  enrichCatalogSummariesWithTenantStatus,
+  loadCatalogTenantStatusContext,
+} from "../categories/catalogTenantStatus";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
 import { requireCmsAdmin } from "./authz";
 
@@ -49,10 +53,20 @@ export const searchCategoryCatalogForCms = query({
     if (!args.query.trim()) return [];
 
     const locale = await getTenantCatalogLocale(ctx);
-    return await searchCategoryCatalogNodes(ctx, args.query, {
+    const summaries = await searchCategoryCatalogNodes(ctx, args.query, {
       maxDepth: CATALOG_TAXONOMY_MAX_DEPTH,
       locale,
     });
+    const { tenantRows, catalogNodes } = await loadCatalogTenantStatusContext(
+      ctx,
+      defaultTenant.slug,
+    );
+    return enrichCatalogSummariesWithTenantStatus(
+      summaries,
+      tenantRows,
+      catalogNodes,
+      locale,
+    );
   },
 });
 

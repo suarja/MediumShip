@@ -21,6 +21,11 @@ export type CatalogNodeSummary = {
   retired: boolean;
   /** Depth-0 nodes are addable only when the display label is compact (≤2 meaningful words). */
   canAdd: boolean;
+  parentId?: string;
+  /** Present when enriched for CMS reservoir toggles. */
+  inTenant?: boolean;
+  /** All copyable catalog descendants are already in the tenant taxonomy. */
+  descendantsFullyInTenant?: boolean;
 };
 
 function toSummary(
@@ -35,6 +40,7 @@ function toSummary(
     depth: node.depth,
     externalId: node.externalId,
     slug: node.slug,
+    ...(node.parentId !== undefined && { parentId: node.parentId as string }),
     ...(node.labelFr !== undefined && { labelFr: node.labelFr }),
     retired: node.retired ?? false,
     canAdd: canAddCatalogNodeToTenant(node.depth, displayLabel),

@@ -8,10 +8,13 @@ import {
   slugifyCategoryLabel,
 } from "../categories/model";
 import { requireCmsAdmin } from "./authz";
-import type { Id } from "../_generated/dataModel";
+import type { Doc, Id } from "../_generated/dataModel";
 import { buildSubtree, type TreeNode } from "../categories/tree";
 import { resolveCatalogDisplayLabel } from "../categories/catalogLocale";
 import { canAddCatalogNodeToTenant } from "../categories/catalogLabelPolicy";
+import {
+  resolveCatalogNodesToRemove,
+} from "../categories/catalogTenantStatus";
 
 async function ensureUniqueCategorySlug(
   ctx: MutationCtx,
@@ -44,6 +47,42 @@ async function countContentsUsingCategory(
     .collect();
 
   return contents.filter((content) => content.category === label).length;
+}
+
+async function detachTenantCategoryChildren(
+  ctx: MutationCtx,
+  tenantSlug: string,
+  categoryId: Id<"categories">,
+) {
+  const children = await ctx.db
+    .query("categories")
+    .withIndex("by_tenantSlug_and_parentId", (q) =>
+      q.eq("tenantSlug", tenantSlug).eq("parentId", categoryId),
+    )
+    .collect();
+
+  for (const child of children) {
+    await ctx.db.patch(child._id, { parentId: undefined });
+  }
+}
+
+async function deleteTenantCategoryRow(
+  ctx: MutationCtx,
+  category: Doc<"categories">,
+) {
+  const usageCount = await countContentsUsingCategory(
+    ctx,
+    category.tenantSlug,
+    category.label,
+  );
+  if (usageCount > 0) {
+    throw new Error(
+      `La catégorie « ${category.label} » est utilisée par du contenu publié`,
+    );
+  }
+
+  await detachTenantCategoryChildren(ctx, category.tenantSlug, category._id);
+  await ctx.db.delete(category._id);
 }
 
 export const listCmsCategories = query({
@@ -288,6 +327,72 @@ export const addCategoryFromCatalog = mutation({
   },
 });
 
+/**
+ * Remove tenant categories copied from the global catalog.
+ * - Default: remove only the selected node.
+ * - With `includeDescendants`: remove descendants; set `excludeSelf` to keep the node.
+ */
+export const removeCategoryFromCatalog = mutation({
+  args: {
+    tenantSlug: v.optional(v.string()),
+    catalogNodeId: v.id("categoryCatalog"),
+    includeDescendants: v.optional(v.boolean()),
+    excludeSelf: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    await requireCmsAdmin(ctx);
+
+    const tenantSlug = args.tenantSlug ?? defaultTenant.slug;
+    const includeDescendants = args.includeDescendants ?? false;
+    const excludeSelf = args.excludeSelf ?? false;
+
+    const tenant = await ctx.db
+      .query("tenants")
+      .withIndex("by_slug", (q) => q.eq("slug", tenantSlug))
+      .unique();
+    const catalogLocale = tenant?.catalogLocale ?? "en";
+
+    const catalogNodes = await ctx.db.query("categoryCatalog").take(5000);
+    const catalogNodesToRemove = resolveCatalogNodesToRemove(
+      args.catalogNodeId as string,
+      catalogNodes,
+      catalogLocale,
+      { includeDescendants, excludeSelf },
+    );
+
+    if (catalogNodesToRemove.length === 0) {
+      return { removed: 0 };
+    }
+
+    const tenantRows = await ctx.db
+      .query("categories")
+      .withIndex("by_tenantSlug", (q) => q.eq("tenantSlug", tenantSlug))
+      .collect();
+
+    const rowsToDelete = tenantRows
+      .filter(
+        (row) =>
+          row.catalogNodeId &&
+          catalogNodesToRemove.some(
+            (catalogNode) => catalogNode._id === row.catalogNodeId,
+          ),
+      )
+      .sort(
+        (left, right) =>
+          (right.depth ?? 0) - (left.depth ?? 0) ||
+          right.label.localeCompare(left.label),
+      );
+
+    let removed = 0;
+    for (const row of rowsToDelete) {
+      await deleteTenantCategoryRow(ctx, row);
+      removed += 1;
+    }
+
+    return { removed };
+  },
+});
+
 export const deleteCategory = mutation({
   args: { id: v.id("categories") },
   handler: async (ctx, args) => {
@@ -298,16 +403,7 @@ export const deleteCategory = mutation({
       throw new Error("Category not found");
     }
 
-    const usageCount = await countContentsUsingCategory(
-      ctx,
-      existing.tenantSlug,
-      existing.label,
-    );
-    if (usageCount > 0) {
-      throw new Error("Category is still used by published content");
-    }
-
-    await ctx.db.delete(existing._id);
+    await deleteTenantCategoryRow(ctx, existing);
     return args.id;
   },
 });

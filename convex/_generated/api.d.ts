@@ -18,6 +18,7 @@ import type * as categories_catalogImportParse from "../categories/catalogImport
 import type * as categories_catalogLabelPolicy from "../categories/catalogLabelPolicy.js";
 import type * as categories_catalogLocale from "../categories/catalogLocale.js";
 import type * as categories_catalogRead from "../categories/catalogRead.js";
+import type * as categories_catalogTenantStatus from "../categories/catalogTenantStatus.js";
 import type * as categories_interests from "../categories/interests.js";
 import type * as categories_model from "../categories/model.js";
 import type * as categories_queries from "../categories/queries.js";
@@ -86,6 +87,7 @@ declare const fullApi: ApiFromModules<{
   "categories/catalogLabelPolicy": typeof categories_catalogLabelPolicy;
   "categories/catalogLocale": typeof categories_catalogLocale;
   "categories/catalogRead": typeof categories_catalogRead;
+  "categories/catalogTenantStatus": typeof categories_catalogTenantStatus;
   "categories/interests": typeof categories_interests;
   "categories/model": typeof categories_model;
   "categories/queries": typeof categories_queries;

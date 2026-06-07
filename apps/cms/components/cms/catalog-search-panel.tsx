@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api } from "../../../../convex/_generated/api";
 import { CatalogSearchResults } from "./catalog-search-results";
@@ -46,34 +46,26 @@ export function CatalogSearchPanel({ ready }: CatalogSearchPanelProps) {
     !ready || isEmpty ? "skip" : { query: debouncedQuery },
   );
 
-  const tenantCategories = useQuery(
-    api.cms.categories.listCmsCategories,
-    ready ? {} : "skip",
-  );
-  const tenantSlugs = useMemo(
-    () => new Set((tenantCategories ?? []).map((c) => c.slug)),
-    [tenantCategories],
-  );
-  const tenantCatalogNodeIds = useMemo(
-    () =>
-      new Set(
-        (tenantCategories ?? [])
-          .filter((c) => c.catalogNodeId)
-          .map((c) => c.catalogNodeId as string),
-      ),
-    [tenantCategories],
-  );
-
   const addFromCatalog = useMutation(api.cms.categories.addCategoryFromCatalog);
+  const removeFromCatalog = useMutation(api.cms.categories.removeCategoryFromCatalog);
 
-  const handleAdd = useCallback(
-    async (catalogNodeId: string, includeDescendants: boolean) => {
-      return await addFromCatalog({
+  const handleToggle = useCallback(
+    async (catalogNodeId: string, mode: "self" | "descendants", remove: boolean) => {
+      if (remove) {
+        await removeFromCatalog({
+          catalogNodeId: catalogNodeId as never,
+          includeDescendants: mode === "descendants",
+          excludeSelf: mode === "descendants",
+        });
+        return;
+      }
+
+      await addFromCatalog({
         catalogNodeId: catalogNodeId as never,
-        includeDescendants,
+        includeDescendants: mode === "descendants",
       });
     },
-    [addFromCatalog],
+    [addFromCatalog, removeFromCatalog],
   );
 
   const handleLocaleChange = async (next: "en" | "fr") => {
@@ -197,9 +189,7 @@ export function CatalogSearchPanel({ ready }: CatalogSearchPanelProps) {
         {showResults && searchResults.length > 0 && (
           <CatalogSearchResults
             nodes={searchResults}
-            onAdd={handleAdd}
-            tenantCatalogNodeIds={tenantCatalogNodeIds}
-            tenantSlugs={tenantSlugs}
+            onToggle={handleToggle}
           />
         )}
 

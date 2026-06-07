@@ -473,6 +473,73 @@ describe("addCategoryFromCatalog", () => {
       }),
     ).rejects.toThrow();
   });
+
+  it("removes only the selected node when toggling Ajouter off", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const catalogRows = await seedCatalog(t);
+    const investments = catalogRows.find((r) => r.externalId === "medtop:20000346")!;
+    const asAdmin = t.withIdentity(ADMIN);
+
+    await asAdmin.mutation(api.cms.categories.addCategoryFromCatalog, {
+      tenantSlug: TENANT,
+      catalogNodeId: investments._id,
+      includeDescendants: true,
+    });
+
+    const result = await asAdmin.mutation(
+      api.cms.categories.removeCategoryFromCatalog,
+      {
+        tenantSlug: TENANT,
+        catalogNodeId: investments._id,
+        includeDescendants: false,
+      },
+    );
+
+    expect(result.removed).toBe(1);
+
+    const tenantRows = await t.run((ctx) =>
+      ctx.db
+        .query("categories")
+        .withIndex("by_tenantSlug", (q) => q.eq("tenantSlug", TENANT))
+        .collect(),
+    );
+    expect(tenantRows.map((row) => row.label)).toEqual(["ETF"]);
+  });
+
+  it("removes descendants but keeps the parent when toggling + dérivés off", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const catalogRows = await seedCatalog(t);
+    const investments = catalogRows.find((r) => r.externalId === "medtop:20000346")!;
+    const asAdmin = t.withIdentity(ADMIN);
+
+    await asAdmin.mutation(api.cms.categories.addCategoryFromCatalog, {
+      tenantSlug: TENANT,
+      catalogNodeId: investments._id,
+      includeDescendants: true,
+    });
+
+    const result = await asAdmin.mutation(
+      api.cms.categories.removeCategoryFromCatalog,
+      {
+        tenantSlug: TENANT,
+        catalogNodeId: investments._id,
+        includeDescendants: true,
+        excludeSelf: true,
+      },
+    );
+
+    expect(result.removed).toBe(1);
+
+    const tenantRows = await t.run((ctx) =>
+      ctx.db
+        .query("categories")
+        .withIndex("by_tenantSlug", (q) => q.eq("tenantSlug", TENANT))
+        .collect(),
+    );
+    expect(tenantRows.map((row) => row.label)).toEqual(["Investments"]);
+  });
 });
 
 // ─── Slice I regression ───────────────────────────────────────────────────────

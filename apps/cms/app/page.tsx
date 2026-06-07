@@ -1,4 +1,5 @@
 import { Dashboard } from "../components/cms/dashboard";
+import { isCmsTab } from "../components/cms/admin-shell";
 
 type PageProps = {
   searchParams?: Promise<{
@@ -7,13 +8,7 @@ type PageProps = {
 };
 
 function resolveInitialTab(tab: string | undefined) {
-  return tab === "tenant" ||
-    tab === "users" ||
-    tab === "categories" ||
-    tab === "collections" ||
-    tab === "events"
-    ? tab
-    : "contents";
+  return isCmsTab(tab) ? tab : "contents";
 }
 
 export default async function Page({ searchParams }: PageProps) {

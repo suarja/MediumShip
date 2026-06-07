@@ -34,6 +34,8 @@ type LibraryCollectionSectionProps = {
   subtitle: string;
   /** When true, section chrome is rendered by the parent screen header. */
   hideHeader?: boolean;
+  /** Preview keeps the featured hero + capped rows; full lists every item as a row. */
+  mode?: "preview" | "full";
   items: LibraryCollectionItem[];
   isLoading: boolean;
   loadingLabel: string;
@@ -44,10 +46,139 @@ type LibraryCollectionSectionProps = {
   emptyCtaHref?: string;
 };
 
+function LibraryCollectionRow({
+  item,
+  scaleFont,
+  scaleSpace,
+}: {
+  item: LibraryCollectionItem;
+  scaleFont: number;
+  scaleSpace: number;
+}) {
+  const { theme } = useAppTheme();
+
+  return (
+    <Link href={item.href as never} asChild>
+      <Pressable
+        accessibilityRole="link"
+        style={({ pressed }) => [pressed && styles.pressed]}
+      >
+        <View
+          style={[
+            styles.rowCard,
+            {
+              borderRadius: theme.radii.lg,
+              borderColor: theme.colors.border,
+              backgroundColor: theme.colors.surface,
+              gap: theme.spacing.md * scaleSpace,
+              padding: theme.spacing.md * scaleSpace,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.rowMedia,
+              {
+                width: 72 * scaleSpace,
+                height: 72 * scaleSpace,
+                borderRadius: theme.radii.md,
+                backgroundColor: theme.colors.surfaceMuted,
+              },
+            ]}
+          >
+            {item.imageUrl ? (
+              <Image
+                accessibilityLabel={`${item.title} thumbnail`}
+                source={{ uri: item.imageUrl }}
+                style={styles.cover}
+              />
+            ) : (
+              <View
+                style={[
+                  styles.fallbackMedia,
+                  { backgroundColor: theme.colors.canvasAccent },
+                ]}
+              >
+                <Ionicons
+                  color={theme.colors.accent}
+                  name={item.iconName}
+                  size={20 * scaleFont}
+                />
+              </View>
+            )}
+          </View>
+
+          <View style={[styles.rowCopy, { gap: 4 * scaleSpace }]}>
+            <Text
+              numberOfLines={1}
+              style={[
+                styles.rowEyebrow,
+                {
+                  color:
+                    item.tone === "premium"
+                      ? theme.colors.premium
+                      : theme.colors.accent,
+                  fontSize: 10 * scaleFont,
+                },
+              ]}
+            >
+              {item.eyebrow}
+            </Text>
+            <Text
+              numberOfLines={2}
+              style={[
+                styles.rowTitle,
+                { color: theme.colors.heading, fontSize: 17 * scaleFont },
+              ]}
+            >
+              {item.title}
+            </Text>
+            <Text
+              numberOfLines={1}
+              style={[
+                styles.rowMeta,
+                { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
+              ]}
+            >
+              {item.meta}
+            </Text>
+          </View>
+
+          <View
+            style={[
+              styles.rowBadge,
+              {
+                borderRadius: theme.radii.pill,
+                backgroundColor: withAlpha(
+                  item.tone === "premium"
+                    ? theme.colors.premium
+                    : theme.colors.accent,
+                  0.14,
+                ),
+              },
+            ]}
+          >
+            <Ionicons
+              color={
+                item.tone === "premium"
+                  ? theme.colors.premium
+                  : theme.colors.accent
+              }
+              name={item.iconName}
+              size={16 * scaleFont}
+            />
+          </View>
+        </View>
+      </Pressable>
+    </Link>
+  );
+}
+
 export function LibraryCollectionSection({
   title,
   subtitle,
   hideHeader = false,
+  mode = "preview",
   items,
   isLoading,
   loadingLabel,
@@ -60,8 +191,11 @@ export function LibraryCollectionSection({
   const { theme } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
 
-  const featured = items[0];
-  const rest = items.slice(1, isTablet ? 5 : 4);
+  const featured = mode === "full" ? undefined : items[0];
+  const rest =
+    mode === "full"
+      ? items
+      : items.slice(1, isTablet ? 5 : 4);
   const featuredHeroBg = theme.isDark ? theme.colors.canvasAccent : theme.colors.heading;
   const featuredOnHero = theme.isDark ? theme.colors.heading : theme.colors.canvas;
   const featuredMediaHeight = (isTablet ? 168 : 140) * scaleSpace;
@@ -110,6 +244,17 @@ export function LibraryCollectionSection({
           >
             {loadingLabel}
           </Text>
+        </View>
+      ) : mode === "full" && rest.length > 0 ? (
+        <View style={[styles.rows, { gap: theme.spacing.sm * scaleSpace }]}>
+          {rest.map((item) => (
+            <LibraryCollectionRow
+              item={item}
+              key={item.id}
+              scaleFont={scaleFont}
+              scaleSpace={scaleSpace}
+            />
+          ))}
         </View>
       ) : featured ? (
         <View style={[styles.contentStack, { gap: theme.spacing.md * scaleSpace }]}>
@@ -245,119 +390,12 @@ export function LibraryCollectionSection({
           {rest.length > 0 ? (
             <View style={[styles.rows, { gap: theme.spacing.sm * scaleSpace }]}>
               {rest.map((item) => (
-                <Link href={item.href as never} key={item.id} asChild>
-                  <Pressable
-                    accessibilityRole="link"
-                    style={({ pressed }) => [pressed && styles.pressed]}
-                  >
-                    <View
-                      style={[
-                        styles.rowCard,
-                        {
-                          borderRadius: theme.radii.lg,
-                          borderColor: theme.colors.border,
-                          backgroundColor: theme.colors.surface,
-                          gap: theme.spacing.md * scaleSpace,
-                          padding: theme.spacing.md * scaleSpace,
-                        },
-                      ]}
-                    >
-                      <View
-                        style={[
-                          styles.rowMedia,
-                          {
-                            width: 72 * scaleSpace,
-                            height: 72 * scaleSpace,
-                            borderRadius: theme.radii.md,
-                            backgroundColor: theme.colors.surfaceMuted,
-                          },
-                        ]}
-                      >
-                        {item.imageUrl ? (
-                          <Image
-                            accessibilityLabel={`${item.title} thumbnail`}
-                            source={{ uri: item.imageUrl }}
-                            style={styles.cover}
-                          />
-                        ) : (
-                          <View
-                            style={[
-                              styles.fallbackMedia,
-                              { backgroundColor: theme.colors.canvasAccent },
-                            ]}
-                          >
-                            <Ionicons
-                              color={theme.colors.accent}
-                              name={item.iconName}
-                              size={20 * scaleFont}
-                            />
-                          </View>
-                        )}
-                      </View>
-
-                      <View style={[styles.rowCopy, { gap: 4 * scaleSpace }]}>
-                        <Text
-                          numberOfLines={1}
-                          style={[
-                            styles.rowEyebrow,
-                            {
-                              color:
-                                item.tone === "premium"
-                                  ? theme.colors.premium
-                                  : theme.colors.accent,
-                              fontSize: 10 * scaleFont,
-                            },
-                          ]}
-                        >
-                          {item.eyebrow}
-                        </Text>
-                        <Text
-                          numberOfLines={2}
-                          style={[
-                            styles.rowTitle,
-                            { color: theme.colors.heading, fontSize: 17 * scaleFont },
-                          ]}
-                        >
-                          {item.title}
-                        </Text>
-                        <Text
-                          numberOfLines={1}
-                          style={[
-                            styles.rowMeta,
-                            { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
-                          ]}
-                        >
-                          {item.meta}
-                        </Text>
-                      </View>
-
-                      <View
-                        style={[
-                          styles.rowBadge,
-                          {
-                            borderRadius: theme.radii.pill,
-                            backgroundColor: withAlpha(
-                              item.tone === "premium"
-                                ? theme.colors.premium
-                                : theme.colors.accent,
-                              0.14,
-                            ),
-                          },
-                        ]}
-                      >
-                        <Ionicons
-                          color={
-                            item.tone === "premium"
-                              ? theme.colors.premium
-                              : theme.colors.accent
-                          }
-                          name={item.iconName}
-                          size={16 * scaleFont}
-                        />
-                      </View>
-                    </View>
-                  </Pressable>
-                </Link>
+                <LibraryCollectionRow
+                  item={item}
+                  key={item.id}
+                  scaleFont={scaleFont}
+                  scaleSpace={scaleSpace}
+                />
               ))}
             </View>
           ) : null}

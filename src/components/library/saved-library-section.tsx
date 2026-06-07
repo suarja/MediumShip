@@ -8,7 +8,11 @@ import {
   type LibraryCollectionItem,
 } from "./library-collection-section";
 
-export function SavedLibrarySection() {
+type SavedLibrarySectionProps = {
+  mode?: "preview" | "full";
+};
+
+export function SavedLibrarySection({ mode = "preview" }: SavedLibrarySectionProps) {
   const { t } = useTranslation(["library"]);
   const { isSignedIn } = useClerkAuth();
   const { bookmarks, isMembershipLoading, isBookmarksLoading } = useBookmarks();
@@ -30,6 +34,7 @@ export function SavedLibrarySection() {
   return (
     <LibraryCollectionSection
       hideHeader
+      mode={mode}
       emptyBody={isSignedIn ? t("library:saved.empty") : t("library:saved.guestHint")}
       emptyCtaHref={isSignedIn ? "/home" : "/sign-in"}
       emptyCtaLabel={

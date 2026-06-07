@@ -288,6 +288,8 @@ function SignedInLibraryContent({
         {canBookmark ? (
           <View style={styles.sectionBlock}>
             <LibrarySectionHeader
+              onSeeAllPress={() => router.push("/favorites")}
+              seeAllLabel={t("library:screen.seeAll")}
               title={t("library:screen.sections.saved")}
             />
             <SavedLibrarySection />

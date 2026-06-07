@@ -85,6 +85,14 @@ describe("signed-in library screen", () => {
     expect(screen.queryByText("Your library, everywhere")).toBeNull();
   });
 
+  it("navigates to the full favorites list when See all is pressed", () => {
+    render(<LibraryScreen />);
+
+    fireEvent.press(screen.getByLabelText("See all"));
+
+    expect(mockPush).toHaveBeenCalledWith("/favorites");
+  });
+
   it("does not render a top-bar search loupe", () => {
     render(<LibraryScreen />);
 

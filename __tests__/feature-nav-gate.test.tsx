@@ -54,10 +54,11 @@ jest.mock("../src/components/navigation/app-tab-bar", () => ({
 function mockThemeFromConfigs(
   featureConfigsInput: Record<string, Partial<TenantFeatureConfig> & { enabled: boolean }>,
   navOrder = buildDefaultNavOrder(),
+  isLoading = false,
 ) {
   const featureConfigs = resolveEffectiveFeatureConfigs({ featureConfigs: featureConfigsInput });
   const effectiveNavigation = resolveEffectiveNavigation(featureConfigs, navOrder);
-  mockUseAppTheme.mockReturnValue({ featureConfigs, effectiveNavigation });
+  mockUseAppTheme.mockReturnValue({ featureConfigs, effectiveNavigation, isLoading });
   return { featureConfigs, effectiveNavigation };
 }
 
@@ -136,5 +137,35 @@ describe("app layout feature navigation", () => {
     );
 
     expect(visibleOrder).toEqual(effectiveNavigation);
+  });
+
+  it("waits for tenant config before applying the boot redirect", () => {
+    mockThemeFromConfigs(
+      {
+        home: { enabled: true, access: "free", iconKey: "news" },
+        discover: { enabled: true, access: "free", iconKey: "news" },
+        explore: { enabled: true, access: "free", iconKey: "default" },
+        profile: { enabled: true, access: "free", iconKey: "default" },
+      },
+      ["explore", "home", "discover", "profile"],
+      true,
+    );
+
+    const { rerender } = render(<AppLayout />);
+    expect(mockReplace).not.toHaveBeenCalled();
+
+    mockThemeFromConfigs(
+      {
+        home: { enabled: true, access: "free", iconKey: "news" },
+        discover: { enabled: true, access: "free", iconKey: "news" },
+        explore: { enabled: true, access: "free", iconKey: "default" },
+        profile: { enabled: true, access: "free", iconKey: "default" },
+      },
+      ["explore", "home", "discover", "profile"],
+      false,
+    );
+
+    rerender(<AppLayout />);
+    expect(mockReplace).toHaveBeenCalledWith("/explore");
   });
 });

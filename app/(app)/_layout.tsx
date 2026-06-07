@@ -39,7 +39,7 @@ function tabHref(
 
 // Public tab shell: reading surfaces stay available without authentication.
 export default function AppLayout() {
-  const { effectiveNavigation } = useAppTheme();
+  const { effectiveNavigation, isLoading } = useAppTheme();
   const pathname = usePathname();
   const router = useRouter();
   const bootRedirectHandledRef = useRef(false);
@@ -56,6 +56,10 @@ export default function AppLayout() {
       return;
     }
 
+    if (isLoading) {
+      return;
+    }
+
     if (
       shouldRedirectTabBoot({
         pathname,
@@ -69,7 +73,7 @@ export default function AppLayout() {
     }
 
     bootRedirectHandledRef.current = true;
-  }, [effectiveNavigation, pathname, router]);
+  }, [effectiveNavigation, isLoading, pathname, router]);
 
   return (
     <Tabs

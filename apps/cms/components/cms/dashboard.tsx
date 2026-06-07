@@ -12,7 +12,6 @@ import { CollectionsTab } from "./collections-tab";
 import { ContentsTab } from "./contents-tab";
 import { DeveloperTab } from "./developer-tab";
 import { EventsTab } from "./events-tab";
-import { PreviewTab } from "./preview-tab";
 import { TenantTab } from "./tenant-tab";
 import { UsersTab } from "./users-tab";
 
@@ -186,9 +185,7 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
                 <TenantTab tenant={tenant} />
               ) : activeTab === "users" ? (
                 <UsersTab />
-              ) : (
-                <PreviewTab selectedId={selectedId} />
-              )
+              ) : null
             ) : (
               <main className="page">
                 <section className="panel">

@@ -11,7 +11,6 @@ export const CMS_TABS = [
   "events",
   "tenant",
   "users",
-  "preview",
   "developer",
 ] as const;
 
@@ -28,7 +27,6 @@ const NAV_ITEMS: ReadonlyArray<{
   { icon: "◷", label: "Agenda", value: "events" },
   { icon: "⚙", label: "Tenant", value: "tenant" },
   { icon: "◉", label: "Membres", value: "users" },
-  { icon: "▶", label: "Preview", value: "preview" },
   { icon: "⬡", label: "Développeur", value: "developer" },
 ];
 

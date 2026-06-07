@@ -8,11 +8,11 @@ import { api } from "../../../../convex/_generated/api";
 
 type R2UploadFieldProps = {
   label: string;
-  // Narrow the picker + preview rendering.
+  // Narrow the picker + thumbnail rendering.
   kind: "image" | "video";
   // MIME accept attribute, e.g. "image/*" or "video/*".
   accept: string;
-  // Currently-stored URL (heroImageUrl / playbackUrl) for the preview.
+  // Currently-stored URL (heroImageUrl / playbackUrl) for the form thumbnail.
   currentUrl: string;
   hint?: string;
   // Called with the R2 object key and the resolved playable/renderable URL.

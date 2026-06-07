@@ -73,7 +73,7 @@ function Field({
   );
 }
 
-function PreviewBrandLogo({
+function BrandLogoMark({
   logoUrl,
   name,
 }: {
@@ -105,7 +105,7 @@ function PreviewBrandLogo({
   );
 }
 
-function MobilePhonePreview({
+function TenantMobileMockup({
   appIconUrl,
   enabledModules,
   feedSections,
@@ -155,7 +155,7 @@ function MobilePhonePreview({
         <div className="mfeed">
           <div className="mfeed__hdr">
             <div className="mfeed__logo">
-              <PreviewBrandLogo logoUrl={logoUrl} name={name} />
+              <BrandLogoMark logoUrl={logoUrl} name={name} />
             </div>
             <div
               className="mfeed__av"
@@ -392,7 +392,7 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
             />
             <div className="upload__meta">
               <h5 className="upload__t">Logo de marque</h5>
-              <div className="upload__d">URL persistée et utilisée dans les previews</div>
+              <div className="upload__d">URL persistée et affichée dans l&apos;application mobile</div>
             </div>
           </div>
           <input
@@ -597,13 +597,13 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
       </div>
 
       <div className="tenant-col tenant-col--right">
-        <div className="mobile-preview">
-          <div className="mobile-preview__h">
-            <span className="lbl">— Live mobile preview</span>
+        <div className="mobile-mockup">
+          <div className="mobile-mockup__h">
+            <span className="lbl">— Aperçu mobile</span>
             <span className="tg">{titleCase(safePalette)}</span>
           </div>
 
-          <MobilePhonePreview
+          <TenantMobileMockup
             appIconUrl={appIconUrl}
             enabledModules={enabledModules}
             feedSections={feedSections}

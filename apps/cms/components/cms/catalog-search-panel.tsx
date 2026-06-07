@@ -107,8 +107,9 @@ export function CatalogSearchPanel({ ready }: CatalogSearchPanelProps) {
             <h2 className="catalog-reservoir__title">Ajouter à la taxonomie</h2>
             <p className="catalog-reservoir__lead">
               Parcours les familles IPTC, puis ajoute un sous-thème précis. Les
-              racines servent d&apos;entrée — elles ne peuvent pas être ajoutées
-              telles quelles au tenant.
+              familles courtes (un ou deux mots) peuvent être ajoutées
+              directement ; les familles trop larges servent seulement
+              d&apos;entrée pour explorer.
             </p>
           </div>
 
@@ -175,7 +176,11 @@ export function CatalogSearchPanel({ ready }: CatalogSearchPanelProps) {
                   className="chip chip--browse"
                   key={root._id}
                   onClick={() => handleQueryChange(root.displayLabel)}
-                  title="Explorer les sous-thèmes (non ajoutable)"
+                  title={
+                    root.canAdd
+                      ? "Explorer ou ajouter cette famille"
+                      : "Explorer les sous-thèmes (famille trop large pour ajout direct)"
+                  }
                   type="button"
                 >
                   {root.displayLabel}

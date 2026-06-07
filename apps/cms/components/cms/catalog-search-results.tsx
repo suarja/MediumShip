@@ -57,7 +57,7 @@ export function CatalogSearchResults({
       {nodes.map((node) => {
         const inTenant =
           tenantCatalogNodeIds.has(node._id) || tenantSlugs.has(node.slug);
-        const indentPx = Math.max(0, node.depth - 1) * 20;
+        const indentPx = Math.max(0, node.depth) * 20;
         const fb = errorFeedback.get(node._id);
         const isPending = pending?.startsWith(`${node._id}:`) ?? false;
 
@@ -105,7 +105,7 @@ export function CatalogSearchResults({
                   className={`ghost-button catalog-add-btn${inTenant ? " catalog-add-btn--added" : ""}`}
                   disabled={inTenant || pending !== null}
                   onClick={() => void handleAdd(node._id, true)}
-                  title="Inclut tous les descendants (sans les racines IPTC)"
+                  title="Inclut tous les descendants (sans les familles IPTC trop larges)"
                   type="button"
                 >
                   {inTenant
@@ -116,7 +116,7 @@ export function CatalogSearchResults({
                 </button>
               </div>
             ) : (
-              <span className="catalog-result-ext">Racine — non ajoutable</span>
+              <span className="catalog-result-ext">Famille IPTC trop large</span>
             )}
           </li>
         );

@@ -344,7 +344,7 @@ describe("addCategoryFromCatalog", () => {
     expect(tenantRows[0]?.iconKey).not.toBe("default");
   });
 
-  it("rejects IPTC root nodes (depth 0)", async () => {
+  it("rejects wide IPTC root nodes (depth 0)", async () => {
     const t = convexTest(schema, modules);
     await seedAdmin(t);
     const catalogRows = await seedCatalog(t);
@@ -356,7 +356,39 @@ describe("addCategoryFromCatalog", () => {
         tenantSlug: TENANT,
         catalogNodeId: economy._id,
       }),
-    ).rejects.toThrow("trop larges");
+    ).rejects.toThrow("trop large");
+  });
+
+  it("allows compact IPTC root nodes (depth 0)", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const sportId = await t.run(async (ctx) =>
+      ctx.db.insert("categoryCatalog", {
+        externalId: "medtop:20000099",
+        label: "Sport",
+        slug: "sport",
+        depth: 0,
+        retired: false,
+      }),
+    );
+    const asAdmin = t.withIdentity(ADMIN);
+
+    const result = await asAdmin.mutation(api.cms.categories.addCategoryFromCatalog, {
+      tenantSlug: TENANT,
+      catalogNodeId: sportId,
+      includeDescendants: false,
+    });
+
+    expect(result.created).toBe(1);
+    const tenantRows = await t.run((ctx) =>
+      ctx.db
+        .query("categories")
+        .withIndex("by_tenantSlug", (q) => q.eq("tenantSlug", TENANT))
+        .collect(),
+    );
+    expect(tenantRows).toHaveLength(1);
+    expect(tenantRows[0]?.label).toBe("Sport");
+    expect(tenantRows[0]?.depth).toBe(0);
   });
 
   it("copies a subtree with includeDescendants=true, remapping parentId", async () => {

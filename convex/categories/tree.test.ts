@@ -56,7 +56,7 @@ describe("normalizeSearchQuery", () => {
 // ─── buildSubtree ─────────────────────────────────────────────────────────────
 
 describe("buildSubtree", () => {
-  it("returns root + direct children + grandchildren with default maxDepth 3", () => {
+  it("returns root + direct children + grandchildren with default maxDepth 4", () => {
     const subtree = buildSubtree(NODES, "economy");
     const ids = subtree.map((n) => n.id);
     expect(ids).toContain("economy");
@@ -98,20 +98,22 @@ describe("buildSubtree", () => {
     expect(childIds).toEqual(["investments", "trade"]);
   });
 
-  it("caps at depth 3 by default — deeper nodes are excluded", () => {
+  it("caps at depth 4 by default — deeper nodes are excluded", () => {
     const deep: TreeNode[] = [
       node("a", "A", 0),
       node("b", "B", 1, "a"),
       node("c", "C", 2, "b"),
       node("d", "D", 3, "c"),
-      node("e", "E", 4, "d"), // 4 levels below root → excluded
+      node("e", "E", 4, "d"),
+      node("f", "F", 5, "e"), // 5 levels below root → excluded
     ];
     const ids = buildSubtree(deep, "a").map((n) => n.id);
     expect(ids).toContain("a");
     expect(ids).toContain("b");
     expect(ids).toContain("c");
     expect(ids).toContain("d");
-    expect(ids).not.toContain("e");
+    expect(ids).toContain("e");
+    expect(ids).not.toContain("f");
   });
 });
 

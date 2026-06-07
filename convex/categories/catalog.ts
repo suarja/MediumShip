@@ -4,6 +4,7 @@ import { internalMutation, internalQuery } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { normalizeScoringKey } from "../discovery/scoring";
 import { buildSearchResults, buildSubtree, normalizeSearchQuery, type TreeNode } from "./tree";
+import { CATALOG_TAXONOMY_MAX_DEPTH } from "./catalogLabelPolicy";
 
 // ─── Upsert (called by the IPTC import action) ────────────────────────────────
 
@@ -128,7 +129,7 @@ export const searchCategoryCatalog = internalQuery({
     maxDepth: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const cap = args.maxDepth ?? 3;
+    const cap = args.maxDepth ?? CATALOG_TAXONOMY_MAX_DEPTH;
     const normalized = normalizeSearchQuery(args.query);
     if (!normalized) return [];
 

@@ -113,7 +113,7 @@ describe("cms/catalog — searchCategoryCatalogForCms", () => {
     expect(results).toEqual([]);
   });
 
-  it("excludes root nodes and returns addable children", async () => {
+  it("includes compact root nodes and addable children", async () => {
     const t = convexTest(schema, modules);
     await seedAdmin(t);
     await seedCatalogNodes(t);
@@ -124,11 +124,37 @@ describe("cms/catalog — searchCategoryCatalogForCms", () => {
       { query: "econom" },
     );
     expect(results.length).toBeGreaterThanOrEqual(1);
-    expect(results.every((r) => r.depth >= 1)).toBe(true);
     expect(results.every((r) => r.canAdd)).toBe(true);
     const labels = results.map((r) => r.label);
     expect(labels).toContain("Finance");
-    expect(labels).not.toContain("Economy");
+    expect(labels).toContain("Economy");
+  });
+
+  it("marks wide IPTC families as non-addable", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("categoryCatalog", {
+        externalId: "medtop:20000344",
+        label: "Economy, Business and Finance",
+        slug: "economy-business-and-finance",
+        depth: 0,
+        retired: false,
+      });
+    });
+
+    const asAdmin = t.withIdentity(ADMIN);
+    const results = await asAdmin.query(
+      api.cms.catalog.searchCategoryCatalogForCms,
+      { query: "business" },
+    );
+    expect(results.some((r) => r.label === "Economy, Business and Finance")).toBe(
+      true,
+    );
+    const wideRoot = results.find(
+      (r) => r.label === "Economy, Business and Finance",
+    );
+    expect(wideRoot?.canAdd).toBe(false);
   });
 
   it("matches French labels when present", async () => {
@@ -228,7 +254,8 @@ describe("cms/catalog — listCategoryCatalogRootsForCms", () => {
       {},
     );
     expect(roots.every((r) => r.depth === 0)).toBe(true);
-    expect(roots.every((r) => !r.canAdd)).toBe(true);
+    const economy = roots.find((r) => r.label === "Economy");
+    expect(economy?.canAdd).toBe(true);
     expect(roots.map((r) => r.label)).toContain("Economy");
   });
 });

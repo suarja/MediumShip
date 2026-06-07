@@ -1,6 +1,10 @@
 import type { Doc } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import {
+  CATALOG_TAXONOMY_MAX_DEPTH,
+  canAddCatalogNodeToTenant,
+} from "./catalogLabelPolicy";
+import {
   type CatalogLocale,
   resolveCatalogDisplayLabel,
 } from "./catalogLocale";
@@ -15,7 +19,7 @@ export type CatalogNodeSummary = {
   slug: string;
   labelFr?: string;
   retired: boolean;
-  /** Root nodes (depth 0) cannot be added to tenant taxonomy. */
+  /** Depth-0 nodes are addable only when the display label is compact (≤2 meaningful words). */
   canAdd: boolean;
 };
 
@@ -33,7 +37,7 @@ function toSummary(
     slug: node.slug,
     ...(node.labelFr !== undefined && { labelFr: node.labelFr }),
     retired: node.retired ?? false,
-    canAdd: node.depth > 0,
+    canAdd: canAddCatalogNodeToTenant(node.depth, displayLabel),
   };
 }
 
@@ -73,7 +77,7 @@ export async function searchCategoryCatalogNodes(
     locale?: CatalogLocale;
   } = {},
 ) {
-  const maxDepth = options.maxDepth ?? 3;
+  const maxDepth = options.maxDepth ?? CATALOG_TAXONOMY_MAX_DEPTH;
   const minDepth = options.minDepth ?? 0;
   const locale = options.locale ?? "en";
   const normalized = normalizeSearchQuery(query);

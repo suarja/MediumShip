@@ -5,6 +5,7 @@
  */
 
 import { normalizeScoringKey } from "../discovery/scoring";
+import { CATALOG_TAXONOMY_MAX_DEPTH } from "./catalogConstants";
 
 export type TreeNode = {
   id: string;
@@ -34,7 +35,7 @@ export function normalizeSearchQuery(query: string): string {
 export function buildSubtree<T extends TreeNode>(
   nodes: T[],
   rootId: string,
-  maxDepth: number = 3,
+  maxDepth: number = CATALOG_TAXONOMY_MAX_DEPTH,
 ): T[] {
   const nodeMap = new Map<string, T>(nodes.map((n) => [n.id, n]));
   const byParent = new Map<string, T[]>();
@@ -82,7 +83,7 @@ export function buildSubtree<T extends TreeNode>(
 export function buildSearchResults<T extends TreeNode>(
   nodes: T[],
   query: string,
-  maxDepth: number = 3,
+  maxDepth: number = CATALOG_TAXONOMY_MAX_DEPTH,
 ): T[] {
   const normalized = normalizeSearchQuery(query);
   if (!normalized) return [];

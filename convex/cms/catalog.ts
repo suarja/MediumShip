@@ -11,6 +11,7 @@ import {
   readCategoryCatalogStats,
   searchCategoryCatalogNodes,
 } from "../categories/catalogRead";
+import { CATALOG_TAXONOMY_MAX_DEPTH } from "../categories/catalogLabelPolicy";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
 import { requireCmsAdmin } from "./authz";
 
@@ -35,8 +36,8 @@ export const getCategoryCatalogStats = query({
 });
 
 /**
- * Search the global catalog by label (accent-insensitive, depth cap 3).
- * Root nodes (depth 0) are excluded — too broad for tenant taxonomy.
+ * Search the global catalog by label (accent-insensitive, depth cap 4).
+ * Wide IPTC families (depth 0, 3+ meaningful words) are browse-only.
  * CMS admin only.
  */
 export const searchCategoryCatalogForCms = query({
@@ -49,16 +50,15 @@ export const searchCategoryCatalogForCms = query({
 
     const locale = await getTenantCatalogLocale(ctx);
     return await searchCategoryCatalogNodes(ctx, args.query, {
-      maxDepth: 3,
-      minDepth: 1,
+      maxDepth: CATALOG_TAXONOMY_MAX_DEPTH,
       locale,
     });
   },
 });
 
 /**
- * L1 IPTC families for browse entry (chips). Not addable — use to drill into
- * sub-themes via search.
+ * L1 IPTC families for browse entry (chips). Compact labels (≤2 words) may
+ * also be added directly; broad families drill into sub-themes via search.
  * CMS admin only.
  */
 export const listCategoryCatalogRootsForCms = query({

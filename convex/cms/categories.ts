@@ -11,6 +11,7 @@ import { requireCmsAdmin } from "./authz";
 import type { Id } from "../_generated/dataModel";
 import { buildSubtree, type TreeNode } from "../categories/tree";
 import { resolveCatalogDisplayLabel } from "../categories/catalogLocale";
+import { canAddCatalogNodeToTenant } from "../categories/catalogLabelPolicy";
 
 async function ensureUniqueCategorySlug(
   ctx: MutationCtx,
@@ -175,17 +176,22 @@ export const addCategoryFromCatalog = mutation({
     // Load the source node(s) from the catalog
     const catalogRoot = await ctx.db.get(args.catalogNodeId);
     if (!catalogRoot) throw new Error("Catalog node not found");
-    if (catalogRoot.depth === 0) {
-      throw new Error(
-        "Les racines IPTC (niveau 1) sont trop larges — choisis un sous-thème",
-      );
-    }
 
     const tenant = await ctx.db
       .query("tenants")
       .withIndex("by_slug", (q) => q.eq("slug", tenantSlug))
       .unique();
     const catalogLocale = tenant?.catalogLocale ?? "en";
+
+    const rootDisplayLabel = resolveCatalogDisplayLabel(
+      catalogRoot,
+      catalogLocale,
+    );
+    if (!canAddCatalogNodeToTenant(catalogRoot.depth, rootDisplayLabel)) {
+      throw new Error(
+        "Cette famille IPTC est trop large — choisis un sous-thème plus précis",
+      );
+    }
 
     let catalogNodesToCopy: typeof catalogRoot[] = [catalogRoot];
 
@@ -207,8 +213,13 @@ export const addCategoryFromCatalog = mutation({
       );
     }
 
-    // Never copy depth-0 nodes even when descendants are requested.
-    catalogNodesToCopy = catalogNodesToCopy.filter((node) => node.depth > 0);
+    // Skip wide IPTC families (depth 0 with 3+ meaningful words) even in descendant batches.
+    catalogNodesToCopy = catalogNodesToCopy.filter((node) =>
+      canAddCatalogNodeToTenant(
+        node.depth,
+        resolveCatalogDisplayLabel(node, catalogLocale),
+      ),
+    );
 
     // Load existing tenant slugs to skip duplicates
     const existingTenantRows = await ctx.db

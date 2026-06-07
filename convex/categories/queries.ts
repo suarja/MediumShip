@@ -5,6 +5,7 @@ import type { QueryCtx } from "../_generated/server";
 import { getCategoryPresentation } from "../../src/features/categories/category-presentation";
 import { resolveCategoryIconGlyph } from "./model";
 import { buildSearchResults, type TreeNode } from "./tree";
+import { CATALOG_TAXONOMY_MAX_DEPTH } from "./catalogConstants";
 
 async function publishedCategoryCounts(ctx: QueryCtx, tenantSlug: string) {
   const contents = await ctx.db
@@ -169,7 +170,7 @@ export const searchTenantCategories = query({
     maxDepth: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const cap = args.maxDepth ?? 3;
+    const cap = args.maxDepth ?? CATALOG_TAXONOMY_MAX_DEPTH;
     const all = await loadTenantCategories(ctx, args.tenantSlug);
     const selectable = all.filter((c) => c.isSelectable ?? true);
 

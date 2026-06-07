@@ -1,8 +1,13 @@
-import { Tabs } from "expo-router";
+import { Tabs, usePathname, useRouter } from "expo-router";
+import { useEffect, useRef } from "react";
 
 import { AppTabBar } from "../../src/components/navigation/app-tab-bar";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 import type { FeatureKey } from "../../convex/featureCatalog";
+import {
+  getDefaultAppRoute,
+  shouldRedirectTabBoot,
+} from "../../src/features/navigation/default-app-route";
 
 const ALL_TAB_ROUTE_NAMES = [
   "home",
@@ -35,6 +40,9 @@ function tabHref(
 // Public tab shell: reading surfaces stay available without authentication.
 export default function AppLayout() {
   const { effectiveNavigation } = useAppTheme();
+  const pathname = usePathname();
+  const router = useRouter();
+  const bootRedirectHandledRef = useRef(false);
   const navSet = new Set(effectiveNavigation);
 
   const orderedRoutes = [
@@ -42,6 +50,26 @@ export default function AppLayout() {
     ...ALL_TAB_ROUTE_NAMES.filter((route) => !navSet.has(route)),
     ...HIDDEN_ROUTE_NAMES,
   ];
+
+  useEffect(() => {
+    if (bootRedirectHandledRef.current) {
+      return;
+    }
+
+    if (
+      shouldRedirectTabBoot({
+        pathname,
+        effectiveNavigation,
+        allTabRouteNames: ALL_TAB_ROUTE_NAMES,
+      })
+    ) {
+      bootRedirectHandledRef.current = true;
+      router.replace(getDefaultAppRoute(effectiveNavigation));
+      return;
+    }
+
+    bootRedirectHandledRef.current = true;
+  }, [effectiveNavigation, pathname, router]);
 
   return (
     <Tabs

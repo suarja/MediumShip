@@ -10,6 +10,7 @@ import {
 } from "../convex/featureCatalog";
 
 const mockUseAppTheme = jest.fn();
+const mockReplace = jest.fn();
 const renderedTabOrder: string[] = [];
 
 jest.mock("../src/features/theme/theme-provider", () => ({
@@ -39,7 +40,11 @@ jest.mock("expo-router", () => {
     );
   };
 
-  return { Tabs };
+  return {
+    Tabs,
+    usePathname: () => "/home",
+    useRouter: () => ({ replace: mockReplace }),
+  };
 });
 
 jest.mock("../src/components/navigation/app-tab-bar", () => ({
@@ -59,6 +64,7 @@ function mockThemeFromConfigs(
 describe("app layout feature navigation", () => {
   beforeEach(() => {
     renderedTabOrder.length = 0;
+    mockReplace.mockReset();
   });
 
   it("renders exactly the effective navigation tabs as visible", () => {

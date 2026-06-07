@@ -7,6 +7,8 @@ import {
   slugifyCategoryLabel,
 } from "../categories/model";
 import { requireCmsAdmin } from "./authz";
+import type { Id } from "../_generated/dataModel";
+import { buildSubtree, type TreeNode } from "../categories/tree";
 
 async function ensureUniqueCategorySlug(
   ctx: MutationCtx,
@@ -144,6 +146,117 @@ export const updateCategory = mutation({
     });
 
     return existing._id;
+  },
+});
+
+/**
+ * Copy one or more nodes from the global `categoryCatalog` into the tenant's
+ * `categories` table, preserving the tree shape (parentId links are remapped
+ * to the newly created tenant category IDs).
+ *
+ * - Existing tenant category slugs are skipped (idempotent).
+ * - `catalogNodeId` on each copied row traces the origin back to the catalog.
+ * - `includeDescendants` (default false) copies the full subtree.
+ */
+export const addCategoryFromCatalog = mutation({
+  args: {
+    tenantSlug: v.optional(v.string()),
+    catalogNodeId: v.id("categoryCatalog"),
+    includeDescendants: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args) => {
+    await requireCmsAdmin(ctx);
+
+    const tenantSlug = args.tenantSlug ?? defaultTenant.slug;
+    const includeDescendants = args.includeDescendants ?? false;
+
+    // Load the source node(s) from the catalog
+    const catalogRoot = await ctx.db.get(args.catalogNodeId);
+    if (!catalogRoot) throw new Error("Catalog node not found");
+
+    let catalogNodesToCopy: typeof catalogRoot[] = [catalogRoot];
+
+    if (includeDescendants) {
+      const allCatalog = await ctx.db.query("categoryCatalog").take(5000);
+      const treeNodes: TreeNode[] = allCatalog.map((n) => ({
+        id: n._id as string,
+        parentId: n.parentId ? (n.parentId as string) : null,
+        depth: n.depth,
+        label: n.label,
+      }));
+      const subtreeIds = new Set(
+        buildSubtree(treeNodes, args.catalogNodeId as string, 99).map(
+          (n) => n.id,
+        ),
+      );
+      catalogNodesToCopy = allCatalog.filter((n) =>
+        subtreeIds.has(n._id as string),
+      );
+    }
+
+    // Load existing tenant slugs to skip duplicates
+    const existingTenantRows = await ctx.db
+      .query("categories")
+      .withIndex("by_tenantSlug", (q) => q.eq("tenantSlug", tenantSlug))
+      .collect();
+    const existingSlugs = new Set(existingTenantRows.map((r) => r.slug));
+
+    // Compute a starting sortOrder beyond existing rows
+    const baseSortOrder =
+      existingTenantRows.length > 0
+        ? Math.max(...existingTenantRows.map((r) => r.sortOrder)) + 1
+        : 0;
+
+    // Map catalogNodeId → new tenant category Id (for re-linking parentId)
+    // Also include catalog→tenant links that already exist from previous copies
+    const catalogToTenant = new Map<string, Id<"categories">>(
+      existingTenantRows
+        .filter((r) => r.catalogNodeId)
+        .map((r) => [r.catalogNodeId! as string, r._id]),
+    );
+
+    const created: Id<"categories">[] = [];
+    let sortOffset = 0;
+
+    for (const catalogNode of catalogNodesToCopy) {
+      const slug =
+        slugifyCategoryLabel(catalogNode.label) || catalogNode.slug;
+
+      if (existingSlugs.has(slug)) {
+        // Already exists — record the existing ID for parentId remapping
+        const existing = existingTenantRows.find((r) => r.slug === slug);
+        if (existing) {
+          catalogToTenant.set(catalogNode._id as string, existing._id);
+        }
+        continue;
+      }
+
+      // Remap parentId: if the parent catalog node was also copied (in this
+      // batch or a previous one), link to the tenant category equivalent.
+      const remappedParentId = catalogNode.parentId
+        ? catalogToTenant.get(catalogNode.parentId as string)
+        : undefined;
+
+      const newId = await ctx.db.insert("categories", {
+        tenantSlug,
+        label: catalogNode.label,
+        slug,
+        iconKey: catalogNode.iconKey ?? "default",
+        sortOrder: baseSortOrder + sortOffset,
+        updatedAt: Date.now(),
+        catalogNodeId: catalogNode._id,
+        parentId: remappedParentId,
+        depth: catalogNode.depth,
+        isSelectable: true,
+      });
+
+      catalogToTenant.set(catalogNode._id as string, newId);
+      existingSlugs.add(slug);
+      created.push(newId);
+      sortOffset += 1;
+    }
+
+    return { created: created.length, skipped: catalogNodesToCopy.length - created.length };
   },
 });
 

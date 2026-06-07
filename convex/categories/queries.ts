@@ -4,6 +4,7 @@ import { query } from "../_generated/server";
 import type { QueryCtx } from "../_generated/server";
 import { getCategoryPresentation } from "../../src/features/categories/category-presentation";
 import { resolveCategoryIconGlyph } from "./model";
+import { buildSearchResults, type TreeNode } from "./tree";
 
 async function publishedCategoryCounts(ctx: QueryCtx, tenantSlug: string) {
   const contents = await ctx.db
@@ -76,5 +77,90 @@ export const listCategoryOptions = query({
         icon: resolveCategoryIconGlyph(category.iconKey),
         iconKey: category.iconKey,
       }));
+  },
+});
+
+// ─── Tenant tree queries (ADR 0007 / Slice J) ─────────────────────────────────
+
+/** Helper — load all categories for a tenant (bounded). */
+async function loadTenantCategories(ctx: QueryCtx, tenantSlug: string) {
+  return ctx.db
+    .query("categories")
+    .withIndex("by_tenantSlug", (q) => q.eq("tenantSlug", tenantSlug))
+    .collect();
+}
+
+/**
+ * Return root-level tenant categories (depth 0 or no parentId), sorted by
+ * sortOrder then label. Only includes `isSelectable !== false` nodes
+ * (selectable by members in the interest picker).
+ */
+export const listTenantCategoryRoots = query({
+  args: { tenantSlug: v.string() },
+  handler: async (ctx, args) => {
+    const all = await loadTenantCategories(ctx, args.tenantSlug);
+    return all
+      .filter(
+        (c) => !c.parentId && (c.isSelectable ?? true),
+      )
+      .sort(
+        (a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label),
+      );
+  },
+});
+
+/**
+ * Return direct children of a tenant category node, sorted by sortOrder then
+ * label. Only returns `isSelectable !== false` nodes.
+ */
+export const listTenantCategoryChildren = query({
+  args: {
+    tenantSlug: v.string(),
+    parentId: v.id("categories"),
+  },
+  handler: async (ctx, args) => {
+    const children = await ctx.db
+      .query("categories")
+      .withIndex("by_tenantSlug_and_parentId", (q) =>
+        q.eq("tenantSlug", args.tenantSlug).eq("parentId", args.parentId),
+      )
+      .collect();
+    return children
+      .filter((c) => c.isSelectable ?? true)
+      .sort(
+        (a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label),
+      );
+  },
+});
+
+/**
+ * Search tenant categories by label (accent-insensitive).
+ * Returns each matching node plus its subtree, capped at `maxDepth` levels.
+ * Only `isSelectable !== false` nodes are included.
+ */
+export const searchTenantCategories = query({
+  args: {
+    tenantSlug: v.string(),
+    query: v.string(),
+    maxDepth: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const cap = args.maxDepth ?? 3;
+    const all = await loadTenantCategories(ctx, args.tenantSlug);
+    const selectable = all.filter((c) => c.isSelectable ?? true);
+
+    const treeNodes: TreeNode[] = selectable.map((c) => ({
+      id: c._id as string,
+      parentId: c.parentId ? (c.parentId as string) : null,
+      depth: c.depth ?? 0,
+      label: c.label,
+    }));
+
+    const resultIds = new Set(
+      buildSearchResults(treeNodes, args.query, cap).map((n) => n.id),
+    );
+
+    const nodeById = new Map(selectable.map((c) => [c._id as string, c]));
+    return [...resultIds].map((id) => nodeById.get(id)).filter(Boolean);
   },
 });

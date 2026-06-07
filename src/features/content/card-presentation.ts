@@ -47,8 +47,10 @@ export function discoveryCardKicker(
   t: Translate,
   tDiscover: Translate,
 ): string {
-  if (item.source === "wikipedia") {
-    return tDiscover("source.wikipedia");
+  // Ingested (non-CMS) content carries its provider as the kicker — "YouTube",
+  // "Wikipedia", "RSS" — instead of the editorial section bucket label.
+  if (item.source && item.source !== "cms") {
+    return tDiscover(`source.${item.source}`);
   }
 
   const reasonKey = `sections.${reason}.title`;

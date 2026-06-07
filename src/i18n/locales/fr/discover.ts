@@ -14,6 +14,8 @@ export default {
   },
   source: {
     wikipedia: "Wikipedia",
+    youtube: "YouTube",
+    rss: "RSS",
   },
   sections: {
     editorial: {

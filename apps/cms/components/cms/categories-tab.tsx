@@ -1,7 +1,7 @@
 "use client";
 
 import type { Doc } from "../../../../convex/_generated/dataModel";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { CatalogSearchPanel } from "./catalog-search-panel";
 import { CategoryForm } from "./category-form";
@@ -10,9 +10,7 @@ import { CategoryList } from "./category-list";
 type CategoriesTabProps = {
   items: Doc<"categories">[];
   ready: boolean;
-  onCreate: () => void;
-  onSelect: (id: string | null) => void;
-  selectedId: string | null;
+  onCreate: () => Promise<string>;
 };
 
 function matchesQuery(item: Doc<"categories">, query: string) {
@@ -24,47 +22,38 @@ function matchesQuery(item: Doc<"categories">, query: string) {
   return haystack.includes(query.trim().toLowerCase());
 }
 
-function sortAlphabetically(items: Doc<"categories">[]) {
-  return [...items].sort((left, right) => left.label.localeCompare(right.label, "fr"));
-}
-
-export function CategoriesTab({
-  items,
-  ready,
-  onCreate,
-  onSelect,
-  selectedId,
-}: CategoriesTabProps) {
+export function CategoriesTab({ items, ready, onCreate }: CategoriesTabProps) {
   const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const filteredItems = useMemo(
-    () => sortAlphabetically(items.filter((item) => matchesQuery(item, query))),
+    () => items.filter((item) => matchesQuery(item, query)),
     [items, query],
   );
 
-  // Keep selection only when the chosen row is still visible.
-  // Never auto-pick the first row — the editor opens only after an explicit list click.
   useEffect(() => {
-    if (filteredItems.length === 0) {
-      if (selectedId !== null) {
-        onSelect(null);
-      }
-      return;
-    }
-
     if (selectedId && !filteredItems.some((item) => item._id === selectedId)) {
-      onSelect(null);
+      setSelectedId(null);
     }
-  }, [filteredItems, onSelect, selectedId]);
+  }, [filteredItems, selectedId]);
+
+  const handleSelect = useCallback((id: string) => {
+    setSelectedId((current) => (current === id ? null : id));
+  }, []);
+
+  const handleCreate = useCallback(async () => {
+    const id = await onCreate();
+    setSelectedId(id);
+  }, [onCreate]);
 
   return (
     <main className="page">
       <div className="contents-grid categories-layout">
         <CategoryList
           items={filteredItems}
-          onCreate={onCreate}
+          onCreate={() => void handleCreate()}
           onQueryChange={setQuery}
-          onSelect={onSelect}
+          onSelect={handleSelect}
           query={query}
           selectedId={selectedId}
         />

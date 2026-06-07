@@ -25,7 +25,6 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
   const createEvent = useMutation(api.cms.events.createEvent);
   const [activeTab, setActiveTabState] = useState<CmsTab>(initialTab);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(
     null,
   );
@@ -143,16 +142,13 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
                 <CategoriesTab
                   items={categories}
                   ready={isAdmin}
-                  onCreate={async () => {
-                    const id = await createCategory({
+                  onCreate={() =>
+                    createCategory({
                       label: "Sans titre",
                       slug: "",
                       iconKey: "default",
-                    });
-                    setSelectedCategoryId(id);
-                  }}
-                  onSelect={setSelectedCategoryId}
-                  selectedId={selectedCategoryId}
+                    })
+                  }
                 />
               ) : activeTab === "collections" ? (
                 <CollectionsTab

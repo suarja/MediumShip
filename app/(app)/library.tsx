@@ -323,6 +323,8 @@ function SignedInLibraryContent({
           <View style={styles.sectionBlock}>
             <LibrarySectionHeader
               gate="premium"
+              onSeeAllPress={() => router.push("/downloads")}
+              seeAllLabel={t("library:screen.seeAll")}
               title={t("library:screen.sections.offline")}
             />
             {isMember ? (

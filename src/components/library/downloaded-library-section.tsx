@@ -9,7 +9,13 @@ import {
   type LibraryCollectionItem,
 } from "./library-collection-section";
 
-export function DownloadedLibrarySection() {
+type DownloadedLibrarySectionProps = {
+  mode?: "preview" | "full";
+};
+
+export function DownloadedLibrarySection({
+  mode = "preview",
+}: DownloadedLibrarySectionProps) {
   const { t } = useTranslation(["library"]);
   const { isSignedIn } = useClerkAuth();
   const { isMember, isLoading: isMembershipLoading } = useIsMember();
@@ -34,6 +40,7 @@ export function DownloadedLibrarySection() {
   return (
     <LibraryCollectionSection
       hideHeader
+      mode={mode}
       emptyBody={
         !isSignedIn ? t("library:downloads.guestHint") : t("library:downloads.empty")
       }

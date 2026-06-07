@@ -88,9 +88,19 @@ describe("signed-in library screen", () => {
   it("navigates to the full favorites list when See all is pressed", () => {
     render(<LibraryScreen />);
 
-    fireEvent.press(screen.getByLabelText("See all"));
+    fireEvent.press(screen.getAllByLabelText("See all")[0]);
 
     expect(mockPush).toHaveBeenCalledWith("/favorites");
+  });
+
+  it("navigates to the full downloads list from the offline section", () => {
+    mockUseIsMember.mockReturnValue({ isMember: true, isLoading: false });
+
+    render(<LibraryScreen />);
+
+    fireEvent.press(screen.getAllByLabelText("See all")[1]);
+
+    expect(mockPush).toHaveBeenCalledWith("/downloads");
   });
 
   it("does not render a top-bar search loupe", () => {

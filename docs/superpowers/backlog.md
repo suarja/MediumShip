@@ -19,8 +19,8 @@ Idées soulevées mais non planifiées. Rangées ici pendant que **Slice H** (la
 
 Ça fonctionne aujourd'hui, mais ça ne scale pas : chaque nouveau provider voudrait empiler ses propres params (`youtubeChannelId`, clés API…) sur le port partagé. **C'est la dette à traiter AVANT d'ajouter un vrai 2ᵉ provider**, pour ne pas répliquer le couplage.
 
-- **[GATE] Vérification finale + refactor du seam provider** → **planifié : `docs/superpowers/plans/2026-06-07-discovery-slice-m-provider-seam-hardening.md`** (Slice M). Rendre le port agnostique : la config spécifique (locale, channel id, credentials) est résolue **dans l'adapter** depuis un blob `providerConfigs` opaque par tenant que l'orchestrateur ne lit jamais. Prouvé par un 2ᵉ adapter réel (flux RSS, sans clé API). Bloque l'item ci-dessous.
-- **Provider YouTube (chaîne du tenant).** Le 2ᵉ vrai adapter — celui qui *prouve* le seam (1 adapter = couture hypothétique, 2 = couture réelle). À ne lancer **qu'après** le GATE ci-dessus.
+- ~~**[GATE] Vérification finale + refactor du seam provider** → **planifié : `docs/superpowers/plans/2026-06-07-discovery-slice-m-provider-seam-hardening.md`** (Slice M). Rendre le port agnostique : la config spécifique (locale, channel id, credentials) est résolue **dans l'adapter** depuis un blob `providerConfigs` opaque par tenant que l'orchestrateur ne lit jamais. Prouvé par un 2ᵉ adapter réel (flux RSS, sans clé API). Bloque l'item ci-dessous.~~ **✅ Fait** (`feat/discovery-slice-m-provider-seam-hardening`) : port réduit à `{ tenantSlug, demand }`, `providerConfigs` opaque par source/tenant, locale Wikipedia auto-résolue dans l'adapter, migration du champ legacy, et 2ᵉ adapter réel `rss` branché dans `PROVIDERS`.
+- **Provider YouTube (chaîne du tenant).** Le 2ᵉ vrai adapter produit, désormais **débloqué** par le GATE ci-dessus : il peut se brancher sur le seam prouvé via `providerConfigs.youtube`, sans réintroduire de paramètres spécifiques dans le port partagé.
 
 ---
 
@@ -115,6 +115,10 @@ Retours terrain après usage réel (favoris enregistrés, navigation Bibliothèq
 ### Cartes « À découvrir »
 
 - **Summary plus long quand présent** : passer de 2 lignes max à ~4 lignes de summary sur les cartes « À découvrir », pour un aperçu plus riche quand le contenu en a un.
+
+### Retour haptique (app-wide)
+
+- **Retour haptique sur toute l'application.** S'inspirer de **`../editia/mobile/lib/utils/haptics.ts`** : service central `HapticsService` (`expo-haptics`) avec intensités sémantiques (`light`, `medium`, `heavy`) et patterns (`success`, `error`, `warning`, `selection`), no-op sur web. Editia branche déjà le service dans les composants partagés (`Button`, `Chip`, tab bar, toggles…) — reproduire le même pattern : installer `expo-haptics`, créer le service, puis l'appliquer progressivement aux primitives UI et aux interactions clés (navigation, favoris, filtres, actions primaires/secondaires, confirmations).
 
 ---
 

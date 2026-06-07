@@ -59,6 +59,59 @@ describe("discovery/providerConfig — getTenantProviderConfig", () => {
   });
 });
 
+describe("discovery/providerConfig — setTenantProviderConfig", () => {
+  it("writes and removes an opaque provider blob by source", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("tenants", {
+        slug: TENANT,
+        name: "Demo",
+        enabledModules: ["discover"],
+        providerConfigs: {
+          wikipedia: { locale: "en" },
+        },
+      });
+    });
+
+    await t.mutation(internal.discovery.providerConfig.setTenantProviderConfig, {
+      tenantSlug: TENANT,
+      source: "rss",
+      config: {
+        feeds: ["https://example.com/feed.xml"],
+      },
+    });
+
+    expect(
+      await t.query(internal.discovery.providerConfig.getTenantProviderConfig, {
+        tenantSlug: TENANT,
+        source: "rss",
+      }),
+    ).toEqual({
+      feeds: ["https://example.com/feed.xml"],
+    });
+
+    await t.mutation(internal.discovery.providerConfig.setTenantProviderConfig, {
+      tenantSlug: TENANT,
+      source: "rss",
+      config: null,
+    });
+
+    expect(
+      await t.query(internal.discovery.providerConfig.getTenantProviderConfig, {
+        tenantSlug: TENANT,
+        source: "rss",
+      }),
+    ).toBeNull();
+    expect(
+      await t.query(internal.discovery.providerConfig.getTenantProviderConfig, {
+        tenantSlug: TENANT,
+        source: "wikipedia",
+      }),
+    ).toEqual({ locale: "en" });
+  });
+});
+
 describe("buildWikipediaLocaleMigrationPatch", () => {
   it("copies legacy wikipediaLocale into providerConfigs and unsets the field", () => {
     expect(

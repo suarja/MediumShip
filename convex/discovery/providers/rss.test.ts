@@ -303,7 +303,11 @@ describe("rssProvider.ingest", () => {
       });
     });
 
-    const fetchMock = vi.fn(async (url: string) => {
+    const fetchMock = vi.fn(async (url: string): Promise<{
+      ok: boolean;
+      status?: number;
+      text: () => Promise<string>;
+    }> => {
       if (url === "https://example.com/bad.xml") {
         return {
           ok: false,
@@ -322,7 +326,7 @@ describe("rssProvider.ingest", () => {
     const result = await ingestRssDemand(
       ctx,
       { tenantSlug: TENANT, demand: { categories: [] } },
-      fetchMock as typeof fetch,
+      fetchMock as unknown as typeof fetch,
     );
 
     expect(result.upserted).toBe(2);

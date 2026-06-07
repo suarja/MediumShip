@@ -49,6 +49,35 @@ export const getTenantProviderConfig = internalQuery({
   },
 });
 
+export const setTenantProviderConfig = internalMutation({
+  args: {
+    tenantSlug: v.string(),
+    source: v.string(),
+    config: v.union(v.record(v.string(), v.any()), v.null()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const tenant = await ctx.db
+      .query("tenants")
+      .withIndex("by_slug", (q) => q.eq("slug", args.tenantSlug))
+      .unique();
+
+    if (!tenant) {
+      throw new Error(`Unknown tenant: ${args.tenantSlug}`);
+    }
+
+    const providerConfigs = { ...(tenant.providerConfigs ?? {}) };
+    if (args.config === null) {
+      delete providerConfigs[args.source];
+    } else {
+      providerConfigs[args.source] = args.config;
+    }
+
+    await ctx.db.patch(tenant._id, { providerConfigs });
+    return null;
+  },
+});
+
 export const migrateWikipediaLocaleToProviderConfig = internalMutation({
   args: {},
   returns: v.object({

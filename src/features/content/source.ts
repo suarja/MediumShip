@@ -1,4 +1,4 @@
-export type ContentSource = "cms" | "wikipedia";
+export type ContentSource = "cms" | "wikipedia" | "rss";
 
 export function resolveContentSource(content: {
   source?: ContentSource;

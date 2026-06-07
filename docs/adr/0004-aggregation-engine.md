@@ -73,6 +73,7 @@ Ingestion seule : champs source sur `contents` ; `WikipediaProvider` (adapter du
 - Dépendance API externe (quotas, latence, disponibilité) → providers isolés, modèle canonique stocké, source affichée, provider désactivable (ADR 0003, Risque 6).
 - Sans pruning, le corpus croît : acceptable au début, à surveiller (pruning différé).
 - La pertinence dépend de la qualité des catégories seed et de l'agrégat — d'où le quota de diversité.
+- Le port `Provider` doit rester **agnostique** : l'orchestrateur d'ingestion ne passe que `{ tenantSlug, demand }`. Toute config spécifique provider (locale Wikipedia, flux RSS, futur channel YouTube) est stockée dans un blob opaque `providerConfigs` par tenant et résolue **dans l'adapter**, jamais dans le seam générique `convex/discovery/**`.
 
 ## Supersession
 

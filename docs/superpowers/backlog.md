@@ -6,7 +6,7 @@ Idées soulevées mais non planifiées. Rangées ici pendant que **Slice H** (la
 
 ## 🐞 Bugs (priorité)
 
-- **[P0] CMS — boucle infinie sur la recherche de contenu.** Rechercher dans la liste de contenu du CMS boucle. Probablement la même classe que la boucle feed mobile déjà corrigée (query réactive / effet qui se re-déclenche). À investiguer côté `apps/cms` + la query de recherche (`convex/content/queries.ts` `searchPublished` / l'écran CMS). **Indépendant de Slice H (autre surface) → corrigeable en parallèle.**
+- ~~**[P0] CMS — boucle infinie sur la recherche de contenu.**~~ **✅ Corrigé** (`0210623`) : conflit entre deux effets de sélection (ContentsTab désélectionnait sur recherche vide, le dashboard re-sélectionnait le 1er contenu global → ping-pong). Sélection désormais gérée uniquement par `ContentsTab` (filter-aware).
 
 ---
 

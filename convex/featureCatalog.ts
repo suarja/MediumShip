@@ -40,12 +40,14 @@ export type FeatureDefinition = {
 
 export type TenantFeatureConfig = {
   enabled: boolean;
+  inBar: boolean;
   access: AccessLevel;
   iconKey: string;
 };
 
 export type TenantFeatureConfigInput = {
   enabled?: boolean;
+  inBar?: boolean;
   access?: AccessLevel;
   iconKey?: string;
 };
@@ -445,6 +447,7 @@ export function normalizeFeatureConfigs(
 
     normalized[feature.key] = {
       enabled,
+      inBar: patch?.inBar ?? base.inBar,
       access,
       iconKey,
     };

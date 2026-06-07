@@ -35,7 +35,7 @@ describe("FeedFilterChips", () => {
         borderColor: "rgba(43, 33, 29, 0.2)",
       }),
     );
-    expect(label.color).toBe(theme.colors.text);
+    expect((label as { color: string }).color).toBe(theme.colors.text);
   });
 
   it("keeps the active chip on the inverted ink fill", () => {
@@ -53,6 +53,6 @@ describe("FeedFilterChips", () => {
         borderColor: theme.colors.heading,
       }),
     );
-    expect(label.color).toBe(theme.colors.canvas);
+    expect((label as { color: string }).color).toBe(theme.colors.canvas);
   });
 });

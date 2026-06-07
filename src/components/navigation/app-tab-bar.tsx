@@ -1,33 +1,32 @@
 import type { ComponentProps } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
 import { useResponsive } from "../../features/responsive/use-responsive";
-import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
+type IoniconName = ComponentProps<typeof Ionicons>["name"];
+
 type TabMeta = {
-  icon: string;
-  labelKey: string;
-  /** Optical size — the ⌕ loupe reads smaller than circle glyphs at equal font metrics. */
-  iconSize?: number;
+  icon: IoniconName;
+  iconFocused: IoniconName;
+  labelKey: "home" | "discover" | "explore" | "library" | "profile";
 };
 
-const TAB_ICON_SIZE = 16;
-/** ⌕ reads much smaller than circle glyphs — needs a strong optical bump over 16px. */
-const EXPLORE_TAB_ICON_SIZE = 28;
+const TAB_ICON_SIZE = 22;
 
 const TAB_META: Record<string, TabMeta> = {
-  home: { icon: "◉", labelKey: "home" },
-  discover: { icon: "◎", labelKey: "discover" },
-  explore: { icon: "⌕", labelKey: "explore", iconSize: EXPLORE_TAB_ICON_SIZE },
-  library: { icon: "▤", labelKey: "library" },
-  profile: { icon: "○", labelKey: "profile" },
+  home: { icon: "home-outline", iconFocused: "home", labelKey: "home" },
+  discover: { icon: "compass-outline", iconFocused: "compass", labelKey: "discover" },
+  explore: { icon: "search-outline", iconFocused: "search", labelKey: "explore" },
+  library: { icon: "library-outline", iconFocused: "library", labelKey: "library" },
+  profile: { icon: "person-outline", iconFocused: "person", labelKey: "profile" },
 };
 
-const PILL_HEIGHT = 72;
+const PILL_HEIGHT = 64;
 const PILL_GAP = 12;
 
 /**
@@ -82,6 +81,7 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
           const isFocused =
             state.index === state.routes.findIndex((item) => item.key === route.key);
           const meta = TAB_META[route.name];
+          const iconSize = TAB_ICON_SIZE * scaleFont;
 
           const onPress = () => {
             const event = navigation.emit({
@@ -102,22 +102,20 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
             });
           };
 
-          const iconSize = (meta.iconSize ?? TAB_ICON_SIZE) * scaleFont;
-
           return (
             <Pressable
               key={route.key}
               accessibilityRole="button"
+              accessibilityLabel={t(meta.labelKey)}
               accessibilityState={isFocused ? { selected: true } : {}}
               onPress={onPress}
               onLongPress={onLongPress}
               style={({ pressed }) => [
                 styles.tab,
                 {
-                  minHeight: 56 * scaleSpace,
-                  gap: 3 * scaleSpace,
-                  paddingHorizontal: 6 * scaleSpace,
-                  paddingVertical: 4 * scaleSpace,
+                  minHeight: 48 * scaleSpace,
+                  paddingHorizontal: 8 * scaleSpace,
+                  paddingVertical: 6 * scaleSpace,
                 },
                 isFocused && {
                   borderRadius: theme.radii.lg,
@@ -126,31 +124,12 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
                 pressed && styles.tabPressed,
               ]}
             >
-              <Text
+              <Ionicons
                 testID={`tab-icon-${route.name}`}
-                style={[
-                  styles.icon,
-                  {
-                    fontSize: iconSize,
-                    lineHeight: iconSize,
-                    color: isFocused ? theme.colors.surface : theme.colors.tabInactive,
-                  },
-                ]}
-              >
-                {meta.icon}
-              </Text>
-              <Text
-                numberOfLines={1}
-                style={[
-                  styles.label,
-                  {
-                    fontSize: 9 * scaleFont,
-                    color: isFocused ? theme.colors.surface : theme.colors.tabInactive,
-                  },
-                ]}
-              >
-                {t(meta.labelKey)}
-              </Text>
+                name={isFocused ? meta.iconFocused : meta.icon}
+                size={iconSize}
+                color={isFocused ? theme.colors.surface : theme.colors.tabInactive}
+              />
             </Pressable>
           );
         })}
@@ -172,7 +151,6 @@ const styles = StyleSheet.create({
   inner: {
     flexDirection: "row",
     borderWidth: StyleSheet.hairlineWidth,
-    // Floating elevation
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.16,
     shadowRadius: 20,
@@ -186,15 +164,5 @@ const styles = StyleSheet.create({
   },
   tabPressed: {
     opacity: 0.85,
-  },
-  icon: {
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  label: {
-    fontFamily: fontFamilies.mono,
-    letterSpacing: 0.8,
-    textAlign: "center",
-    textTransform: "uppercase",
   },
 });

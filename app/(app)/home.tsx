@@ -34,7 +34,10 @@ import {
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
-const CHIP_LABEL_KEY: Record<ContentKind, string> = {
+const CHIP_LABEL_KEY: Record<
+  ContentKind,
+  "chipArticles" | "chipEpisodes" | "chipVideos"
+> = {
   article: "chipArticles",
   episode: "chipEpisodes",
   video: "chipVideos",

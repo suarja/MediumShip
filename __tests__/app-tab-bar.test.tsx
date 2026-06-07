@@ -31,6 +31,33 @@ jest.mock("../src/features/theme/theme-provider", () => ({
   }),
 }));
 
+function renderTabBar(
+  routes: Array<{ key: string; name: string }>,
+  descriptors: Record<string, { options?: { href?: string | null } }> = {},
+) {
+  render(
+    <AppTabBar
+      descriptors={Object.fromEntries(
+        routes.map((route) => [route.key, descriptors[route.key] ?? { options: {} }]),
+      ) as never}
+      navigation={{
+        emit: jest.fn(() => ({ defaultPrevented: false })),
+        navigate: jest.fn(),
+      } as never}
+      insets={{ top: 0, right: 0, bottom: 0, left: 0 }}
+      state={{
+        index: 0,
+        key: "tab-state",
+        routeNames: routes.map((route) => route.name),
+        routes,
+        stale: false,
+        type: "tab",
+        history: [],
+      } as never}
+    />,
+  );
+}
+
 describe("app tab bar", () => {
   beforeAll(async () => {
     await initI18n();
@@ -40,145 +67,45 @@ describe("app tab bar", () => {
     await changeAppLanguage("en");
   });
 
-  it("renders only the target visible tabs", () => {
-    render(
-      <AppTabBar
-        descriptors={{
-          "home-key": { options: {} },
-          "discover-key": { options: {} },
-          "explore-key": { options: {} },
-          "library-key": { options: {} },
-          "profile-key": { options: {} },
-          "premium-key": { options: { href: null } },
-          "settings-key": { options: { href: null } },
-        } as never}
-        navigation={{
-          emit: jest.fn(() => ({ defaultPrevented: false })),
-          navigate: jest.fn(),
-        } as never}
-        insets={{ top: 0, right: 0, bottom: 0, left: 0 }}
-        state={{
-          index: 0,
-          key: "tab-state",
-          routeNames: [
-            "home",
-            "discover",
-            "explore",
-            "library",
-            "profile",
-            "premium",
-            "settings",
-          ],
-          routes: [
-            { key: "home-key", name: "home" },
-            { key: "discover-key", name: "discover" },
-            { key: "explore-key", name: "explore" },
-            { key: "library-key", name: "library" },
-            { key: "profile-key", name: "profile" },
-            { key: "premium-key", name: "premium" },
-            { key: "settings-key", name: "settings" },
-          ],
-          stale: false,
-          type: "tab",
-          history: [],
-        } as never}
-      />,
+  it("renders only the target visible tabs with accessibility labels", () => {
+    renderTabBar(
+      [
+        { key: "home-key", name: "home" },
+        { key: "discover-key", name: "discover" },
+        { key: "explore-key", name: "explore" },
+        { key: "library-key", name: "library" },
+        { key: "profile-key", name: "profile" },
+        { key: "premium-key", name: "premium" },
+        { key: "settings-key", name: "settings" },
+      ],
+      {
+        "premium-key": { options: { href: null } },
+        "settings-key": { options: { href: null } },
+      },
     );
 
-    expect(screen.getByText("Home")).toBeTruthy();
-    expect(screen.getByText("Discover")).toBeTruthy();
-    expect(screen.getByText("Explore")).toBeTruthy();
-    expect(screen.getByText("Library")).toBeTruthy();
-    expect(screen.getByText("Profile")).toBeTruthy();
-    expect(screen.queryByText("Premium")).toBeNull();
-    expect(screen.queryByText("Settings")).toBeNull();
+    expect(screen.getByLabelText("Home")).toBeTruthy();
+    expect(screen.getByLabelText("Discover")).toBeTruthy();
+    expect(screen.getByLabelText("Explore")).toBeTruthy();
+    expect(screen.getByLabelText("Library")).toBeTruthy();
+    expect(screen.getByLabelText("Profile")).toBeTruthy();
+    expect(screen.queryByLabelText("Premium")).toBeNull();
+    expect(screen.queryByText("Home")).toBeNull();
+    expect(screen.queryByText("Explore")).toBeNull();
   });
 
-  it("sizes tab icons to the mockup 16px scale, with a larger explore loupe", () => {
-    render(
-      <AppTabBar
-        descriptors={{
-          "home-key": { options: {} },
-          "explore-key": { options: {} },
-          "library-key": { options: {} },
-          "profile-key": { options: {} },
-        } as never}
-        navigation={{
-          emit: jest.fn(() => ({ defaultPrevented: false })),
-          navigate: jest.fn(),
-        } as never}
-        insets={{ top: 0, right: 0, bottom: 0, left: 0 }}
-        state={{
-          index: 0,
-          key: "tab-state",
-          routeNames: ["home", "explore", "library", "profile"],
-          routes: [
-            { key: "home-key", name: "home" },
-            { key: "explore-key", name: "explore" },
-            { key: "library-key", name: "library" },
-            { key: "profile-key", name: "profile" },
-          ],
-          stale: false,
-          type: "tab",
-          history: [],
-        } as never}
-      />,
-    );
+  it("renders one icon slot per tab without visible captions", () => {
+    renderTabBar([
+      { key: "home-key", name: "home" },
+      { key: "explore-key", name: "explore" },
+      { key: "library-key", name: "library" },
+      { key: "profile-key", name: "profile" },
+    ]);
 
-    const homeIcon = screen.getByTestId("tab-icon-home");
-    const exploreIcon = screen.getByTestId("tab-icon-explore");
-
-    expect(homeIcon.props.style).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          fontSize: 16,
-          lineHeight: 16,
-        }),
-      ]),
-    );
-    expect(exploreIcon.props.style).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          fontSize: 28,
-          lineHeight: 28,
-        }),
-      ]),
-    );
-  });
-
-  it("renders each tab label on a single line", () => {
-    render(
-      <AppTabBar
-        descriptors={{
-          "home-key": { options: {} },
-          "explore-key": { options: {} },
-          "library-key": { options: {} },
-          "profile-key": { options: {} },
-        } as never}
-        navigation={{
-          emit: jest.fn(() => ({ defaultPrevented: false })),
-          navigate: jest.fn(),
-        } as never}
-        insets={{ top: 0, right: 0, bottom: 0, left: 0 }}
-        state={{
-          index: 0,
-          key: "tab-state",
-          routeNames: ["home", "explore", "library", "profile"],
-          routes: [
-            { key: "home-key", name: "home" },
-            { key: "explore-key", name: "explore" },
-            { key: "library-key", name: "library" },
-            { key: "profile-key", name: "profile" },
-          ],
-          stale: false,
-          type: "tab",
-          history: [],
-        } as never}
-      />,
-    );
-
-    for (const label of ["Home", "Explore", "Library", "Profile"]) {
-      expect(screen.getByText(label).props.numberOfLines).toBe(1);
-    }
+    expect(screen.getByTestId("tab-icon-home")).toBeTruthy();
+    expect(screen.getByTestId("tab-icon-explore")).toBeTruthy();
+    expect(screen.getByTestId("tab-icon-library")).toBeTruthy();
+    expect(screen.getByTestId("tab-icon-profile")).toBeTruthy();
+    expect(screen.queryByText("Library")).toBeNull();
   });
 });

@@ -21,7 +21,8 @@ import { toContentCardModel } from "../../src/features/content/selectors";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { useSearch } from "../../src/features/search/use-search";
-import { isModuleEnabled } from "../../src/features/tenant/public-config";
+import { getCategoryIconGlyph } from "../../src/features/categories/category-icon-catalog";
+import type { FeatureKey } from "../../convex/featureCatalog";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
@@ -31,10 +32,10 @@ type SearchFilter = "all" | ContentKind;
 /** Mockup-aligned loupe scale shared by the top-bar action and search card. */
 const SEARCH_GLYPH_SIZE = 19;
 
-const ALL_MODULE_ITEMS = [
-  { key: "collections" as const, icon: "◆", href: "/collections" },
-  { key: "agenda" as const, icon: "☷", href: "/agenda" },
-  { key: "community" as const, icon: "✦", href: "/community" },
+const ALL_MODULE_ITEMS: Array<{ key: FeatureKey; href: string }> = [
+  { key: "collections", href: "/collections" },
+  { key: "agenda", href: "/agenda" },
+  { key: "community", href: "/community" },
 ];
 
 const TREND_KEYS = [
@@ -47,12 +48,15 @@ const TREND_KEYS = [
 
 export default function ExploreScreen() {
   const { t } = useTranslation("explore");
-  const { theme, enabledModules } = useAppTheme();
+  const { theme, featureConfigs } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace, contentMaxWidth } = useResponsive();
 
-  const moduleItems = ALL_MODULE_ITEMS.filter((item) =>
-    isModuleEnabled(enabledModules, item.key),
-  );
+  const moduleItems = ALL_MODULE_ITEMS.filter(
+    (item) => featureConfigs[item.key]?.enabled,
+  ).map((item) => ({
+    ...item,
+    icon: getCategoryIconGlyph(featureConfigs[item.key]?.iconKey ?? "default"),
+  }));
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
   const router = useRouter();

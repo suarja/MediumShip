@@ -1,5 +1,6 @@
 import { mutation } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
+import { buildDefaultFeatureConfigs } from "../featureCatalog";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
 
 const demoContents = [
@@ -208,6 +209,7 @@ export const seedDemoContent = mutation({
         name: defaultTenant.name,
         themeConfig: defaultTenant.themeConfig,
         enabledModules: defaultTenant.enabledModules,
+        featureConfigs: buildDefaultFeatureConfigs(),
         feedSections: defaultTenant.feedSections,
       });
     } else {
@@ -217,6 +219,7 @@ export const seedDemoContent = mutation({
       // collections/agenda/community. CMS edits after seeding take over.
       await ctx.db.patch(existingTenant._id, {
         enabledModules: defaultTenant.enabledModules,
+        featureConfigs: existingTenant.featureConfigs ?? buildDefaultFeatureConfigs(),
         feedSections: existingTenant.feedSections ?? defaultTenant.feedSections,
       });
     }

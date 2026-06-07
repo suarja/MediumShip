@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react-native";
 
 import ExploreScreen from "../app/(app)/explore";
+import { resolveEffectiveFeatureConfigs } from "../convex/featureCatalog";
 import { initI18n, changeAppLanguage } from "../src/i18n";
 
 const mockUseAppTheme = jest.fn();
@@ -39,6 +40,7 @@ function makeTheme(enabledModules: string[]) {
   return {
     tenantSlug: "demo-media",
     enabledModules,
+    featureConfigs: resolveEffectiveFeatureConfigs({ enabledModules }),
     feedSections: [],
     theme: {
       colors: {

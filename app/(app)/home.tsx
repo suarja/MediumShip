@@ -24,6 +24,8 @@ import { useNetworkStatus } from "../../src/features/network/use-network-status"
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import {
   filterAndOrderFeedContent,
+  getVisibleFeedSections,
+  groupFeedContentBySection,
   moduleToContentKind,
   type ContentModule,
 } from "../../src/features/tenant/public-config";
@@ -49,6 +51,17 @@ export default function HomeFeedScreen() {
     tenantSlug,
   }) as ContentDoc[] | undefined;
 
+  const sectionGroups = useMemo(
+    () =>
+      groupFeedContentBySection(contents ?? [], enabledModules, feedSections).map(
+        (group) => ({
+          ...group,
+          items: group.items.map(toContentCardModel),
+        }),
+      ),
+    [contents, enabledModules, feedSections],
+  );
+
   const allItems = useMemo(
     () =>
       filterAndOrderFeedContent(contents ?? [], enabledModules, feedSections).map(
@@ -58,26 +71,34 @@ export default function HomeFeedScreen() {
   );
 
   const chips = useMemo<FeedFilterChip[]>(() => {
-    const formatChips = enabledModules
-      .filter((module): module is ContentModule =>
-        module === "articles" || module === "episodes" || module === "videos",
-      )
-      .map((module) => {
-        const kind = moduleToContentKind(module);
-        return { key: kind, label: t(CHIP_LABEL_KEY[kind]) } satisfies FeedFilterChip;
-      });
-    return [{ key: "all", label: t("chipAll") }, ...formatChips];
-  }, [enabledModules, t]);
+    const visibleSections = getVisibleFeedSections(feedSections, enabledModules);
+    const formatChips = visibleSections.map((section) => ({
+      key: section.kind,
+      label: section.title,
+    })) as FeedFilterChip[];
 
-  const visibleItems =
-    filter === "all" ? allItems : allItems.filter((item) => item.kind === filter);
-  const [featured, ...rest] = visibleItems;
+    if (formatChips.length === 0) {
+      const fallbackChips = enabledModules
+        .filter((module): module is ContentModule =>
+          module === "articles" || module === "episodes" || module === "videos",
+        )
+        .map((module) => {
+          const kind = moduleToContentKind(module);
+          return { key: kind, label: t(CHIP_LABEL_KEY[kind]) } satisfies FeedFilterChip;
+        });
+      return [{ key: "all", label: t("chipAll") }, ...fallbackChips];
+    }
+
+    return [{ key: "all", label: t("chipAll") }, ...formatChips];
+  }, [enabledModules, feedSections, t]);
+
+  const filteredSections =
+    filter === "all"
+      ? sectionGroups
+      : sectionGroups.filter((group) => group.section.kind === filter);
 
   const isLoading = contents === undefined;
-  const sectionTitle =
-    filter === "all"
-      ? t("sectionFeed")
-      : (chips.find((chip) => chip.key === filter)?.label ?? t("sectionFeed"));
+  const hasAnyContent = allItems.length > 0;
 
   return (
     <Screen>
@@ -92,30 +113,30 @@ export default function HomeFeedScreen() {
         contentContainerStyle={{ paddingBottom: tabBarSpace + persistentPlayerSpace }}
         showsVerticalScrollIndicator={false}
       >
-        {visibleItems.length === 0 ? (
+        {filteredSections.every((group) => group.items.length === 0) ? (
           <EmptyState
             isLoading={isLoading}
             isOffline={networkState === "offline"}
-            hasAnyContent={allItems.length > 0}
+            hasAnyContent={hasAnyContent}
           />
         ) : (
-          <>
-            {featured ? (
-              <FeedHeroCard
-                item={featured}
-                kicker={cardKicker(featured, t)}
-                meta={cardMeta(featured, t)}
-              />
-            ) : null}
+          filteredSections.map((group, groupIndex) => {
+            if (group.items.length === 0) {
+              return null;
+            }
 
-            {rest.length > 0 ? (
-              <>
+            const [featured, ...rest] = group.items;
+
+            return (
+              <View
+                key={group.section.kind}
+                style={groupIndex > 0 ? { marginTop: theme.spacing.xl * scaleSpace } : undefined}
+              >
                 <View
                   style={[
                     styles.sectionHeader,
                     {
-                      marginTop: theme.spacing.xl * scaleSpace,
-                      marginBottom: theme.spacing.xs * scaleSpace,
+                      marginBottom: theme.spacing.sm * scaleSpace,
                     },
                   ]}
                 >
@@ -125,9 +146,17 @@ export default function HomeFeedScreen() {
                       { color: theme.colors.heading, fontSize: 18 * scaleFont },
                     ]}
                   >
-                    {sectionTitle}
+                    {group.section.title}
                   </Text>
                 </View>
+
+                {featured ? (
+                  <FeedHeroCard
+                    item={featured}
+                    kicker={cardKicker(featured, t)}
+                    meta={cardMeta(featured, t)}
+                  />
+                ) : null}
 
                 {rest.map((item, index) => (
                   <FeedRow
@@ -138,9 +167,9 @@ export default function HomeFeedScreen() {
                     divider={index > 0}
                   />
                 ))}
-              </>
-            ) : null}
-          </>
+              </View>
+            );
+          })
         )}
       </ScrollView>
     </Screen>

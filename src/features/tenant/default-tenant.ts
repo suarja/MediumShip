@@ -1,3 +1,4 @@
+import { buildDefaultFeatureConfigs } from "../../../convex/featureCatalog";
 import { defaultThemeConfig } from "../theme/palette-catalog";
 import {
   CAPABILITIES,
@@ -19,5 +20,6 @@ export const defaultTenant = {
     ...CAPABILITIES,
   ],
   themeConfig: defaultThemeConfig,
+  featureConfigs: buildDefaultFeatureConfigs(),
   feedSections: DEFAULT_FEED_SECTIONS,
 };

@@ -2969,6 +2969,10 @@ a {
   gap: 8px;
 }
 
+.mod-toggle-cell--compact {
+  justify-content: center;
+}
+
 .mod-toggle-cell .lbl {
   font-family: var(--font-mono);
   font-size: 9px;
@@ -3120,12 +3124,33 @@ a {
   border-top: 1px solid var(--rule);
 }
 
+.nav-composer__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 88px 108px;
+  gap: 16px;
+  padding: 0 20px 10px;
+  align-items: end;
+}
+
+.nav-composer__head-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  text-align: center;
+}
+
+.nav-composer__head-label--info {
+  text-align: left;
+}
+
 .nav-composer__row {
   display: grid;
-  grid-template-columns: 24px 1fr auto auto;
-  gap: 20px;
-  align-items: center;
-  padding: 14px 20px;
+  grid-template-columns: minmax(0, 1fr) auto 88px 108px;
+  gap: 16px;
+  align-items: start;
+  padding: 18px 20px;
   border-top: 1px solid var(--rule);
 }
 
@@ -3139,13 +3164,6 @@ a {
 
 .nav-composer__row--core {
   background: color-mix(in srgb, var(--accent) 4%, var(--surface));
-}
-
-.nav-composer__grip {
-  color: var(--ink-mute);
-  font-size: 14px;
-  line-height: 1;
-  user-select: none;
 }
 
 .nav-composer__info {
@@ -3171,19 +3189,31 @@ a {
 
 .nav-composer__ord {
   flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.nav-composer__control {
+  display: flex;
+  justify-content: center;
+  padding-top: 2px;
+}
+
+.nav-composer__row .mod-toggle-cell {
+  width: 100%;
+  justify-content: center;
 }
 
 @media (max-width: 900px) {
-  .nav-composer__row {
-    grid-template-columns: 20px 1fr auto;
-    grid-template-areas:
-      "grip info toggle"
-      "grip ord toggle";
-    row-gap: 10px;
+  .nav-composer__head {
+    display: none;
   }
 
-  .nav-composer__grip {
-    grid-area: grip;
+  .nav-composer__row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "info ord"
+      "available inbar";
+    row-gap: 12px;
   }
 
   .nav-composer__info {
@@ -3195,8 +3225,32 @@ a {
     justify-self: start;
   }
 
-  .nav-composer__row .mod-toggle-cell {
-    grid-area: toggle;
-    justify-self: end;
+  .nav-composer__control {
+    justify-content: flex-start;
+  }
+
+  .nav-composer__control:first-of-type {
+    grid-area: available;
+  }
+
+  .nav-composer__control:last-of-type {
+    grid-area: inbar;
+  }
+
+  .nav-composer__control::before {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin-right: 10px;
+  }
+
+  .nav-composer__control:first-of-type::before {
+    content: "Disponible";
+  }
+
+  .nav-composer__control:last-of-type::before {
+    content: "Dans la barre";
   }
 }

@@ -110,6 +110,7 @@ function ModuleToggle({
   onChange,
   onLabel = "Activé",
   offLabel = "Désactivé",
+  hideLabel = false,
 }: {
   checked: boolean;
   locked?: boolean;
@@ -117,12 +118,14 @@ function ModuleToggle({
   onChange: (checked: boolean) => void;
   onLabel?: string;
   offLabel?: string;
+  hideLabel?: boolean;
 }) {
   return (
-    <div className="mod-toggle-cell">
-      <span className="lbl">{checked ? onLabel : offLabel}</span>
+    <div className={`mod-toggle-cell ${hideLabel ? "mod-toggle-cell--compact" : ""}`}>
+      {hideLabel ? null : <span className="lbl">{checked ? onLabel : offLabel}</span>}
       <label className="toggle">
         <input
+          aria-label={checked ? onLabel : offLabel}
           checked={checked}
           disabled={locked || disabled}
           onChange={(event) => onChange(event.currentTarget.checked)}
@@ -203,6 +206,13 @@ function NavTabComposer({
         )}
       </p>
 
+      <div className="nav-composer__head" aria-hidden>
+        <span className="nav-composer__head-label nav-composer__head-label--info">Table</span>
+        <span className="nav-composer__head-label">Ordre</span>
+        <span className="nav-composer__head-label">Disponible</span>
+        <span className="nav-composer__head-label">Dans la barre</span>
+      </div>
+
       <div className="nav-composer__list">
         {orderedFeatures.map((feature, index) => {
           const config = featureConfigs[feature.key];
@@ -219,10 +229,6 @@ function NavTabComposer({
               className={`nav-composer__row ${isEnabled ? "" : "off"} ${isCore ? "nav-composer__row--core" : ""}`}
               key={feature.key}
             >
-              <span className="nav-composer__grip" aria-hidden>
-                ⋮⋮
-              </span>
-
               <div className="nav-composer__info">
                 <h4 className="nav-composer__title">
                   {feature.label}
@@ -286,18 +292,21 @@ function NavTabComposer({
                 </button>
               </div>
 
-              {/* Two-level controls: Disponible (enabled) + Dans la barre (inBar) */}
-              <div className="nav-composer__controls">
+              <div className="nav-composer__control">
                 <ModuleToggle
                   checked={isEnabled}
+                  hideLabel
                   locked={isCore}
                   onChange={(enabled) => onToggleEnabled(feature.key, enabled)}
                   onLabel="Disponible"
                   offLabel="Désactivée"
                 />
+              </div>
+              <div className="nav-composer__control">
                 <ModuleToggle
                   checked={isInBar}
                   disabled={!isEnabled || blockInBar}
+                  hideLabel
                   locked={isCore}
                   onChange={(inBar) => onToggleInBar(feature.key, inBar)}
                   onLabel="Dans la barre"

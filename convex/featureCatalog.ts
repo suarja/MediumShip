@@ -4,14 +4,38 @@ import { ENABLED_MODULES, isEnabledModule } from "../src/features/tenant/public-
 
 export type AccessLevel = "free" | "member" | "premium";
 
+export type FeatureNature = "navTab" | "content" | "capability";
+
 export type FeatureKey = EnabledModule;
+
+export const NAV_TAB_CAP = 5;
+
+export const CORE_NAV_TAB_KEYS = ["home", "profile"] as const;
+
+/** L'univers des tables de navigation ; le tenant en active au plus NAV_TAB_CAP. */
+export const NAV_TAB_KEYS = [
+  "home",
+  "discover",
+  "explore",
+  "agenda",
+  "community",
+  "collections",
+  "library",
+  "profile",
+] as const;
+
+export type NavTabKey = (typeof NAV_TAB_KEYS)[number];
+
+export const DEFAULT_NAV_ORDER = [...NAV_TAB_KEYS] as const;
 
 export type FeatureDefinition = {
   key: FeatureKey;
   label: string;
   desc: string;
+  nature: FeatureNature;
   group: string;
   core?: boolean;
+  defaultEnabled?: boolean;
   lockAccess?: boolean;
   defaultAccess: AccessLevel;
   defaultIconKey: string;
@@ -31,9 +55,90 @@ export type TenantFeatureConfigInput = {
 
 const FEATURE_DEFINITIONS: FeatureDefinition[] = [
   {
+    key: "home",
+    label: "Accueil",
+    desc: "Table d'accueil et fil principal.",
+    nature: "navTab",
+    group: "Tables",
+    core: true,
+    defaultAccess: "free",
+    defaultIconKey: "news",
+  },
+  {
+    key: "profile",
+    label: "Profil",
+    desc: "Compte, paramètres et préférences.",
+    nature: "navTab",
+    group: "Tables",
+    core: true,
+    defaultAccess: "free",
+    defaultIconKey: "default",
+  },
+  {
+    key: "discover",
+    label: "Découverte",
+    desc: "Fil personnalisé et recommandations.",
+    nature: "navTab",
+    group: "Tables",
+    defaultEnabled: true,
+    defaultAccess: "free",
+    defaultIconKey: "news",
+  },
+  {
+    key: "explore",
+    label: "Explorer",
+    desc: "Recherche et exploration de contenus.",
+    nature: "navTab",
+    group: "Tables",
+    defaultEnabled: true,
+    defaultAccess: "free",
+    defaultIconKey: "default",
+  },
+  {
+    key: "library",
+    label: "Bibliothèque",
+    desc: "Contenus sauvegardés et listes personnelles.",
+    nature: "navTab",
+    group: "Tables",
+    defaultEnabled: true,
+    defaultAccess: "free",
+    defaultIconKey: "library",
+  },
+  {
+    key: "collections",
+    label: "Collections",
+    desc: "Séries éditoriales et parcours thématiques.",
+    nature: "navTab",
+    group: "Tables",
+    defaultEnabled: false,
+    defaultAccess: "free",
+    defaultIconKey: "collections",
+  },
+  {
+    key: "agenda",
+    label: "Agenda",
+    desc: "Événements live, replays et inscriptions.",
+    nature: "navTab",
+    group: "Tables",
+    defaultEnabled: false,
+    defaultAccess: "free",
+    defaultIconKey: "agenda",
+  },
+  {
+    key: "community",
+    label: "Communauté",
+    desc: "Liens communautaires et salon membres.",
+    nature: "navTab",
+    group: "Tables",
+    defaultEnabled: false,
+    defaultAccess: "member",
+    defaultIconKey: "community",
+  },
+  {
     key: "articles",
     label: "Articles",
     desc: "Lecture longue, analyses et actualités.",
+    nature: "content",
     group: "Contenu",
     core: true,
     defaultAccess: "free",
@@ -43,6 +148,7 @@ const FEATURE_DEFINITIONS: FeatureDefinition[] = [
     key: "episodes",
     label: "Podcasts",
     desc: "Épisodes audio et flux podcast.",
+    nature: "content",
     group: "Contenu",
     defaultAccess: "free",
     defaultIconKey: "podcasts",
@@ -51,6 +157,7 @@ const FEATURE_DEFINITIONS: FeatureDefinition[] = [
     key: "videos",
     label: "Vidéos",
     desc: "Formats vidéo hébergés ou YouTube.",
+    nature: "content",
     group: "Contenu",
     defaultAccess: "free",
     defaultIconKey: "videos",
@@ -59,47 +166,17 @@ const FEATURE_DEFINITIONS: FeatureDefinition[] = [
     key: "premium",
     label: "Premium",
     desc: "Contenus et surfaces réservés aux abonnés.",
+    nature: "content",
     group: "Contenu",
     lockAccess: true,
     defaultAccess: "premium",
     defaultIconKey: "debate",
   },
   {
-    key: "discover",
-    label: "Découverte",
-    desc: "Fil personnalisé et recommandations.",
-    group: "Navigation",
-    defaultAccess: "free",
-    defaultIconKey: "news",
-  },
-  {
-    key: "collections",
-    label: "Collections",
-    desc: "Séries éditoriales et parcours thématiques.",
-    group: "Navigation",
-    defaultAccess: "free",
-    defaultIconKey: "collections",
-  },
-  {
-    key: "agenda",
-    label: "Agenda",
-    desc: "Événements live, replays et inscriptions.",
-    group: "Navigation",
-    defaultAccess: "free",
-    defaultIconKey: "agenda",
-  },
-  {
-    key: "community",
-    label: "Communauté",
-    desc: "Liens communautaires et salon membres.",
-    group: "Navigation",
-    defaultAccess: "member",
-    defaultIconKey: "community",
-  },
-  {
     key: "bookmarks",
     label: "Favoris",
     desc: "Sauvegarde de contenus pour les membres.",
+    nature: "capability",
     group: "Capacités membres",
     defaultAccess: "member",
     defaultIconKey: "library",
@@ -108,6 +185,7 @@ const FEATURE_DEFINITIONS: FeatureDefinition[] = [
     key: "progressSync",
     label: "Progression",
     desc: "Reprise de lecture et synchronisation.",
+    nature: "capability",
     group: "Capacités membres",
     defaultAccess: "member",
     defaultIconKey: "default",
@@ -116,6 +194,7 @@ const FEATURE_DEFINITIONS: FeatureDefinition[] = [
     key: "offline",
     label: "Mode hors-ligne",
     desc: "Téléchargements pour consultation offline.",
+    nature: "capability",
     group: "Capacités membres",
     defaultAccess: "premium",
     defaultIconKey: "library",
@@ -124,6 +203,7 @@ const FEATURE_DEFINITIONS: FeatureDefinition[] = [
     key: "personalLists",
     label: "Listes",
     desc: "Listes personnelles de contenus.",
+    nature: "capability",
     group: "Capacités membres",
     defaultAccess: "member",
     defaultIconKey: "library",
@@ -132,6 +212,7 @@ const FEATURE_DEFINITIONS: FeatureDefinition[] = [
     key: "membersRoom",
     label: "Salon membres",
     desc: "Espace réservé aux membres connectés.",
+    nature: "capability",
     group: "Capacités membres",
     defaultAccess: "member",
     defaultIconKey: "community",
@@ -161,15 +242,35 @@ export function getFeatureDefinition(key: string): FeatureDefinition | undefined
   return isEnabledModule(key) ? FEATURE_BY_KEY[key] : undefined;
 }
 
+export function isNavTabKey(key: string): boolean {
+  return getFeatureDefinition(key)?.nature === "navTab";
+}
+
+export function getNavTabKeys(): NavTabKey[] {
+  return [...NAV_TAB_KEYS];
+}
+
 export function assertFeatureIconKey(iconKey: string) {
   if (!isCategoryIconKey(iconKey)) {
     throw new Error(`Unknown feature icon key: ${iconKey}`);
   }
 }
 
+function defaultEnabledForFeature(feature: FeatureDefinition): boolean {
+  if (feature.core) {
+    return true;
+  }
+
+  if (feature.defaultEnabled !== undefined) {
+    return feature.defaultEnabled;
+  }
+
+  return feature.nature !== "navTab";
+}
+
 function defaultConfigForFeature(feature: FeatureDefinition): TenantFeatureConfig {
   return {
-    enabled: feature.core ?? true,
+    enabled: defaultEnabledForFeature(feature),
     access: feature.defaultAccess,
     iconKey: feature.defaultIconKey,
   };
@@ -182,6 +283,130 @@ export function buildDefaultFeatureConfigs(): Record<FeatureKey, TenantFeatureCo
       defaultConfigForFeature(feature),
     ]),
   ) as Record<FeatureKey, TenantFeatureConfig>;
+}
+
+export function buildDefaultNavOrder(): string[] {
+  return [...DEFAULT_NAV_ORDER];
+}
+
+export function normalizeNavOrder(navOrder: readonly string[] | undefined): string[] {
+  const validKeys = new Set<string>(NAV_TAB_KEYS);
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+
+  for (const key of navOrder ?? DEFAULT_NAV_ORDER) {
+    if (validKeys.has(key) && !seen.has(key)) {
+      normalized.push(key);
+      seen.add(key);
+    }
+  }
+
+  for (const key of DEFAULT_NAV_ORDER) {
+    if (!seen.has(key)) {
+      normalized.push(key);
+      seen.add(key);
+    }
+  }
+
+  const homeIndex = normalized.indexOf("home");
+  if (homeIndex > 0) {
+    normalized.splice(homeIndex, 1);
+    normalized.unshift("home");
+  }
+
+  return normalized;
+}
+
+export function countEnabledNavTabs(
+  featureConfigs: Record<FeatureKey, TenantFeatureConfig>,
+): number {
+  return FEATURE_DEFINITIONS.filter(
+    (feature) => feature.nature === "navTab" && featureConfigs[feature.key]?.enabled,
+  ).length;
+}
+
+export function clampNavTabsInConfigs(
+  featureConfigs: Record<FeatureKey, TenantFeatureConfig>,
+  navOrder?: readonly string[],
+): Record<FeatureKey, TenantFeatureConfig> {
+  const order = normalizeNavOrder(navOrder);
+  const keep = new Set<FeatureKey>([...CORE_NAV_TAB_KEYS]);
+
+  for (const key of order) {
+    if (keep.size >= NAV_TAB_CAP) {
+      break;
+    }
+    const featureKey = key as FeatureKey;
+    if (featureConfigs[featureKey]?.enabled) {
+      keep.add(featureKey);
+    }
+  }
+
+  for (const key of NAV_TAB_KEYS) {
+    if (keep.size >= NAV_TAB_CAP) {
+      break;
+    }
+    if (featureConfigs[key]?.enabled) {
+      keep.add(key);
+    }
+  }
+
+  const next = { ...featureConfigs };
+  for (const key of NAV_TAB_KEYS) {
+    if (!keep.has(key)) {
+      next[key] = { ...next[key], enabled: false };
+    }
+  }
+
+  return next;
+}
+
+export function assertNavTabCap(featureConfigs: Record<FeatureKey, TenantFeatureConfig>) {
+  const count = countEnabledNavTabs(featureConfigs);
+  if (count > NAV_TAB_CAP) {
+    throw new Error(
+      `Too many navigation tabs enabled (${count}). Maximum is ${NAV_TAB_CAP}.`,
+    );
+  }
+}
+
+export function resolveEffectiveNavigation(
+  featureConfigs: Record<FeatureKey, TenantFeatureConfig>,
+  navOrder?: readonly string[],
+): FeatureKey[] {
+  const order = normalizeNavOrder(navOrder);
+
+  const enabledNavTabs = new Set<FeatureKey>(
+    FEATURE_DEFINITIONS.filter(
+      (feature) => feature.nature === "navTab" && featureConfigs[feature.key]?.enabled,
+    ).map((feature) => feature.key),
+  );
+
+  for (const coreKey of CORE_NAV_TAB_KEYS) {
+    enabledNavTabs.add(coreKey);
+  }
+
+  const result: FeatureKey[] = [];
+  for (const key of order) {
+    const featureKey = key as FeatureKey;
+    if (enabledNavTabs.has(featureKey) && !result.includes(featureKey)) {
+      result.push(featureKey);
+    }
+  }
+
+  for (const key of enabledNavTabs) {
+    if (!result.includes(key)) {
+      result.push(key);
+    }
+  }
+
+  const homeIndex = result.indexOf("home");
+  if (homeIndex > 0) {
+    result.splice(homeIndex, 1);
+    result.unshift("home");
+  }
+
+  return result.slice(0, NAV_TAB_CAP);
 }
 
 function migrateLegacyEnabledModules(
@@ -204,6 +429,7 @@ function migrateLegacyEnabledModules(
 export function normalizeFeatureConfigs(
   input: Record<string, TenantFeatureConfigInput> | undefined,
   legacyEnabledModules?: readonly string[],
+  navOrder?: readonly string[],
 ): Record<FeatureKey, TenantFeatureConfig> {
   const source = input ?? migrateLegacyEnabledModules(legacyEnabledModules);
   const normalized = buildDefaultFeatureConfigs();
@@ -227,14 +453,15 @@ export function normalizeFeatureConfigs(
     };
   }
 
-  return normalized;
+  return clampNavTabsInConfigs(normalized, navOrder);
 }
 
 export function resolveEffectiveFeatureConfigs(args: {
   featureConfigs?: Record<string, TenantFeatureConfigInput>;
   enabledModules?: readonly string[];
+  navOrder?: readonly string[];
 }): Record<FeatureKey, TenantFeatureConfig> {
-  return normalizeFeatureConfigs(args.featureConfigs, args.enabledModules);
+  return normalizeFeatureConfigs(args.featureConfigs, args.enabledModules, args.navOrder);
 }
 
 export function deriveEnabledModules(

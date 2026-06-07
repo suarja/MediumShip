@@ -1,6 +1,6 @@
 import { mutation } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
-import { buildDefaultFeatureConfigs } from "../featureCatalog";
+import { buildDefaultFeatureConfigs, buildDefaultNavOrder } from "../featureCatalog";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
 
 const demoContents = [
@@ -210,6 +210,7 @@ export const seedDemoContent = mutation({
         themeConfig: defaultTenant.themeConfig,
         enabledModules: defaultTenant.enabledModules,
         featureConfigs: buildDefaultFeatureConfigs(),
+        navOrder: buildDefaultNavOrder(),
         feedSections: defaultTenant.feedSections,
       });
     } else {

@@ -1,9 +1,16 @@
 import { render } from "@testing-library/react-native";
 
 import AppLayout from "../app/(app)/_layout";
-import { resolveEffectiveFeatureConfigs } from "../convex/featureCatalog";
+import {
+  buildDefaultNavOrder,
+  resolveEffectiveFeatureConfigs,
+  resolveEffectiveNavigation,
+  type AccessLevel,
+  type TenantFeatureConfig,
+} from "../convex/featureCatalog";
 
 const mockUseAppTheme = jest.fn();
+const renderedTabOrder: string[] = [];
 
 jest.mock("../src/features/theme/theme-provider", () => ({
   useAppTheme: () => mockUseAppTheme(),
@@ -22,12 +29,15 @@ jest.mock("expo-router", () => {
   }: {
     name: string;
     options?: { href?: string | null };
-  }) => (
-    <View
-      testID={`tab-${name}`}
-      accessibilityLabel={options?.href === null ? "hidden" : "visible"}
-    />
-  );
+  }) => {
+    renderedTabOrder.push(name);
+    return (
+      <View
+        testID={`tab-${name}`}
+        accessibilityLabel={options?.href === null ? "hidden" : "visible"}
+      />
+    );
+  };
 
   return { Tabs };
 });
@@ -36,26 +46,89 @@ jest.mock("../src/components/navigation/app-tab-bar", () => ({
   AppTabBar: () => null,
 }));
 
+function mockThemeFromConfigs(
+  featureConfigsInput: Record<string, Partial<TenantFeatureConfig> & { enabled: boolean }>,
+  navOrder = buildDefaultNavOrder(),
+) {
+  const featureConfigs = resolveEffectiveFeatureConfigs({ featureConfigs: featureConfigsInput });
+  const effectiveNavigation = resolveEffectiveNavigation(featureConfigs, navOrder);
+  mockUseAppTheme.mockReturnValue({ featureConfigs, effectiveNavigation });
+  return { featureConfigs, effectiveNavigation };
+}
+
 describe("app layout feature navigation", () => {
-  it("hides discover tab when the feature is disabled", () => {
-    const featureConfigs = resolveEffectiveFeatureConfigs({
-      featureConfigs: { discover: { enabled: false, access: "free", iconKey: "news" } },
+  beforeEach(() => {
+    renderedTabOrder.length = 0;
+  });
+
+  it("renders exactly the effective navigation tabs as visible", () => {
+    const { effectiveNavigation } = mockThemeFromConfigs({
+      home: { enabled: true, access: "free", iconKey: "news" },
+      discover: { enabled: true, access: "free", iconKey: "news" },
+      explore: { enabled: true, access: "free", iconKey: "default" },
+      library: { enabled: true, access: "free", iconKey: "library" },
+      profile: { enabled: true, access: "free", iconKey: "default" },
+      collections: { enabled: false, access: "free", iconKey: "collections" },
     });
 
-    mockUseAppTheme.mockReturnValue({ featureConfigs });
+    const { getByTestId } = render(<AppLayout />);
+
+    for (const tab of effectiveNavigation) {
+      expect(getByTestId(`tab-${tab}`).props.accessibilityLabel).toBe("visible");
+    }
+    expect(getByTestId("tab-discover").props.accessibilityLabel).toBe("visible");
+  });
+
+  it("hides discover when the table is disabled", () => {
+    mockThemeFromConfigs({
+      home: { enabled: true, access: "free", iconKey: "news" },
+      discover: { enabled: false, access: "free", iconKey: "news" },
+      explore: { enabled: true, access: "free", iconKey: "default" },
+      library: { enabled: true, access: "free", iconKey: "library" },
+      profile: { enabled: true, access: "free", iconKey: "default" },
+    });
 
     const { getByTestId } = render(<AppLayout />);
     expect(getByTestId("tab-discover").props.accessibilityLabel).toBe("hidden");
+    expect(getByTestId("tab-home").props.accessibilityLabel).toBe("visible");
+    expect(getByTestId("tab-profile").props.accessibilityLabel).toBe("visible");
   });
 
-  it("keeps discover tab visible when the feature is enabled", () => {
-    const featureConfigs = resolveEffectiveFeatureConfigs({
-      featureConfigs: { discover: { enabled: true, access: "free", iconKey: "news" } },
+  it("never shows content or capability modules as tabs", () => {
+    mockThemeFromConfigs({
+      home: { enabled: true, access: "free", iconKey: "news" },
+      profile: { enabled: true, access: "free", iconKey: "default" },
+      articles: { enabled: true, access: "free", iconKey: "analyses" },
+      bookmarks: {
+        enabled: true,
+        access: "member" as AccessLevel,
+        iconKey: "library",
+      },
     });
 
-    mockUseAppTheme.mockReturnValue({ featureConfigs });
+    const { queryByTestId } = render(<AppLayout />);
+    expect(queryByTestId("tab-articles")).toBeNull();
+    expect(queryByTestId("tab-bookmarks")).toBeNull();
+  });
+
+  it("respects navigation order from effective navigation", () => {
+    const navOrder = ["home", "library", "discover", "explore", "profile"];
+    const { effectiveNavigation } = mockThemeFromConfigs(
+      {
+        home: { enabled: true, access: "free", iconKey: "news" },
+        discover: { enabled: true, access: "free", iconKey: "news" },
+        explore: { enabled: true, access: "free", iconKey: "default" },
+        library: { enabled: true, access: "free", iconKey: "library" },
+        profile: { enabled: true, access: "free", iconKey: "default" },
+      },
+      navOrder,
+    );
 
     const { getByTestId } = render(<AppLayout />);
-    expect(getByTestId("tab-discover").props.accessibilityLabel).toBe("visible");
+    const visibleOrder = renderedTabOrder.filter(
+      (name) => getByTestId(`tab-${name}`).props.accessibilityLabel === "visible",
+    );
+
+    expect(visibleOrder).toEqual(effectiveNavigation);
   });
 });

@@ -108,11 +108,6 @@ function TenantMobileMockup({
         <div className="mhead">
           <BrandLogoMark logoUrl={logoUrl} name={name} />
         </div>
-        <div className="mfeed">
-          <div className="mhero" />
-          <div className="mrow" />
-          <div className="mrow" />
-        </div>
         <div className="mtab">
           <span className="on" />
           <span />

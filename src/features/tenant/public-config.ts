@@ -16,28 +16,43 @@ export const OPTIONAL_PUBLIC_MODULES = ["premium"] as const;
 
 export type ContentModule = (typeof PUBLIC_CONTENT_MODULES)[number];
 
-// ─── Navigation modules ───────────────────────────────────────────────────────
+// ─── Tab bar tables (max 5, composable) ───────────────────────────────────────
 
-export const NAVIGATION_MODULES = [
+export const CORE_TAB_MODULES = ["home", "profile"] as const;
+export type CoreTabModule = (typeof CORE_TAB_MODULES)[number];
+
+/** Onglets possibles dans la barre mobile — exactement ce vocabulaire. */
+export const TAB_BAR_MODULES = [
+  "home",
   "discover",
-  "collections",
-  "agenda",
-  "community",
+  "explore",
+  "library",
+  "profile",
 ] as const;
-export type NavigationModule = (typeof NAVIGATION_MODULES)[number];
+export type TabBarModule = (typeof TAB_BAR_MODULES)[number];
+
+// ─── Surfaces navigables (hors barre) ─────────────────────────────────────────
+
+export const SURFACE_MODULES = ["collections", "agenda", "community"] as const;
+export type SurfaceModule = (typeof SURFACE_MODULES)[number];
+
+/** @deprecated Use SURFACE_MODULES for collections/agenda/community */
+export const NAVIGATION_MODULES = SURFACE_MODULES;
+export type NavigationModule = SurfaceModule;
 
 /**
- * Strict allowlist: a navigation module is enabled iff it is present in the
- * tenant's `enabledModules`. Out-of-the-box defaults come from
- * `defaultTenant.enabledModules`, NOT from a "default-on when unconfigured"
- * heuristic — that heuristic resurrected every module when the last one was
- * unchecked, and left never-activated modules visible.
+ * Strict allowlist: a surface module is enabled iff it is present in the
+ * tenant's `enabledModules`.
  */
 export function isModuleEnabled(
   modules: readonly string[],
-  name: NavigationModule,
+  name: SurfaceModule,
 ): boolean {
   return modules.includes(name);
+}
+
+export function isTabBarModule(value: string): value is TabBarModule {
+  return (TAB_BAR_MODULES as readonly string[]).includes(value);
 }
 
 // ─── Capabilities ─────────────────────────────────────────────────────────────
@@ -61,7 +76,8 @@ export function hasCapability(modules: readonly string[], cap: Capability): bool
 export const ENABLED_MODULES = [
   ...PUBLIC_CONTENT_MODULES,
   ...OPTIONAL_PUBLIC_MODULES,
-  ...NAVIGATION_MODULES,
+  ...TAB_BAR_MODULES,
+  ...SURFACE_MODULES,
   ...CAPABILITIES,
 ] as const;
 

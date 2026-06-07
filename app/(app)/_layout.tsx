@@ -2,29 +2,61 @@ import { Tabs } from "expo-router";
 
 import { AppTabBar } from "../../src/components/navigation/app-tab-bar";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
+import type { FeatureKey } from "../../convex/featureCatalog";
+
+const ALL_TAB_ROUTE_NAMES = [
+  "home",
+  "discover",
+  "explore",
+  "agenda",
+  "community",
+  "collections",
+  "library",
+  "profile",
+] as const satisfies readonly FeatureKey[];
+
+const HIDDEN_ROUTE_NAMES = ["premium", "settings"] as const;
+
+function tabHref(
+  routeName: string,
+  effectiveNavigation: readonly FeatureKey[],
+): string | null | undefined {
+  if ((HIDDEN_ROUTE_NAMES as readonly string[]).includes(routeName)) {
+    return null;
+  }
+
+  if ((ALL_TAB_ROUTE_NAMES as readonly string[]).includes(routeName)) {
+    return effectiveNavigation.includes(routeName as FeatureKey) ? undefined : null;
+  }
+
+  return null;
+}
 
 // Public tab shell: reading surfaces stay available without authentication.
 export default function AppLayout() {
-  const { featureConfigs } = useAppTheme();
-  const discoverHref = featureConfigs.discover?.enabled ? undefined : null;
+  const { effectiveNavigation } = useAppTheme();
+  const navSet = new Set(effectiveNavigation);
+
+  const orderedRoutes = [
+    ...effectiveNavigation,
+    ...ALL_TAB_ROUTE_NAMES.filter((route) => !navSet.has(route)),
+    ...HIDDEN_ROUTE_NAMES,
+  ];
 
   return (
     <Tabs
       tabBar={(props) => <AppTabBar {...props} />}
       screenOptions={{ headerShown: false }}
     >
-      <Tabs.Screen name="home" />
-      <Tabs.Screen
-        name="discover"
-        options={{
-          href: discoverHref,
-        }}
-      />
-      <Tabs.Screen name="explore" />
-      <Tabs.Screen name="library" />
-      <Tabs.Screen name="profile" />
-      <Tabs.Screen name="premium" options={{ href: null }} />
-      <Tabs.Screen name="settings" options={{ href: null }} />
+      {orderedRoutes.map((name) => (
+        <Tabs.Screen
+          key={name}
+          name={name}
+          options={{
+            href: tabHref(name, effectiveNavigation) as null | undefined,
+          }}
+        />
+      ))}
     </Tabs>
   );
 }

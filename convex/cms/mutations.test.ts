@@ -3,6 +3,7 @@ import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
 
 import { api } from "../_generated/api";
+import { buildDefaultNavOrder } from "../featureCatalog";
 import schema from "../schema";
 import { modules } from "../../convexTestModules";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
@@ -49,7 +50,16 @@ describe("cms/mutations — updateModuleSettings", () => {
     });
 
     const tenant = await asAdmin.query(api.cms.queries.getTenantSettings, {});
-    expect(tenant.enabledModules).toEqual(["articles", "videos", "premium", "discover"]);
+    expect(tenant.enabledModules).toEqual([
+      "articles",
+      "videos",
+      "premium",
+      "home",
+      "discover",
+      "explore",
+      "library",
+      "profile",
+    ]);
     expect(tenant.featureConfigs?.articles).toEqual({
       enabled: true,
       access: "free",
@@ -61,6 +71,65 @@ describe("cms/mutations — updateModuleSettings", () => {
       { kind: "video", title: "À regarder", visible: true },
       { kind: "article", title: "Dernières analyses", visible: false },
     ]);
+  });
+
+  it("persists nav order and rejects more than five enabled nav tabs", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+    const asAdmin = t.withIdentity(ADMIN);
+
+    const customOrder = ["home", "library", "discover", "explore", "profile"];
+
+    await asAdmin.mutation(api.cms.mutations.updateModuleSettings, {
+      featureConfigs: {
+        home: { enabled: true },
+        discover: { enabled: true },
+        explore: { enabled: true },
+        library: { enabled: true },
+        profile: { enabled: true },
+        collections: { enabled: false },
+      },
+      feedSections: defaultTenant.feedSections ?? [],
+      navOrder: customOrder,
+    });
+
+    const tenant = await asAdmin.query(api.cms.queries.getTenantSettings, {});
+    // navOrder is normalized (missing nav tabs appended); the custom prefix is preserved.
+    expect(tenant.navOrder?.slice(0, customOrder.length)).toEqual(customOrder);
+
+    await asAdmin.mutation(api.cms.mutations.updateModuleSettings, {
+      featureConfigs: {
+        home: { enabled: true },
+        discover: { enabled: true },
+        explore: { enabled: true },
+        library: { enabled: true },
+        profile: { enabled: true },
+        collections: { enabled: true },
+        agenda: { enabled: true },
+      },
+      feedSections: defaultTenant.feedSections ?? [],
+      navOrder: buildDefaultNavOrder(),
+    });
+
+    const clamped = await asAdmin.query(api.cms.queries.getTenantSettings, {});
+    expect(clamped.featureConfigs?.home?.enabled).toBe(true);
+    expect(clamped.featureConfigs?.profile?.enabled).toBe(true);
+    // 7 nav tabs were requested; the cap keeps exactly five (core + by nav order).
+    const enabledNavTabs = (
+      [
+        "home",
+        "discover",
+        "explore",
+        "agenda",
+        "community",
+        "collections",
+        "library",
+        "profile",
+      ] as const
+    ).filter((key) => clamped.featureConfigs?.[key]?.enabled);
+    expect(enabledNavTabs.length).toBe(5);
+    // collections is beyond the cap by nav order → dropped.
+    expect(clamped.featureConfigs?.collections?.enabled).toBe(false);
   });
 
   it("cannot disable a core feature or override locked access", async () => {

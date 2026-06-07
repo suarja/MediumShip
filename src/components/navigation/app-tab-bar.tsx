@@ -13,7 +13,15 @@ type IoniconName = ComponentProps<typeof Ionicons>["name"];
 type TabMeta = {
   icon: IoniconName;
   iconFocused: IoniconName;
-  labelKey: "home" | "discover" | "explore" | "library" | "profile";
+  labelKey:
+    | "home"
+    | "discover"
+    | "explore"
+    | "library"
+    | "profile"
+    | "agenda"
+    | "community"
+    | "collections";
 };
 
 const TAB_ICON_SIZE = 22;
@@ -22,6 +30,9 @@ const TAB_META: Record<string, TabMeta> = {
   home: { icon: "home-outline", iconFocused: "home", labelKey: "home" },
   discover: { icon: "compass-outline", iconFocused: "compass", labelKey: "discover" },
   explore: { icon: "search-outline", iconFocused: "search", labelKey: "explore" },
+  agenda: { icon: "calendar-outline", iconFocused: "calendar", labelKey: "agenda" },
+  community: { icon: "people-outline", iconFocused: "people", labelKey: "community" },
+  collections: { icon: "albums-outline", iconFocused: "albums", labelKey: "collections" },
   library: { icon: "library-outline", iconFocused: "library", labelKey: "library" },
   profile: { icon: "person-outline", iconFocused: "person", labelKey: "profile" },
 };

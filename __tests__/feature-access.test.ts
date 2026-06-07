@@ -11,12 +11,13 @@ describe("feature-access", () => {
     ).toBe(true);
   });
 
-  it("requires member entitlement for member access", () => {
+  it("requires authentication — not premium — for member access", () => {
     expect(
       canAccessFeatureLevel("member", { isAuthenticated: false, isPro: false }),
     ).toBe(false);
+    // A signed-in free user (not pro) passes a member-gated feature.
     expect(
-      canAccessFeatureLevel("member", { isAuthenticated: true, isPro: true }),
+      canAccessFeatureLevel("member", { isAuthenticated: true, isPro: false }),
     ).toBe(true);
   });
 

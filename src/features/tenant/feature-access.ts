@@ -17,7 +17,7 @@ export function canAccessFeatureLevel(
   }
 
   if (access === "member") {
-    return context.isPro;
+    return context.isAuthenticated;
   }
 
   if (PREMIUM_PAYMENT_DEFERRED) {

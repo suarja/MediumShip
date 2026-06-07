@@ -100,6 +100,18 @@ _Avoid_: Skin, palette only, CSS theme
 Interrupteur permettant d'activer ou désactiver une capacité produit pour un tenant sans changer le chemin cœur du code.
 _Avoid_: Setting, boolean option
 
+**Feature**:
+Capacité produit activable et configurable pour un tenant (ex. articles, podcasts, vidéos, collections, agenda, téléchargements, notifications). Chaque `Feature` est décrite par le `FeatureCatalog` et reçoit une config par tenant `{ enabled, access }` : `enabled` est son `FeatureFlag`, `access` est son `AccessLevel`. Une `Feature` désactivée disparaît de la navigation de l'app.
+_Avoid_: Module (sauf comme synonyme UI), Setting, Tab
+
+**FeatureCatalog**:
+Liste **statique, définie en code par l'`Operator`** (nous), des `Feature` disponibles, avec leurs métadonnées (clé, libellé, description, groupe) et leurs flags `core`/`locked` (non-désactivables ou à accès fixe). Source de vérité versionnée ; le tenant configure par-dessus, il ne l'invente pas.
+_Avoid_: Settings registry, DB-driven feature list
+
+**AccessLevel**:
+Niveau d'accès d'une `Feature` activée, choisi par le `Creator` : `free` (invité, sans compte), `member` (compte requis, gratuit), `premium` (`Entitlement` payant). Appliqué côté app via le chemin `Entitlement` existant (`requireMember` / `isPro`), **pas** une nouvelle infra de paywall.
+_Avoid_: Role, Plan, Tier (comme terme distinct)
+
 ### Modèle Éditorial
 
 **Content**:
@@ -184,8 +196,12 @@ _Avoid_: Donor when the product meaning is broader
 Utilisateur connecté et connu du produit — l'individu côté audience (le « fan ») qui consomme et personnalise son feed, par opposition au `Creator`/`Tenant` (notre client, qui possède le tenant et sa taxonomie de `Category`).
 _Avoid_: User, account holder, Fan (comme terme distinct)
 
+**Operator**:
+Nous, l'éditeur du produit MediumShip, **un cran au-dessus du `Creator`**. Possède le `FeatureCatalog` et, à terme, l'autorisation des `Feature` par tenant (la licence/package). Définit ce que le `Creator` a le droit d'activer ; le `Creator` configure dans ces limites. Hiérarchie de config : `Operator` → `Creator`/`Tenant` → `Member`.
+_Avoid_: Super-admin (sauf UI), God user
+
 **Creator**:
-Propriétaire ou principal éditeur d'un tenant.
+Propriétaire ou principal éditeur d'un tenant. Configure, **dans les limites posées par l'`Operator`**, quelles `Feature` activer et leur `AccessLevel`.
 _Avoid_: Admin when the role is editorial
 
 **Editor**:

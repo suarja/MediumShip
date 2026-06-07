@@ -82,14 +82,14 @@ Retours terrain après usage réel (favoris enregistrés, navigation Bibliothèq
 - **Filtre par provider / source** (`cms` / `wikipedia` / `rss`) dans la liste CMS. (La recherche porte déjà sur tout le contenu — confirmé.)
 - **Backfill `source` des vieux contenus** : ~16 contenus historiques ont `source` absent (`undefined`). Les passer à `source: "cms"` pour que le futur filtre par source soit propre.
 
-### 🧱 Couche méta « développeur » (au-dessus du tenant) — candidat ADR
+### 🧱 Couche Operator (au-dessus du tenant) — modèle tranché (ADR 0008)
 
-> Idée encore **floue / non tranchée** (capturée pour ne rien perdre). On ne s'y lance pas maintenant.
+> Le **modèle d'accès** est désormais **décidé** (`docs/adr/0008-feature-catalog-and-access-model.md`) et **en cours d'implémentation dans Slice N élargi** : `FeatureCatalog` en code (flags `core`/`lockAccess`) → config tenant `{ enabled, access }` par feature → application mobile via les **entitlements existants** (`member`/`premium`/`free`). Ne restent parqués que les morceaux ci-dessous.
 
-- **Une couche de config un cran AU-DESSUS du tenant**, contrôlée par **le développeur (nous)**, qui décide quelles **options/features** du CMS sont **activées** pour un tenant donné. À distinguer du `enabledModules` du tenant. Décision de design : **hiérarchie de config** développeur → tenant → membre.
-- **Onglet Développeur accessible aussi aux clients (tenants).** Aujourd'hui l'onglet Développeur (catalogue IPTC + langues discovery) est pour nous ; on veut qu'un client puisse y accéder pour ses **connexions API / clés API** — modèle **Be Viral / Mobile de Soi** (onglet Développeurs avec clés + intégrations). Implique un **rôle « développeur »** assignable.
-- **Features activables = packages vendables par le créateur.** Quelles features rendre optionnelles (et facturables) ? Pistes : **Notifications** (claire, certaine) ; **couche Premium** via un flag `is_premium_enabled` (filtrage premium/non-premium dans l'app) — mais config potentiellement complexe côté nous → **commencer par une couche premium gratuite** (flag activé, sans paiement) avant d'y brancher le paiement.
-- Croise la section parquée « API publique tenant — clés API » (même onglet Développeur).
+- **Câblage paiement** : brancher un provider (RevenueCat/Stripe) qui écrit la table `entitlements` → `premium` devient réellement payant. Tant que non fait, `premium` passe par défaut (« premium gratuit »). Le chemin de lecture ne change pas (règle entitlements stable).
+- **Écran Operator — autorisation des features par tenant.** L'axe « quelles features ce tenant a le **droit** d'activer » (la licence/**package vendable** par tenant), au-delà des flags `core`/`lockAccess` en code. Un écran super-admin où **nous** cochons par tenant. Hiérarchie Operator → Creator → Member (déjà actée ADR 0008).
+- **Notifications-as-a-package** : feature optionnelle facturable (candidat évident une fois le paiement câblé).
+- **Onglet Développeur accessible aussi aux clients (tenants)** + **rôle « développeur »** assignable, pour ses **connexions API / clés API** — modèle **Be Viral / Mobile de Soi**. Croise la section parquée « API publique tenant — clés API ».
 
 ### 🔌 API publique tenant — clés API (onglet Développeur CMS) — PARQUÉ (pas maintenant)
 

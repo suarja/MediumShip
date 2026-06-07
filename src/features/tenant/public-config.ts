@@ -70,6 +70,7 @@ export type EnabledModule = (typeof ENABLED_MODULES)[number];
 export type FeedSectionConfig = {
   kind: ContentKind;
   title: string;
+  visible?: boolean;
 };
 
 export const DEFAULT_FEED_SECTIONS: FeedSectionConfig[] = [
@@ -113,6 +114,10 @@ export function normalizeEnabledModules(
   return (modules ?? []).filter(isEnabledModule);
 }
 
+export function isFeedSectionVisible(section: FeedSectionConfig): boolean {
+  return section.visible !== false;
+}
+
 export function normalizeFeedSections(
   sections: readonly FeedSectionConfig[] | undefined,
   enabledModules: readonly EnabledModule[],
@@ -139,6 +144,33 @@ export function normalizeFeedSections(
   return DEFAULT_FEED_SECTIONS.filter((section) => enabledKinds.has(section.kind));
 }
 
+export function getVisibleFeedSections(
+  sections: readonly FeedSectionConfig[] | undefined,
+  enabledModules: readonly EnabledModule[],
+): FeedSectionConfig[] {
+  const enabledKinds = new Set(
+    enabledModules
+      .filter((module): module is ContentModule => CONTENT_MODULE_SET.has(module))
+      .map(moduleToContentKind),
+  );
+
+  const source = sections ?? DEFAULT_FEED_SECTIONS;
+  const seenKinds = new Set<ContentKind>();
+
+  return source.filter((section) => {
+    if (
+      !enabledKinds.has(section.kind) ||
+      seenKinds.has(section.kind) ||
+      !isFeedSectionVisible(section)
+    ) {
+      return false;
+    }
+
+    seenKinds.add(section.kind);
+    return true;
+  });
+}
+
 export function moduleToContentKind(module: ContentModule): ContentKind {
   return module === "articles" ? "article" : module === "episodes" ? "episode" : "video";
 }
@@ -147,12 +179,32 @@ export function contentKindToModule(kind: ContentKind): ContentModule {
   return CONTENT_KIND_MODULES[kind];
 }
 
+export function groupFeedContentBySection(
+  contents: readonly ContentDoc[],
+  enabledModules: readonly EnabledModule[],
+  sections: readonly FeedSectionConfig[],
+): Array<{ section: FeedSectionConfig; items: ContentDoc[] }> {
+  const visibleSections = getVisibleFeedSections(sections, enabledModules);
+
+  return visibleSections.map((section) => ({
+    section,
+    items: [...contents]
+      .filter((content) => content.kind === section.kind)
+      .filter((content) => isContentVisible(content, enabledModules))
+      .sort((left, right) => {
+        const leftPublishedAt = left.publishedAt ? Date.parse(left.publishedAt) : 0;
+        const rightPublishedAt = right.publishedAt ? Date.parse(right.publishedAt) : 0;
+        return rightPublishedAt - leftPublishedAt;
+      }),
+  }));
+}
+
 export function filterAndOrderFeedContent(
   contents: readonly ContentDoc[],
   enabledModules: readonly EnabledModule[],
   sections: readonly FeedSectionConfig[],
 ): ContentDoc[] {
-  const normalizedSections = normalizeFeedSections(sections, enabledModules);
+  const normalizedSections = getVisibleFeedSections(sections, enabledModules);
   const sectionOrder = new Map(
     normalizedSections.map((section, index) => [section.kind, index]),
   );

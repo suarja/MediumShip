@@ -3,9 +3,11 @@ import { v } from "convex/values";
 import { mutation, type MutationCtx } from "../_generated/server";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
 import {
-  normalizeEnabledModules,
-  normalizeFeedSections,
-} from "../../src/features/tenant/public-config";
+  deriveEnabledModules,
+  normalizeFeatureConfigs,
+  type TenantFeatureConfigInput,
+} from "../featureCatalog";
+import { normalizeFeedSections } from "../../src/features/tenant/public-config";
 import {
   getYoutubeVideoId,
   normalizeRemoteImageUrl,
@@ -420,19 +422,66 @@ export const setContentStatus = mutation({
   },
 });
 
+const featureConfigInputValidator = v.record(
+  v.string(),
+  v.object({
+    enabled: v.optional(v.boolean()),
+    access: v.optional(
+      v.union(v.literal("free"), v.literal("member"), v.literal("premium")),
+    ),
+    iconKey: v.optional(v.string()),
+  }),
+);
+
+const feedSectionValidator = v.object({
+  kind: contentKindValidator,
+  title: v.string(),
+  visible: v.optional(v.boolean()),
+});
+
+async function getOrCreateTenant(ctx: MutationCtx) {
+  const tenant = await ctx.db
+    .query("tenants")
+    .withIndex("by_slug", (q) => q.eq("slug", defaultTenant.slug))
+    .unique();
+
+  if (tenant) {
+    return tenant;
+  }
+
+  const featureConfigs = normalizeFeatureConfigs(
+    undefined,
+    defaultTenant.enabledModules,
+  );
+  const enabledModules = deriveEnabledModules(featureConfigs);
+  const feedSections = normalizeFeedSections(
+    defaultTenant.feedSections,
+    enabledModules,
+  );
+
+  const tenantId = await ctx.db.insert("tenants", {
+    slug: defaultTenant.slug,
+    name: defaultTenant.name,
+    themeConfig: defaultTenant.themeConfig,
+    enabledModules,
+    featureConfigs,
+    feedSections,
+  });
+
+  const created = await ctx.db.get(tenantId);
+  if (!created) {
+    throw new Error("Failed to create tenant");
+  }
+
+  return created;
+}
+
 export const updateTenantSettings = mutation({
   args: {
     name: v.string(),
     brandLogoUrl: v.string(),
     appIconUrl: v.string(),
     paletteName: v.string(),
-    enabledModules: v.array(v.string()),
-    feedSections: v.array(
-      v.object({
-        kind: contentKindValidator,
-        title: v.string(),
-      }),
-    ),
   },
   handler: async (ctx, args) => {
     await requireCmsAdmin(ctx);
@@ -441,37 +490,42 @@ export const updateTenantSettings = mutation({
       throw new Error(`Unknown palette: ${args.paletteName}`);
     }
 
-    const enabledModules = normalizeEnabledModules(args.enabledModules);
-    const feedSections = normalizeFeedSections(args.feedSections, enabledModules);
     const name = args.name.trim() || defaultTenant.name;
     const brandLogoUrl = normalizeBrandAssetUrl(args.brandLogoUrl);
     const appIconUrl = normalizeBrandAssetUrl(args.appIconUrl);
+    const tenant = await getOrCreateTenant(ctx);
 
-    const tenant = await ctx.db
-      .query("tenants")
-      .withIndex("by_slug", (q) => q.eq("slug", defaultTenant.slug))
-      .unique();
-
-    if (tenant) {
-      await ctx.db.patch(tenant._id, {
-        name,
-        brandLogoUrl,
-        appIconUrl,
-        themeConfig: { paletteName: args.paletteName },
-        enabledModules,
-        feedSections,
-      });
-      return tenant._id;
-    }
-
-    return await ctx.db.insert("tenants", {
-      slug: defaultTenant.slug,
+    await ctx.db.patch(tenant._id, {
       name,
-      ...(brandLogoUrl ? { brandLogoUrl } : {}),
-      ...(appIconUrl ? { appIconUrl } : {}),
+      brandLogoUrl,
+      appIconUrl,
       themeConfig: { paletteName: args.paletteName },
+    });
+    return tenant._id;
+  },
+});
+
+export const updateModuleSettings = mutation({
+  args: {
+    featureConfigs: featureConfigInputValidator,
+    feedSections: v.array(feedSectionValidator),
+  },
+  handler: async (ctx, args) => {
+    await requireCmsAdmin(ctx);
+
+    const tenant = await getOrCreateTenant(ctx);
+    const featureConfigs = normalizeFeatureConfigs(
+      args.featureConfigs as Record<string, TenantFeatureConfigInput>,
+      tenant.enabledModules,
+    );
+    const enabledModules = deriveEnabledModules(featureConfigs);
+    const feedSections = normalizeFeedSections(args.feedSections, enabledModules);
+
+    await ctx.db.patch(tenant._id, {
+      featureConfigs,
       enabledModules,
       feedSections,
     });
+    return tenant._id;
   },
 });

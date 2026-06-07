@@ -40,6 +40,20 @@ export default defineSchema({
       }),
     ),
     enabledModules: v.array(v.string()),
+    featureConfigs: v.optional(
+      v.record(
+        v.string(),
+        v.object({
+          enabled: v.boolean(),
+          access: v.union(
+            v.literal("free"),
+            v.literal("member"),
+            v.literal("premium"),
+          ),
+          iconKey: v.string(),
+        }),
+      ),
+    ),
     feedSections: v.optional(
       v.array(
         v.object({
@@ -49,6 +63,7 @@ export default defineSchema({
             v.literal("video"),
           ),
           title: v.string(),
+          visible: v.optional(v.boolean()),
         }),
       ),
     ),

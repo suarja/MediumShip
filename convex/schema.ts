@@ -150,6 +150,25 @@ export default defineSchema({
   })
     .index("by_tenant_and_status", ["tenantSlug", "status"])
     .index("by_tenantSlug_and_slug", ["tenantSlug", "slug"]),
+  // Global platform vocabulary seeded from IPTC Media Topics (ADR 0007).
+  // Not per-tenant — all tenants share this reservoir.
+  categoryCatalog: defineTable({
+    externalId: v.string(),             // e.g. "medtop:20000344"
+    label: v.string(),                  // English label
+    labelFr: v.optional(v.string()),    // French label
+    slug: v.string(),                   // normalizeScoringKey(label)
+    parentId: v.optional(v.id("categoryCatalog")),
+    depth: v.number(),                  // 0 = root
+    iconKey: v.optional(v.string()),
+    retired: v.optional(v.boolean()),
+  })
+    .index("by_externalId", ["externalId"])
+    .index("by_parentId", ["parentId"])
+    .index("by_depth", ["depth"])
+    .searchIndex("search_label", {
+      searchField: "label",
+      filterFields: [],
+    }),
   categories: defineTable({
     tenantSlug: v.string(),
     label: v.string(),
@@ -157,9 +176,16 @@ export default defineSchema({
     iconKey: v.string(),
     sortOrder: v.number(),
     updatedAt: v.number(),
+    // Hierarchy fields added in Slice J (ADR 0007).
+    // Optional for backward compat: existing flat rows have depth=0 implicitly.
+    parentId: v.optional(v.id("categories")),
+    catalogNodeId: v.optional(v.id("categoryCatalog")),
+    depth: v.optional(v.number()),         // 0 or undefined = root
+    isSelectable: v.optional(v.boolean()), // true when undefined
   })
     .index("by_tenantSlug", ["tenantSlug"])
-    .index("by_tenantSlug_and_slug", ["tenantSlug", "slug"]),
+    .index("by_tenantSlug_and_slug", ["tenantSlug", "slug"])
+    .index("by_tenantSlug_and_parentId", ["tenantSlug", "parentId"]),
   collectionItems: defineTable({
     tenantSlug: v.string(),
     collectionId: v.id("collections"),

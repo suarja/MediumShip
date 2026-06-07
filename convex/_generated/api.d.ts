@@ -54,6 +54,7 @@ import type * as entitlements_mutations from "../entitlements/mutations.js";
 import type * as entitlements_queries from "../entitlements/queries.js";
 import type * as events_model from "../events/model.js";
 import type * as events_queries from "../events/queries.js";
+import type * as featureCatalog from "../featureCatalog.js";
 import type * as http from "../http.js";
 import type * as httpHandlers_clerkWebhook from "../httpHandlers/clerkWebhook.js";
 import type * as httpHandlers_svix from "../httpHandlers/svix.js";
@@ -125,6 +126,7 @@ declare const fullApi: ApiFromModules<{
   "entitlements/queries": typeof entitlements_queries;
   "events/model": typeof events_model;
   "events/queries": typeof events_queries;
+  featureCatalog: typeof featureCatalog;
   http: typeof http;
   "httpHandlers/clerkWebhook": typeof httpHandlers_clerkWebhook;
   "httpHandlers/svix": typeof httpHandlers_svix;

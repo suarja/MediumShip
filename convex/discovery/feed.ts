@@ -2,6 +2,7 @@ import { v } from "convex/values";
 
 import { query, type QueryCtx } from "../_generated/server";
 import type { Doc, Id } from "../_generated/dataModel";
+import { loadMemberCategoryInterests } from "../categories/interests";
 import {
   bucketFeed,
   createSeededRng,
@@ -195,6 +196,7 @@ export function buildOrderedDiscoveryFeed(args: {
   hiddenIds: Set<Id<"contents">>;
   seenIds: Set<Id<"contents">>;
   affinities: Affinity[];
+  interestCategories?: readonly string[];
 }): { ordered: OrderedFeedEntry[] } {
   const referenceTime = referenceTimeFrom(args.visible);
 
@@ -224,7 +226,10 @@ export function buildOrderedDiscoveryFeed(args: {
   const unseenScored = unseen.map((content) => ({
     id: content._id,
     content,
-    score: scoreContent(content, args.affinities, referenceTime, { rng }),
+    score: scoreContent(content, args.affinities, referenceTime, {
+      rng,
+      interestCategories: args.interestCategories,
+    }),
   }));
 
   const unseenMixed = bucketFeed(unseenScored, MEMBER_FEED_MIX, rng);
@@ -309,6 +314,10 @@ export const getDiscoveryFeed = query({
     const affinities = tokenIdentifier
       ? await loadAffinities(ctx, tokenIdentifier)
       : [];
+    const interestCategories =
+      tokenIdentifier && identity
+        ? await loadMemberCategoryInterests(ctx, tokenIdentifier, args.tenantSlug)
+        : [];
 
     const { ordered } = buildOrderedDiscoveryFeed({
       visible,
@@ -317,6 +326,7 @@ export const getDiscoveryFeed = query({
       hiddenIds,
       seenIds,
       affinities,
+      interestCategories,
     });
 
     const page = paginateOrderedFeed({

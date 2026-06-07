@@ -28,6 +28,10 @@ export const INTERACTION_WEIGHTS = {
   hide: -100,
 } as const;
 
+/** Explicit member picks in Settings — distinct from interaction affinities. */
+export const INTEREST_CATEGORY_BOOST = 80;
+export const INTEREST_TAG_BOOST = 40;
+
 export const DIMENSION_FACTORS = {
   category: 1.0,
   tag: 0.5,
@@ -180,7 +184,11 @@ export function scoreContent(
   content: ScoreableContent,
   prefs: readonly Affinity[],
   now: number,
-  options?: { seen?: boolean; rng?: () => number },
+  options?: {
+    seen?: boolean;
+    rng?: () => number;
+    interestCategories?: readonly string[];
+  },
 ): number {
   let score = 0;
 
@@ -189,6 +197,20 @@ export function scoreContent(
     score += getAffinityScore(prefs, "tag", tag);
   }
   score += getAffinityScore(prefs, "contentType", content.kind);
+
+  const interestCategories = options?.interestCategories ?? [];
+  if (interestCategories.length > 0) {
+    const categoryKey = normalizeScoringKey(content.category);
+    if (interestCategories.includes(categoryKey)) {
+      score += INTEREST_CATEGORY_BOOST;
+    }
+
+    for (const tag of content.tags) {
+      if (interestCategories.includes(normalizeScoringKey(tag))) {
+        score += INTEREST_TAG_BOOST;
+      }
+    }
+  }
 
   if (content.publishedAt) {
     const ageMs = now - Date.parse(content.publishedAt);

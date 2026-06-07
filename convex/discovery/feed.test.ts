@@ -191,6 +191,36 @@ describe("getDiscoveryFeed authenticated path", () => {
     expect(feed.items.some((item) => item.reason === "personalized")).toBe(true);
   });
 
+  it("ranks picked category interests above unmatched content", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t, ["articles", "discover"]);
+    const asMember = t.withIdentity(MEMBER);
+
+    const scienceId = await insertPublishedContent(t, {
+      title: "Science story",
+      publishedAt: "2026-06-01T08:00:00.000Z",
+      category: "Science",
+    });
+    await insertPublishedContent(t, {
+      title: "Culture story",
+      publishedAt: "2026-06-01T08:00:00.000Z",
+      category: "Culture",
+    });
+
+    await asMember.mutation(api.categories.interests.setCategoryInterests, {
+      tenantSlug: TENANT,
+      categoryKeys: ["Science"],
+    });
+
+    const feed = await asMember.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      tokenIdentifier: MEMBER.tokenIdentifier,
+      feedSeed: 3,
+    });
+
+    expect(feed.items[0]?._id).toBe(scienceId);
+  });
+
   it("marks feed items the member has liked with isLiked", async () => {
     const t = convexTest(schema, modules);
     await seedTenant(t, ["articles", "discover"]);

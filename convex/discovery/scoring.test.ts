@@ -262,6 +262,140 @@ describe("scoreContent", () => {
 
     expect(unseen - seen).toBe(30);
   });
+
+  it("adds an interest boost when the category is in interestCategories", () => {
+    const baseline = scoreContent(
+      {
+        category: "Culture",
+        tags: [],
+        kind: "article",
+        publishedAt: "2026-05-01T08:00:00.000Z",
+      },
+      [],
+      now,
+      { rng: () => 0 },
+    );
+
+    const boosted = scoreContent(
+      {
+        category: "Science",
+        tags: [],
+        kind: "article",
+        publishedAt: "2026-05-01T08:00:00.000Z",
+      },
+      [],
+      now,
+      { rng: () => 0, interestCategories: ["science"] },
+    );
+
+    expect(boosted - baseline).toBe(80);
+  });
+
+  it("adds a tag interest boost when a tag matches interestCategories", () => {
+    const baseline = scoreContent(
+      {
+        category: "Culture",
+        tags: [],
+        kind: "article",
+        publishedAt: "2026-05-01T08:00:00.000Z",
+      },
+      [],
+      now,
+      { rng: () => 0 },
+    );
+
+    const boosted = scoreContent(
+      {
+        category: "Culture",
+        tags: ["Philosophie"],
+        kind: "article",
+        publishedAt: "2026-05-01T08:00:00.000Z",
+      },
+      [],
+      now,
+      { rng: () => 0, interestCategories: ["philosophie"] },
+    );
+
+    expect(boosted - baseline).toBe(40);
+  });
+
+  it("behaves exactly as today when interestCategories is empty", () => {
+    const prefs: Affinity[] = [
+      { targetType: "category", targetId: "politique", score: 100 },
+    ];
+
+    const withoutInterests = scoreContent(
+      {
+        category: "Politique",
+        tags: [],
+        kind: "article",
+        publishedAt: "2026-05-01T08:00:00.000Z",
+      },
+      prefs,
+      now,
+      { rng: () => 0 },
+    );
+
+    const withEmptyInterests = scoreContent(
+      {
+        category: "Politique",
+        tags: [],
+        kind: "article",
+        publishedAt: "2026-05-01T08:00:00.000Z",
+      },
+      prefs,
+      now,
+      { rng: () => 0, interestCategories: [] },
+    );
+
+    expect(withEmptyInterests).toBe(withoutInterests);
+  });
+
+  it("ranks content matching both affinity and interest highest", () => {
+    const prefs: Affinity[] = [
+      { targetType: "category", targetId: "science", score: 50 },
+    ];
+
+    const affinityOnly = scoreContent(
+      {
+        category: "Science",
+        tags: [],
+        kind: "article",
+        publishedAt: "2026-05-01T08:00:00.000Z",
+      },
+      prefs,
+      now,
+      { rng: () => 0 },
+    );
+
+    const interestOnly = scoreContent(
+      {
+        category: "Science",
+        tags: [],
+        kind: "article",
+        publishedAt: "2026-05-01T08:00:00.000Z",
+      },
+      [],
+      now,
+      { rng: () => 0, interestCategories: ["science"] },
+    );
+
+    const both = scoreContent(
+      {
+        category: "Science",
+        tags: [],
+        kind: "article",
+        publishedAt: "2026-05-01T08:00:00.000Z",
+      },
+      prefs,
+      now,
+      { rng: () => 0, interestCategories: ["science"] },
+    );
+
+    expect(both).toBeGreaterThan(affinityOnly);
+    expect(both).toBeGreaterThan(interestOnly);
+    expect(both - affinityOnly).toBe(80);
+  });
 });
 
 describe("bucketFeed", () => {

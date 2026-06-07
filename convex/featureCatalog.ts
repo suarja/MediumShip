@@ -319,12 +319,6 @@ export function normalizeNavOrder(navOrder: readonly string[] | undefined): stri
     }
   }
 
-  const homeIndex = normalized.indexOf("home");
-  if (homeIndex > 0) {
-    normalized.splice(homeIndex, 1);
-    normalized.unshift("home");
-  }
-
   return normalized;
 }
 
@@ -415,12 +409,6 @@ export function resolveEffectiveNavigation(
     if (!result.includes(key)) {
       result.push(key);
     }
-  }
-
-  const homeIndex = result.indexOf("home");
-  if (homeIndex > 0) {
-    result.splice(homeIndex, 1);
-    result.unshift("home");
   }
 
   return result.slice(0, NAV_TAB_CAP);

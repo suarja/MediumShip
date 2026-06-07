@@ -112,7 +112,7 @@ describe("app layout feature navigation", () => {
   });
 
   it("respects navigation order from effective navigation", () => {
-    const navOrder = ["home", "library", "discover", "explore", "profile"];
+    const navOrder = ["library", "home", "discover", "explore", "profile"];
     const { effectiveNavigation } = mockThemeFromConfigs(
       {
         home: { enabled: true, access: "free", iconKey: "news" },

@@ -58,13 +58,14 @@ type AppTabBarProps =
 
 export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
   const { t } = useTranslation("navigation");
-  const { theme } = useAppTheme();
+  const { theme, effectiveNavigation } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
   const insets = useSafeAreaInsets();
   const visibleRoutes = state.routes.filter((route) => {
-    const href = (descriptors[route.key]?.options as { href?: string | null } | undefined)
-      ?.href;
-    return href !== null && route.name in TAB_META;
+    return (
+      route.name in TAB_META &&
+      (effectiveNavigation as readonly string[]).includes(route.name)
+    );
   });
 
   return (

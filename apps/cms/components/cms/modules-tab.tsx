@@ -270,7 +270,7 @@ function NavTabComposer({
               <div className="ord nav-composer__ord">
                 <button
                   aria-label={`Monter ${feature.label}`}
-                  disabled={index === 0 || feature.key === "home"}
+                  disabled={index === 0}
                   onClick={() => onMove(feature.key, -1)}
                   type="button"
                 >
@@ -278,7 +278,7 @@ function NavTabComposer({
                 </button>
                 <button
                   aria-label={`Descendre ${feature.label}`}
-                  disabled={index === orderedFeatures.length - 1 || feature.key === "home"}
+                  disabled={index === orderedFeatures.length - 1}
                   onClick={() => onMove(feature.key, 1)}
                   type="button"
                 >

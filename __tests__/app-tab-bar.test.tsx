@@ -18,6 +18,7 @@ jest.mock("../src/features/responsive/use-responsive", () => ({
 
 jest.mock("../src/features/theme/theme-provider", () => ({
   useAppTheme: () => ({
+    effectiveNavigation: ["home", "discover", "explore", "library", "profile"],
     theme: {
       colors: {
         border: "#DDD",
@@ -92,6 +93,25 @@ describe("app tab bar", () => {
     expect(screen.queryByLabelText("Premium")).toBeNull();
     expect(screen.queryByText("Home")).toBeNull();
     expect(screen.queryByText("Explore")).toBeNull();
+  });
+
+  it("filters tabs from effective navigation instead of route registration", () => {
+    renderTabBar(
+      [
+        { key: "home-key", name: "home" },
+        { key: "agenda-key", name: "agenda" },
+        { key: "community-key", name: "community" },
+        { key: "collections-key", name: "collections" },
+        { key: "profile-key", name: "profile" },
+      ],
+      {},
+    );
+
+    expect(screen.getByLabelText("Home")).toBeTruthy();
+    expect(screen.getByLabelText("Profile")).toBeTruthy();
+    expect(screen.queryByLabelText("Agenda")).toBeNull();
+    expect(screen.queryByLabelText("Community")).toBeNull();
+    expect(screen.queryByLabelText("Collections")).toBeNull();
   });
 
   it("renders one icon slot per tab without visible captions", () => {

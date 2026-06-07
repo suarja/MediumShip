@@ -148,12 +148,12 @@ describe("featureCatalog", () => {
     expect(countNavTabsInBar(defaults)).toBe(NAV_TAB_CAP);
   });
 
-  it("builds a default nav order with home first", () => {
+  it("builds a default nav order matching the catalog order", () => {
     expect(buildDefaultNavOrder()[0]).toBe("home");
     expect(buildDefaultNavOrder()).toEqual([...NAV_TAB_KEYS]);
   });
 
-  it("resolveEffectiveNavigation returns enabled+inBar nav tabs ordered with home first and capped", () => {
+  it("resolveEffectiveNavigation returns enabled+inBar nav tabs in navOrder and capped", () => {
     const configs = normalizeFeatureConfigs({
       home: { enabled: true, inBar: true },
       discover: { enabled: true, inBar: true },
@@ -163,14 +163,14 @@ describe("featureCatalog", () => {
     });
 
     const nav = resolveEffectiveNavigation(configs, [
-      "home",
       "library",
+      "home",
       "discover",
       "explore",
       "profile",
     ]);
 
-    expect(nav[0]).toBe("home");
+    expect(nav[0]).toBe("library");
     expect(nav).toContain("profile");
     expect(nav.length).toBe(NAV_TAB_CAP);
     expect(nav).not.toContain("articles");
@@ -218,7 +218,8 @@ describe("featureCatalog", () => {
     });
 
     const nav = resolveEffectiveNavigation(configs, ["explore", "profile", "home"]);
-    expect(nav[0]).toBe("home");
+    expect(nav[0]).toBe("explore");
+    expect(nav).toContain("home");
     expect(nav).toContain("profile");
   });
 
@@ -279,10 +280,10 @@ describe("featureCatalog", () => {
     expect(clamped.library.inBar).toBe(false);
   });
 
-  it("normalizeNavOrder deduplicates and forces home first", () => {
+  it("normalizeNavOrder deduplicates while preserving caller order", () => {
     expect(normalizeNavOrder(["discover", "home", "home", "profile"])).toEqual([
-      "home",
       "discover",
+      "home",
       "profile",
       "explore",
       "agenda",

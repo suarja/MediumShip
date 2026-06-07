@@ -17,7 +17,7 @@ type TabMeta = {
 
 const TAB_ICON_SIZE = 16;
 /** ⌕ reads much smaller than circle glyphs — needs a strong optical bump over 16px. */
-const EXPLORE_TAB_ICON_SIZE = 24;
+const EXPLORE_TAB_ICON_SIZE = 28;
 
 const TAB_META: Record<string, TabMeta> = {
   home: { icon: "◉", labelKey: "home" },

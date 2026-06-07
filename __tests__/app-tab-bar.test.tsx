@@ -139,8 +139,8 @@ describe("app tab bar", () => {
     expect(exploreIcon.props.style).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          fontSize: 24,
-          lineHeight: 24,
+          fontSize: 28,
+          lineHeight: 28,
         }),
       ]),
     );

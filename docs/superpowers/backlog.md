@@ -19,20 +19,34 @@ Idées soulevées mais non encore planifiées en slice. Rangées par **priorité
 - **Onboarding première arrivée CMS** : flux de premier lancement propre (claim du premier admin, repère visuel d'état).
 - **Landing page CMS (non connecté)** : à faire d'après la maquette.
 
-### ⚙️ Config tenant / personnalisation de l'app
+### 🧭 Navigation composable (tables) — gros morceau, distinct des sections de feed
 
-- **Ordre + affichage des sections de feed configurables par tenant** (dans la config / preview tenant) : ordonner les « tables »/sections, les afficher ou non. S'appuie sur `feedSections` / `enabledModules` existants.
-- **Nommer les sections de feed de l'écran d'accueil.** Dans la config CMS de l'écran home, ce qu'on sélectionne dans les tables doit pouvoir recevoir un **nom d'affichage**. Vocabulaire à figer : **Home Feed** (accueil, plus traditionnel) vs **Discover Feed** (le feed discovery perso). S'appuie sur `feedSections`.
-- **Icône de module configurable** : permettre au tenant (CMS) de choisir l'icône d'un module, sur le même modèle que les catégories. (Croise le polish modules mobile ci-dessous.)
+> **Constat terrain (test Slice N) :** deux concepts étaient confondus. À séparer nettement.
+> - **Tables / onglets de navigation** (Home, Découverte, Explore, Agenda, Communauté, Bibliothèque…) → ce que le tenant veut **ajouter / retirer / réordonner**, et **désactiver une feature doit retirer son onglet**.
+> - **Sections du Home Feed** (article/épisode/vidéo *dans* le Home, avec titres + ordre) → déjà géré par l'onglet Modules (Slice N).
+
+- **La nav mobile n'est PAS composable aujourd'hui.** `app/(app)/_layout.tsx` a un set d'onglets **en dur** (home, discover, explore, library, profile) ; seul `discover` est conditionné par `featureConfigs.discover.enabled`. Cible : la barre d'onglets est **dérivée de la config** (features activées + ordre), et désactiver une feature **retire son onglet**.
+- **Réordonner / afficher-masquer les tables** depuis le CMS (onglet Modules), au-delà des seules sections de contenu. S'appuie sur `featureConfigs` (Slice N) + un ordre de navigation.
+- **Groupes du `FeatureCatalog` à rendre cohérents.** Aujourd'hui le regroupement est bancal (« Navigation » contient Agenda/communauté/collection). Regrouper par sens (navigation vs contenu vs bibliothèque vs social…).
+- **Nommer les sections de feed de l'écran d'accueil** (titres éditables depuis Modules — **déjà possible** mais peu évident ; vocabulaire **Home Feed** vs **Discover Feed**). Clarifier l'UX d'édition (et la sauvegarde — cf. toasts).
+- **Icône de module configurable** : déjà livré côté config (Slice N) ; reste à brancher proprement dans la grille mobile (cf. polish modules).
+
+### 🔔 Feedback — toasts CMS + haptics mobile (petit slice combiné)
+
+- **Toasts de confirmation dans le CMS.** Aujourd'hui « Enregistrer » ne donne **aucun retour** → on ne sait pas si ça a marché (source de confusion réelle pendant le test Slice N : modifs perdues car non sauvées). Ajouter un système de toasts (succès/erreur) déclenché sur les mutations CMS (sauvegarde tenant/modules/contenu…).
+- **Retour haptique mobile (app-wide).** S'inspirer de **`../editia/mobile/lib/utils/haptics.ts`** : service central `HapticsService` (`expo-haptics`) avec intensités sémantiques (`light`/`medium`/`heavy`) et patterns (`success`/`error`/`warning`/`selection`), no-op sur web ; brancher progressivement sur les primitives UI et interactions clés (navigation, favoris, filtres, actions primaires/secondaires, confirmations).
 
 ### 🏠 Home Feed / Explore — recherche & convergence
 
 - **Recherche dans le Home Feed (nécessaire).** Afficher une **barre de recherche** (ou au minimum un **bouton** de recherche) **au-dessus des tags de filtre** dans l'accueil. C'est un requis, pas un nice-to-have.
-- **Convergence Explore ↔ Home Feed (UX à trancher).** Deux pistes : (a) au tap sur la barre de recherche du Home, **afficher le contenu de la page Explore** (Explore devient le mode recherche du Home) ; ou (b) **garder Explore comme page configurable à part**. Décider la bonne UX avant d'implémenter. Lié : « qu'est-ce qui est sélectionné dans le Home Feed » vient du CMS (cf. « Nommer les sections de feed »).
+- **Explore : affichable ou pas + où/comment.** La page **Explore doit être une table togglable** (afficher/masquer) comme les autres, et il faut décider **où et comment** elle s'affiche. Dépend de « Navigation composable » + de la décision UX ci-dessous.
+- **Convergence Explore ↔ Home Feed (UX à trancher).** Deux pistes : (a) au tap sur la barre de recherche du Home, **afficher le contenu de la page Explore** (Explore devient le mode recherche du Home) ; ou (b) **garder Explore comme page configurable à part**. Décider la bonne UX avant d'implémenter.
 
 ### 📱 Mobile — Bibliothèque & UI
 
 Retours terrain après usage réel (favoris enregistrés, navigation Bibliothèque).
+
+> **Livré (branche `feat/mobile-library-favoris-polish`, à vérifier)** : rename Favoris, retrait badge Gratuit, listes complètes favoris/téléchargements, retrait loupe, summary cartes À découvrir. Reste ci-dessous : layout grille modules.
 
 **Favoris / Enregistrés**
 - **Renommer « Enregistrés » → « Favoris »** partout dans l'app (Profil, Bibliothèque, stats, i18n).
@@ -51,13 +65,13 @@ Retours terrain après usage réel (favoris enregistrés, navigation Bibliothèq
 **Cartes « À découvrir »**
 - **Summary plus long quand présent** : passer de 2 lignes max à ~4 lignes de summary sur les cartes « À découvrir », pour un aperçu plus riche quand le contenu en a un.
 
-**Retour haptique (app-wide)**
-- **Retour haptique sur toute l'application.** S'inspirer de **`../editia/mobile/lib/utils/haptics.ts`** : service central `HapticsService` (`expo-haptics`) avec intensités sémantiques (`light`, `medium`, `heavy`) et patterns (`success`, `error`, `warning`, `selection`), no-op sur web. Editia branche déjà le service dans les composants partagés (`Button`, `Chip`, tab bar, toggles…) — reproduire le même pattern : installer `expo-haptics`, créer le service, puis l'appliquer progressivement aux primitives UI et aux interactions clés (navigation, favoris, filtres, actions primaires/secondaires, confirmations).
+**Retour haptique (app-wide)** → déplacé dans « 🔔 Feedback — toasts CMS + haptics mobile ».
 
 ---
 
 ## 🐞 Bugs
 
+- **[CMS] Aperçu mobile cassé dans l'onglet Tenant.** La preview `mfeed` (`apps/cms/components/cms/tenant-settings-form.tsx:111`) est restée alors que la config feed/modules a migré vers l'onglet Modules (Slice N) → elle référence des données parties. Fix : retirer la preview de l'onglet Tenant (ou la déplacer/reconstruire dans l'onglet Modules). À traiter avec la « Navigation composable ».
 - ~~**[CMS] Déconnexion cassée.**~~ **✅ Corrigé** : le bloc user en haut à droite affichait un avatar custom sans sign-out ; restauré via `<UserButton afterSignOutUrl="/">` de Clerk dans `admin-shell.tsx` (et `getViewerInitial` mort supprimé).
 - **Article Wikipedia — flicker de l'extrait au chargement.** À l'ouverture d'un article, l'extrait s'affiche d'abord en gras seul, puis le contenu complet prend le relais — léger flicker visuel. Hypothèse : l'extrait sert de placeholder pendant le fetch du corps. Piste : afficher l'extrait en style light (pas bold) tant que le contenu n'est pas chargé, pour une transition plus seamless.
 

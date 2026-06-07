@@ -57,6 +57,7 @@ export default defineSchema({
     catalogLocale: v.optional(v.union(v.literal("en"), v.literal("fr"))),
     /** Wikipedia edition for discovery ingestion (en / fr). */
     wikipediaLocale: v.optional(v.union(v.literal("en"), v.literal("fr"))),
+    providerConfigs: v.optional(v.record(v.string(), v.any())),
   }).index("by_slug", ["slug"]),
   contents: defineTable({
     tenantSlug: v.string(),

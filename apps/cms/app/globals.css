@@ -2868,19 +2868,70 @@ a {
 }
 
 .catalog-result-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  gap: 8px 10px;
   padding-top: 8px;
   padding-right: 8px;
   padding-bottom: 8px;
   border-radius: var(--r);
-  transition: background 0.12s;
+  border-left: 3px solid transparent;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.catalog-result-row--added {
+  background: var(--success-soft);
+  border-left-color: var(--success);
 }
 
 .catalog-result-row:hover {
   background: var(--bg-deep);
+}
+
+.catalog-result-row--added:hover {
+  background: color-mix(in oklab, var(--success-soft) 70%, var(--bg-deep));
+}
+
+.catalog-result-leading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.catalog-collapse-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--rule-2);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--ink-soft);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.catalog-collapse-btn:hover {
+  background: var(--surface-muted);
+  border-color: var(--ink-mute);
+  color: var(--ink);
+}
+
+.catalog-collapse-spacer {
+  display: block;
+  width: 24px;
+  height: 24px;
 }
 
 .catalog-result-info {
@@ -2926,28 +2977,47 @@ a {
 }
 
 .catalog-badge-tenant--added {
-  background: var(--surface-muted);
-  color: var(--ink-mute);
+  background: var(--success);
+  color: #fff;
 }
 
 .catalog-result-actions {
   display: flex;
-  gap: 5px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
 .catalog-add-btn {
   height: 28px;
-  padding: 0 9px;
+  min-width: 84px;
+  padding: 0 10px;
   font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
-.catalog-add-btn--added:disabled {
-  opacity: 1;
-  cursor: default;
-  color: var(--ink-mute);
-  border-color: var(--border);
-  background: var(--surface-muted);
+.catalog-add-btn--self.is-active {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+
+.catalog-add-btn--self.is-active:hover {
+  background: color-mix(in oklab, var(--success) 88%, #000);
+  border-color: color-mix(in oklab, var(--success) 88%, #000);
+  color: #fff;
+}
+
+.catalog-add-btn--desc.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.catalog-add-btn--desc.is-active:hover {
+  background: var(--accent-2);
+  border-color: var(--accent-2);
+  color: var(--accent-ink);
 }
 
 .catalog-result-fb--error {

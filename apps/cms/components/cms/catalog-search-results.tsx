@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+
+import { buildCatalogResultTreeIndex } from "./catalog-result-tree";
 
 type CatalogNode = {
   _id: string;
@@ -10,6 +12,7 @@ type CatalogNode = {
   externalId: string;
   slug: string;
   labelFr?: string;
+  parentId?: string;
   retired: boolean;
   canAdd: boolean;
   inTenant?: boolean;
@@ -33,6 +36,9 @@ export function CatalogSearchResults({
 }: CatalogSearchResultsProps) {
   const [pending, setPending] = useState<string | null>(null);
   const [errorFeedback, setErrorFeedback] = useState<Map<string, string>>(new Map());
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set());
+
+  const tree = useMemo(() => buildCatalogResultTreeIndex(nodes), [nodes]);
 
   const handleToggle = async (
     nodeId: string,
@@ -56,13 +62,31 @@ export function CatalogSearchResults({
     }
   };
 
+  const toggleCollapsed = (nodeId: string) => {
+    setCollapsedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(nodeId)) {
+        next.delete(nodeId);
+      } else {
+        next.add(nodeId);
+      }
+      return next;
+    });
+  };
+
   if (nodes.length === 0) return null;
 
   return (
     <ul className="catalog-results">
       {nodes.map((node) => {
+        if (!tree.isVisible(node, collapsedIds)) {
+          return null;
+        }
+
         const inTenant = node.inTenant ?? false;
         const descendantsFullyInTenant = node.descendantsFullyInTenant ?? false;
+        const hasChildren = tree.hasChildren(node._id);
+        const isCollapsed = collapsedIds.has(node._id);
         const indentPx = Math.max(0, node.depth) * 20;
         const fb = errorFeedback.get(node._id);
         const selfPending = pending === `${node._id}:self`;
@@ -70,10 +94,30 @@ export function CatalogSearchResults({
 
         return (
           <li
-            className="catalog-result-row"
+            className={`catalog-result-row${inTenant ? " catalog-result-row--added" : ""}`}
             key={node._id}
             style={{ paddingLeft: `${indentPx + 14}px` }}
           >
+            <div className="catalog-result-leading">
+              {hasChildren ? (
+                <button
+                  aria-expanded={!isCollapsed}
+                  aria-label={
+                    isCollapsed
+                      ? `Déplier ${node.displayLabel}`
+                      : `Replier ${node.displayLabel}`
+                  }
+                  className="catalog-collapse-btn"
+                  onClick={() => toggleCollapsed(node._id)}
+                  type="button"
+                >
+                  {isCollapsed ? "▸" : "▾"}
+                </button>
+              ) : (
+                <span aria-hidden="true" className="catalog-collapse-spacer" />
+              )}
+            </div>
+
             <div className="catalog-result-info">
               <span className="catalog-result-label">{node.displayLabel}</span>
               {node.labelFr &&
@@ -89,7 +133,7 @@ export function CatalogSearchResults({
               <span className="catalog-result-ext">{node.externalId}</span>
               {inTenant && (
                 <span className="catalog-badge-tenant catalog-badge-tenant--added">
-                  Ajouté au tenant
+                  Ajouté
                 </span>
               )}
             </div>
@@ -99,19 +143,19 @@ export function CatalogSearchResults({
             ) : node.canAdd ? (
               <div className="catalog-result-actions">
                 <button
-                  className={`ghost-button catalog-add-btn${inTenant ? " catalog-add-btn--added" : ""}`}
+                  className={`ghost-button catalog-add-btn catalog-add-btn--self${
+                    inTenant ? " is-active" : ""
+                  }`}
                   disabled={pending !== null}
                   onClick={() => void handleToggle(node._id, "self", inTenant)}
                   type="button"
                 >
-                  {selfPending
-                    ? "…"
-                    : inTenant
-                      ? "Retirer"
-                      : "Ajouter"}
+                  {selfPending ? "…" : inTenant ? "Retirer" : "Ajouter"}
                 </button>
                 <button
-                  className={`ghost-button catalog-add-btn${descendantsFullyInTenant ? " catalog-add-btn--added" : ""}`}
+                  className={`ghost-button catalog-add-btn catalog-add-btn--desc${
+                    descendantsFullyInTenant ? " is-active" : ""
+                  }`}
                   disabled={pending !== null}
                   onClick={() =>
                     void handleToggle(

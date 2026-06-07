@@ -14,6 +14,7 @@ import {
 
 type CategoryFormProps = {
   selectedId: string | null;
+  onDone?: () => void;
 };
 
 type EditorState = {
@@ -75,7 +76,7 @@ function Field({
   );
 }
 
-export function CategoryForm({ selectedId }: CategoryFormProps) {
+export function CategoryForm({ selectedId, onDone }: CategoryFormProps) {
   const category = useQuery(
     api.cms.categories.getCmsCategory,
     selectedId ? { id: selectedId as Id<"categories"> } : "skip",
@@ -137,7 +138,7 @@ export function CategoryForm({ selectedId }: CategoryFormProps) {
         iconKey: state.iconKey,
         sortOrder: Number.parseInt(state.sortOrder, 10) || 0,
       });
-      setSaveLabel("Enregistré");
+      onDone?.();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Échec de l'enregistrement");
     }
@@ -147,6 +148,7 @@ export function CategoryForm({ selectedId }: CategoryFormProps) {
     setErrorMessage(null);
     try {
       await deleteCategory({ id: category._id });
+      onDone?.();
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Suppression impossible");
     }

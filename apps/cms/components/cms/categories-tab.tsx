@@ -60,7 +60,11 @@ export function CategoriesTab({ items, ready, onCreate }: CategoriesTabProps) {
 
         <div className="categories-right-stack">
           {selectedId ? (
-            <CategoryForm key={selectedId} selectedId={selectedId} />
+            <CategoryForm
+              key={selectedId}
+              onDone={() => setSelectedId(null)}
+              selectedId={selectedId}
+            />
           ) : null}
           <CatalogSearchPanel ready={ready} />
         </div>

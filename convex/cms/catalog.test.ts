@@ -254,6 +254,77 @@ describe("cms/catalog — updateDiscoveryLocales", () => {
   });
 });
 
+describe("cms/catalog — getYoutubeDiscoverySettings", () => {
+  it("returns french defaults and whitelist counts when youtube is unconfigured", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+
+    const asAdmin = t.withIdentity(ADMIN);
+    const settings = await asAdmin.query(api.cms.catalog.getYoutubeDiscoverySettings, {});
+
+    expect(settings).toEqual({
+      locale: "fr",
+      disableWhitelist: false,
+      whitelistChannelCount: expect.any(Number),
+      whitelistCounts: {
+        fr: expect.any(Number),
+        en: 0,
+      },
+    });
+    expect(settings.whitelistCounts.fr).toBeGreaterThan(0);
+    expect(settings.whitelistChannelCount).toBe(settings.whitelistCounts.fr);
+  });
+});
+
+describe("cms/catalog — updateYoutubeDiscoverySettings", () => {
+  it("persists youtube locale and disableWhitelist on tenant providerConfigs", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+
+    const asAdmin = t.withIdentity(ADMIN);
+    await asAdmin.mutation(api.cms.catalog.updateYoutubeDiscoverySettings, {
+      locale: "en",
+      disableWhitelist: true,
+    });
+
+    const settings = await asAdmin.query(api.cms.catalog.getYoutubeDiscoverySettings, {});
+    expect(settings.locale).toBe("en");
+    expect(settings.disableWhitelist).toBe(true);
+    expect(settings.whitelistChannelCount).toBe(0);
+
+    const tenant = await t.run(async (ctx) =>
+      ctx.db
+        .query("tenants")
+        .withIndex("by_slug", (q) => q.eq("slug", "demo-media"))
+        .unique(),
+    );
+    expect(tenant?.providerConfigs?.youtube).toEqual({
+      locale: "en",
+      disableWhitelist: true,
+    });
+  });
+
+  it("merges partial updates without dropping existing youtube config", async () => {
+    const t = convexTest(schema, modules);
+    await seedAdmin(t);
+
+    const asAdmin = t.withIdentity(ADMIN);
+    await asAdmin.mutation(api.cms.catalog.updateYoutubeDiscoverySettings, {
+      locale: "fr",
+      disableWhitelist: true,
+    });
+    await asAdmin.mutation(api.cms.catalog.updateYoutubeDiscoverySettings, {
+      disableWhitelist: false,
+    });
+
+    const settings = await asAdmin.query(api.cms.catalog.getYoutubeDiscoverySettings, {});
+    expect(settings).toMatchObject({
+      locale: "fr",
+      disableWhitelist: false,
+    });
+  });
+});
+
 describe("cms/catalog — listCategoryCatalogRootsForCms", () => {
   it("returns localized L1 families for browse chips", async () => {
     const t = convexTest(schema, modules);

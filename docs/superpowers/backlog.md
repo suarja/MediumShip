@@ -65,7 +65,7 @@ Retours terrain après usage réel (favoris enregistrés, navigation Bibliothèq
 
 - **Re-personnalisation à chaque loadMore** : c'est **déjà le design** (le serveur re-score chaque page avec les affinités courantes), renforcé par Slice H. Pas du backlog.
 - **Taxonomie de `Category` gérée par le tenant** → `docs/adr/0006-tenant-managed-category-taxonomy.md`.
-- **Catalogue global hiérarchique + UX recherche/nuage** → `docs/adr/0007-hierarchical-category-catalog.md` ; slices J (backend) → K (CMS) → L (mobile Settings).
+- **Catalogue global hiérarchique + UX recherche/nuage** → `docs/adr/0007-hierarchical-category-catalog.md` ; Slice J (backend) ✅ → **Slice K (CMS Développeur)** → Slice L (mobile Settings).
 - **Largeur de découverte** (tags réels, sérendipité, frontière, graphe) → `docs/adr/0005-discovery-breadth.md`.
 - **Nuage d'onboarding** (le fan pioche dans la taxonomie → affinités) → après Slice L (composant Réglages réutilisable).
 - **Politique recherche / fetch multi-providers** → ADR futur (noté dans ADR 0006).

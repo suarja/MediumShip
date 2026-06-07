@@ -85,6 +85,12 @@ describe("signed-in library screen", () => {
     expect(screen.queryByText("Your library, everywhere")).toBeNull();
   });
 
+  it("does not render a top-bar search loupe", () => {
+    render(<LibraryScreen />);
+
+    expect(screen.queryByTestId("library-top-bar-search")).toBeNull();
+  });
+
   it("labels the saved section Favorites without a free gate badge", () => {
     render(<LibraryScreen />);
 

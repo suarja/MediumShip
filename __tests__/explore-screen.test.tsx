@@ -50,22 +50,12 @@ describe("explore screen", () => {
     mockUseCategories.mockClear();
   });
 
-  it("aligns top-bar and search-card loupe glyphs to the same scale", () => {
+  it("does not render a top-bar search loupe but keeps the search card", () => {
     render(<ExploreScreen />);
 
-    const topBarSearch = screen.getByTestId("explore-top-bar-search");
-    const searchCardIcon = screen.getByTestId("explore-search-card-icon");
-
-    expect(topBarSearch.props.style).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ fontSize: 19, lineHeight: 19 }),
-      ]),
-    );
-    expect(searchCardIcon.props.style).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ fontSize: 19, lineHeight: 19 }),
-      ]),
-    );
+    expect(screen.queryByTestId("explore-top-bar-search")).toBeNull();
+    expect(screen.getByTestId("explore-search-card-icon")).toBeTruthy();
+    expect(screen.getByPlaceholderText("Search analyses, podcasts, events…")).toBeTruthy();
   });
 
   it("renders the first discovery shell sections", () => {

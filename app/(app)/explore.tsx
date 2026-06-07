@@ -115,26 +115,7 @@ export default function ExploreScreen() {
           >
             {t("title")}
           </Text>
-          <View
-            style={[
-              styles.topBarAction,
-              { width: 34 * scaleSpace, height: 34 * scaleSpace },
-            ]}
-          >
-            <Text
-              testID="explore-top-bar-search"
-              style={[
-                styles.topBarActionGlyph,
-                {
-                  color: theme.colors.heading,
-                  fontSize: SEARCH_GLYPH_SIZE * scaleFont,
-                  lineHeight: SEARCH_GLYPH_SIZE * scaleFont,
-                },
-              ]}
-            >
-              ⌕
-            </Text>
-          </View>
+          <View style={styles.topBarSide} />
         </View>
 
         <View
@@ -504,13 +485,6 @@ const styles = StyleSheet.create({
   topBarSide: {
     width: 34,
     height: 34,
-  },
-  topBarAction: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  topBarActionGlyph: {
-    textAlign: "center",
   },
   topBarTitle: {
     fontFamily: fontFamilies.display,

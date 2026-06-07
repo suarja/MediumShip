@@ -16,8 +16,8 @@ type TabMeta = {
 };
 
 const TAB_ICON_SIZE = 16;
-/** Matches the Explore search-card loupe scale; keeps the tab glyph visually even. */
-const EXPLORE_TAB_ICON_SIZE = 20;
+/** ⌕ reads much smaller than circle glyphs — needs a strong optical bump over 16px. */
+const EXPLORE_TAB_ICON_SIZE = 24;
 
 const TAB_META: Record<string, TabMeta> = {
   home: { icon: "◉", labelKey: "home" },

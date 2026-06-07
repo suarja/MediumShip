@@ -57,7 +57,7 @@ describe("listPublishedByCategory", () => {
 });
 
 describe("editorial source isolation", () => {
-  it("excludes wikipedia and rss content from listPublishedFeed and category reads", async () => {
+  it("excludes wikipedia, rss, and youtube content from listPublishedFeed and category reads", async () => {
     const t = convexTest(schema, modules);
 
     await t.run(async (ctx) => {
@@ -111,6 +111,26 @@ describe("editorial source isolation", () => {
         source: "rss",
         externalId: "rss-123",
         canonicalUrl: "https://example.com/rss-story",
+      });
+      await ctx.db.insert("contents", {
+        tenantSlug: "demo-media",
+        kind: "video",
+        status: "published",
+        slug: "youtube-video-abc123",
+        title: "YouTube video",
+        summary: "Discovery only video",
+        category: "science",
+        tags: ["science"],
+        isPremium: false,
+        source: "youtube",
+        externalId: "abc123XYZ9",
+        canonicalUrl: "https://youtube.com/watch?v=abc123XYZ9",
+        durationSeconds: 312,
+        videoSource: {
+          kind: "youtube",
+          youtubeVideoId: "abc123XYZ9",
+          youtubeUrl: "https://youtube.com/watch?v=abc123XYZ9",
+        },
       });
     });
 

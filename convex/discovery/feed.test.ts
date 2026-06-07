@@ -365,7 +365,7 @@ describe("getDiscoveryFeed authenticated path", () => {
 });
 
 describe("getDiscoveryFeed source isolation", () => {
-  it("includes wikipedia content alongside editorial corpus", async () => {
+  it("includes wikipedia and youtube content alongside editorial corpus", async () => {
     const t = convexTest(schema, modules);
     await seedTenant(t, ["articles", "discover"]);
 
@@ -398,6 +398,27 @@ describe("getDiscoveryFeed source isolation", () => {
         externalId: "999",
         canonicalUrl: "https://en.wikipedia.org/wiki/Example",
       });
+      await ctx.db.insert("contents", {
+        tenantSlug: TENANT,
+        kind: "video",
+        status: "published",
+        slug: "youtube-read-abc123",
+        title: "YouTube read",
+        summary: "Discovery video",
+        category: "science",
+        tags: ["science"],
+        isPremium: false,
+        publishedAt: "2026-06-06T10:00:00.000Z",
+        source: "youtube",
+        externalId: "abc123XYZ9",
+        canonicalUrl: "https://youtube.com/watch?v=abc123XYZ9",
+        durationSeconds: 312,
+        videoSource: {
+          kind: "youtube",
+          youtubeVideoId: "abc123XYZ9",
+          youtubeUrl: "https://youtube.com/watch?v=abc123XYZ9",
+        },
+      });
     });
 
     const feed = await t.query(api.discovery.feed.getDiscoveryFeed, {
@@ -405,7 +426,7 @@ describe("getDiscoveryFeed source isolation", () => {
     });
 
     expect(feed.items.map((item) => item.title).sort()).toEqual(
-      ["CMS read", "Wikipedia read"].sort(),
+      ["CMS read", "Wikipedia read", "YouTube read"].sort(),
     );
   });
 });

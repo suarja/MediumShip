@@ -39,12 +39,13 @@ describe("cmsProvider", () => {
 });
 
 describe("PROVIDERS registry", () => {
-  it("contains cmsProvider, wikipediaProvider, and rssProvider", () => {
+  it("contains cmsProvider, wikipediaProvider, rssProvider, and youtubeProvider", () => {
     expect(PROVIDERS).toContain(cmsProvider);
     expect(PROVIDERS.map((provider) => provider.source)).toEqual([
       "cms",
       "wikipedia",
       "rss",
+      "youtube",
     ]);
   });
 
@@ -79,8 +80,8 @@ describe("PROVIDERS registry", () => {
       upserted.push(result.upserted);
     }
 
-    expect(seen).toEqual(["cms", "wikipedia", "rss", "fake"]);
+    expect(seen).toEqual(["cms", "wikipedia", "rss", "youtube", "fake"]);
     expect(upserted[0]).toBe(0);
-    expect(upserted[3]).toBe(3);
+    expect(upserted[4]).toBe(3);
   });
 });

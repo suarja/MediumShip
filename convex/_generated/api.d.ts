@@ -45,6 +45,8 @@ import type * as discovery_provider from "../discovery/provider.js";
 import type * as discovery_providerConfig from "../discovery/providerConfig.js";
 import type * as discovery_providers_rss from "../discovery/providers/rss.js";
 import type * as discovery_providers_wikipedia from "../discovery/providers/wikipedia.js";
+import type * as discovery_providers_youtube from "../discovery/providers/youtube.js";
+import type * as discovery_providers_youtubeWhitelist from "../discovery/providers/youtubeWhitelist.js";
 import type * as discovery_refill from "../discovery/refill.js";
 import type * as discovery_scoring from "../discovery/scoring.js";
 import type * as discovery_visibility from "../discovery/visibility.js";
@@ -117,6 +119,8 @@ declare const fullApi: ApiFromModules<{
   "discovery/providerConfig": typeof discovery_providerConfig;
   "discovery/providers/rss": typeof discovery_providers_rss;
   "discovery/providers/wikipedia": typeof discovery_providers_wikipedia;
+  "discovery/providers/youtube": typeof discovery_providers_youtube;
+  "discovery/providers/youtubeWhitelist": typeof discovery_providers_youtubeWhitelist;
   "discovery/refill": typeof discovery_refill;
   "discovery/scoring": typeof discovery_scoring;
   "discovery/visibility": typeof discovery_visibility;

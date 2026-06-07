@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react-native";
 
 import HomeFeedScreen from "../app/(app)/home";
 import { resolveEffectiveFeatureConfigs } from "../convex/featureCatalog";
-import { initI18n } from "../src/i18n";
+import { changeAppLanguage, initI18n } from "../src/i18n";
 
 const mockUseAppTheme = jest.fn();
 const mockUseQuery = jest.fn();
@@ -97,11 +97,12 @@ function makeTheme(feedSections: Array<{ kind: "article" | "video"; title: strin
 }
 
 describe("home feed sections", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     mockUseQuery.mockReturnValue(SAMPLE_CONTENT);
+    await changeAppLanguage("fr");
   });
 
-  it("renders tenant section titles in configured order and skips hidden sections", () => {
+  it("renders localized default section titles and skips hidden sections", () => {
     mockUseAppTheme.mockReturnValue(
       makeTheme([
         { kind: "video", title: "Watch now", visible: true },
@@ -111,9 +112,43 @@ describe("home feed sections", () => {
 
     render(<HomeFeedScreen />);
 
-    expect(screen.getAllByText("Watch now").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Vidéos").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Watch now")).toBeNull();
     expect(screen.queryByText("Latest analyses")).toBeNull();
     expect(screen.getByText("Clip one")).toBeTruthy();
     expect(screen.queryByText("Story one")).toBeNull();
+  });
+
+  it("keeps custom CMS section titles untouched", () => {
+    mockUseAppTheme.mockReturnValue(
+      makeTheme([{ kind: "video", title: "Sélection vidéo", visible: true }]),
+    );
+
+    render(<HomeFeedScreen />);
+
+    expect(screen.getAllByText("Sélection vidéo").length).toBeGreaterThan(0);
+  });
+
+  it("adds breathing room between the hero card and the stacked rows", () => {
+    mockUseQuery.mockReturnValue([
+      ...SAMPLE_CONTENT,
+      {
+        ...SAMPLE_CONTENT[0],
+        _id: "a2",
+        title: "Story two",
+        publishedAt: "2026-05-31T08:00:00.000Z",
+      },
+    ]);
+    mockUseAppTheme.mockReturnValue(
+      makeTheme([{ kind: "article", title: "Latest stories", visible: true }]),
+    );
+
+    render(<HomeFeedScreen />);
+
+    const rows = screen.getAllByTestId("feed-section-rows");
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows[0].props.style).toEqual(
+      expect.objectContaining({ marginTop: 12 }),
+    );
   });
 });

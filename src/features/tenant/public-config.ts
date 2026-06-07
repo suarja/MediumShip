@@ -79,11 +79,15 @@ export const DEFAULT_FEED_SECTIONS: FeedSectionConfig[] = [
   { kind: "video", title: "Watch now" },
 ];
 
-const DEFAULT_FEED_SECTION_TITLES: Record<ContentKind, string> = {
+export const DEFAULT_FEED_SECTION_TITLES: Record<ContentKind, string> = {
   article: "Latest stories",
   episode: "New episodes",
   video: "Watch now",
 };
+
+export function isDefaultFeedSectionTitle(kind: ContentKind, title: string): boolean {
+  return title.trim() === DEFAULT_FEED_SECTION_TITLES[kind];
+}
 
 const CONTENT_KIND_MODULES: Record<ContentKind, ContentModule> = {
   article: "articles",

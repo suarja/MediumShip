@@ -26,8 +26,10 @@ import {
   filterAndOrderFeedContent,
   getVisibleFeedSections,
   groupFeedContentBySection,
+  isDefaultFeedSectionTitle,
   moduleToContentKind,
   type ContentModule,
+  type FeedSectionConfig,
 } from "../../src/features/tenant/public-config";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
@@ -37,6 +39,17 @@ const CHIP_LABEL_KEY: Record<ContentKind, string> = {
   episode: "chipEpisodes",
   video: "chipVideos",
 };
+
+function resolveFeedSectionTitle(
+  section: FeedSectionConfig,
+  t: (key: "chipArticles" | "chipEpisodes" | "chipVideos") => string,
+): string {
+  if (isDefaultFeedSectionTitle(section.kind, section.title)) {
+    return t(CHIP_LABEL_KEY[section.kind]);
+  }
+
+  return section.title;
+}
 
 export default function HomeFeedScreen() {
   const { t } = useTranslation("home");
@@ -74,7 +87,7 @@ export default function HomeFeedScreen() {
     const visibleSections = getVisibleFeedSections(feedSections, enabledModules);
     const formatChips = visibleSections.map((section) => ({
       key: section.kind,
-      label: section.title,
+      label: resolveFeedSectionTitle(section, t),
     })) as FeedFilterChip[];
 
     if (formatChips.length === 0) {
@@ -146,7 +159,7 @@ export default function HomeFeedScreen() {
                       { color: theme.colors.heading, fontSize: 18 * scaleFont },
                     ]}
                   >
-                    {group.section.title}
+                    {resolveFeedSectionTitle(group.section, t)}
                   </Text>
                 </View>
 
@@ -158,15 +171,22 @@ export default function HomeFeedScreen() {
                   />
                 ) : null}
 
-                {rest.map((item, index) => (
-                  <FeedRow
-                    key={item.id}
-                    item={item}
-                    kicker={cardKicker(item, t)}
-                    meta={cardMeta(item, t)}
-                    divider={index > 0}
-                  />
-                ))}
+                {rest.length > 0 ? (
+                  <View
+                    testID="feed-section-rows"
+                    style={{ marginTop: theme.spacing.md * scaleSpace }}
+                  >
+                    {rest.map((item, index) => (
+                      <FeedRow
+                        key={item.id}
+                        item={item}
+                        kicker={cardKicker(item, t)}
+                        meta={cardMeta(item, t)}
+                        divider={index > 0}
+                      />
+                    ))}
+                  </View>
+                ) : null}
               </View>
             );
           })

@@ -426,6 +426,7 @@ const featureConfigInputValidator = v.record(
   v.string(),
   v.object({
     enabled: v.optional(v.boolean()),
+    inBar: v.optional(v.boolean()),
     access: v.optional(
       v.union(v.literal("free"), v.literal("member"), v.literal("premium")),
     ),

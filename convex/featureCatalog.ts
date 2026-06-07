@@ -36,19 +36,25 @@ export type FeatureDefinition = {
   group: string;
   core?: boolean;
   defaultEnabled?: boolean;
+  /** navTab only: in the bottom bar by default (core nav tabs are always in). */
+  defaultInBar?: boolean;
   lockAccess?: boolean;
   defaultAccess: AccessLevel;
   defaultIconKey: string;
 };
 
 export type TenantFeatureConfig = {
+  /** Surface available/reachable at all (route + Explore card). */
   enabled: boolean;
+  /** navTab only: promoted to the bottom tab bar (subject to NAV_TAB_CAP). */
+  inBar: boolean;
   access: AccessLevel;
   iconKey: string;
 };
 
 export type TenantFeatureConfigInput = {
   enabled?: boolean;
+  inBar?: boolean;
   access?: AccessLevel;
   iconKey?: string;
 };
@@ -80,7 +86,7 @@ const FEATURE_DEFINITIONS: FeatureDefinition[] = [
     desc: "Fil personnalisé et recommandations.",
     nature: "navTab",
     group: "Tables",
-    defaultEnabled: true,
+    defaultInBar: true,
     defaultAccess: "free",
     defaultIconKey: "news",
   },
@@ -90,7 +96,7 @@ const FEATURE_DEFINITIONS: FeatureDefinition[] = [
     desc: "Recherche et exploration de contenus.",
     nature: "navTab",
     group: "Tables",
-    defaultEnabled: true,
+    defaultInBar: true,
     defaultAccess: "free",
     defaultIconKey: "default",
   },
@@ -100,7 +106,7 @@ const FEATURE_DEFINITIONS: FeatureDefinition[] = [
     desc: "Contenus sauvegardés et listes personnelles.",
     nature: "navTab",
     group: "Tables",
-    defaultEnabled: true,
+    defaultInBar: true,
     defaultAccess: "free",
     defaultIconKey: "library",
   },
@@ -110,7 +116,6 @@ const FEATURE_DEFINITIONS: FeatureDefinition[] = [
     desc: "Séries éditoriales et parcours thématiques.",
     nature: "navTab",
     group: "Tables",
-    defaultEnabled: false,
     defaultAccess: "free",
     defaultIconKey: "collections",
   },
@@ -120,7 +125,6 @@ const FEATURE_DEFINITIONS: FeatureDefinition[] = [
     desc: "Événements live, replays et inscriptions.",
     nature: "navTab",
     group: "Tables",
-    defaultEnabled: false,
     defaultAccess: "free",
     defaultIconKey: "agenda",
   },
@@ -130,7 +134,6 @@ const FEATURE_DEFINITIONS: FeatureDefinition[] = [
     desc: "Liens communautaires et salon membres.",
     nature: "navTab",
     group: "Tables",
-    defaultEnabled: false,
     defaultAccess: "member",
     defaultIconKey: "community",
   },
@@ -261,16 +264,24 @@ function defaultEnabledForFeature(feature: FeatureDefinition): boolean {
     return true;
   }
 
-  if (feature.defaultEnabled !== undefined) {
-    return feature.defaultEnabled;
-  }
+  // Two-level model: a feature is available (reachable + Explore) by default.
+  return feature.defaultEnabled ?? true;
+}
 
-  return feature.nature !== "navTab";
+function defaultInBarForFeature(feature: FeatureDefinition): boolean {
+  if (feature.nature !== "navTab") {
+    return false;
+  }
+  if (feature.core) {
+    return true;
+  }
+  return feature.defaultInBar ?? false;
 }
 
 function defaultConfigForFeature(feature: FeatureDefinition): TenantFeatureConfig {
   return {
     enabled: defaultEnabledForFeature(feature),
+    inBar: defaultInBarForFeature(feature),
     access: feature.defaultAccess,
     iconKey: feature.defaultIconKey,
   };
@@ -317,11 +328,15 @@ export function normalizeNavOrder(navOrder: readonly string[] | undefined): stri
   return normalized;
 }
 
-export function countEnabledNavTabs(
+/** Nav tabs promoted to the bottom bar (enabled AND inBar). The cap applies here. */
+export function countNavTabsInBar(
   featureConfigs: Record<FeatureKey, TenantFeatureConfig>,
 ): number {
   return FEATURE_DEFINITIONS.filter(
-    (feature) => feature.nature === "navTab" && featureConfigs[feature.key]?.enabled,
+    (feature) =>
+      feature.nature === "navTab" &&
+      featureConfigs[feature.key]?.enabled &&
+      featureConfigs[feature.key]?.inBar,
   ).length;
 }
 
@@ -337,7 +352,7 @@ export function clampNavTabsInConfigs(
       break;
     }
     const featureKey = key as FeatureKey;
-    if (featureConfigs[featureKey]?.enabled) {
+    if (featureConfigs[featureKey]?.enabled && featureConfigs[featureKey]?.inBar) {
       keep.add(featureKey);
     }
   }
@@ -346,26 +361,25 @@ export function clampNavTabsInConfigs(
     if (keep.size >= NAV_TAB_CAP) {
       break;
     }
-    if (featureConfigs[key]?.enabled) {
+    if (featureConfigs[key]?.enabled && featureConfigs[key]?.inBar) {
       keep.add(key);
     }
   }
 
+  // The cap applies to bar membership (inBar), never to availability (enabled).
   const next = { ...featureConfigs };
   for (const key of NAV_TAB_KEYS) {
-    if (!keep.has(key)) {
-      next[key] = { ...next[key], enabled: false };
-    }
+    next[key] = { ...next[key], inBar: keep.has(key) };
   }
 
   return next;
 }
 
 export function assertNavTabCap(featureConfigs: Record<FeatureKey, TenantFeatureConfig>) {
-  const count = countEnabledNavTabs(featureConfigs);
+  const count = countNavTabsInBar(featureConfigs);
   if (count > NAV_TAB_CAP) {
     throw new Error(
-      `Too many navigation tabs enabled (${count}). Maximum is ${NAV_TAB_CAP}.`,
+      `Too many navigation tabs in the bar (${count}). Maximum is ${NAV_TAB_CAP}.`,
     );
   }
 }
@@ -376,25 +390,28 @@ export function resolveEffectiveNavigation(
 ): FeatureKey[] {
   const order = normalizeNavOrder(navOrder);
 
-  const enabledNavTabs = new Set<FeatureKey>(
+  const barNavTabs = new Set<FeatureKey>(
     FEATURE_DEFINITIONS.filter(
-      (feature) => feature.nature === "navTab" && featureConfigs[feature.key]?.enabled,
+      (feature) =>
+        feature.nature === "navTab" &&
+        featureConfigs[feature.key]?.enabled &&
+        featureConfigs[feature.key]?.inBar,
     ).map((feature) => feature.key),
   );
 
   for (const coreKey of CORE_NAV_TAB_KEYS) {
-    enabledNavTabs.add(coreKey);
+    barNavTabs.add(coreKey);
   }
 
   const result: FeatureKey[] = [];
   for (const key of order) {
     const featureKey = key as FeatureKey;
-    if (enabledNavTabs.has(featureKey) && !result.includes(featureKey)) {
+    if (barNavTabs.has(featureKey) && !result.includes(featureKey)) {
       result.push(featureKey);
     }
   }
 
-  for (const key of enabledNavTabs) {
+  for (const key of barNavTabs) {
     if (!result.includes(key)) {
       result.push(key);
     }
@@ -419,6 +436,7 @@ function migrateLegacyEnabledModules(
       feature.key,
       {
         enabled: feature.core ? true : enabledSet.has(feature.key),
+        inBar: defaultInBarForFeature(feature),
         access: feature.defaultAccess,
         iconKey: feature.defaultIconKey,
       },
@@ -443,11 +461,18 @@ export function normalizeFeatureConfigs(
       ? feature.defaultAccess
       : (patch?.access ?? base.access);
     const iconKey = patch?.iconKey ?? base.iconKey;
+    const inBar =
+      feature.nature !== "navTab"
+        ? false
+        : feature.core
+          ? true
+          : enabled && (patch?.inBar ?? base.inBar);
 
     assertFeatureIconKey(iconKey);
 
     normalized[feature.key] = {
       enabled,
+      inBar,
       access,
       iconKey,
     };

@@ -6,7 +6,18 @@ Idées soulevées mais non encore planifiées en slice. Rangées par **priorité
 
 ## 🎯 Vague en cours — Config tenant & Mobile UI
 
-> Focus actuel : la config de l'app côté CMS (sections de feed, modules) **et** le polish UI mobile (Bibliothèque, cartes, recherche Home). Pas de clés API pour l'instant (parqué plus bas).
+> Focus actuel : **refonte/professionnalisation du shell CMS**, la config de l'app côté CMS (sections de feed, modules) **et** le polish UI mobile (Bibliothèque, cartes, recherche Home). Pas de clés API pour l'instant (parqué plus bas).
+
+### 🖥️ CMS — refonte shell & professionnalisation (prioritaire)
+
+> Repenser **toute la couche autour du CMS**, pas juste un onglet. Source de vérité visuelle : maquettes `docs/podapp/project/cms/`.
+
+- **Réorganiser les onglets dans un ordre logique.** Mettre en tête le travail quotidien (Contenus, Catégories, Collections, Agenda) ; pousser plus loin la config « identité / créateur » — l'onglet **Tenant** (nom, identité de l'app, couleurs) arrive **après**, comme config avancée. **Candidat : retirer l'onglet Preview.**
+- **Cohérence visuelle / « plus carré ».** Réduire le **border-radius** partout (trop arrondi aujourd'hui) pour un rendu plus carré et homogène avec le reste de l'app. Professionnaliser le shell (topbar, nav, états vides, espacements).
+- **Nettoyer les résidus.** Sur la page **non connecté / landing**, du **langage domaine** fuit dans la barre de navigation / les tab bars — à retirer. Plus généralement, enlever les restes d'échafaudage.
+- **Auth / accès à l'arrivée** : clarifier les états non-connecté / connecté non-admin / admin / bootstrap premier admin (gating confus aujourd'hui). *(Sign-out Clerk déjà restauré via `<UserButton>`.)*
+- **Onboarding première arrivée CMS** : flux de premier lancement propre (claim du premier admin, repère visuel d'état).
+- **Landing page CMS (non connecté)** : à faire d'après la maquette.
 
 ### ⚙️ Config tenant / personnalisation de l'app
 
@@ -50,11 +61,7 @@ Retours terrain après usage réel (favoris enregistrés, navigation Bibliothèq
 - ~~**[CMS] Déconnexion cassée.**~~ **✅ Corrigé** : le bloc user en haut à droite affichait un avatar custom sans sign-out ; restauré via `<UserButton afterSignOutUrl="/">` de Clerk dans `admin-shell.tsx` (et `getViewerInitial` mort supprimé).
 - **Article Wikipedia — flicker de l'extrait au chargement.** À l'ouverture d'un article, l'extrait s'affiche d'abord en gras seul, puis le contenu complet prend le relais — léger flicker visuel. Hypothèse : l'extrait sert de placeholder pendant le fetch du corps. Piste : afficher l'extrait en style light (pas bold) tant que le contenu n'est pas chargé, pour une transition plus seamless.
 
-### 🚪 CMS — auth, onboarding & landing (groupé)
-
-- **Logique d'accès à l'arrivée** : à l'ouverture du CMS, clarifier le flux « si tu n'es pas admin, tu n'as pas accès à cet écran » (états : non connecté / connecté non-admin / admin / bootstrap premier admin). Aujourd'hui la sélection/gating à l'arrivée est confuse.
-- **Onboarding première arrivée CMS** : flux de premier lancement propre (claim du premier admin, repère visuel de l'état).
-- **Landing page CMS** : à faire d'après la **maquette** (`docs/podapp/project/cms/`). Page d'accueil publique avant connexion.
+> CMS auth / onboarding / landing → repris dans **« 🖥️ CMS — refonte shell & professionnalisation »** (Vague en cours).
 
 ---
 

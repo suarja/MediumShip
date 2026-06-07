@@ -22,8 +22,8 @@ export function useCategoryInterests(): {
 } {
   const { tenantSlug } = useAppTheme();
   const { isSignedIn } = useClerkAuth();
-  const options =
-    useQuery(api.categories.queries.listCategoryOptions, { tenantSlug }) ?? [];
+  const rawOptions = useQuery(api.categories.queries.listCategoryOptions, { tenantSlug });
+  const options = Array.isArray(rawOptions) ? rawOptions : [];
   const interestKeys = useQuery(
     api.categories.interests.getMyCategoryInterests,
     isSignedIn ? { tenantSlug } : "skip",
@@ -31,7 +31,7 @@ export function useCategoryInterests(): {
   const setCategoryInterests = useMutation(api.categories.interests.setCategoryInterests);
 
   const selectedKeys = useMemo(
-    () => new Set(interestKeys ?? []),
+    () => new Set(Array.isArray(interestKeys) ? interestKeys : []),
     [interestKeys],
   );
 

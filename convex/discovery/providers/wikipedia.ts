@@ -11,9 +11,6 @@ export const WIKIPEDIA_API_URL = "https://en.wikipedia.org/w/api.php";
 
 const PAGES_PER_CATEGORY = 12;
 
-/** Bounded random-pick quota per ingestion run (ADR 0005 step 2). */
-export const SERENDIPITY_PER_RUN = 4;
-
 export { PAGES_PER_CATEGORY as WIKIPEDIA_PAGES_PER_CATEGORY };
 
 export type WikipediaCategoryRaw = {
@@ -434,20 +431,23 @@ async function ingestWikipediaDemand(
     }
   }
 
-  const randomPages = await fetchWikipediaRandomPages(SERENDIPITY_PER_RUN, fetchImpl);
-  const serendipityItems = randomPages.map((page) =>
-    normalizeWikipediaPage(page, {
-      tenantSlug: args.tenantSlug,
-      category: categoryLabelForSerendipityPage(page),
-    }),
-  );
-
-  if (serendipityItems.length > 0) {
-    const result: { upserted: number } = await ctx.runMutation(
-      internal.discovery.ingest.upsertIngested,
-      { items: serendipityItems },
+  const serendipityCount = args.demand.serendipityCount ?? 0;
+  if (serendipityCount > 0) {
+    const randomPages = await fetchWikipediaRandomPages(serendipityCount, fetchImpl);
+    const serendipityItems = randomPages.map((page) =>
+      normalizeWikipediaPage(page, {
+        tenantSlug: args.tenantSlug,
+        category: categoryLabelForSerendipityPage(page),
+      }),
     );
-    totalUpserted += result.upserted;
+
+    if (serendipityItems.length > 0) {
+      const result: { upserted: number } = await ctx.runMutation(
+        internal.discovery.ingest.upsertIngested,
+        { items: serendipityItems },
+      );
+      totalUpserted += result.upserted;
+    }
   }
 
   return { upserted: totalUpserted };

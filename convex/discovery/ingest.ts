@@ -13,6 +13,9 @@ import {
 } from "./fetchDemand";
 import { PROVIDERS } from "./provider";
 
+/** Random articles per scheduled ingestion run — novelty outside seed affinities. */
+export const SERENDIPITY_PER_RUN = 4;
+
 const ingestedContentValidator = v.object({
   tenantSlug: v.string(),
   kind: v.union(
@@ -184,13 +187,18 @@ export const runDiscoveryIngestion = internalAction({
         tenantSlug: tenant.slug,
       });
 
-      const demand = computeFetchDemand(
-        inputs.aggregatedAffinities,
-        inputs.seedCategories,
-        SCHEDULED_INGESTION_DEMAND_OPTIONS,
-      );
+      const demand = {
+        ...computeFetchDemand(
+          inputs.aggregatedAffinities,
+          inputs.seedCategories,
+          SCHEDULED_INGESTION_DEMAND_OPTIONS,
+        ),
+        serendipityCount: SERENDIPITY_PER_RUN,
+      };
 
-      if (demand.categories.length === 0) {
+      const hasCategoryWork = demand.categories.length > 0;
+      const hasSerendipityWork = (demand.serendipityCount ?? 0) > 0;
+      if (!hasCategoryWork && !hasSerendipityWork) {
         continue;
       }
 

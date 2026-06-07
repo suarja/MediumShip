@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { internal } from "../../_generated/api";
 import schema from "../../schema";
 import { modules } from "../../../convexTestModules";
+import { SERENDIPITY_PER_RUN } from "../ingest";
 import {
   extractWikipediaTags,
   fetchWikipediaArticleBody,
@@ -12,7 +13,6 @@ import {
   fetchWikipediaRandomPages,
   isMaintenanceWikipediaCategory,
   normalizeWikipediaPage,
-  SERENDIPITY_PER_RUN,
   slugFromWikipediaTitle,
   toWikipediaCategoryTitle,
   WIKIPEDIA_USER_AGENT,
@@ -294,7 +294,7 @@ describe("wikipediaProvider.ingest", () => {
     const ctx = makeIngestCtx(t);
     const result = await wikipediaProvider.ingest(ctx, {
       tenantSlug: TENANT,
-      demand: { categories: [] },
+      demand: { categories: [], serendipityCount: SERENDIPITY_PER_RUN },
     });
 
     expect(result.upserted).toBe(2);
@@ -364,7 +364,7 @@ describe("wikipediaProvider.ingest", () => {
     const ctx = makeIngestCtx(t);
     const result = await wikipediaProvider.ingest(ctx, {
       tenantSlug: TENANT,
-      demand: { categories: ["science"] },
+      demand: { categories: ["science"], serendipityCount: SERENDIPITY_PER_RUN },
     });
 
     expect(result.upserted).toBe(1);

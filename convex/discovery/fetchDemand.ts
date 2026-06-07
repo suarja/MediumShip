@@ -3,6 +3,8 @@ import { normalizeScoringKey } from "./scoring";
 export type FetchDemand = {
   categories: string[];
   coldStart?: boolean;
+  /** Bounded random-pick quota per ingestion run (ADR 0005 step 2). */
+  serendipityCount?: number;
 };
 
 export type TenantCategoryPreference = {

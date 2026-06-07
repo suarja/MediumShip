@@ -164,7 +164,9 @@ describe("getTenantIngestionInputs", () => {
         slug: TENANT,
         name: "Demo",
         enabledModules: ["discover"],
-        wikipediaLocale: "fr",
+        providerConfigs: {
+          wikipedia: { locale: "fr" },
+        },
       });
     });
 
@@ -197,7 +199,9 @@ describe("provider-agnostic orchestration", () => {
         slug: TENANT,
         name: "Demo",
         enabledModules: ["discover"],
-        wikipediaLocale: "fr",
+        providerConfigs: {
+          wikipedia: { locale: "fr" },
+        },
       });
     });
 

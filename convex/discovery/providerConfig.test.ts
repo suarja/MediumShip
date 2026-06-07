@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { internal } from "../_generated/api";
 import schema from "../schema";
 import { modules } from "../../convexTestModules";
+import { buildWikipediaLocaleMigrationPatch } from "./providerConfig";
 
 const TENANT = "demo-media";
 
@@ -55,5 +56,59 @@ describe("discovery/providerConfig — getTenantProviderConfig", () => {
     });
 
     expect(config).toBeNull();
+  });
+});
+
+describe("buildWikipediaLocaleMigrationPatch", () => {
+  it("copies legacy wikipediaLocale into providerConfigs and unsets the field", () => {
+    expect(
+      buildWikipediaLocaleMigrationPatch({
+        catalogLocale: "en",
+        wikipediaLocale: "fr",
+        providerConfigs: {
+          rss: { feeds: ["https://example.com/feed.xml"] },
+        },
+      } as never),
+    ).toEqual({
+      providerConfigs: {
+        rss: { feeds: ["https://example.com/feed.xml"] },
+        wikipedia: { locale: "fr" },
+      },
+      wikipediaLocale: undefined,
+    });
+  });
+
+  it("returns null when no legacy wikipediaLocale is present", () => {
+    expect(
+      buildWikipediaLocaleMigrationPatch({
+        providerConfigs: {
+          wikipedia: { locale: "en" },
+        },
+      }),
+    ).toBeNull();
+  });
+});
+
+describe("discovery/providerConfig — migrateWikipediaLocaleToProviderConfig", () => {
+  it("skips tenants without a legacy wikipediaLocale", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("tenants", {
+        slug: TENANT,
+        name: "Demo",
+        enabledModules: ["discover"],
+        providerConfigs: {
+          wikipedia: { locale: "en" },
+        },
+      });
+    });
+
+    const result = await t.mutation(
+      internal.discovery.providerConfig.migrateWikipediaLocaleToProviderConfig,
+      {},
+    );
+
+    expect(result.migrated).toBe(0);
   });
 });

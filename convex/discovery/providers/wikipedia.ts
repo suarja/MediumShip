@@ -441,16 +441,34 @@ function categoryLabelForSerendipityPage(page: WikipediaPageRaw): string {
   return slugFromWikipediaTitle(page.title, page.pageid);
 }
 
+function resolveWikipediaLocaleFromConfig(
+  config: Record<string, unknown> | null,
+): WikipediaLocale {
+  const locale = config?.locale;
+  if (locale === "en" || locale === "fr") {
+    return locale;
+  }
+  return "en";
+}
+
 async function ingestWikipediaDemand(
   ctx: ActionCtx,
   args: {
     tenantSlug: string;
     demand: FetchDemand;
-    wikipediaLocale?: WikipediaLocale;
   },
   fetchImpl: typeof fetch = fetch,
 ): Promise<{ upserted: number }> {
-  const apiUrl = wikipediaApiUrlForLocale(args.wikipediaLocale ?? "en");
+  const providerConfig = await ctx.runQuery(
+    internal.discovery.providerConfig.getTenantProviderConfig,
+    {
+      tenantSlug: args.tenantSlug,
+      source: "wikipedia",
+    },
+  );
+  const apiUrl = wikipediaApiUrlForLocale(
+    resolveWikipediaLocaleFromConfig(providerConfig),
+  );
   let totalUpserted = 0;
 
   for (const category of args.demand.categories) {

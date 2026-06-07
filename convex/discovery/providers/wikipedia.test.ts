@@ -211,6 +211,83 @@ describe("wikipediaProvider.ingest", () => {
     } as never;
   }
 
+  it("uses fr.wikipedia.org when providerConfigs.wikipedia.locale is fr", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("tenants", {
+        slug: TENANT,
+        name: "Demo",
+        enabledModules: ["discover"],
+        providerConfigs: {
+          wikipedia: { locale: "fr" },
+        },
+      });
+    });
+
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      const params = new URL(url).searchParams;
+      if (params.get("list") === "random") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ query: { random: [] } }),
+        });
+      }
+
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          query: { pages: { "42": makeWikiPage() } },
+        }),
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const ctx = makeIngestCtx(t);
+    await wikipediaProvider.ingest(ctx, {
+      tenantSlug: TENANT,
+      demand: { categories: ["science"] },
+    });
+
+    const categoryRequest = fetchMock.mock.calls.find(
+      (call) => new URL(call[0] as string).searchParams.get("gsrsearch") !== null,
+    )?.[0] as string;
+    expect(categoryRequest).toContain("fr.wikipedia.org/w/api.php");
+  });
+
+  it("defaults to en.wikipedia.org when wikipedia locale is not configured", async () => {
+    const t = convexTest(schema, modules);
+
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      const params = new URL(url).searchParams;
+      if (params.get("list") === "random") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ query: { random: [] } }),
+        });
+      }
+
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          query: { pages: { "42": makeWikiPage() } },
+        }),
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const ctx = makeIngestCtx(t);
+    await wikipediaProvider.ingest(ctx, {
+      tenantSlug: TENANT,
+      demand: { categories: ["science"] },
+    });
+
+    const categoryRequest = fetchMock.mock.calls.find(
+      (call) => new URL(call[0] as string).searchParams.get("gsrsearch") !== null,
+    )?.[0] as string;
+    expect(categoryRequest).toContain("en.wikipedia.org/w/api.php");
+  });
+
   it("fetches, normalizes, and upserts without duplicating on re-run", async () => {
     const t = convexTest(schema, modules);
     const searchResponse = {

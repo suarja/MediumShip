@@ -211,6 +211,16 @@ describe("cms/catalog — updateDiscoveryLocales", () => {
       catalogLocale: "fr",
       wikipediaLocale: "fr",
     });
+
+    const tenant = await t.run(async (ctx) =>
+      ctx.db
+        .query("tenants")
+        .withIndex("by_slug", (q) => q.eq("slug", "demo-media"))
+        .unique(),
+    );
+    expect(tenant?.catalogLocale).toBe("fr");
+    expect(tenant?.providerConfigs?.wikipedia?.locale).toBe("fr");
+    expect(tenant).not.toHaveProperty("wikipediaLocale");
   });
 
   it("allows updating only catalogLocale", async () => {
@@ -231,6 +241,16 @@ describe("cms/catalog — updateDiscoveryLocales", () => {
       catalogLocale: "en",
       wikipediaLocale: "en",
     });
+
+    const tenant = await t.run(async (ctx) =>
+      ctx.db
+        .query("tenants")
+        .withIndex("by_slug", (q) => q.eq("slug", "demo-media"))
+        .unique(),
+    );
+    expect(tenant?.catalogLocale).toBe("en");
+    expect(tenant?.providerConfigs?.wikipedia?.locale).toBe("en");
+    expect(tenant).not.toHaveProperty("wikipediaLocale");
   });
 });
 

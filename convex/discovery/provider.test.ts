@@ -6,7 +6,10 @@ import {
   type ContentProvider,
 } from "./provider";
 
-const noopCtx = {} as Parameters<ContentProvider["ingest"]>[0];
+const noopCtx = {
+  runQuery: vi.fn().mockResolvedValue(null),
+  runMutation: vi.fn().mockResolvedValue({ upserted: 0 }),
+} as unknown as Parameters<ContentProvider["ingest"]>[0];
 
 describe("cmsProvider", () => {
   it("declares cms as its source", () => {

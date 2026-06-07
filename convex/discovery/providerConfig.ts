@@ -1,6 +1,37 @@
 import { v } from "convex/values";
 
-import { internalQuery } from "../_generated/server";
+import { internalMutation, internalQuery } from "../_generated/server";
+
+export type TenantWithLegacyWikipediaLocale = {
+  providerConfigs?: Record<string, Record<string, unknown>>;
+  wikipediaLocale?: "en" | "fr";
+};
+
+export function buildWikipediaLocaleMigrationPatch(
+  tenant: TenantWithLegacyWikipediaLocale,
+):
+  | {
+      providerConfigs: Record<string, Record<string, unknown>>;
+      wikipediaLocale: undefined;
+    }
+  | null {
+  const legacy = tenant.wikipediaLocale;
+  if (legacy === undefined) {
+    return null;
+  }
+
+  const existingConfigs = tenant.providerConfigs ?? {};
+  return {
+    providerConfigs: {
+      ...existingConfigs,
+      wikipedia: {
+        ...(existingConfigs.wikipedia ?? {}),
+        locale: legacy,
+      },
+    },
+    wikipediaLocale: undefined,
+  };
+}
 
 export const getTenantProviderConfig = internalQuery({
   args: {
@@ -15,5 +46,30 @@ export const getTenantProviderConfig = internalQuery({
       .unique();
 
     return tenant?.providerConfigs?.[args.source] ?? null;
+  },
+});
+
+export const migrateWikipediaLocaleToProviderConfig = internalMutation({
+  args: {},
+  returns: v.object({
+    migrated: v.number(),
+  }),
+  handler: async (ctx) => {
+    const tenants = await ctx.db.query("tenants").collect();
+    let migrated = 0;
+
+    for (const tenant of tenants) {
+      const patch = buildWikipediaLocaleMigrationPatch(
+        tenant as TenantWithLegacyWikipediaLocale,
+      );
+      if (patch === null) {
+        continue;
+      }
+
+      await ctx.db.patch(tenant._id, patch);
+      migrated += 1;
+    }
+
+    return { migrated };
   },
 });

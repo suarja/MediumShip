@@ -55,8 +55,6 @@ export default defineSchema({
     discoverySeedCategories: v.optional(v.array(v.string())),
     /** Preferred catalog label locale in CMS (en = IPTC English, fr = labelFr). */
     catalogLocale: v.optional(v.union(v.literal("en"), v.literal("fr"))),
-    /** Wikipedia edition for discovery ingestion (en / fr). */
-    wikipediaLocale: v.optional(v.union(v.literal("en"), v.literal("fr"))),
     providerConfigs: v.optional(v.record(v.string(), v.any())),
   }).index("by_slug", ["slug"]),
   contents: defineTable({

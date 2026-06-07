@@ -98,9 +98,13 @@ export const getDiscoveryLocales = query({
       .withIndex("by_slug", (q) => q.eq("slug", defaultTenant.slug))
       .unique();
 
+    const wikipediaConfig = tenant?.providerConfigs?.wikipedia as
+      | { locale?: "en" | "fr" }
+      | undefined;
+
     return {
       catalogLocale: tenant?.catalogLocale ?? "en",
-      wikipediaLocale: tenant?.wikipediaLocale ?? "en",
+      wikipediaLocale: wikipediaConfig?.locale ?? "en",
     };
   },
 });
@@ -126,12 +130,24 @@ export const updateDiscoveryLocales = mutation({
       .withIndex("by_slug", (q) => q.eq("slug", defaultTenant.slug))
       .unique();
 
+    const existingConfigs = tenant?.providerConfigs ?? {};
+    const wikipediaConfig =
+      args.wikipediaLocale !== undefined
+        ? {
+            ...(existingConfigs.wikipedia ?? {}),
+            locale: args.wikipediaLocale,
+          }
+        : existingConfigs.wikipedia;
+
     const patch = {
       ...(args.catalogLocale !== undefined && {
         catalogLocale: args.catalogLocale,
       }),
       ...(args.wikipediaLocale !== undefined && {
-        wikipediaLocale: args.wikipediaLocale,
+        providerConfigs: {
+          ...existingConfigs,
+          wikipedia: wikipediaConfig,
+        },
       }),
     };
 
@@ -147,7 +163,11 @@ export const updateDiscoveryLocales = mutation({
       feedSections: defaultTenant.feedSections,
       themeConfig: defaultTenant.themeConfig,
       catalogLocale: args.catalogLocale ?? "en",
-      wikipediaLocale: args.wikipediaLocale ?? "en",
+      ...(args.wikipediaLocale !== undefined && {
+        providerConfigs: {
+          wikipedia: { locale: args.wikipediaLocale },
+        },
+      }),
     });
   },
 });

@@ -1,14 +1,21 @@
 {
   "expo": {
-    "name": "MediumShip",
-    "slug": "mediumship",
+    "name": "Knowly",
+    "slug": "knowly",
     "version": "1.0.0",
-    "scheme": "mediumship",
+    "scheme": "knowly",
     "orientation": "default",
     "userInterfaceStyle": "automatic",
+    "icon": "./assets/images/icon.png",
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#EFECE5"
+    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.swarecito.mediumship"
+      "bundleIdentifier": "com.swarecito.knowly",
+      "icon": "./assets/images/icon.png"
     },
     "plugins": [
       "expo-router",
@@ -42,7 +49,11 @@
       "typedRoutes": true
     },
     "android": {
-      "package": "com.swarecito.mediumship"
+      "package": "com.swarecito.knowly",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#EFECE5"
+      }
     }
   }
 }

@@ -4,10 +4,7 @@ import { parseDurationSeconds } from "../../youtube/helpers";
 import type { FetchDemand } from "../fetchDemand";
 import type { ContentProvider } from "../provider";
 import { normalizeScoringKey } from "../scoring";
-import {
-  YOUTUBE_WHITELIST,
-  type YouTubeWhitelistLocale,
-} from "./youtubeWhitelist";
+import type { YouTubeWhitelistLocale } from "./youtubeWhitelist";
 
 export const MAX_YOUTUBE_TAGS_PER_ITEM = 8;
 
@@ -34,6 +31,11 @@ export type YouTubeVideoRaw = {
 export type ResolvedYouTubeChannel = {
   channelId: string;
   defaultCategory?: string;
+};
+
+export type WhitelistChannelEntry = {
+  channelId: string;
+  defaultCategory: string;
 };
 
 export type NormalizedYouTubeVideo = {
@@ -147,17 +149,14 @@ export function resolveHeroImageUrl(
 
 export function resolveChannelIds(
   providerConfig: Record<string, unknown> | null,
-  locale: string,
+  whitelistChannels: ReadonlyArray<WhitelistChannelEntry>,
 ): ResolvedYouTubeChannel[] {
   const channels: ResolvedYouTubeChannel[] = [];
   const seen = new Set<string>();
   const disableWhitelist = providerConfig?.disableWhitelist === true;
 
   if (!disableWhitelist) {
-    const whitelistLocale = resolveWhitelistLocale(locale);
-    const whitelist = YOUTUBE_WHITELIST[whitelistLocale] ?? YOUTUBE_WHITELIST.fr;
-
-    for (const entry of whitelist) {
+    for (const entry of whitelistChannels) {
       if (seen.has(entry.channelId)) {
         continue;
       }
@@ -396,7 +395,15 @@ export async function ingestYouTubeDemand(
 
   const locale =
     typeof providerConfig?.locale === "string" ? providerConfig.locale : "fr";
-  const channels = resolveChannelIds(providerConfig, locale);
+  const whitelistLocale = resolveWhitelistLocale(locale);
+  const disableWhitelist = providerConfig?.disableWhitelist === true;
+  const whitelistChannels = disableWhitelist
+    ? []
+    : await ctx.runQuery(
+        internal.discovery.youtubeWhitelistChannels.listWhitelistChannels,
+        { locale: whitelistLocale },
+      );
+  const channels = resolveChannelIds(providerConfig, whitelistChannels);
   if (channels.length === 0) {
     return { upserted: 0 };
   }

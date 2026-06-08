@@ -159,9 +159,18 @@ describe("resolveHeroImageUrl", () => {
   });
 });
 
+function frWhitelistEntries() {
+  return YOUTUBE_WHITELIST_FR.map((entry) => ({
+    channelId: entry.channelId,
+    defaultCategory: entry.defaultCategory,
+  }));
+}
+
 describe("resolveChannelIds", () => {
-  it("merges whitelist channels for the locale when whitelist is enabled", () => {
-    const ids = resolveChannelIds(null, "fr").map((channel) => channel.channelId);
+  it("merges whitelist channels when whitelist is enabled", () => {
+    const ids = resolveChannelIds(null, frWhitelistEntries()).map(
+      (channel) => channel.channelId,
+    );
 
     expect(ids).toEqual(YOUTUBE_WHITELIST_FR.map((entry) => entry.channelId));
   });
@@ -170,7 +179,7 @@ describe("resolveChannelIds", () => {
     const duplicateId = YOUTUBE_WHITELIST_FR[0]!.channelId;
     const channels = resolveChannelIds(
       { channelId: duplicateId, defaultCategory: "creator" },
-      "fr",
+      frWhitelistEntries(),
     );
 
     expect(channels.filter((channel) => channel.channelId === duplicateId)).toHaveLength(1);
@@ -183,7 +192,7 @@ describe("resolveChannelIds", () => {
         channelId: "UCcreator123",
         defaultCategory: "tech",
       },
-      "fr",
+      frWhitelistEntries(),
     );
 
     expect(channels).toEqual([
@@ -192,7 +201,90 @@ describe("resolveChannelIds", () => {
   });
 
   it("returns empty when whitelist disabled and no tenant channel", () => {
-    expect(resolveChannelIds({ disableWhitelist: true }, "fr")).toEqual([]);
+    expect(resolveChannelIds({ disableWhitelist: true }, frWhitelistEntries())).toEqual([]);
+  });
+});
+
+describe("resolveChannelIds with table-backed whitelist", () => {
+  it("ingestion reads enabled channels from youtubeWhitelistChannels", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(internal.discovery.youtubeWhitelistChannels.seedYoutubeWhitelist, {});
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("tenants", {
+        slug: TENANT,
+        name: "Demo",
+        enabledModules: ["discover"],
+        providerConfigs: {
+          youtube: { locale: "fr" },
+        },
+      });
+    });
+
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.includes("playlistItems")) {
+        return {
+          ok: true,
+          json: async () => ({
+            items: [{ contentDetails: { videoId: "abc123XYZ9" } }],
+          }),
+        };
+      }
+
+      if (url.includes("/videos")) {
+        return {
+          ok: true,
+          json: async () => videosListPayload(SAMPLE_VIDEO),
+        };
+      }
+
+      throw new Error(`Unexpected fetch: ${url}`);
+    });
+
+    const ctx = makeIngestCtx(t);
+    const result = await ingestYouTubeDemand(
+      ctx,
+      { tenantSlug: TENANT, demand: { categories: [] } },
+      { fetchImpl: fetchMock as unknown as typeof fetch, apiKey: API_KEY },
+    );
+
+    expect(result.upserted).toBe(1);
+    expect(fetchMock).toHaveBeenCalled();
+  });
+
+  it("excludes disabled whitelist channels from ingestion", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(internal.discovery.youtubeWhitelistChannels.seedYoutubeWhitelist, {});
+
+    await t.run(async (ctx) => {
+      const rows = await ctx.db
+        .query("youtubeWhitelistChannels")
+        .withIndex("by_locale", (q) => q.eq("locale", "fr"))
+        .collect();
+      for (const row of rows) {
+        await ctx.db.patch(row._id, { enabled: false });
+      }
+
+      await ctx.db.insert("tenants", {
+        slug: TENANT,
+        name: "Demo",
+        enabledModules: ["discover"],
+        providerConfigs: {
+          youtube: { locale: "fr" },
+        },
+      });
+    });
+
+    const fetchMock = vi.fn();
+    const ctx = makeIngestCtx(t);
+    const result = await ingestYouTubeDemand(
+      ctx,
+      { tenantSlug: TENANT, demand: { categories: [] } },
+      { fetchImpl: fetchMock as unknown as typeof fetch, apiKey: API_KEY },
+    );
+
+    expect(result).toEqual({ upserted: 0 });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

@@ -2,7 +2,7 @@
 import { convexTest } from "convex-test";
 import { describe, expect, it } from "vitest";
 
-import { api } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 import schema from "../schema";
 import { modules } from "../../convexTestModules";
 
@@ -258,6 +258,7 @@ describe("cms/catalog — getYoutubeDiscoverySettings", () => {
   it("returns french defaults and whitelist counts when youtube is unconfigured", async () => {
     const t = convexTest(schema, modules);
     await seedAdmin(t);
+    await t.mutation(internal.discovery.youtubeWhitelistChannels.seedYoutubeWhitelist, {});
 
     const asAdmin = t.withIdentity(ADMIN);
     const settings = await asAdmin.query(api.cms.catalog.getYoutubeDiscoverySettings, {});

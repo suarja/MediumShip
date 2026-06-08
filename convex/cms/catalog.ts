@@ -19,7 +19,7 @@ import {
 } from "../categories/catalogTenantStatus";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
 import { requireCmsAdmin } from "./authz";
-import { YOUTUBE_WHITELIST } from "../discovery/providers/youtubeWhitelist";
+import { countWhitelistChannelsByLocale } from "../discovery/youtubeWhitelistCounts";
 
 async function getTenantCatalogLocale(ctx: Parameters<typeof requireCmsAdmin>[0]) {
   const tenant = await ctx.db
@@ -193,15 +193,13 @@ export const getYoutubeDiscoverySettings = query({
       | undefined;
 
     const locale = youtubeConfig?.locale ?? "fr";
+    const whitelistCounts = await countWhitelistChannelsByLocale(ctx);
 
     return {
       locale,
       disableWhitelist: youtubeConfig?.disableWhitelist ?? false,
-      whitelistChannelCount: YOUTUBE_WHITELIST[locale].length,
-      whitelistCounts: {
-        fr: YOUTUBE_WHITELIST.fr.length,
-        en: YOUTUBE_WHITELIST.en.length,
-      },
+      whitelistChannelCount: whitelistCounts[locale],
+      whitelistCounts,
     };
   },
 });

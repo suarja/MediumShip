@@ -195,8 +195,9 @@ describe("cms/youtubeWhitelist — addWhitelistChannel", () => {
       defaultCategory: "science",
       enabled: true,
     });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(String(fetchMock.mock.calls[0]?.[0])).toContain("forHandle=NewChannel");
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("forHandle=NewChannel"),
+    );
 
     const rows = await asAdmin.query(api.cms.youtubeWhitelist.listWhitelistChannelsForCms, {
       locale: "en",

@@ -7,7 +7,7 @@ import {
 } from "./provider";
 
 const noopCtx = {
-  runQuery: vi.fn().mockResolvedValue(null),
+  runQuery: vi.fn().mockResolvedValue([]),
   runMutation: vi.fn().mockResolvedValue({ upserted: 0 }),
 } as unknown as Parameters<ContentProvider["ingest"]>[0];
 

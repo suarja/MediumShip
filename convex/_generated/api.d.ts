@@ -30,6 +30,7 @@ import type * as cms_collections from "../cms/collections.js";
 import type * as cms_events from "../cms/events.js";
 import type * as cms_mutations from "../cms/mutations.js";
 import type * as cms_queries from "../cms/queries.js";
+import type * as cms_youtubeWhitelist from "../cms/youtubeWhitelist.js";
 import type * as collections_model from "../collections/model.js";
 import type * as collections_queries from "../collections/queries.js";
 import type * as content_queries from "../content/queries.js";
@@ -50,6 +51,9 @@ import type * as discovery_providers_youtubeWhitelist from "../discovery/provide
 import type * as discovery_refill from "../discovery/refill.js";
 import type * as discovery_scoring from "../discovery/scoring.js";
 import type * as discovery_visibility from "../discovery/visibility.js";
+import type * as discovery_youtubeChannelResolve from "../discovery/youtubeChannelResolve.js";
+import type * as discovery_youtubeWhitelistChannels from "../discovery/youtubeWhitelistChannels.js";
+import type * as discovery_youtubeWhitelistCounts from "../discovery/youtubeWhitelistCounts.js";
 import type * as entitlements_authz from "../entitlements/authz.js";
 import type * as entitlements_model from "../entitlements/model.js";
 import type * as entitlements_mutations from "../entitlements/mutations.js";
@@ -104,6 +108,7 @@ declare const fullApi: ApiFromModules<{
   "cms/events": typeof cms_events;
   "cms/mutations": typeof cms_mutations;
   "cms/queries": typeof cms_queries;
+  "cms/youtubeWhitelist": typeof cms_youtubeWhitelist;
   "collections/model": typeof collections_model;
   "collections/queries": typeof collections_queries;
   "content/queries": typeof content_queries;
@@ -124,6 +129,9 @@ declare const fullApi: ApiFromModules<{
   "discovery/refill": typeof discovery_refill;
   "discovery/scoring": typeof discovery_scoring;
   "discovery/visibility": typeof discovery_visibility;
+  "discovery/youtubeChannelResolve": typeof discovery_youtubeChannelResolve;
+  "discovery/youtubeWhitelistChannels": typeof discovery_youtubeWhitelistChannels;
+  "discovery/youtubeWhitelistCounts": typeof discovery_youtubeWhitelistCounts;
   "entitlements/authz": typeof entitlements_authz;
   "entitlements/model": typeof entitlements_model;
   "entitlements/mutations": typeof entitlements_mutations;

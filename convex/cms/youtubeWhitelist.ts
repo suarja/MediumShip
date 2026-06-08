@@ -15,6 +15,18 @@ function getEnv(name: string): string | undefined {
   ).process?.env?.[name];
 }
 
+export const seedYoutubeWhitelistForCms = mutation({
+  args: {},
+  handler: async (ctx): Promise<{ inserted: number; skipped: number }> => {
+    await requireCmsAdmin(ctx);
+    const result: { inserted: number; skipped: number } = await ctx.runMutation(
+      internal.discovery.youtubeWhitelistChannels.seedYoutubeWhitelist,
+      {},
+    );
+    return result;
+  },
+});
+
 export const listWhitelistChannelsForCms = query({
   args: {
     locale: localeValidator,

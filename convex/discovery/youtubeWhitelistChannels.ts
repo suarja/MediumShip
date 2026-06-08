@@ -80,13 +80,17 @@ export const upsertWhitelistChannel = internalMutation({
 
 export const listWhitelistChannels = internalQuery({
   args: {
-    locale: localeValidator,
+    locale: v.optional(localeValidator),
   },
   handler: async (ctx, args) => {
-    const rows = await ctx.db
-      .query("youtubeWhitelistChannels")
-      .withIndex("by_locale", (q) => q.eq("locale", args.locale))
-      .collect();
+    // No locale → every enabled channel (locale is only a CMS grouping label).
+    const { locale } = args;
+    const rows = locale
+      ? await ctx.db
+          .query("youtubeWhitelistChannels")
+          .withIndex("by_locale", (q) => q.eq("locale", locale))
+          .collect()
+      : await ctx.db.query("youtubeWhitelistChannels").collect();
 
     return rows
       .filter((row) => row.enabled)

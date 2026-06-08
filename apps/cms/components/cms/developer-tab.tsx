@@ -205,107 +205,6 @@ function IptcImportPanel({ ready }: { ready: boolean }) {
   );
 }
 
-function YoutubeDiscoveryPanel({ ready }: { ready: boolean }) {
-  const settings = useQuery(
-    api.cms.catalog.getYoutubeDiscoverySettings,
-    ready ? {} : "skip",
-  );
-  const updateSettings = useMutation(api.cms.catalog.updateYoutubeDiscoverySettings);
-  const [locale, setLocale] = useState<"en" | "fr">("fr");
-  const [disableWhitelist, setDisableWhitelist] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!settings) return;
-    setLocale(settings.locale);
-    setDisableWhitelist(settings.disableWhitelist);
-  }, [settings]);
-
-  const handleSave = async () => {
-    setErrorMsg(null);
-    try {
-      await updateSettings({ locale, disableWhitelist });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Erreur inconnue");
-    }
-  };
-
-  const channelCount = settings?.whitelistCounts[locale] ?? 0;
-
-  return (
-    <section className="panel dev-panel">
-      <div className="panel-header">
-        <div>
-          <p className="page__crumb">Vidéos discovery</p>
-          <h2 className="panel-title">YouTube ingestion</h2>
-        </div>
-        {settings && (
-          <div className="catalog-stats">
-            <span className="stat-chip">
-              <strong>{channelCount}</strong> chaîne{channelCount > 1 ? "s" : ""}{" "}
-              {locale === "fr" ? "FR" : "EN"}
-            </span>
-          </div>
-        )}
-      </div>
-
-      <p className="empty-copy">
-        La whitelist éditoriale alimente le feed Découvrir sans configuration
-        tenant. Chaque vidéo ingérée porte ses propres tags YouTube pour la
-        personnalisation granulaire.
-      </p>
-
-      <div className="dev-locale-grid">
-        <label className="field">
-          <span className="field__lbl">Whitelist locale</span>
-          <select
-            className="dev-search-input"
-            disabled={!ready}
-            onChange={(e) => setLocale(e.target.value as "en" | "fr")}
-            value={locale}
-          >
-            <option value="fr">
-              FR ({settings?.whitelistCounts.fr ?? 0} chaînes)
-            </option>
-            <option value="en">
-              EN ({settings?.whitelistCounts.en ?? 0} chaînes)
-            </option>
-          </select>
-        </label>
-
-        <label className="field dev-checkbox-field">
-          <span className="field__lbl">Whitelist éditoriale</span>
-          <label className="dev-checkbox-row">
-            <input
-              checked={!disableWhitelist}
-              disabled={!ready}
-              onChange={(e) => setDisableWhitelist(!e.currentTarget.checked)}
-              type="checkbox"
-            />
-            <span>Activer la whitelist ({locale.toUpperCase()})</span>
-          </label>
-        </label>
-      </div>
-
-      <div className="stack-actions" style={{ marginTop: 16 }}>
-        <button
-          className="primary-button"
-          disabled={!ready}
-          onClick={() => void handleSave()}
-          type="button"
-        >
-          Enregistrer YouTube
-        </button>
-        {saved && <span className="dev-success-copy">✓ Paramètres enregistrés</span>}
-        {errorMsg && <span className="dev-error-copy">{errorMsg}</span>}
-      </div>
-    </section>
-  );
-}
-
 export function DeveloperTab({ ready }: { ready: boolean }) {
   return (
     <main className="page">
@@ -316,7 +215,7 @@ export function DeveloperTab({ ready }: { ready: boolean }) {
             <i>Développeur</i>
           </h1>
           <p className="page__sub">
-            Import IPTC · Langues discovery · YouTube · Whitelist · Réservoir global
+            Import IPTC · Langues discovery · Whitelist YouTube · Réservoir global
           </p>
         </div>
       </div>
@@ -324,7 +223,6 @@ export function DeveloperTab({ ready }: { ready: boolean }) {
       <div className="dev-grid">
         <IptcImportPanel ready={ready} />
         <DiscoveryLocalesPanel ready={ready} />
-        <YoutubeDiscoveryPanel ready={ready} />
         <YoutubeWhitelistPanel ready={ready} />
       </div>
     </main>

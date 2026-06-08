@@ -5,7 +5,6 @@ import { internal } from "../_generated/api";
 import {
   CATALOG_LOCALES,
   WIKIPEDIA_LOCALES,
-  YOUTUBE_LOCALES,
 } from "../categories/catalogLocale";
 import {
   readCategoryCatalogRoots,
@@ -19,7 +18,6 @@ import {
 } from "../categories/catalogTenantStatus";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
 import { requireCmsAdmin } from "./authz";
-import { countWhitelistChannelsByLocale } from "../discovery/youtubeWhitelistCounts";
 
 async function getTenantCatalogLocale(ctx: Parameters<typeof requireCmsAdmin>[0]) {
   const tenant = await ctx.db
@@ -170,95 +168,6 @@ export const updateDiscoveryLocales = mutation({
           wikipedia: { locale: args.wikipediaLocale },
         },
       }),
-    });
-  },
-});
-
-/**
- * YouTube discovery ingestion settings for CMS (whitelist locale + opt-out).
- * CMS admin only.
- */
-export const getYoutubeDiscoverySettings = query({
-  args: {},
-  handler: async (ctx) => {
-    await requireCmsAdmin(ctx);
-
-    const tenant = await ctx.db
-      .query("tenants")
-      .withIndex("by_slug", (q) => q.eq("slug", defaultTenant.slug))
-      .unique();
-
-    const youtubeConfig = tenant?.providerConfigs?.youtube as
-      | { locale?: "en" | "fr"; disableWhitelist?: boolean }
-      | undefined;
-
-    const locale = youtubeConfig?.locale ?? "fr";
-    const whitelistCounts = await countWhitelistChannelsByLocale(ctx);
-
-    return {
-      locale,
-      disableWhitelist: youtubeConfig?.disableWhitelist ?? false,
-      whitelistChannelCount: whitelistCounts[locale],
-      whitelistCounts,
-    };
-  },
-});
-
-export const updateYoutubeDiscoverySettings = mutation({
-  args: {
-    locale: v.optional(
-      v.union(...YOUTUBE_LOCALES.map((locale) => v.literal(locale))),
-    ),
-    disableWhitelist: v.optional(v.boolean()),
-  },
-  handler: async (ctx, args) => {
-    await requireCmsAdmin(ctx);
-
-    if (args.locale === undefined && args.disableWhitelist === undefined) {
-      throw new Error("At least one YouTube setting must be provided");
-    }
-
-    const tenant = await ctx.db
-      .query("tenants")
-      .withIndex("by_slug", (q) => q.eq("slug", defaultTenant.slug))
-      .unique();
-
-    const existingConfigs = tenant?.providerConfigs ?? {};
-    const currentYoutube = (existingConfigs.youtube ?? {}) as {
-      locale?: "en" | "fr";
-      disableWhitelist?: boolean;
-    };
-
-    const youtubeConfig = {
-      ...currentYoutube,
-      ...(args.locale !== undefined && { locale: args.locale }),
-      ...(args.disableWhitelist !== undefined && {
-        disableWhitelist: args.disableWhitelist,
-      }),
-    };
-
-    const patch = {
-      providerConfigs: {
-        ...existingConfigs,
-        youtube: youtubeConfig,
-      },
-    };
-
-    if (tenant) {
-      await ctx.db.patch(tenant._id, patch);
-      return tenant._id;
-    }
-
-    return await ctx.db.insert("tenants", {
-      slug: defaultTenant.slug,
-      name: defaultTenant.name,
-      enabledModules: defaultTenant.enabledModules,
-      feedSections: defaultTenant.feedSections,
-      themeConfig: defaultTenant.themeConfig,
-      catalogLocale: "en",
-      providerConfigs: {
-        youtube: youtubeConfig,
-      },
     });
   },
 });

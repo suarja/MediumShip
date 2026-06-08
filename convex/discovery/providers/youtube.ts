@@ -4,7 +4,6 @@ import { parseDurationSeconds } from "../../youtube/helpers";
 import type { FetchDemand } from "../fetchDemand";
 import type { ContentProvider } from "../provider";
 import { normalizeScoringKey } from "../scoring";
-import type { YouTubeWhitelistLocale } from "./youtubeWhitelist";
 
 export const MAX_YOUTUBE_TAGS_PER_ITEM = 8;
 
@@ -79,10 +78,6 @@ function getEnv(name: string): string | undefined {
       process?: { env?: Record<string, string | undefined> };
     }
   ).process?.env?.[name];
-}
-
-function resolveWhitelistLocale(locale: string): YouTubeWhitelistLocale {
-  return locale === "en" ? "en" : "fr";
 }
 
 export function uploadsPlaylistId(channelId: string): string {
@@ -393,15 +388,14 @@ export async function ingestYouTubeDemand(
     },
   );
 
-  const locale =
-    typeof providerConfig?.locale === "string" ? providerConfig.locale : "fr";
-  const whitelistLocale = resolveWhitelistLocale(locale);
+  // The whitelist is the set of enabled channels across locales; locale is only
+  // an organizational label in the CMS, not an ingestion filter.
   const disableWhitelist = providerConfig?.disableWhitelist === true;
   const whitelistChannels = disableWhitelist
     ? []
     : await ctx.runQuery(
         internal.discovery.youtubeWhitelistChannels.listWhitelistChannels,
-        { locale: whitelistLocale },
+        {},
       );
   const channels = resolveChannelIds(providerConfig, whitelistChannels);
   if (channels.length === 0) {

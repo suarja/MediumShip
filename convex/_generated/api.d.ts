@@ -53,7 +53,6 @@ import type * as discovery_scoring from "../discovery/scoring.js";
 import type * as discovery_visibility from "../discovery/visibility.js";
 import type * as discovery_youtubeChannelResolve from "../discovery/youtubeChannelResolve.js";
 import type * as discovery_youtubeWhitelistChannels from "../discovery/youtubeWhitelistChannels.js";
-import type * as discovery_youtubeWhitelistCounts from "../discovery/youtubeWhitelistCounts.js";
 import type * as entitlements_authz from "../entitlements/authz.js";
 import type * as entitlements_model from "../entitlements/model.js";
 import type * as entitlements_mutations from "../entitlements/mutations.js";
@@ -131,7 +130,6 @@ declare const fullApi: ApiFromModules<{
   "discovery/visibility": typeof discovery_visibility;
   "discovery/youtubeChannelResolve": typeof discovery_youtubeChannelResolve;
   "discovery/youtubeWhitelistChannels": typeof discovery_youtubeWhitelistChannels;
-  "discovery/youtubeWhitelistCounts": typeof discovery_youtubeWhitelistCounts;
   "entitlements/authz": typeof entitlements_authz;
   "entitlements/model": typeof entitlements_model;
   "entitlements/mutations": typeof entitlements_mutations;

@@ -43,6 +43,41 @@ export const seedYoutubeWhitelist = internalMutation({
   },
 });
 
+export const upsertWhitelistChannel = internalMutation({
+  args: {
+    channelId: v.string(),
+    label: v.string(),
+    defaultCategory: v.string(),
+    locale: localeValidator,
+    enabled: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("youtubeWhitelistChannels")
+      .withIndex("by_channelId_and_locale", (q) =>
+        q.eq("channelId", args.channelId).eq("locale", args.locale),
+      )
+      .unique();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        label: args.label,
+        defaultCategory: args.defaultCategory,
+        enabled: args.enabled,
+      });
+      return existing._id;
+    }
+
+    return await ctx.db.insert("youtubeWhitelistChannels", {
+      channelId: args.channelId,
+      label: args.label,
+      defaultCategory: args.defaultCategory,
+      locale: args.locale,
+      enabled: args.enabled,
+    });
+  },
+});
+
 export const listWhitelistChannels = internalQuery({
   args: {
     locale: localeValidator,

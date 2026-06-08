@@ -332,4 +332,13 @@ export default defineSchema({
     // re-fetching the same top-N (which dedup-collapses to zero new content).
     searchOffset: v.optional(v.number()),
   }).index("by_tenant_and_category", ["tenantSlug", "categoryKey"]),
+  youtubeWhitelistChannels: defineTable({
+    channelId: v.string(),
+    label: v.string(),
+    defaultCategory: v.string(),
+    locale: v.union(v.literal("fr"), v.literal("en")),
+    enabled: v.boolean(),
+  })
+    .index("by_locale", ["locale"])
+    .index("by_channelId_and_locale", ["channelId", "locale"]),
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton, SignOutButton } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 
@@ -213,6 +213,11 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
             <button className="primary-button" onClick={() => void bootstrapAdmin({})} type="button">
               Devenir administrateur
             </button>
+            <SignOutButton>
+              <button className="ghost-button" type="button">
+                Se déconnecter
+              </button>
+            </SignOutButton>
           </AdminLoginShell>
         ) : (
           <AdminLoginShell
@@ -223,6 +228,11 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
             <p className="empty-copy">
               Demandez à un administrateur existant de vous accorder les droits, ou connectez-vous avec un autre compte.
             </p>
+            <SignOutButton>
+              <button className="primary-button" type="button">
+                Se déconnecter
+              </button>
+            </SignOutButton>
           </AdminLoginShell>
         )}
       </SignedIn>

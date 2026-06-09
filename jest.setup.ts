@@ -130,6 +130,22 @@ jest.mock("expo-video", () => {
   };
 });
 
+jest.mock("expo-haptics", () => ({
+  impactAsync: jest.fn().mockResolvedValue(undefined),
+  selectionAsync: jest.fn().mockResolvedValue(undefined),
+  notificationAsync: jest.fn().mockResolvedValue(undefined),
+  ImpactFeedbackStyle: {
+    Light: "light",
+    Medium: "medium",
+    Heavy: "heavy",
+  },
+  NotificationFeedbackType: {
+    Success: "success",
+    Error: "error",
+    Warning: "warning",
+  },
+}));
+
 jest.mock("expo-web-browser", () => ({
   openBrowserAsync: jest.fn().mockResolvedValue({ type: "opened" }),
 }));

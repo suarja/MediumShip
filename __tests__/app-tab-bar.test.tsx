@@ -1,6 +1,7 @@
-import { render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import { AppTabBar } from "../src/components/navigation/app-tab-bar";
+import { HapticsService } from "../src/features/haptics/haptics";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
 jest.mock("react-native-safe-area-context", () => ({
@@ -14,6 +15,18 @@ jest.mock("../src/features/responsive/use-responsive", () => ({
     scaleSpace: 1,
     contentMaxWidth: undefined,
   }),
+}));
+
+jest.mock("../src/features/haptics/haptics", () => ({
+  HapticsService: {
+    selection: jest.fn(),
+    light: jest.fn(),
+    medium: jest.fn(),
+    heavy: jest.fn(),
+    success: jest.fn(),
+    error: jest.fn(),
+    warning: jest.fn(),
+  },
 }));
 
 jest.mock("../src/features/theme/theme-provider", () => ({
@@ -65,6 +78,7 @@ describe("app tab bar", () => {
   });
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     await changeAppLanguage("en");
   });
 
@@ -112,6 +126,17 @@ describe("app tab bar", () => {
     expect(screen.queryByLabelText("Agenda")).toBeNull();
     expect(screen.queryByLabelText("Community")).toBeNull();
     expect(screen.queryByLabelText("Collections")).toBeNull();
+  });
+
+  it("fires selection haptic when a tab is pressed", () => {
+    renderTabBar([
+      { key: "home-key", name: "home" },
+      { key: "explore-key", name: "explore" },
+    ]);
+
+    fireEvent.press(screen.getByLabelText("Explore"));
+
+    expect(HapticsService.selection).toHaveBeenCalledTimes(1);
   });
 
   it("renders one icon slot per tab without visible captions", () => {

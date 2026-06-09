@@ -1,10 +1,23 @@
-import { render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen } from "@testing-library/react-native";
 import { StyleSheet } from "react-native";
 
 import { FeedFilterChips } from "../src/components/content/feed-filter-chips";
+import { HapticsService } from "../src/features/haptics/haptics";
 import { resolveTheme } from "../src/features/theme/palette-catalog";
 
 const mockUseAppTheme = jest.fn();
+
+jest.mock("../src/features/haptics/haptics", () => ({
+  HapticsService: {
+    selection: jest.fn(),
+    light: jest.fn(),
+    medium: jest.fn(),
+    heavy: jest.fn(),
+    success: jest.fn(),
+    error: jest.fn(),
+    warning: jest.fn(),
+  },
+}));
 
 jest.mock("../src/features/theme/theme-provider", () => ({
   useAppTheme: () => mockUseAppTheme(),
@@ -15,10 +28,27 @@ function flattenStyle(style: unknown) {
 }
 
 describe("FeedFilterChips", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   const chips = [
     { key: "all" as const, label: "Tout" },
     { key: "article" as const, label: "Articles" },
   ];
+
+  it("fires selection haptic when a chip is selected", () => {
+    const theme = resolveTheme({ paletteName: "brick" });
+    mockUseAppTheme.mockReturnValue({ theme });
+    const onSelect = jest.fn();
+
+    render(<FeedFilterChips chips={chips} active="all" onSelect={onSelect} />);
+
+    fireEvent.press(screen.getByTestId("feed-filter-chip-article"));
+
+    expect(HapticsService.selection).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith("article");
+  });
 
   it("gives inactive chips a surface fill and stronger ink border", () => {
     const theme = resolveTheme({ paletteName: "brick" });

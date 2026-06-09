@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
+import { HapticsService } from "../../features/haptics/haptics";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
@@ -17,6 +18,7 @@ type SearchBarProps = {
    * an entry point that routes to the dedicated search surface.
    */
   onPress?: () => void;
+  onSubmitEditing?: () => void;
   testID?: string;
 };
 
@@ -29,6 +31,7 @@ export function SearchBar({
   value,
   onChangeText,
   onPress,
+  onSubmitEditing,
   testID,
 }: SearchBarProps) {
   const { theme } = useAppTheme();
@@ -65,7 +68,10 @@ export function SearchBar({
       <Pressable
         accessibilityRole="search"
         accessibilityLabel={placeholder}
-        onPress={onPress}
+        onPress={() => {
+          void HapticsService.light();
+          onPress?.();
+        }}
         testID={testID}
         style={({ pressed }) => [...containerStyle, pressed && styles.pressed]}
       >
@@ -101,6 +107,10 @@ export function SearchBar({
         placeholderTextColor={theme.colors.textMuted}
         value={value}
         onChangeText={onChangeText}
+        onSubmitEditing={() => {
+          void HapticsService.light();
+          onSubmitEditing?.();
+        }}
         returnKeyType="search"
         clearButtonMode="while-editing"
         autoCapitalize="none"

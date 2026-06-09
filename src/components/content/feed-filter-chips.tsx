@@ -1,6 +1,7 @@
 import { ScrollView, StyleSheet, Text, Pressable } from "react-native";
 
 import type { ContentKind } from "../../features/content/types";
+import { HapticsService } from "../../features/haptics/haptics";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
@@ -48,7 +49,10 @@ export function FeedFilterChips({
             testID={`feed-filter-chip-${chip.key}`}
             accessibilityRole="button"
             accessibilityState={selected ? { selected: true } : {}}
-            onPress={() => onSelect(chip.key)}
+            onPress={() => {
+              void HapticsService.selection();
+              onSelect(chip.key);
+            }}
             style={({ pressed }) => [
               styles.chip,
               {

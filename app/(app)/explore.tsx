@@ -17,6 +17,7 @@ import { SearchBar } from "../../src/components/search/search-bar";
 import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { useCategories } from "../../src/features/categories/use-categories";
+import { HapticsService } from "../../src/features/haptics/haptics";
 import type { ContentKind } from "../../src/features/content/types";
 import { toContentCardModel } from "../../src/features/content/selectors";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
@@ -272,6 +273,7 @@ export default function ExploreScreen() {
                   <Pressable
                     key={item.id}
                     onPress={() => {
+                      void HapticsService.selection();
                       setSearchFilter("all");
                       setSearchQuery(item.label);
                     }}

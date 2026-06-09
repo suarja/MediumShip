@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
+import { HapticsService } from "../../features/haptics/haptics";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
@@ -96,6 +97,7 @@ export function AppTabBar({ state, descriptors, navigation }: AppTabBarProps) {
           const iconSize = TAB_ICON_SIZE * scaleFont;
 
           const onPress = () => {
+            void HapticsService.selection();
             const event = navigation.emit({
               type: "tabPress",
               target: route.key,

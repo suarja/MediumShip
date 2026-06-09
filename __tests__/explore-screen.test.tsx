@@ -54,7 +54,7 @@ describe("explore screen", () => {
     render(<ExploreScreen />);
 
     expect(screen.queryByTestId("explore-top-bar-search")).toBeNull();
-    expect(screen.getByTestId("explore-search-card-icon")).toBeTruthy();
+    expect(screen.getByTestId("explore-search-icon")).toBeTruthy();
     expect(screen.getByPlaceholderText("Search analyses, podcasts, events…")).toBeTruthy();
   });
 

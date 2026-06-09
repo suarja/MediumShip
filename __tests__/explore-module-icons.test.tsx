@@ -19,6 +19,11 @@ jest.mock("../src/features/search/use-search", () => ({
   useSearch: () => ({ results: [], isSearching: false }),
 }));
 
+jest.mock("convex/react", () => ({
+  useQuery: () => undefined,
+  useMutation: () => jest.fn(),
+}));
+
 jest.mock("../src/components/navigation/app-tab-bar", () => ({
   useTabBarSpace: () => 96,
 }));

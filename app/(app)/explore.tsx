@@ -1,18 +1,19 @@
+import { useQuery } from "convex/react";
 import { Link, useRouter } from "expo-router";
 import { useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
-  FlatList,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { api } from "../../convex/_generated/api";
 import { FeedRow } from "../../src/components/content/feed-row";
+import { SearchBar } from "../../src/components/search/search-bar";
 import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { useCategories } from "../../src/features/categories/use-categories";
@@ -28,9 +29,6 @@ import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 type SearchFilter = "all" | ContentKind;
-
-/** Mockup-aligned loupe scale shared by the top-bar action and search card. */
-const SEARCH_GLYPH_SIZE = 19;
 
 const ALL_MODULE_ITEMS: Array<{ key: FeatureKey; href: string }> = [
   { key: "collections", href: "/collections" },
@@ -48,7 +46,7 @@ const TREND_KEYS = [
 
 export default function ExploreScreen() {
   const { t } = useTranslation("explore");
-  const { theme, featureConfigs } = useAppTheme();
+  const { theme, featureConfigs, tenantSlug } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace, contentMaxWidth } = useResponsive();
 
   const moduleItems = ALL_MODULE_ITEMS.filter(
@@ -65,6 +63,17 @@ export default function ExploreScreen() {
   const [searchFilter, setSearchFilter] = useState<SearchFilter>("all");
   const { results: rawResults, isSearching } = useSearch(searchQuery);
   const { categories } = useCategories();
+  const trending = useQuery(api.content.queries.getTrendingTopics, {
+    tenantSlug,
+  });
+
+  const trendItems =
+    trending && trending.topics.length > 0
+      ? trending.topics.map((topic) => ({
+          id: topic.tag,
+          label: topic.tag.replace(/-/g, " "),
+        }))
+      : TREND_KEYS.map((key) => ({ id: key, label: t(`trends.${key}`) }));
 
   const isSearchActive = searchQuery.trim().length > 0;
 
@@ -118,49 +127,12 @@ export default function ExploreScreen() {
           <View style={styles.topBarSide} />
         </View>
 
-        <View
-          style={[
-            styles.searchCard,
-            {
-              borderRadius: theme.radii.pill,
-              borderColor: theme.colors.border,
-              backgroundColor: theme.colors.surface,
-            },
-          ]}
-        >
-          <Text
-            testID="explore-search-card-icon"
-            style={[
-              styles.searchIcon,
-              {
-                color: theme.colors.accent,
-                fontSize: SEARCH_GLYPH_SIZE * scaleFont,
-                lineHeight: SEARCH_GLYPH_SIZE * scaleFont,
-                width: 22 * scaleSpace,
-              },
-            ]}
-          >
-            ⌕
-          </Text>
-          <TextInput
-            style={[
-              styles.searchInput,
-              {
-                color: theme.colors.text,
-                fontSize: 15 * scaleFont,
-                fontFamily: fontFamilies.body,
-              },
-            ]}
-            placeholder={t("searchPlaceholder")}
-            placeholderTextColor={theme.colors.textMuted}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            returnKeyType="search"
-            clearButtonMode="while-editing"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-        </View>
+        <SearchBar
+          testID="explore-search"
+          placeholder={t("searchPlaceholder")}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
 
         {isSearchActive ? (
           <View style={{ gap: theme.spacing.sm * scaleSpace }}>
@@ -296,15 +268,15 @@ export default function ExploreScreen() {
             <ExploreSection>
               <SectionHeader label={t("trendsTitle")} italic />
               <View style={[styles.trendRow, { gap: theme.spacing.sm * scaleSpace }]}>
-                {TREND_KEYS.map((key) => (
+                {trendItems.map((item) => (
                   <Pressable
-                    key={key}
+                    key={item.id}
                     onPress={() => {
                       setSearchFilter("all");
-                      setSearchQuery(t(`trends.${key}`));
+                      setSearchQuery(item.label);
                     }}
                     accessibilityRole="button"
-                    accessibilityLabel={t("trendA11y", { label: t(`trends.${key}`) })}
+                    accessibilityLabel={t("trendA11y", { label: item.label })}
                     style={[
                       styles.trendChip,
                       {
@@ -326,7 +298,7 @@ export default function ExploreScreen() {
                         },
                       ]}
                     >
-                      {t(`trends.${key}`)}
+                      {item.label}
                     </Text>
                   </Pressable>
                 ))}
@@ -489,22 +461,6 @@ const styles = StyleSheet.create({
   topBarTitle: {
     fontFamily: fontFamilies.display,
     letterSpacing: -0.2,
-  },
-  searchCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    minHeight: 42,
-    paddingHorizontal: 15,
-  },
-  searchIcon: {
-    width: 22,
-    textAlign: "center",
-  },
-  searchInput: {
-    flex: 1,
-    minHeight: 42,
   },
   filterRow: {
     flexDirection: "row",

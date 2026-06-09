@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from "@testing-library/react-native";
 
 import AgendaScreen from "../app/(app)/agenda";
 import { resolveEffectiveFeatureConfigs } from "../convex/featureCatalog";
+import { HapticsService } from "../src/features/haptics/haptics";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
 const mockUseAppTheme = jest.fn();
@@ -48,9 +49,24 @@ jest.mock("react-native-safe-area-context", () => {
   };
 });
 
+const mockPush = jest.fn();
+const mockBack = jest.fn();
+
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => children,
-  useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
+  useRouter: () => ({ push: mockPush, back: mockBack }),
+}));
+
+jest.mock("../src/features/haptics/haptics", () => ({
+  HapticsService: {
+    selection: jest.fn(),
+    light: jest.fn(),
+    medium: jest.fn(),
+    heavy: jest.fn(),
+    success: jest.fn(),
+    error: jest.fn(),
+    warning: jest.fn(),
+  },
 }));
 
 describe("agenda screen", () => {
@@ -60,6 +76,7 @@ describe("agenda screen", () => {
 
   beforeEach(async () => {
     await changeAppLanguage("en");
+    jest.clearAllMocks();
     mockUseAppTheme.mockReturnValue({
       enabledModules: ["agenda"],
       featureConfigs: resolveEffectiveFeatureConfigs({ enabledModules: ["agenda"] }),
@@ -96,5 +113,18 @@ describe("agenda screen", () => {
     render(<AgendaScreen />);
     fireEvent.press(screen.getByText("En ligne"));
     expect(screen.getAllByText(/EN LIGNE/i).length).toBeGreaterThan(0);
+  });
+
+  it("fires selection haptic when filter chip is pressed", () => {
+    render(<AgendaScreen />);
+    fireEvent.press(screen.getByText("Local"));
+    expect(HapticsService.selection).toHaveBeenCalledTimes(1);
+  });
+
+  it("fires light haptic when an event row is pressed", () => {
+    render(<AgendaScreen />);
+    fireEvent.press(screen.getByText("Assemblée ouverte · Paris"));
+    expect(HapticsService.light).toHaveBeenCalledTimes(1);
+    expect(mockPush).toHaveBeenCalledWith("/event/evt-1");
   });
 });

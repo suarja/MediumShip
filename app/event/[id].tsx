@@ -7,6 +7,7 @@ import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import { useEvent } from "../../src/features/events/use-events";
+import { HapticsService } from "../../src/features/haptics/haptics";
 import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
 import { useIsMember } from "../../src/features/membership/use-is-member";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
@@ -70,11 +71,13 @@ export default function EventDetailScreen() {
 
   const handleCta = () => {
     if (isPremiumGated) {
+      void HapticsService.medium();
       openPaywall(event.access === "premium" ? "content" : "members");
       return;
     }
     const url = event.ctaUrl ?? event.communityUrl;
     if (url) {
+      void HapticsService.medium();
       void WebBrowser.openBrowserAsync(url);
     }
   };
@@ -88,7 +91,10 @@ export default function EventDetailScreen() {
         ]}
       >
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => {
+            void HapticsService.selection();
+            router.back();
+          }}
           style={styles.backBtn}
           accessibilityRole="button"
         >

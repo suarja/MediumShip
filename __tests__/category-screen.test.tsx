@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import CategoryScreen from "../app/category/[name]";
+import { HapticsService } from "../src/features/haptics/haptics";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
 const mockBack = jest.fn();
@@ -24,6 +25,18 @@ jest.mock("expo-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => children,
   useLocalSearchParams: () => ({ name: "Analyses" }),
   useRouter: () => ({ back: mockBack }),
+}));
+
+jest.mock("../src/features/haptics/haptics", () => ({
+  HapticsService: {
+    selection: jest.fn(),
+    light: jest.fn(),
+    medium: jest.fn(),
+    heavy: jest.fn(),
+    success: jest.fn(),
+    error: jest.fn(),
+    warning: jest.fn(),
+  },
 }));
 
 describe("category screen", () => {
@@ -64,5 +77,6 @@ describe("category screen", () => {
 
     fireEvent.press(screen.getByLabelText("Back to Explore"));
     expect(mockBack).toHaveBeenCalledTimes(1);
+    expect(HapticsService.selection).toHaveBeenCalledTimes(1);
   });
 });

@@ -3,6 +3,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Screen } from "../../src/components/layout/screen";
+import { HapticsService } from "../../src/features/haptics/haptics";
 import { useCollection } from "../../src/features/collections/use-collections";
 import type { CollectionItem } from "../../src/features/collections/types";
 import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
@@ -49,7 +50,10 @@ export default function CollectionDetailScreen() {
         ]}
       >
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => {
+            void HapticsService.selection();
+            router.back();
+          }}
           style={styles.backBtn}
           accessibilityRole="button"
         >
@@ -110,8 +114,10 @@ export default function CollectionDetailScreen() {
             divider={index !== 0}
             onPress={() => {
               if (item.isPremium && !isMember) {
+                void HapticsService.medium();
                 openPaywall("content");
               } else {
+                void HapticsService.light();
                 router.push(`/${item.kind}/${item.contentId}` as never);
               }
             }}

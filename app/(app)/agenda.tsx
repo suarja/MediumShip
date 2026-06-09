@@ -9,6 +9,7 @@ import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import type { AppEvent, EventFilter } from "../../src/features/events/types";
 import { useEvents } from "../../src/features/events/use-events";
+import { HapticsService } from "../../src/features/haptics/haptics";
 import { FeatureAccessGate } from "../../src/components/navigation/feature-access-gate";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { withAlpha } from "../../src/features/theme/contrast";
@@ -67,7 +68,10 @@ export default function AgendaScreen() {
         ]}
       >
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => {
+            void HapticsService.selection();
+            router.back();
+          }}
           style={styles.backBtn}
           accessibilityRole="button"
         >
@@ -89,7 +93,10 @@ export default function AgendaScreen() {
           return (
             <Pressable
               key={opt.key}
-              onPress={() => setFilter(opt.key)}
+              onPress={() => {
+                void HapticsService.selection();
+                setFilter(opt.key);
+              }}
               style={[
                 styles.filterChip,
                 {
@@ -135,7 +142,10 @@ export default function AgendaScreen() {
           <EventRow
             event={item}
             divider={index !== 0}
-            onPress={() => router.push(`/event/${item._id}` as never)}
+            onPress={() => {
+              void HapticsService.light();
+              router.push(`/event/${item._id}` as never);
+            }}
           />
         )}
         showsVerticalScrollIndicator={false}

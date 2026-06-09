@@ -1,7 +1,8 @@
-import { render, screen } from "@testing-library/react-native";
+import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import CollectionsScreen from "../app/(app)/collections";
 import { resolveEffectiveFeatureConfigs } from "../convex/featureCatalog";
+import { HapticsService } from "../src/features/haptics/haptics";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
 const mockUseAppTheme = jest.fn();
@@ -39,9 +40,23 @@ jest.mock("react-native-safe-area-context", () => {
   };
 });
 
+const mockPush = jest.fn();
+
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => children,
-  useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
+  useRouter: () => ({ push: mockPush, back: jest.fn() }),
+}));
+
+jest.mock("../src/features/haptics/haptics", () => ({
+  HapticsService: {
+    selection: jest.fn(),
+    light: jest.fn(),
+    medium: jest.fn(),
+    heavy: jest.fn(),
+    success: jest.fn(),
+    error: jest.fn(),
+    warning: jest.fn(),
+  },
 }));
 
 describe("collections index screen", () => {
@@ -51,6 +66,7 @@ describe("collections index screen", () => {
 
   beforeEach(async () => {
     await changeAppLanguage("en");
+    jest.clearAllMocks();
     mockUseAppTheme.mockReturnValue({
       enabledModules: ["collections"],
       featureConfigs: resolveEffectiveFeatureConfigs({ enabledModules: ["collections"] }),
@@ -79,5 +95,12 @@ describe("collections index screen", () => {
   it("shows item counts for rendered collections", () => {
     render(<CollectionsScreen />);
     expect(screen.getAllByText(/CONTENUS/i).length).toBeGreaterThan(0);
+  });
+
+  it("fires light haptic when a collection card is pressed", () => {
+    render(<CollectionsScreen />);
+    fireEvent.press(screen.getByText("Le grand entretien"));
+    expect(HapticsService.light).toHaveBeenCalledTimes(1);
+    expect(mockPush).toHaveBeenCalledWith("/collection/coll-1");
   });
 });

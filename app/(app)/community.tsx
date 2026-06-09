@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
+import { HapticsService } from "../../src/features/haptics/haptics";
 import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
 import { useIsMember } from "../../src/features/membership/use-is-member";
 import { FeatureAccessGate } from "../../src/components/navigation/feature-access-gate";
@@ -56,7 +57,10 @@ export default function CommunityScreen() {
         ]}
       >
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => {
+            void HapticsService.selection();
+            router.back();
+          }}
           style={styles.backBtn}
           accessibilityRole="button"
         >
@@ -120,7 +124,10 @@ export default function CommunityScreen() {
             12 400 membres · 84 cercles locaux · accès libre ou réservé selon le module.
           </Text>
           <Pressable
-            onPress={handleDiscord}
+            onPress={() => {
+              void HapticsService.medium();
+              handleDiscord();
+            }}
             style={({ pressed }) => [
               styles.heroCta,
               {
@@ -193,7 +200,11 @@ function CommunityCard({
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        if (isPremium) void HapticsService.medium();
+        else void HapticsService.light();
+        onPress();
+      }}
       style={({ pressed }) => [
         styles.card,
         {

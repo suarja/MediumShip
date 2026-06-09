@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../convex/_generated/api";
 import { toContentCardModel } from "../../src/features/content/selectors";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
+import { HapticsService } from "../../src/features/haptics/haptics";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { FeedRow } from "../../src/components/content/feed-row";
@@ -44,7 +45,10 @@ export default function CategoryScreen() {
         ]}
       >
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => {
+            void HapticsService.selection();
+            router.back();
+          }}
           style={styles.topBarAction}
           accessibilityRole="button"
           accessibilityLabel={t("category.backToExplore")}

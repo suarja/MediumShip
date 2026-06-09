@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
+import { HapticsService } from "../../src/features/haptics/haptics";
 import { useCollections } from "../../src/features/collections/use-collections";
 import type { Collection } from "../../src/features/collections/types";
 import { FeatureAccessGate } from "../../src/components/navigation/feature-access-gate";
@@ -34,7 +35,10 @@ export default function CollectionsScreen() {
         ]}
       >
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => {
+            void HapticsService.selection();
+            router.back();
+          }}
           style={styles.backBtn}
           accessibilityRole="button"
         >
@@ -96,7 +100,10 @@ function CollectionCard({
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        void HapticsService.light();
+        onPress();
+      }}
       style={({ pressed }) => [
         styles.collectionCard,
         {

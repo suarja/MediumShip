@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from "@testing-library/react-native";
 
 import CommunityScreen from "../app/(app)/community";
 import { resolveEffectiveFeatureConfigs } from "../convex/featureCatalog";
+import { HapticsService } from "../src/features/haptics/haptics";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
 const mockUseAppTheme = jest.fn();
@@ -52,13 +53,25 @@ jest.mock("expo-web-browser", () => ({
   openBrowserAsync: jest.fn().mockResolvedValue({ type: "opened" }),
 }));
 
+jest.mock("../src/features/haptics/haptics", () => ({
+  HapticsService: {
+    selection: jest.fn(),
+    light: jest.fn(),
+    medium: jest.fn(),
+    heavy: jest.fn(),
+    success: jest.fn(),
+    error: jest.fn(),
+    warning: jest.fn(),
+  },
+}));
+
 describe("community screen", () => {
   beforeAll(async () => {
     await initI18n();
   });
 
   beforeEach(async () => {
-    mockOpenPaywall.mockClear();
+    jest.clearAllMocks();
     await changeAppLanguage("fr");
     mockUseAppTheme.mockReturnValue({
       enabledModules: ["community", "membersRoom"],
@@ -98,5 +111,16 @@ describe("community screen", () => {
 
     fireEvent.press(screen.getByText("Salon membres"));
     expect(mockOpenPaywall).toHaveBeenCalledWith("members");
+    expect(HapticsService.medium).toHaveBeenCalledTimes(1);
+  });
+
+  it("fires medium haptic on hero CTA and light on free community card", () => {
+    render(<CommunityScreen />);
+
+    fireEvent.press(screen.getByText("Rejoindre la communauté"));
+    expect(HapticsService.medium).toHaveBeenCalledTimes(1);
+
+    fireEvent.press(screen.getByText("Discord communautaire"));
+    expect(HapticsService.light).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,4 +1,5 @@
 import type { ContentCardModel, ContentKind } from "./types";
+import type { AppTheme } from "../theme/palette-catalog";
 
 /** Editorial format glyph per kind, shared by the hero card and feed rows. */
 export const KIND_GLYPH: Record<ContentKind, string> = {
@@ -6,6 +7,30 @@ export const KIND_GLYPH: Record<ContentKind, string> = {
   episode: "▷",
   video: "▶",
 };
+
+export type KindAccent = {
+  accent: string;
+  accentSoft: string;
+};
+
+/**
+ * Per-kind accent colours drawn exclusively from theme tokens so every
+ * palette (including midnight) gets correct contrast out of the box.
+ *
+ * article → theme.colors.accent / accentSoft
+ * episode → theme.colors.premium / premiumSoft
+ * video   → theme.colors.videoAccent / videoAccentSoft
+ */
+export function kindAccent(kind: ContentKind, theme: AppTheme): KindAccent {
+  switch (kind) {
+    case "article":
+      return { accent: theme.colors.accent, accentSoft: theme.colors.accentSoft };
+    case "episode":
+      return { accent: theme.colors.premium, accentSoft: theme.colors.premiumSoft };
+    case "video":
+      return { accent: theme.colors.videoAccent, accentSoft: theme.colors.videoAccentSoft };
+  }
+}
 
 /**
  * Text/glyph colour for content sitting on a premium fill. The premium token is

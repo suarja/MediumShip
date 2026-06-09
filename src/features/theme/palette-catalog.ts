@@ -30,6 +30,8 @@ type ThemePaletteDefinition = {
     accentContrast: string;
     premium: string;
     premiumSoft: string;
+    videoAccent: string;
+    videoAccentSoft: string;
     tabBar: string;
     tabBarCard: string;
     tabInactive: string;
@@ -105,6 +107,8 @@ const paletteCatalog: Record<ThemePaletteName, ThemePaletteDefinition> = {
       accentContrast: "#FFF8F4",
       premium: "#C8964A",
       premiumSoft: "rgba(200, 150, 74, 0.14)",
+      videoAccent: "#5B7A9A",
+      videoAccentSoft: "rgba(91, 122, 154, 0.12)",
       tabBar: "#EEE2D4",
       tabBarCard: "rgba(255, 252, 247, 0.92)",
       tabInactive: "#8A7468",
@@ -130,6 +134,8 @@ const paletteCatalog: Record<ThemePaletteName, ThemePaletteDefinition> = {
       accentContrast: "#F6FDFF",
       premium: "#C0913F",
       premiumSoft: "rgba(192, 145, 63, 0.14)",
+      videoAccent: "#7A4A6B",
+      videoAccentSoft: "rgba(122, 74, 107, 0.12)",
       tabBar: "#DCE9ED",
       tabBarCard: "rgba(251, 255, 255, 0.92)",
       tabInactive: "#6C8792",
@@ -155,6 +161,8 @@ const paletteCatalog: Record<ThemePaletteName, ThemePaletteDefinition> = {
       accentContrast: "#FBFFF5",
       premium: "#B8923C",
       premiumSoft: "rgba(184, 146, 60, 0.14)",
+      videoAccent: "#4A6A8A",
+      videoAccentSoft: "rgba(74, 106, 138, 0.12)",
       tabBar: "#E1E7D7",
       tabBarCard: "rgba(252, 254, 248, 0.92)",
       tabInactive: "#70806A",
@@ -180,6 +188,8 @@ const paletteCatalog: Record<ThemePaletteName, ThemePaletteDefinition> = {
       accentContrast: "#1D1304",
       premium: "#E7B85C",
       premiumSoft: "rgba(231, 184, 92, 0.18)",
+      videoAccent: "#5B8FCC",
+      videoAccentSoft: "rgba(91, 143, 204, 0.16)",
       tabBar: "#0F1825",
       tabBarCard: "rgba(19, 32, 48, 0.94)",
       tabInactive: "#7E91A6",
@@ -207,6 +217,8 @@ const paletteCatalog: Record<ThemePaletteName, ThemePaletteDefinition> = {
       accentContrast: "#FFF5F2",
       premium: "#C4904A",
       premiumSoft: "rgba(196, 144, 74, 0.14)",
+      videoAccent: "#3A6A7A",
+      videoAccentSoft: "rgba(58, 106, 122, 0.12)",
       tabBar: "#EAE5D6",
       tabBarCard: "rgba(255, 255, 255, 0.92)",
       tabInactive: "#8A7068",
@@ -234,6 +246,8 @@ const paletteCatalog: Record<ThemePaletteName, ThemePaletteDefinition> = {
       accentContrast: "#F4F8FF",
       premium: "#B8893A",
       premiumSoft: "rgba(184, 137, 58, 0.14)",
+      videoAccent: "#7A4A5A",
+      videoAccentSoft: "rgba(122, 74, 90, 0.12)",
       tabBar: "#DDDDD8",
       tabBarCard: "rgba(255, 255, 255, 0.92)",
       tabInactive: "#748090",
@@ -263,6 +277,8 @@ const paletteCatalog: Record<ThemePaletteName, ThemePaletteDefinition> = {
       accentContrast: "#1F1505",
       premium: "#C89648",
       premiumSoft: "rgba(200, 150, 72, 0.14)",
+      videoAccent: "#4A6B7A",
+      videoAccentSoft: "rgba(74, 107, 122, 0.12)",
       tabBar: "#DDD6C2",
       tabBarCard: "rgba(255, 252, 244, 0.92)",
       tabInactive: "#8A7A5A",

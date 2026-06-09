@@ -18,6 +18,8 @@ Idées soulevées mais non encore planifiées en slice. Rangées par **priorité
 - **Auth / accès à l'arrivée** : clarifier les états non-connecté / connecté non-admin / admin / bootstrap premier admin (gating confus aujourd'hui). *(Sign-out Clerk déjà restauré via `<UserButton>`.)*
 - **Onboarding première arrivée CMS** : flux de premier lancement propre (claim du premier admin, repère visuel d'état).
 - **Landing page CMS (non connecté)** : à faire d'après la maquette.
+- **Rôles CMS — admin + manager.** Depuis le CMS (onglet Modules / « Nos modules » ou écran dédié), pouvoir **promouvoir d'autres comptes Clerk connectés** en **admin** ou **manager** (nouveau rôle, distinct d'admin). Les **scopes** de chaque rôle restent à définir (admin vs manager) — trancher avant implémentation. Croise ADR 0008 / auth CMS.
+- **Onglet Modules — table Membres : reprendre le display du 1er module.** S'inspirer du rendu **table** du premier module tenant (plus propre que la table Membres actuelle — nommage « table » à clarifier) et appliquer ce layout à la liste des membres dans l'onglet Modules.
 
 ### 🧭 Navigation composable (tables) — gros morceau, distinct des sections de feed
 
@@ -31,22 +33,38 @@ Idées soulevées mais non encore planifiées en slice. Rangées par **priorité
 - **Nommer les sections de feed de l'écran d'accueil** (titres éditables depuis Modules — **déjà possible** mais peu évident ; vocabulaire **Home Feed** vs **Discover Feed**). Clarifier l'UX d'édition (et la sauvegarde — cf. toasts).
 - **Icône de module configurable** : déjà livré côté config (Slice N) ; reste à brancher proprement dans la grille mobile (cf. polish modules).
 
-### 🔔 Feedback — toasts CMS + haptics mobile (petit slice combiné)
+### 🔔 Feedback — toasts CMS + haptics mobile
 
-- **Toasts de confirmation dans le CMS.** Aujourd'hui « Enregistrer » ne donne **aucun retour** → on ne sait pas si ça a marché (source de confusion réelle pendant le test Slice N : modifs perdues car non sauvées). Ajouter un système de toasts (succès/erreur) déclenché sur les mutations CMS (sauvegarde tenant/modules/contenu…).
-- **Retour haptique mobile (app-wide).** S'inspirer de **`../editia/mobile/lib/utils/haptics.ts`** : service central `HapticsService` (`expo-haptics`) avec intensités sémantiques (`light`/`medium`/`heavy`) et patterns (`success`/`error`/`warning`/`selection`), no-op sur web ; brancher progressivement sur les primitives UI et interactions clés (navigation, favoris, filtres, actions primaires/secondaires, confirmations).
+> **Découplé en deux slices** (décidé avec le user) : haptique mobile et toasts CMS séparés.
+
+- **Retour haptique mobile (app-wide)** → **📋 Planifié** : `docs/superpowers/plans/2026-06-09-mobile-slice-haptics-app-wide.md`. `HapticsService` calqué sur `../editia/mobile/lib/utils/haptics.ts` (intensités sémantiques + patterns, no-op web) + câblage des **primitives partagées** (tab bar, chips, SearchBar, favoris, actions, paywall). Prêt à exécuter depuis `dev`.
+- **Toasts de confirmation dans le CMS** *(slice CMS séparé — PAS FAIT)*. Aujourd'hui « Enregistrer » ne donne **aucun retour** → on ne sait pas si ça a marché (source de confusion réelle pendant le test Slice N : modifs perdues car non sauvées). Ajouter un système de toasts (succès/erreur) déclenché sur les mutations CMS (sauvegarde tenant/modules/contenu…).
 
 ### 🏠 Home Feed / Explore — recherche & convergence
 
-- **Recherche dans le Home Feed (nécessaire).** Afficher une **barre de recherche** (ou au minimum un **bouton** de recherche) **au-dessus des tags de filtre** dans l'accueil. C'est un requis, pas un nice-to-have.
+> **Livré** (slice recherche, mergé `dev`/`main` + Convex déployé) : composant `<SearchBar>` réutilisable (éditable + bouton lecture-seule) ; **entrée recherche en haut du feed Home** → route vers Explore ; **recherche élargie à tout le contenu** (CMS + découverte Wikipedia/YouTube/RSS, plus seulement éditorial) ; **tendances réelles** (`getTrendingTopics` = tags les plus fréquents, fallback i18n statique si vide).
+
+- ~~**Recherche dans le Home Feed.**~~ ✅ Entrée bouton au-dessus des filtres, tap → Explore.
 - **Explore : affichable ou pas + où/comment.** La page **Explore doit être une table togglable** (afficher/masquer) comme les autres, et il faut décider **où et comment** elle s'affiche. Dépend de « Navigation composable » + de la décision UX ci-dessous.
-- **Convergence Explore ↔ Home Feed (UX à trancher).** Deux pistes : (a) au tap sur la barre de recherche du Home, **afficher le contenu de la page Explore** (Explore devient le mode recherche du Home) ; ou (b) **garder Explore comme page configurable à part**. Décider la bonne UX avant d'implémenter.
+- **Convergence Explore ↔ Home Feed (UX à trancher).** Deux pistes : (a) au tap sur la barre de recherche du Home, **afficher le contenu de la page Explore** (Explore devient le mode recherche du Home) — *piste amorcée : l'entrée Home route déjà vers Explore* ; ou (b) **garder Explore comme page configurable à part**. Trancher la bonne UX (+ auto-focus de la recherche à l'arrivée).
+- **Polish écran Explore (PAS FAIT — prévu, oublié au 1er passage).** Top-bar avec deux **côtés vides** (vestige de la loupe retirée) à nettoyer/rééquilibrer ; revoir hiérarchie de la page ; cf. **vitalité des cartes** ci-dessous.
 
 ### 📱 Mobile — Bibliothèque & UI
 
 Retours terrain après usage réel (favoris enregistrés, navigation Bibliothèque).
 
-> **Livré (branche `feat/mobile-library-favoris-polish`, à vérifier)** : rename Favoris, retrait badge Gratuit, listes complètes favoris/téléchargements, retrait loupe, summary cartes À découvrir. Reste ci-dessous : layout grille modules.
+> **Livré (branche `feat/mobile-library-favoris-polish`, à vérifier)** : rename Favoris, retrait badge Gratuit, listes complètes favoris/téléchargements, retrait loupe, summary cartes À découvrir. Reste ci-dessous : layout grille modules, profil invité, deep links profil, historique/progression.
+
+**Profil invité — gate cohérent avec Bibliothèque**
+- **Invité sur Profil : même écran que Bibliothèque (connect d'abord).** Aujourd'hui Bibliothèque affiche correctement « connecte-toi » ; Profil pousse directement vers premium. Or premium **implique** d'être connecté → afficher le **même gate invité que Bibliothèque** (sign-in / continuer en invité) avant toute surface premium.
+
+**Profil — section « Ma bibliothèque » (deep links)**
+- **Rows Profil → pages ciblées, pas la Bibliothèque générique.** La section dupliquée avec la page Bibliothèque peut rester, mais chaque row doit router directement : **Favoris** → page Favoris, **Téléchargements** → page Téléchargements, etc. Aujourd'hui tout mène vers `/library`.
+
+**Historique & progression** *(issue à part — pas juste polish)*
+- **CRUD / modèle backend** pour l'historique de lecture et la progression (aujourd'hui absent ou stub).
+- **Re-câbler « Reprendre la lecture »** : le petit composant est **en dur** ; le brancher sur les vraies données une fois le modèle en place.
+- **Chips / mini-cartes Profil** (Hors-ligne, Historique, stats) : aligner sur les compteurs réels ; aujourd'hui Favoris semble OK, **Hors-ligne et Historique ne reflètent pas la réalité** (cf. bugs ci-dessous).
 
 **Favoris / Enregistrés**
 - **Renommer « Enregistrés » → « Favoris »** partout dans l'app (Profil, Bibliothèque, stats, i18n).
@@ -62,6 +80,9 @@ Retours terrain après usage réel (favoris enregistrés, navigation Bibliothèq
 **Modules**
 - **Revoir le layout du grid de modules** dans l'app mobile : disposition actuelle un peu bizarre à corriger.
 
+**Polish visuel — vitalité des cartes (app-wide)**
+- **Les cartes se ressemblent trop / sont trop plates.** Rendu actuel « cartes blanches sur fond info », peu de distinction entre types → ça ne ressort pas assez, ça manque de vie. Donner plus de **hiérarchie, profondeur et accent**, et **différencier les types** (article / épisode / vidéo / catégorie / module) : accents de couleur par type, élévation/contraste, traitement éditorial. Cibles : cartes **Explore** (catégories + modules), cartes **« À découvrir »**, **feed rows / hero**. Source de vérité : maquettes `docs/podapp/project/mobile-mockups/`. (Inclut le layout grille modules ci-dessus.)
+
 **Cartes « À découvrir »**
 - **Summary plus long quand présent** : passer de 2 lignes max à ~4 lignes de summary sur les cartes « À découvrir », pour un aperçu plus riche quand le contenu en a un.
 
@@ -71,6 +92,7 @@ Retours terrain après usage réel (favoris enregistrés, navigation Bibliothèq
 
 ## 🐞 Bugs
 
+- **[Profil] Stats / encart Hors-ligne incohérents.** Les chips Profil (ex. compteur Hors-ligne) et l'encart « Aucune étagère offline pour l'instant » ne reflètent pas les téléchargements réels — alors que **Tous mes téléchargements** liste bien du contenu. Les stats Profil restent à 0 / vide. Aligner compteurs, encart preview et liste complète sur la même source de vérité offline.
 - **[CMS] Aperçu mobile cassé dans l'onglet Tenant.** La preview `mfeed` (`apps/cms/components/cms/tenant-settings-form.tsx:111`) est restée alors que la config feed/modules a migré vers l'onglet Modules (Slice N) → elle référence des données parties. Fix : retirer la preview de l'onglet Tenant (ou la déplacer/reconstruire dans l'onglet Modules). À traiter avec la « Navigation composable ».
 - ~~**[CMS] Déconnexion cassée.**~~ **✅ Corrigé** : le bloc user en haut à droite affichait un avatar custom sans sign-out ; restauré via `<UserButton afterSignOutUrl="/">` de Clerk dans `admin-shell.tsx` (et `getViewerInitial` mort supprimé).
 - **Article Wikipedia — flicker de l'extrait au chargement.** À l'ouverture d'un article, l'extrait s'affiche d'abord en gras seul, puis le contenu complet prend le relais — léger flicker visuel. Hypothèse : l'extrait sert de placeholder pendant le fetch du corps. Piste : afficher l'extrait en style light (pas bold) tant que le contenu n'est pas chargé, pour une transition plus seamless.

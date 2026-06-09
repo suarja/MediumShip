@@ -2,9 +2,11 @@ import { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { useQuery } from "convex/react";
+import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../convex/_generated/api";
+import { SearchBar } from "../../src/components/search/search-bar";
 import {
   FeedFilterChips,
   type FeedFilter,
@@ -61,6 +63,8 @@ export default function HomeFeedScreen() {
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
   const { state: networkState } = useNetworkStatus();
+  const router = useRouter();
+  const { t: tSearch } = useTranslation("explore");
   const [filter, setFilter] = useState<FeedFilter>("all");
 
   const contents = useQuery(api.content.queries.listPublishedFeed, {
@@ -120,6 +124,13 @@ export default function HomeFeedScreen() {
     <Screen>
       <StatusBannerStack networkState={networkState} />
       <BrandHeader />
+      <View style={{ marginBottom: theme.spacing.md * scaleSpace }}>
+        <SearchBar
+          testID="home-search"
+          placeholder={tSearch("searchPlaceholder")}
+          onPress={() => router.push("/explore")}
+        />
+      </View>
       <View style={{ marginBottom: theme.spacing.lg * scaleSpace }}>
         <FeedFilterChips chips={chips} active={filter} onSelect={setFilter} />
       </View>

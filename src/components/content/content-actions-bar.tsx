@@ -71,7 +71,11 @@ export function ContentActionsBar({ content }: { content: ContentDoc }) {
       label={isSaved ? t("bookmark.savedCta") : t("bookmark.saveCta")}
       onPress={
         isSignedIn
-          ? () => void toggleBookmark({ contentId: content._id as never })
+          ? () =>
+              void toggleBookmark({
+                contentId: content._id as never,
+                isSaved,
+              })
           : () => router.push("/sign-in")
       }
     />

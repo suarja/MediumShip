@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import { ContentActionsSheet } from "../src/components/content/content-actions-sheet";
+import { HapticsService } from "../src/features/haptics/haptics";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
 const mockRecordInteraction = jest.fn();
@@ -69,6 +70,18 @@ jest.mock("../src/features/personal-lists/use-personal-lists", () => ({
   }),
 }));
 
+jest.mock("../src/features/haptics/haptics", () => ({
+  HapticsService: {
+    selection: jest.fn(),
+    light: jest.fn(),
+    medium: jest.fn(),
+    heavy: jest.fn(),
+    success: jest.fn(),
+    error: jest.fn(),
+    warning: jest.fn(),
+  },
+}));
+
 jest.mock("expo-router", () => ({
   useRouter: () => ({ push: jest.fn() }),
 }));
@@ -104,6 +117,7 @@ describe("ContentActionsSheet discovery focus", () => {
   });
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     mockRecordInteraction.mockClear();
     mockOnDismiss.mockClear();
     await changeAppLanguage("fr");
@@ -128,5 +142,6 @@ describe("ContentActionsSheet discovery focus", () => {
       type: "hide",
     });
     expect(mockOnDismiss).toHaveBeenCalledTimes(1);
+    expect(HapticsService.warning).toHaveBeenCalledTimes(1);
   });
 });

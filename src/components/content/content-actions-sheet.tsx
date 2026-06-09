@@ -20,6 +20,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useBookmarks } from "../../features/bookmarks/use-bookmarks";
+import { HapticsService } from "../../features/haptics/haptics";
 import { useClerkAuth } from "../../features/auth/use-clerk-auth";
 import type { ContentActionsFocus } from "../../features/content/content-actions-sheet-provider";
 import type { ContentDoc } from "../../features/content/types";
@@ -236,7 +237,10 @@ function SheetBody({
               onSignIn();
               return;
             }
-            void toggleBookmark({ contentId: content._id as Id<"contents"> });
+            void toggleBookmark({
+              contentId: content._id as Id<"contents">,
+              isSaved,
+            });
           }}
         />
       ) : null}
@@ -293,6 +297,7 @@ function SheetBody({
               onSignIn();
               return;
             }
+            void HapticsService.warning();
             void recordInteraction({
               tenantSlug,
               contentId: content._id as Id<"contents">,

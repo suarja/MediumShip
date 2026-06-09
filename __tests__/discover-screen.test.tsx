@@ -340,7 +340,10 @@ describe("discover screen", () => {
 
     fireEvent.press(screen.getAllByTestId("discover-favorite-button")[0]);
 
-    expect(mockToggleBookmark).toHaveBeenCalledWith({ contentId: "article-1" });
+    expect(mockToggleBookmark).toHaveBeenCalledWith({
+      contentId: "article-1",
+      isSaved: false,
+    });
     expect(screen.getByText("Economie du soin")).toBeTruthy();
   });
 

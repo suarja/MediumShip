@@ -79,7 +79,7 @@ export function ContentCardFavoriteAction({
 
         const nextSaved = !isSaved;
         setPendingSaved(nextSaved);
-        void toggleBookmark({ contentId }).catch(() => {
+        void toggleBookmark({ contentId, isSaved }).catch(() => {
           setPendingSaved(null);
         });
       }}

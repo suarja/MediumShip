@@ -3,6 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
+import { HapticsService } from "../../features/haptics/haptics";
 import type { PaywallReason } from "../../features/paywall/paywall-copy";
 import { resolvePaywallCopyKeys } from "../../features/paywall/paywall-copy";
 import { useResponsive } from "../../features/responsive/use-responsive";
@@ -111,7 +112,10 @@ export function PaywallSheet({ visible, reason, isSignedIn, onDismiss }: Props) 
                 <Link href="/premium" asChild>
                   <Pressable
                     accessibilityRole="link"
-                    onPress={onDismiss}
+                    onPress={() => {
+                      void HapticsService.medium();
+                      onDismiss();
+                    }}
                     style={({ pressed }) => [
                       styles.primaryCta,
                       {
@@ -137,7 +141,10 @@ export function PaywallSheet({ visible, reason, isSignedIn, onDismiss }: Props) 
               <Link href="/sign-in" asChild>
                 <Pressable
                   accessibilityRole="link"
-                  onPress={onDismiss}
+                  onPress={() => {
+                    void HapticsService.medium();
+                    onDismiss();
+                  }}
                   style={({ pressed }) => [
                     styles.primaryCta,
                     {

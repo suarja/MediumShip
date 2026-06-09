@@ -2,6 +2,7 @@ import { Link } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { KIND_GLYPH, PREMIUM_ON_FILL } from "../../features/content/card-presentation";
+import { HapticsService } from "../../features/haptics/haptics";
 import type { ContentCardModel } from "../../features/content/types";
 import { hasCapability } from "../../features/tenant/public-config";
 import { useResponsive } from "../../features/responsive/use-responsive";
@@ -54,6 +55,7 @@ export function FeedRow({
       <Link href={item.href as never} asChild style={styles.link}>
         <Pressable
           accessibilityRole="link"
+          onPress={() => void HapticsService.light()}
           style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
         >
           <View style={[styles.rowInner, { gap: theme.spacing.md * scaleSpace }]}>

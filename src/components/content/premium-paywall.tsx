@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useClerkAuth } from "../../features/auth/use-clerk-auth";
+import { HapticsService } from "../../features/haptics/haptics";
 import { usePaywallSheet } from "../../features/paywall/paywall-sheet-provider";
 import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
@@ -70,7 +71,10 @@ export function PremiumPaywall({
         <>
           <Pressable
             accessibilityRole="button"
-            onPress={() => openPaywall("content")}
+            onPress={() => {
+              void HapticsService.medium();
+              openPaywall("content");
+            }}
             style={({ pressed }) => [
               styles.cta,
               {
@@ -105,6 +109,7 @@ export function PremiumPaywall({
           <Link href="/sign-in" asChild>
             <Pressable
               accessibilityRole="link"
+              onPress={() => void HapticsService.medium()}
               style={({ pressed }) => [
                 styles.cta,
                 {

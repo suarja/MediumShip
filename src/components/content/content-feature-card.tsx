@@ -4,6 +4,7 @@ import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { KIND_GLYPH, PREMIUM_ON_FILL } from "../../features/content/card-presentation";
+import { HapticsService } from "../../features/haptics/haptics";
 import type { ContentCardModel } from "../../features/content/types";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
@@ -78,6 +79,7 @@ export function ContentFeatureCard({
           <Link href={item.href as never} asChild>
             <Pressable
               accessibilityRole="link"
+              onPress={() => void HapticsService.light()}
               style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
             >
               <View style={{ gap: 2 * scaleSpace }}>

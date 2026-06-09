@@ -152,8 +152,45 @@ describe("editorial source isolation", () => {
     expect(category.map((item) => item.title).sort()).toEqual(
       ["CMS story", "Legacy story"].sort(),
     );
+    // Search spans every source: editorial + ingested discovery content.
     expect(search.contents.map((item) => item.title).sort()).toEqual(
-      ["CMS story", "Legacy story"].sort(),
+      ["CMS story", "Legacy story", "RSS story", "Wikipedia story"].sort(),
     );
+  });
+
+  it("ranks the most frequent tags as trending topics", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      const seed = (slug: string, tags: string[]) =>
+        ctx.db.insert("contents", {
+          tenantSlug: "demo-media",
+          kind: "article",
+          status: "published",
+          slug,
+          title: slug,
+          summary: "",
+          category: "science",
+          tags,
+          isPremium: false,
+          source: "wikipedia",
+          externalId: slug,
+          canonicalUrl: `https://example.com/${slug}`,
+        });
+
+      await seed("a", ["intelligence-artificielle", "histoire"]);
+      await seed("b", ["intelligence-artificielle", "science"]);
+      await seed("c", ["intelligence-artificielle"]);
+      await seed("d", ["histoire"]);
+    });
+
+    const { topics } = await t.query(api.content.queries.getTrendingTopics, {
+      tenantSlug: "demo-media",
+      limit: 3,
+    });
+
+    expect(topics[0]).toEqual({ tag: "intelligence-artificielle", count: 3 });
+    expect(topics.map((entry) => entry.tag)).toContain("histoire");
+    expect(topics.length).toBeLessThanOrEqual(3);
   });
 });

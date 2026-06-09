@@ -107,25 +107,15 @@ export default function ExploreScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View
-          style={[
-            styles.topBar,
-            { marginHorizontal: -(theme.spacing.lg * scaleSpace) },
-          ]}
-        >
-          <View style={styles.topBarSide} />
+        <View style={styles.topBar}>
           <Text
             style={[
               styles.topBarTitle,
-              {
-                color: theme.colors.heading,
-                fontSize: 18 * scaleFont,
-              },
+              { color: theme.colors.heading, fontSize: 18 * scaleFont },
             ]}
           >
             {t("title")}
           </Text>
-          <View style={styles.topBarSide} />
         </View>
 
         <SearchBar
@@ -213,7 +203,11 @@ export default function ExploreScreen() {
                   ? categories.slice(0, 4).map((cat) => (
                       <Pressable
                         key={cat.category}
-                        style={({ pressed }) => [styles.gridCell, pressed && styles.pressed]}
+                        style={({ pressed }) => [
+                        styles.gridCell,
+                        { width: isTablet ? "31.5%" : "48.5%" },
+                        pressed && styles.pressed,
+                      ]}
                         onPress={() => {
                           void HapticsService.light();
                           router.push(`/category/${encodeURIComponent(cat.category)}` as never);
@@ -230,7 +224,11 @@ export default function ExploreScreen() {
                   : STATIC_CATEGORY_ITEMS.map((item) => (
                       <Pressable
                         key={item.key}
-                        style={({ pressed }) => [styles.gridCell, pressed && styles.pressed]}
+                        style={({ pressed }) => [
+                        styles.gridCell,
+                        { width: isTablet ? "31.5%" : "48.5%" },
+                        pressed && styles.pressed,
+                      ]}
                         onPress={() => {
                           void HapticsService.light();
                           router.push(
@@ -256,7 +254,11 @@ export default function ExploreScreen() {
                   {moduleItems.map((item) => (
                     <Link key={item.key} href={item.href as never} asChild>
                       <Pressable
-                        style={({ pressed }) => [styles.gridCell, pressed && styles.pressed]}
+                        style={({ pressed }) => [
+                        styles.gridCell,
+                        { width: isTablet ? "31.5%" : "48.5%" },
+                        pressed && styles.pressed,
+                      ]}
                         accessibilityRole="link"
                         onPress={() => void HapticsService.light()}
                       >
@@ -391,7 +393,8 @@ function FeatureCard({
         {
           borderRadius: theme.radii.md,
           borderColor: theme.colors.border,
-          backgroundColor: theme.colors.surface,
+          backgroundColor: theme.colors.surfaceMuted,
+          padding: theme.spacing.md * scaleSpace,
         },
       ]}
     >
@@ -455,16 +458,8 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 12,
-  },
-  topBarSide: {
-    width: 34,
-    height: 34,
   },
   topBarTitle: {
     fontFamily: fontFamilies.display,

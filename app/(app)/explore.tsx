@@ -393,7 +393,7 @@ function FeatureCard({
         {
           borderRadius: theme.radii.md,
           borderColor: theme.colors.border,
-          backgroundColor: theme.colors.surfaceMuted,
+          backgroundColor: theme.colors.surface,
           padding: theme.spacing.md * scaleSpace,
         },
       ]}

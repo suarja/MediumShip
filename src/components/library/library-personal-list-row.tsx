@@ -1,6 +1,7 @@
 import { Image, Pressable, StyleSheet, Text, View, type ViewStyle } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { HapticsService } from "../../features/haptics/haptics";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
@@ -42,7 +43,10 @@ export function LibraryPersonalListRow({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? title ?? t("library:screen.listsPreviewTitle")}
-      onPress={onPress}
+      onPress={() => {
+        void HapticsService.light();
+        onPress();
+      }}
       style={({ pressed }) => [
         styles.row,
         {

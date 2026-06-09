@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useBookmarks } from "../../features/bookmarks/use-bookmarks";
+import { HapticsService } from "../../features/haptics/haptics";
 import type { ContentActionsFocus } from "../../features/content/content-actions-sheet-provider";
 import { useContentActionsSheet } from "../../features/content/content-actions-sheet-provider";
 import { useResponsive } from "../../features/responsive/use-responsive";
@@ -26,7 +27,10 @@ export function ContentCardLikeAction({
       testID="discover-like-button"
       icon={isLiked ? "heart" : "heart-outline"}
       active={isLiked}
-      onPress={onPress}
+      onPress={() => {
+        void (isLiked ? HapticsService.selection() : HapticsService.success());
+        onPress();
+      }}
       accessibilityLabel={accessibilityLabel}
     />
   );
@@ -104,7 +108,10 @@ export function ContentCardOverflowAction({
     <CardIconAction
       testID="discover-overflow-button"
       icon="ellipsis-horizontal"
-      onPress={() => openContentActions(contentId, focus)}
+      onPress={() => {
+        void HapticsService.light();
+        openContentActions(contentId, focus);
+      }}
       accessibilityLabel={accessibilityLabel}
     />
   );

@@ -3,6 +3,7 @@ import { Pressable, StyleSheet } from "react-native";
 
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useContentActionsSheet } from "../../features/content/content-actions-sheet-provider";
+import { HapticsService } from "../../features/haptics/haptics";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
@@ -25,7 +26,8 @@ export function ContentOverflowButton({
       accessibilityLabel={accessibilityLabel}
       hitSlop={8}
       onPress={(event) => {
-        event.stopPropagation?.();
+        event?.stopPropagation?.();
+        void HapticsService.light();
         openContentActions(contentId, "all");
       }}
       style={({ pressed }) => [

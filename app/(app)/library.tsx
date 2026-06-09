@@ -20,6 +20,7 @@ import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { hasCapability } from "../../src/features/tenant/public-config";
 
+import { HapticsService } from "../../src/features/haptics/haptics";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 const SECTION_KEYS = ["resume", "saved", "lists", "offline"] as const;
@@ -126,7 +127,10 @@ export default function LibraryScreen() {
           >
             <Pressable
               accessibilityRole="button"
-              onPress={() => router.push("/sign-in")}
+              onPress={() => {
+                void HapticsService.medium();
+                router.push("/sign-in");
+              }}
               style={({ pressed }) => [
                 styles.primaryButton,
                 {
@@ -151,7 +155,10 @@ export default function LibraryScreen() {
 
             <Pressable
               accessibilityRole="button"
-              onPress={() => router.replace("/home")}
+              onPress={() => {
+                void HapticsService.selection();
+                router.replace("/home");
+              }}
               style={({ pressed }) => [
                 styles.secondaryButton,
                 {
@@ -215,6 +222,7 @@ function SignedInLibraryContent({
   const { t: tLists } = useTranslation("lists");
 
   const handleListsPress = () => {
+    void HapticsService.light();
     router.push("/lists");
   };
 
@@ -288,7 +296,10 @@ function SignedInLibraryContent({
         {canBookmark ? (
           <View style={styles.sectionBlock}>
             <LibrarySectionHeader
-              onSeeAllPress={() => router.push("/favorites")}
+              onSeeAllPress={() => {
+                void HapticsService.light();
+                router.push("/favorites");
+              }}
               seeAllLabel={t("library:screen.seeAll")}
               title={t("library:screen.sections.saved")}
             />
@@ -323,7 +334,10 @@ function SignedInLibraryContent({
           <View style={styles.sectionBlock}>
             <LibrarySectionHeader
               gate="premium"
-              onSeeAllPress={() => router.push("/downloads")}
+              onSeeAllPress={() => {
+                void HapticsService.light();
+                router.push("/downloads");
+              }}
               seeAllLabel={t("library:screen.seeAll")}
               title={t("library:screen.sections.offline")}
             />

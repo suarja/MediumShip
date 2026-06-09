@@ -15,6 +15,7 @@ import { useRouter } from "expo-router";
 
 import { StatusBannerStack } from "./status-banner-stack";
 import { OVER_MEDIA } from "../../features/content/card-presentation";
+import { HapticsService } from "../../features/haptics/haptics";
 import { usePersistentMediaPlayerSpace } from "../../features/media/persistent-media-player";
 import type { NetworkState } from "../../features/network/use-network-status";
 import { useResponsive } from "../../features/responsive/use-responsive";
@@ -69,6 +70,7 @@ export function ContentDetailShell({
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
 
   const handleBack = () => {
+    void HapticsService.selection();
     if (router.canGoBack()) {
       router.back();
       return;

@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import DiscoverScreen from "../app/(app)/discover";
 import { resolveEffectiveFeatureConfigs } from "../convex/featureCatalog";
+import { HapticsService } from "../src/features/haptics/haptics";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 import type { DiscoveryFeedItem } from "../src/features/discovery/use-discovery-feed";
 
@@ -13,6 +14,18 @@ const mockRefresh = jest.fn();
 const mockLoadMore = jest.fn();
 const mockToggleBookmark = jest.fn();
 const mockOpenContentActions = jest.fn();
+
+jest.mock("../src/features/haptics/haptics", () => ({
+  HapticsService: {
+    selection: jest.fn(),
+    light: jest.fn(),
+    medium: jest.fn(),
+    heavy: jest.fn(),
+    success: jest.fn(),
+    error: jest.fn(),
+    warning: jest.fn(),
+  },
+}));
 
 jest.mock("../src/features/theme/theme-provider", () => ({
   useAppTheme: () => mockUseAppTheme(),
@@ -153,6 +166,7 @@ describe("discover screen", () => {
   });
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     mockRecordLike.mockClear();
     mockRecordHide.mockClear();
     mockRefresh.mockClear();
@@ -333,6 +347,24 @@ describe("discover screen", () => {
     expect(screen.getByTestId("discover-list").props.refreshControl.props.refreshing).toBe(
       true,
     );
+  });
+
+  it("fires success haptic when liking a card", () => {
+    render(<DiscoverScreen />);
+
+    fireEvent.press(screen.getAllByTestId("discover-like-button")[0]);
+
+    expect(HapticsService.success).toHaveBeenCalledTimes(1);
+    expect(mockRecordLike).toHaveBeenCalledWith("article-1");
+  });
+
+  it("fires light haptic when opening the actions sheet from overflow", () => {
+    render(<DiscoverScreen />);
+
+    fireEvent.press(screen.getAllByTestId("discover-overflow-button")[0]);
+
+    expect(HapticsService.light).toHaveBeenCalledTimes(1);
+    expect(mockOpenContentActions).toHaveBeenCalledWith("article-1", "discovery");
   });
 
   it("wires the Favoris toggle without removing the card", () => {

@@ -2,9 +2,22 @@ import type { ReactNode } from "react";
 import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import ProfileScreen from "../app/(app)/profile";
+import { HapticsService } from "../src/features/haptics/haptics";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
 const mockOpenPaywall = jest.fn();
+
+jest.mock("../src/features/haptics/haptics", () => ({
+  HapticsService: {
+    selection: jest.fn(),
+    light: jest.fn(),
+    medium: jest.fn(),
+    heavy: jest.fn(),
+    success: jest.fn(),
+    error: jest.fn(),
+    warning: jest.fn(),
+  },
+}));
 
 jest.mock("convex/react", () => ({
   useConvexAuth: () => ({ isAuthenticated: false }),
@@ -59,6 +72,7 @@ describe("guest profile", () => {
   });
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     mockOpenPaywall.mockClear();
     await changeAppLanguage("en");
   });
@@ -85,6 +99,7 @@ describe("guest profile", () => {
     expect(screen.getByText("Discover Premium")).toBeTruthy();
 
     fireEvent.press(screen.getByTestId("profile-discover-premium-button"));
+    expect(HapticsService.medium).toHaveBeenCalledTimes(1);
     expect(mockOpenPaywall).toHaveBeenCalledWith("support");
 
     expect(screen.queryByText("Your profile")).toBeNull();

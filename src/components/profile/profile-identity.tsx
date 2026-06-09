@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 
+import { HapticsService } from "../../features/haptics/haptics";
 import { useAvatarEdit } from "../../features/profile/use-avatar-edit";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { withAlpha } from "../../features/theme/contrast";
@@ -69,6 +70,7 @@ export function ProfileIdentity({
           <Pressable
             testID="profile-settings-button"
             accessibilityRole="link"
+            onPress={() => void HapticsService.light()}
             style={({ pressed }) => [
               styles.settingsButton,
               {
@@ -97,6 +99,7 @@ export function ProfileIdentity({
               return;
             }
 
+            void HapticsService.light();
             void pickAndUploadAvatar();
           }}
           style={({ pressed }) => [

@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { GateBadge, type GateTone } from "../library/gate-badge";
+import { HapticsService } from "../../features/haptics/haptics";
 import { usePaywallSheet } from "../../features/paywall/paywall-sheet-provider";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
@@ -41,14 +42,17 @@ export function ProfileLibraryRows({
   const { openPaywall } = usePaywallSheet();
 
   const openLists = () => {
+    void HapticsService.light();
     router.push("/lists");
   };
 
   const openDownloads = () => {
     if (isMember) {
+      void HapticsService.light();
       router.push("/library");
       return;
     }
+    void HapticsService.medium();
     openPaywall("offline");
   };
 
@@ -62,7 +66,10 @@ export function ProfileLibraryRows({
           gate="free"
           gateLabel={t("badges.free")}
           subtitle={t("rows.saved.sub", { count: savedCount })}
-          onPress={() => router.push("/library")}
+          onPress={() => {
+            void HapticsService.light();
+            router.push("/library");
+          }}
         />
         <ProfileRow
           icon="download-outline"
@@ -96,7 +103,10 @@ export function ProfileLibraryRows({
           gate="member"
           gateLabel={t("badges.member")}
           subtitle={t("rows.history.sub")}
-          onPress={() => router.push("/library")}
+          onPress={() => {
+            void HapticsService.light();
+            router.push("/library");
+          }}
         />
       </Section>
 
@@ -114,14 +124,23 @@ export function ProfileLibraryRows({
             icon="star-outline"
             title={t("rows.goPremium.title")}
             subtitle={t("rows.goPremium.sub")}
-            onPress={onGoPremium ?? (() => router.push("/premium"))}
+            onPress={
+              onGoPremium ??
+              (() => {
+                void HapticsService.medium();
+                router.push("/premium");
+              })
+            }
           />
         )}
         <ProfileRow
           icon="log-out-outline"
           title={t("rows.signOut.title")}
           subtitle={t("rows.signOut.sub")}
-          onPress={onSignOut}
+          onPress={() => {
+            void HapticsService.warning();
+            onSignOut();
+          }}
         />
       </Section>
     </View>

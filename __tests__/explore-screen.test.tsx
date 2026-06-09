@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react-native";
 
 import ExploreScreen from "../app/(app)/explore";
+import { HapticsService } from "../src/features/haptics/haptics";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
 const mockUseSearch = jest.fn((query: string) => ({ results: [], isSearching: false }));
@@ -34,6 +35,18 @@ jest.mock("../src/features/categories/use-categories", () => ({
   useCategories: () => mockUseCategories(),
 }));
 
+jest.mock("../src/features/haptics/haptics", () => ({
+  HapticsService: {
+    selection: jest.fn(),
+    light: jest.fn(),
+    medium: jest.fn(),
+    heavy: jest.fn(),
+    success: jest.fn(),
+    error: jest.fn(),
+    warning: jest.fn(),
+  },
+}));
+
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => children,
   useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
@@ -45,6 +58,7 @@ describe("explore screen", () => {
   });
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     await changeAppLanguage("en");
     mockUseSearch.mockClear();
     mockUseCategories.mockClear();
@@ -83,8 +97,17 @@ describe("explore screen", () => {
 
     fireEvent.press(screen.getByText("Care economy"));
 
+    expect(HapticsService.selection).toHaveBeenCalledTimes(1);
     await waitFor(() =>
       expect(mockUseSearch).toHaveBeenLastCalledWith("Care economy"),
     );
+  });
+
+  it("fires light haptic when a category card is pressed", () => {
+    render(<ExploreScreen />);
+
+    fireEvent.press(screen.getByText("Analyses"));
+
+    expect(HapticsService.light).toHaveBeenCalledTimes(1);
   });
 });

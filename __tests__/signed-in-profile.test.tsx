@@ -3,10 +3,23 @@ import { Alert } from "react-native";
 import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import ProfileScreen from "../app/(app)/profile";
+import { HapticsService } from "../src/features/haptics/haptics";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
 const mockOpenPaywall = jest.fn();
 const mockPush = jest.fn();
+
+jest.mock("../src/features/haptics/haptics", () => ({
+  HapticsService: {
+    selection: jest.fn(),
+    light: jest.fn(),
+    medium: jest.fn(),
+    heavy: jest.fn(),
+    success: jest.fn(),
+    error: jest.fn(),
+    warning: jest.fn(),
+  },
+}));
 
 jest.mock("convex/react", () => ({
   useConvexAuth: () => ({ isAuthenticated: true }),
@@ -75,6 +88,7 @@ describe("signed-in profile", () => {
   });
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     mockOpenPaywall.mockClear();
     mockPush.mockClear();
     mockUseBookmarks.mockReturnValue({
@@ -115,6 +129,7 @@ describe("signed-in profile", () => {
 
     fireEvent.press(screen.getByText("My lists"));
 
+    expect(HapticsService.light).toHaveBeenCalledTimes(1);
     expect(mockPush).toHaveBeenCalledWith("/lists");
     expect(mockOpenPaywall).not.toHaveBeenCalled();
   });
@@ -124,6 +139,7 @@ describe("signed-in profile", () => {
 
     fireEvent.press(screen.getByText("Downloads"));
 
+    expect(HapticsService.medium).toHaveBeenCalledTimes(1);
     expect(mockOpenPaywall).toHaveBeenCalledWith("offline");
     expect(mockPush).not.toHaveBeenCalled();
   });
@@ -150,6 +166,7 @@ describe("signed-in profile", () => {
 
     fireEvent.press(screen.getByTestId("resume-card"));
 
+    expect(HapticsService.light).toHaveBeenCalledTimes(1);
     expect(alertSpy).toHaveBeenCalledWith(
       "The care economy",
       "This action will be available in an upcoming update.",

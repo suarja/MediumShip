@@ -95,6 +95,11 @@ export function ContentActionsSheet({
     return null;
   }
 
+  const dismissWithSelection = () => {
+    void HapticsService.selection();
+    onDismiss();
+  };
+
   const keyboardSheetGap = 14 * scaleSpace;
   const sheetLift =
     keyboardHeight > 0
@@ -104,11 +109,16 @@ export function ContentActionsSheet({
     keyboardHeight > 0 ? 16 * scaleSpace : insets.bottom + 24 * scaleSpace;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={dismissWithSelection}
+    >
         <View style={[styles.backdrop, { backgroundColor: withAlpha(theme.colors.canvas, 0.72) }]}>
           <Pressable
             style={StyleSheet.absoluteFill}
-            onPress={onDismiss}
+            onPress={dismissWithSelection}
             accessibilityLabel={t("lists:actionsSheet.dismiss")}
           />
           <View
@@ -164,7 +174,9 @@ export function ContentActionsSheet({
                 isSignedIn={isSignedIn}
                 isMember={isMember}
                 onDismiss={onDismiss}
+                onDismissWithSelection={dismissWithSelection}
                 onSignIn={() => {
+                  void HapticsService.light();
                   onDismiss();
                   router.push("/sign-in");
                 }}
@@ -187,6 +199,7 @@ function SheetBody({
   isSignedIn,
   isMember,
   onDismiss,
+  onDismissWithSelection,
   onSignIn,
   onOpenPaywall,
 }: {
@@ -198,6 +211,7 @@ function SheetBody({
   isSignedIn: boolean;
   isMember: boolean;
   onDismiss: () => void;
+  onDismissWithSelection: () => void;
   onSignIn: () => void;
   onOpenPaywall: (reason: "offline" | "lists") => void;
 }) {
@@ -279,9 +293,11 @@ function SheetBody({
           }
           onPress={() => {
             if (!isSignedIn || !isMember) {
+              void HapticsService.medium();
               onOpenPaywall("offline");
               return;
             }
+            void HapticsService.medium();
             void downloadContent(content);
           }}
         />
@@ -311,7 +327,7 @@ function SheetBody({
       {showGeneralActions || showDiscoveryActions ? (
         <Pressable
           accessibilityRole="button"
-          onPress={onDismiss}
+          onPress={onDismissWithSelection}
           style={({ pressed }) => [
             styles.cancelRow,
             {
@@ -378,10 +394,12 @@ function AddToListSection({
     }
 
     if (!canCreateAnother) {
+      void HapticsService.medium();
       onOpenPaywall("lists");
       return;
     }
 
+    void HapticsService.success();
     setIsCreating(true);
     try {
       const result = await createList({ title });
@@ -389,10 +407,12 @@ function AddToListSection({
       setShowCreateForm(false);
       setDraftTitle("");
     } catch (error) {
+      void HapticsService.error();
       if (
         error instanceof Error &&
         /Premium required for additional lists/.test(error.message)
       ) {
+        void HapticsService.medium();
         onOpenPaywall("lists");
       }
     } finally {
@@ -442,7 +462,12 @@ function AddToListSection({
             key={list._id}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: list.contains }}
-            onPress={() => void toggleList(list._id, list.contains)}
+            onPress={() => {
+              void (list.contains
+                ? HapticsService.selection()
+                : HapticsService.success());
+              void toggleList(list._id, list.contains);
+            }}
             style={({ pressed }) => [
               styles.listRow,
               { gap: 10 * scaleSpace },
@@ -493,7 +518,10 @@ function AddToListSection({
               },
             ]}
             autoFocus
-            onSubmitEditing={() => void handleCreate()}
+            onSubmitEditing={() => {
+              void HapticsService.light();
+              void handleCreate();
+            }}
           />
           <Pressable
             accessibilityRole="button"
@@ -528,9 +556,11 @@ function AddToListSection({
           accessibilityRole="button"
           onPress={() => {
             if (!canCreateAnother) {
+              void HapticsService.medium();
               onOpenPaywall("lists");
               return;
             }
+            void HapticsService.light();
             setDraftTitle(t("screen.defaultTitle"));
             setShowCreateForm(true);
           }}

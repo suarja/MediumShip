@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { useBookmarks } from "../../features/bookmarks/use-bookmarks";
+import { HapticsService } from "../../features/haptics/haptics";
 import type { ContentDoc } from "../../features/content/types";
 import { getDownloadSupport } from "../../features/downloads/model";
 import { useDownloads } from "../../features/downloads/use-downloads";
@@ -108,7 +109,10 @@ export function ContentActionsBar({ content }: { content: ContentDoc }) {
               : "download-outline"
         }
         label={label}
-        onPress={() => void downloadContent(content)}
+        onPress={() => {
+          void HapticsService.medium();
+          void downloadContent(content);
+        }}
         tone="premium"
       />
     );
@@ -117,7 +121,10 @@ export function ContentActionsBar({ content }: { content: ContentDoc }) {
       <ActionPill
         iconName="download-outline"
         label={t("download.downloadCta")}
-        onPress={() => openPaywall("offline")}
+        onPress={() => {
+          void HapticsService.medium();
+          openPaywall("offline");
+        }}
       />
     );
   }
@@ -131,6 +138,7 @@ export function ContentActionsBar({ content }: { content: ContentDoc }) {
       iconName={isInList ? "list" : "list-outline"}
       label={isInList ? t("list.inListCta") : t("list.addCta")}
       onPress={() => {
+        void HapticsService.light();
         if (!isSignedIn) {
           router.push("/sign-in");
           return;

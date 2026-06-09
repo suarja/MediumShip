@@ -143,5 +143,22 @@ describe("ContentActionsSheet discovery focus", () => {
     });
     expect(mockOnDismiss).toHaveBeenCalledTimes(1);
     expect(HapticsService.warning).toHaveBeenCalledTimes(1);
+    expect(HapticsService.selection).not.toHaveBeenCalled();
+  });
+
+  it("fires selection haptic when the sheet is dismissed", () => {
+    render(
+      <ContentActionsSheet
+        visible
+        contentId={"article-1" as never}
+        focus="discovery"
+        onDismiss={mockOnDismiss}
+      />,
+    );
+
+    fireEvent.press(screen.getByText("Fermer"));
+
+    expect(HapticsService.selection).toHaveBeenCalledTimes(1);
+    expect(mockOnDismiss).toHaveBeenCalledTimes(1);
   });
 });

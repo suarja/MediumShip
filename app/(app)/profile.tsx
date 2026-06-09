@@ -28,6 +28,7 @@ import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provid
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
+import { HapticsService } from "../../src/features/haptics/haptics";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 export default function ProfileScreen() {
@@ -170,6 +171,7 @@ function ProfileDashboard() {
             <Link href="/sign-in" asChild>
               <Pressable
                 accessibilityRole="link"
+                onPress={() => void HapticsService.medium()}
                 style={({ pressed }) => [
                   styles.primaryButton,
                   {
@@ -197,7 +199,10 @@ function ProfileDashboard() {
             <Pressable
               testID="profile-discover-premium-button"
               accessibilityRole="button"
-              onPress={() => openPaywall("support")}
+              onPress={() => {
+                void HapticsService.medium();
+                openPaywall("support");
+              }}
               style={({ pressed }) => [
                 styles.secondaryButton,
                 {
@@ -268,7 +273,10 @@ function ProfileDashboard() {
           onSignOut={() => {
             void signOut();
           }}
-          onGoPremium={() => openPaywall("support")}
+          onGoPremium={() => {
+            void HapticsService.medium();
+            openPaywall("support");
+          }}
         />
       </ScrollView>
     </Screen>

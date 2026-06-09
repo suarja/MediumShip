@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 
+import { HapticsService } from "../../features/haptics/haptics";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
@@ -61,6 +62,7 @@ function LibraryCollectionRow({
     <Link href={item.href as never} asChild>
       <Pressable
         accessibilityRole="link"
+        onPress={() => void HapticsService.light()}
         style={({ pressed }) => [pressed && styles.pressed]}
       >
         <View
@@ -261,6 +263,7 @@ export function LibraryCollectionSection({
           <Link href={featured.href as never} asChild>
             <Pressable
               accessibilityRole="link"
+              onPress={() => void HapticsService.light()}
               style={({ pressed }) => [pressed && styles.pressed]}
             >
               <View
@@ -449,6 +452,11 @@ export function LibraryCollectionSection({
             <Link href={emptyCtaHref as never} asChild>
               <Pressable
                 accessibilityRole="link"
+                onPress={() => {
+                  void (emptyCtaHref === "/sign-in"
+                    ? HapticsService.medium()
+                    : HapticsService.light());
+                }}
                 style={({ pressed }) => [
                   styles.emptyButton,
                   {

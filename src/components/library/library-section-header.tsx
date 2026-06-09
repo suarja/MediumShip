@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { HapticsService } from "../../features/haptics/haptics";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
@@ -47,7 +48,10 @@ export function LibrarySectionHeader({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={seeAllLabel}
-            onPress={onSeeAllPress}
+            onPress={() => {
+              void HapticsService.light();
+              onSeeAllPress?.();
+            }}
             style={({ pressed }) => [
               styles.seeAllButton,
               { gap: 2 * scaleSpace },

@@ -143,7 +143,10 @@ export default function ExploreScreen() {
                 return (
                   <Pressable
                     key={opt.key}
-                    onPress={() => setSearchFilter(opt.key)}
+                    onPress={() => {
+                      void HapticsService.selection();
+                      setSearchFilter(opt.key);
+                    }}
                     style={[
                       styles.filterChip,
                       {
@@ -211,9 +214,10 @@ export default function ExploreScreen() {
                       <Pressable
                         key={cat.category}
                         style={({ pressed }) => [styles.gridCell, pressed && styles.pressed]}
-                        onPress={() =>
-                          router.push(`/category/${encodeURIComponent(cat.category)}` as never)
-                        }
+                        onPress={() => {
+                          void HapticsService.light();
+                          router.push(`/category/${encodeURIComponent(cat.category)}` as never);
+                        }}
                         accessibilityRole="button"
                       >
                         <FeatureCard
@@ -227,11 +231,12 @@ export default function ExploreScreen() {
                       <Pressable
                         key={item.key}
                         style={({ pressed }) => [styles.gridCell, pressed && styles.pressed]}
-                        onPress={() =>
+                        onPress={() => {
+                          void HapticsService.light();
                           router.push(
                             `/category/${encodeURIComponent(t(`categories.${item.key}.title`))}` as never,
-                          )
-                        }
+                          );
+                        }}
                         accessibilityRole="button"
                       >
                         <FeatureCard
@@ -253,6 +258,7 @@ export default function ExploreScreen() {
                       <Pressable
                         style={({ pressed }) => [styles.gridCell, pressed && styles.pressed]}
                         accessibilityRole="link"
+                        onPress={() => void HapticsService.light()}
                       >
                         <FeatureCard
                           icon={item.icon}

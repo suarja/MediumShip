@@ -1,7 +1,7 @@
 import { Link } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { KIND_GLYPH, PREMIUM_ON_FILL } from "../../features/content/card-presentation";
+import { KIND_GLYPH, PREMIUM_ON_FILL, kindAccent } from "../../features/content/card-presentation";
 import { HapticsService } from "../../features/haptics/haptics";
 import type { ContentCardModel } from "../../features/content/types";
 import { hasCapability } from "../../features/tenant/public-config";
@@ -38,7 +38,7 @@ export function FeedRow({
       hasCapability(enabledModules, "offline"));
   const { scaleFont, scaleSpace } = useResponsive();
   const tile = 60 * scaleSpace;
-  const accentTone = item.isPremium ? theme.colors.premium : theme.colors.accent;
+  const kAccent = kindAccent(item.kind, theme);
 
   return (
     <View
@@ -66,7 +66,7 @@ export function FeedRow({
               width: tile,
               height: tile,
               borderRadius: theme.radii.sm,
-              backgroundColor: theme.colors.accentSoft,
+              backgroundColor: kAccent.accentSoft,
             },
           ]}
         >
@@ -77,9 +77,9 @@ export function FeedRow({
               style={styles.thumbnail}
             />
           ) : (
-            <Text style={[styles.glyph, { color: accentTone, fontSize: 22 * scaleFont }]}>
-              {KIND_GLYPH[item.kind]}
-            </Text>
+              <Text style={[styles.glyph, { color: kAccent.accent, fontSize: 22 * scaleFont }]}>
+                {KIND_GLYPH[item.kind]}
+              </Text>
           )}
           {item.isPremium ? (
             <View style={[styles.premiumBadge, { backgroundColor: theme.colors.premium }]}>
@@ -91,7 +91,7 @@ export function FeedRow({
         <View style={styles.meta}>
           <Text
             numberOfLines={1}
-            style={[styles.kicker, { color: accentTone, fontSize: 10 * scaleFont }]}
+            style={[styles.kicker, { color: kAccent.accent, fontSize: 10 * scaleFont }]}
           >
             {kicker}
           </Text>

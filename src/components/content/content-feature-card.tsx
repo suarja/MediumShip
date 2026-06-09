@@ -3,7 +3,7 @@ import { Link } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
-import { KIND_GLYPH, PREMIUM_ON_FILL } from "../../features/content/card-presentation";
+import { KIND_GLYPH, PREMIUM_ON_FILL, kindAccent } from "../../features/content/card-presentation";
 import { HapticsService } from "../../features/haptics/haptics";
 import type { ContentCardModel } from "../../features/content/types";
 import { useResponsive } from "../../features/responsive/use-responsive";
@@ -32,10 +32,10 @@ export function ContentFeatureCard({
   const { t } = useTranslation("home");
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
-  const accentTone = item.isPremium ? theme.colors.premium : theme.colors.accent;
   const thumb = 72 * scaleSpace;
   const hasEditorialCategory = Boolean(item.category?.trim());
   const showFooter = Boolean(meta || item.isPremium || actions);
+  const kAccent = kindAccent(item.kind, theme);
 
   return (
     <View
@@ -53,7 +53,7 @@ export function ContentFeatureCard({
               width: thumb,
               height: thumb,
               borderRadius: theme.radii.sm,
-              backgroundColor: theme.colors.accentSoft,
+              backgroundColor: kAccent.accentSoft,
             },
           ]}
         >
@@ -67,7 +67,7 @@ export function ContentFeatureCard({
             <Text
               style={[
                 styles.thumbGlyph,
-                { color: accentTone, fontSize: 24 * scaleFont },
+                { color: kAccent.accent, fontSize: 24 * scaleFont },
               ]}
             >
               {KIND_GLYPH[item.kind]}
@@ -109,7 +109,7 @@ export function ContentFeatureCard({
                       testID="content-card-title-category"
                       style={[
                         styles.titleLabel,
-                        { color: accentTone, fontSize: 10 * scaleFont },
+                        { color: kAccent.accent, fontSize: 10 * scaleFont },
                       ]}
                     >
                       {kicker}

@@ -1,7 +1,7 @@
 import { Link } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { KIND_GLYPH, PREMIUM_ON_FILL } from "../../features/content/card-presentation";
+import { KIND_GLYPH, PREMIUM_ON_FILL, kindAccent } from "../../features/content/card-presentation";
 import { HapticsService } from "../../features/haptics/haptics";
 import type { ContentCardModel } from "../../features/content/types";
 import { useResponsive } from "../../features/responsive/use-responsive";
@@ -30,8 +30,10 @@ export function FeedHeroCard({
   // palette we lift it off the canvas with the muted surface and dark text.
   const heroBg = theme.isDark ? theme.colors.canvasAccent : theme.colors.heading;
   const onHero = theme.isDark ? theme.colors.heading : theme.colors.canvas;
-  const accentTone = item.isPremium ? theme.colors.premium : theme.colors.accent;
-  const onAccentTone = item.isPremium ? PREMIUM_ON_FILL : theme.colors.accentContrast;
+  const kAccent = kindAccent(item.kind, theme);
+  const glowColor = item.isPremium ? theme.colors.premium : kAccent.accent;
+  const chipColor = item.isPremium ? theme.colors.premium : kAccent.accent;
+  const onChipColor = item.isPremium ? PREMIUM_ON_FILL : theme.colors.accentContrast;
   const mediaHeight = 150 * scaleSpace;
 
   return (
@@ -63,7 +65,7 @@ export function FeedHeroCard({
               <View
                 style={[
                   styles.glow,
-                  { backgroundColor: accentTone, opacity: theme.isDark ? 0.3 : 0.22 },
+                  { backgroundColor: glowColor, opacity: theme.isDark ? 0.3 : 0.22 },
                 ]}
               />
               <Text style={[styles.watermark, { color: onHero, fontSize: 72 * scaleFont }]}>
@@ -89,7 +91,7 @@ export function FeedHeroCard({
         >
           <Text
             numberOfLines={1}
-            style={[styles.kicker, { color: accentTone, fontSize: 11 * scaleFont }]}
+            style={[styles.kicker, { color: chipColor, fontSize: 11 * scaleFont }]}
           >
             {kicker}
           </Text>
@@ -105,8 +107,8 @@ export function FeedHeroCard({
 
           {meta ? (
             <View style={[styles.metaRow, { gap: theme.spacing.sm * scaleSpace }]}>
-              <View style={[styles.play, { backgroundColor: accentTone }]}>
-                <Text style={[styles.playGlyph, { color: onAccentTone }]}>
+              <View style={[styles.play, { backgroundColor: chipColor }]}>
+                <Text style={[styles.playGlyph, { color: onChipColor }]}>
                   {KIND_GLYPH[item.kind]}
                 </Text>
               </View>

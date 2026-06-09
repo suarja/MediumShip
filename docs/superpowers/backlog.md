@@ -37,7 +37,7 @@ Idées soulevées mais non encore planifiées en slice. Rangées par **priorité
 
 > **Découplé en deux slices** (décidé avec le user) : haptique mobile et toasts CMS séparés.
 
-- **Retour haptique mobile (app-wide)** → **📋 Planifié** : `docs/superpowers/plans/2026-06-09-mobile-slice-haptics-app-wide.md`. `HapticsService` calqué sur `../editia/mobile/lib/utils/haptics.ts` (intensités sémantiques + patterns, no-op web) + câblage des **primitives partagées** (tab bar, chips, SearchBar, favoris, actions, paywall). Prêt à exécuter depuis `dev`.
+- **Retour haptique mobile (app-wide)** → **✅ Fait** (mergé `dev` `f4c063d`) : `HapticsService` (`src/features/haptics/haptics.ts`, no-op web) + câblage des primitives (tab bar, chips, SearchBar, favoris, actions, paywall, agenda/community/collections/category). Plan : `docs/superpowers/plans/2026-06-09-mobile-slice-haptics-app-wide.md`. Suivi : réglage utilisateur on/off.
 - **Toasts de confirmation dans le CMS** *(slice CMS séparé — PAS FAIT)*. Aujourd'hui « Enregistrer » ne donne **aucun retour** → on ne sait pas si ça a marché (source de confusion réelle pendant le test Slice N : modifs perdues car non sauvées). Ajouter un système de toasts (succès/erreur) déclenché sur les mutations CMS (sauvegarde tenant/modules/contenu…).
 
 ### 🏠 Home Feed / Explore — recherche & convergence
@@ -80,7 +80,7 @@ Retours terrain après usage réel (favoris enregistrés, navigation Bibliothèq
 **Modules**
 - **Revoir le layout du grid de modules** dans l'app mobile : disposition actuelle un peu bizarre à corriger.
 
-**Polish visuel — vitalité des cartes (app-wide)**
+**Polish visuel — vitalité des cartes (app-wide)** → **📋 Planifié** : `docs/superpowers/plans/2026-06-09-mobile-slice-card-vitality-explore-polish.md`
 - **Les cartes se ressemblent trop / sont trop plates.** Rendu actuel « cartes blanches sur fond info », peu de distinction entre types → ça ne ressort pas assez, ça manque de vie. Donner plus de **hiérarchie, profondeur et accent**, et **différencier les types** (article / épisode / vidéo / catégorie / module) : accents de couleur par type, élévation/contraste, traitement éditorial. Cibles : cartes **Explore** (catégories + modules), cartes **« À découvrir »**, **feed rows / hero**. Source de vérité : maquettes `docs/podapp/project/mobile-mockups/`. (Inclut le layout grille modules ci-dessus.)
 
 **Cartes « À découvrir »**

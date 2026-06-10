@@ -68,7 +68,7 @@ export const YoutubeInlinePlayer = forwardRef<
 ) {
   const { t } = useTranslation("video");
   const { theme } = useAppTheme();
-  const { scaleFont, scaleSpace } = useResponsive();
+  const { scaleFont } = useResponsive();
   const playerRef = useRef<YoutubePlayerHandle>(null);
   const [snapshot, setSnapshot] = useState<YoutubePlayerSnapshot>(
     INITIAL_YOUTUBE_PLAYER_SNAPSHOT,

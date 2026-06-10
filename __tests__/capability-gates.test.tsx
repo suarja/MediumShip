@@ -103,7 +103,16 @@ jest.mock("expo-router", () => ({
 }));
 
 jest.mock("convex/react", () => ({
+  useConvexAuth: () => ({ isAuthenticated: true, isLoading: false }),
   useQuery: () => [],
+}));
+
+jest.mock("../src/features/insights/use-analysis", () => ({
+  useAnalysisHistory: () => ({
+    analyses: [],
+    isLoading: false,
+    canAccess: false,
+  }),
 }));
 
 jest.mock("expo-web-browser", () => ({

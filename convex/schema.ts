@@ -14,6 +14,8 @@ export default defineSchema({
     name: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
     lastSeenAt: v.optional(v.string()),
+    /** Persistent @convex-dev/agent thread for taste-analysis memory. */
+    tasteInsightsThreadId: v.optional(v.string()),
     cmsRole: v.optional(v.literal("admin")),
     // Set by the Clerk user.deleted webhook (soft delete).
     deletedAt: v.optional(v.number()),
@@ -342,6 +344,32 @@ export default defineSchema({
     // re-fetching the same top-N (which dedup-collapses to zero new content).
     searchOffset: v.optional(v.number()),
   }).index("by_tenant_and_category", ["tenantSlug", "categoryKey"]),
+  tasteAnalysis: defineTable({
+    tokenIdentifier: v.string(),
+    tenantSlug: v.string(),
+    dayKey: v.string(),
+    /** Opening editorial overview — also used for profile/history preview. */
+    tasteText: v.string(),
+    reflection: v.optional(v.string()),
+    trends: v.optional(v.string()),
+    relatedPicks: v.optional(
+      v.array(
+        v.object({
+          contentId: v.id("contents"),
+          rationale: v.string(),
+        }),
+      ),
+    ),
+    relatedContentIds: v.array(v.id("contents")),
+    model: v.string(),
+    createdAt: v.number(),
+    seenAt: v.optional(v.number()),
+  })
+    .index("by_tokenIdentifier_and_dayKey", ["tokenIdentifier", "dayKey"])
+    .index("by_tokenIdentifier_and_createdAt", [
+      "tokenIdentifier",
+      "createdAt",
+    ]),
   youtubeWhitelistChannels: defineTable({
     channelId: v.string(),
     label: v.string(),

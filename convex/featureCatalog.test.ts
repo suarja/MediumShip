@@ -112,6 +112,7 @@ describe("featureCatalog", () => {
       "explore",
       "library",
       "profile",
+      "premiumInsights",
     ]);
   });
 

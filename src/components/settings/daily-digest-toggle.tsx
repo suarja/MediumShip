@@ -12,7 +12,7 @@ import { SettingsRow } from "./settings-row";
 
 export function DailyDigestToggle({ isLast = false }: { isLast?: boolean }) {
   const { t, i18n } = useTranslation("notifications");
-  const { theme } = useAppTheme();
+  const { theme, tenantName } = useAppTheme();
   const { scaleSpace } = useResponsive();
   const { status } = usePermissionStatus();
   const { requestPermissionExplicit, openSettings } = useRequestPermission();
@@ -42,13 +42,14 @@ export function DailyDigestToggle({ isLast = false }: { isLast?: boolean }) {
           await scheduleDailyDigest({
             hour,
             locale: i18n.language,
+            tenantName,
           });
         }
       } finally {
         setBusy(false);
       }
     },
-    [busy, hour, i18n.language, isLoading, requestPermissionExplicit, setEnabled],
+    [busy, hour, i18n.language, isLoading, requestPermissionExplicit, setEnabled, tenantName],
   );
 
   const statusLabel = enabled ? t("dailyDigest.enabled") : t("dailyDigest.disabled");

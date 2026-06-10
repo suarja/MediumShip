@@ -10,22 +10,19 @@ export type DigestReminderTrigger = {
   body: string;
 };
 
-const DIGEST_MESSAGES = {
-  fr: {
-    title: "Knowly",
-    body: "Ton feed du jour est prêt",
-  },
-  en: {
-    title: "Knowly",
-    body: "Your feed for today is ready",
-  },
+const DIGEST_BODIES = {
+  fr: "Ton feed du jour est prêt",
+  en: "Your feed for today is ready",
 } as const;
 
-export function resolveDigestMessages(locale: string): { title: string; body: string } {
-  if (locale.startsWith("fr")) {
-    return DIGEST_MESSAGES.fr;
-  }
-  return DIGEST_MESSAGES.en;
+export function resolveDigestMessages(
+  locale: string,
+  tenantName?: string,
+): { title: string; body: string } {
+  const body = locale.startsWith("fr") ? DIGEST_BODIES.fr : DIGEST_BODIES.en;
+  // Use the tenant name when provided; fall back to a neutral label without a brand.
+  const title = tenantName?.trim() || "Notification";
+  return { title, body };
 }
 
 /**
@@ -36,8 +33,9 @@ export function computeReminderTriggers(
   hour: number,
   days: number,
   locale: string,
+  tenantName?: string,
 ): DigestReminderTrigger[] {
-  const messages = resolveDigestMessages(locale);
+  const messages = resolveDigestMessages(locale, tenantName);
   const triggers: DigestReminderTrigger[] = [];
 
   for (let day = 1; day <= days; day++) {
@@ -84,6 +82,8 @@ export async function scheduleDailyDigest(args: {
   hour?: number;
   days?: number;
   locale?: string;
+  /** Tenant display name used as the notification title. */
+  tenantName?: string;
 }): Promise<void> {
   if (!notificationsModule) {
     return;
@@ -96,7 +96,7 @@ export async function scheduleDailyDigest(args: {
 
   await cancelDailyDigestReminders();
 
-  const triggers = computeReminderTriggers(now, hour, days, locale);
+  const triggers = computeReminderTriggers(now, hour, days, locale, args.tenantName);
 
   for (const trigger of triggers) {
     await notificationsModule.scheduleNotificationAsync({

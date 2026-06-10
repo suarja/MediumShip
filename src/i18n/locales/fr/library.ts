@@ -18,6 +18,7 @@ export default {
       resume: "Reprendre",
       saved: "Favoris",
       lists: "Listes",
+      briefing: "Lectures du jour",
       offline: "Hors ligne",
     },
     resumeKicker: "Reprendre",
@@ -37,6 +38,11 @@ export default {
     offlineTitle: "Telecharger pour ecouter sans reseau",
     offlineBody:
       "Le premium debloque les telechargements hors ligne pour les articles, episodes et videos hebergees.",
+    briefingTitle: "Tes lectures du jour, au même endroit",
+    briefingBody:
+      "Le premium débloque un compagnon qui interprète tes lectures et te propose quoi lire ensuite.",
+    briefingPreviewTitle: "Tes lectures du jour",
+    briefingPreviewMeta: "Propositions personnalisées et interprétation de tes goûts",
     seeAll: "Voir tout",
   },
   favoritesScreen: {

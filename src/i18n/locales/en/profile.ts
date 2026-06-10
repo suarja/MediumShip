@@ -75,6 +75,13 @@ export default {
       title: "History & progress",
       sub: "Resume synced across your devices",
     },
+    briefing: {
+      title: "Readings of the day",
+      sub: "Interpreted readings · Premium",
+      subMember_one: "{{count}} saved reading",
+      subMember_other: "{{count}} saved readings",
+      subMemberEmpty: "Your readings of the day",
+    },
     subscription: {
       title: "Subscription · Annual",
       sub: "Billing details coming soon",

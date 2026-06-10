@@ -6,6 +6,8 @@ import { useTranslation } from "react-i18next";
 
 import { Screen } from "../../src/components/layout/screen";
 import { DownloadedLibrarySection } from "../../src/components/library/downloaded-library-section";
+import { LibraryBriefingLockedCard } from "../../src/components/library/library-briefing-locked-card";
+import { LibraryBriefingRow } from "../../src/components/library/library-briefing-row";
 import { LibraryOfflineLockedCard } from "../../src/components/library/library-offline-locked-card";
 import { LibraryPersonalListRow } from "../../src/components/library/library-personal-list-row";
 import { LibrarySectionHeader } from "../../src/components/library/library-section-header";
@@ -15,6 +17,7 @@ import { SavedLibrarySection } from "../../src/components/library/saved-library-
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
 import { useIsMember } from "../../src/features/membership/use-is-member";
+import { useAnalysisHistory } from "../../src/features/insights/use-analysis";
 import { usePersonalLists } from "../../src/features/personal-lists/use-personal-lists";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
@@ -193,6 +196,7 @@ export default function LibraryScreen() {
   return (
     <SignedInLibraryContent
       canBookmark={canBookmark}
+      canBriefing={hasCapability(enabledModules, "premiumInsights")}
       canOffline={canOffline}
       canPersonalLists={canPersonalLists}
       canProgressSync={canProgressSync}
@@ -204,6 +208,7 @@ export default function LibraryScreen() {
 
 type SignedInLibraryContentProps = {
   canBookmark: boolean;
+  canBriefing: boolean;
   canPersonalLists: boolean;
   canOffline: boolean;
   canProgressSync: boolean;
@@ -213,13 +218,14 @@ type SignedInLibraryContentProps = {
 
 function SignedInLibraryContent({
   canBookmark,
+  canBriefing,
   canPersonalLists,
   canOffline,
   canProgressSync,
   tabBarSpace,
   persistentPlayerSpace,
 }: SignedInLibraryContentProps) {
-  const { t } = useTranslation("library");
+  const { t } = useTranslation(["library", "insights", "profile"]);
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
   const router = useRouter();
@@ -227,7 +233,15 @@ function SignedInLibraryContent({
   const { openPaywall } = usePaywallSheet();
   const { isMember } = useIsMember();
   const { primaryList } = usePersonalLists();
+  const { analyses } = useAnalysisHistory();
   const { t: tLists } = useTranslation("lists");
+  const latestBriefing = analyses[0];
+  const briefingCount = analyses.length;
+
+  const openBriefingHistory = () => {
+    void HapticsService.light();
+    pushWithReturn("/analysis");
+  };
 
   const handleListsPress = () => {
     void HapticsService.light();
@@ -332,6 +346,39 @@ function SignedInLibraryContent({
               previewCoverUrls={primaryList?.previewCoverUrls}
               itemCount={primaryList?.itemCount ?? 0}
             />
+          </View>
+        ) : null}
+
+        {canBriefing ? (
+          <View style={styles.sectionBlock}>
+            <LibrarySectionHeader
+              gate="premium"
+              onSeeAllPress={
+                isMember && briefingCount > 0 ? openBriefingHistory : undefined
+              }
+              seeAllLabel={
+                isMember && briefingCount > 0 ? t("library:screen.seeAll") : undefined
+              }
+              title={t("library:screen.sections.briefing")}
+            />
+            {isMember ? (
+              <LibraryBriefingRow
+                onPress={openBriefingHistory}
+                title={
+                  latestBriefing
+                    ? t("insights:detail.dateLabel", { day: latestBriefing.dayKey })
+                    : t("library:screen.briefingPreviewTitle")
+                }
+                meta={
+                  briefingCount > 0
+                    ? t("profile:rows.briefing.subMember", { count: briefingCount })
+                    : t("library:screen.briefingPreviewMeta")
+                }
+                accessibilityLabel={t("library:screen.sections.briefing")}
+              />
+            ) : (
+              <LibraryBriefingLockedCard onPress={() => openPaywall("content")} />
+            )}
           </View>
         ) : null}
 

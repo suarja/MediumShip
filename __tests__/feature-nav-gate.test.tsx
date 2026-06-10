@@ -17,6 +17,13 @@ jest.mock("../src/features/theme/theme-provider", () => ({
   useAppTheme: () => mockUseAppTheme(),
 }));
 
+jest.mock("../src/features/insights/briefing-invite-provider", () => {
+  const React = require("react");
+  return {
+    BriefingInviteProvider: ({ children }: { children: React.ReactNode }) => children,
+  };
+});
+
 jest.mock("../src/features/notifications/notification-bootstrap", () => ({
   NotificationBootstrap: () => null,
 }));

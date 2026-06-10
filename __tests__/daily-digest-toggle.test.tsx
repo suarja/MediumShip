@@ -90,6 +90,7 @@ describe("DailyDigestToggle", () => {
       expect(mockScheduleDailyDigest).toHaveBeenCalledWith({
         hour: 9,
         locale: "en",
+        tenantName: "Demo Media",
       });
     });
   });

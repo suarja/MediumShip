@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@clerk/clerk-expo": "^2.19.31",
+    "@convex-dev/agent": "^0.6.2",
     "@convex-dev/r2": "^0.10.1",
     "@expo-google-fonts/hanken-grotesk": "^0.4.3",
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
@@ -33,6 +34,7 @@
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "1.24.0",
     "@react-native-community/netinfo": "12.0.1",
+    "ai": "^6.0.199",
     "convex": "^1.40.0",
     "convex-youtube-cache": "^1.0.1",
     "expo": "~56.0.8",

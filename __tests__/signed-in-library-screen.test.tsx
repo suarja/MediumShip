@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import LibraryScreen from "../app/(app)/library";
 import { changeAppLanguage, initI18n } from "../src/i18n";
+import type { ProfileBriefingPreview } from "../src/features/insights/use-analysis";
 
 const mockOpenPaywall = jest.fn();
 const mockPush = jest.fn();
@@ -68,6 +69,16 @@ jest.mock("../src/features/history/use-resume", () => ({
   useResume: () => ({ data: null, isLoading: false }),
 }));
 
+const mockUseAnalysisHistory = jest.fn(() => ({
+  analyses: [] as ProfileBriefingPreview[],
+  isLoading: false,
+  canAccess: false,
+}));
+
+jest.mock("../src/features/insights/use-analysis", () => ({
+  useAnalysisHistory: () => mockUseAnalysisHistory(),
+}));
+
 describe("signed-in library screen", () => {
   beforeAll(async () => {
     await initI18n();
@@ -77,6 +88,11 @@ describe("signed-in library screen", () => {
     mockOpenPaywall.mockClear();
     mockPush.mockClear();
     mockUseIsMember.mockReturnValue({ isMember: false, isLoading: false });
+    mockUseAnalysisHistory.mockReturnValue({
+      analyses: [],
+      isLoading: false,
+      canAccess: false,
+    });
     await changeAppLanguage("en");
   });
 
@@ -126,7 +142,7 @@ describe("signed-in library screen", () => {
     expect(screen.getByText("Favorites")).toBeTruthy();
     expect(screen.queryByText("Saved")).toBeNull();
     expect(screen.queryByText("Free")).toBeNull();
-    expect(screen.getAllByText("Premium")).toHaveLength(2);
+    expect(screen.getAllByText("Premium")).toHaveLength(3);
   });
 
   it("pressing the lists row opens the lists screen for signed-in members", () => {
@@ -167,5 +183,44 @@ describe("signed-in library screen", () => {
     fireEvent.press(screen.getByText("Download to listen without a network"));
 
     expect(mockOpenPaywall).toHaveBeenCalledWith("offline");
+  });
+
+  it("shows the reading-of-the-day locked promo for non-premium members", () => {
+    render(<LibraryScreen />);
+
+    expect(screen.getByText("Readings of the day")).toBeTruthy();
+    expect(screen.getByText("Your readings of the day, in one place")).toBeTruthy();
+  });
+
+  it("pressing the reading-of-the-day locked card opens the content paywall", () => {
+    render(<LibraryScreen />);
+
+    fireEvent.press(screen.getByText("Your readings of the day, in one place"));
+
+    expect(mockOpenPaywall).toHaveBeenCalledWith("content");
+  });
+
+  it("navigates to reading history for premium members", () => {
+    mockUseIsMember.mockReturnValue({ isMember: true, isLoading: false });
+    mockUseAnalysisHistory.mockReturnValue({
+      analyses: [
+        {
+          _id: "analysis_1" as ProfileBriefingPreview["_id"],
+          dayKey: "2026-06-10",
+          tasteText: "You follow politics closely.",
+          createdAt: 1,
+        },
+      ],
+      isLoading: false,
+      canAccess: true,
+    });
+
+    render(<LibraryScreen />);
+
+    fireEvent.press(screen.getByLabelText("Readings of the day"));
+
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: "/analysis" }),
+    );
   });
 });

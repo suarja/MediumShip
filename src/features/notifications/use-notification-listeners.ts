@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useRouter } from "expo-router";
 
 import { notificationsModule } from "./bootstrap";
+import { isAnalysisReadyNotification } from "./schedule-analysis-ready";
 import { isDailyDigestNotification } from "./schedule-daily-digest";
 
 const HOME_ROUTE = "/home" as const;
@@ -17,11 +18,15 @@ export function useNotificationListeners(): void {
     const responseSub = notificationsModule.addNotificationResponseReceivedListener(
       (response) => {
         const data = response.notification.request.content.data;
-        if (!isDailyDigestNotification(data)) {
+
+        if (isAnalysisReadyNotification(data)) {
+          router.push(`/analysis/${data.analysisId}`);
           return;
         }
 
-        router.replace(HOME_ROUTE);
+        if (isDailyDigestNotification(data)) {
+          router.replace(HOME_ROUTE);
+        }
       },
     );
 

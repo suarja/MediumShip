@@ -23,7 +23,14 @@ describe("computeReminderTriggers", () => {
     const triggers = computeReminderTriggers(now, 9, 1, "fr-FR");
 
     expect(triggers[0]?.body).toBe("Ton feed du jour est prêt");
-    expect(triggers[0]?.title).toBe("Knowly");
+    // No brand hardcoded — falls back to neutral label.
+    expect(triggers[0]?.title).toBe("Notification");
+  });
+
+  it("uses tenantName as notification title when provided", () => {
+    const triggers = computeReminderTriggers(now, 9, 1, "fr-FR", "MonApp");
+
+    expect(triggers[0]?.title).toBe("MonApp");
   });
 
   it("selects English copy for en locales", () => {

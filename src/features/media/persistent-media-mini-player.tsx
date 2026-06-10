@@ -59,7 +59,11 @@ export function PersistentMediaMiniPlayer() {
       : Math.max(insets.bottom, PERSISTENT_MEDIA_PLAYER_GAP);
 
   const kicker =
-    activeSession.kind === "episode" ? tEpisode("playerLabel") : tVideo("playVideo");
+    activeSession.kind === "episode"
+      ? tEpisode("playerLabel")
+      : activeSession.kind === "youtube"
+        ? tVideo("youtubeProvider")
+        : tVideo("playVideo");
   const progressRatio =
     durationSeconds > 0
       ? Math.min(currentTimeSeconds / durationSeconds, 1)

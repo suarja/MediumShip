@@ -3,6 +3,7 @@ import {
   PropsWithChildren,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -21,14 +22,21 @@ import { useIsMember } from "../membership/use-is-member";
 import { useContentEngagement } from "../discovery/use-content-engagement";
 import { hasCapability } from "../tenant/public-config";
 import { useAppTheme } from "../theme/theme-provider";
+import type { YoutubePlayerHandle } from "../../components/media/youtube-player";
 import {
   createAudioPlaybackEngine,
   createVideoPlaybackEngine,
+  createYoutubePlaybackEngine,
   NULL_PLAYBACK_ENGINE,
   type VideoPlaybackState,
 } from "./playback-engine";
 import { MIN_RESUMABLE_SECONDS } from "./playback-progress";
 import { usePlaybackProgress } from "./use-playback-progress";
+import {
+  YoutubePlayerLayoutProvider,
+  useYoutubePlayerLayout,
+} from "./youtube-player-layout-context";
+import { YoutubePlayerHost } from "./youtube-player-host";
 import { VideoPipHost } from "./video-pip-host";
 
 export const PERSISTENT_MEDIA_PLAYER_HEIGHT = 64;
@@ -68,9 +76,18 @@ export type HostedVideoTrack = {
   durationSeconds?: number;
 };
 
+export type YoutubeVideoTrack = {
+  contentId: string;
+  title: string;
+  youtubeVideoId: string;
+  artworkUrl?: string;
+  durationSeconds?: number;
+};
+
 export type ActiveMediaSession =
   | ({ kind: "episode" } & EpisodeTrack)
-  | ({ kind: "hostedVideo" } & HostedVideoTrack);
+  | ({ kind: "hostedVideo" } & HostedVideoTrack)
+  | ({ kind: "youtube" } & YoutubeVideoTrack);
 
 type PersistentMediaPlayerContextValue = {
   activeSession: ActiveMediaSession | null;
@@ -84,6 +101,7 @@ type PersistentMediaPlayerContextValue = {
   videoPlayer: VideoPlayer | null;
   playEpisode: (track: EpisodeTrack) => Promise<void>;
   playHostedVideo: (track: HostedVideoTrack) => Promise<void>;
+  playYoutubeVideo: (track: YoutubeVideoTrack) => Promise<void>;
   playTrack: (track: EpisodeTrack) => Promise<void>;
   togglePlayback: () => Promise<void>;
   seekBy: (deltaSeconds: number) => Promise<void>;
@@ -104,6 +122,7 @@ const fallbackContextValue: PersistentMediaPlayerContextValue = {
   videoPlayer: null,
   playEpisode: async () => {},
   playHostedVideo: async () => {},
+  playYoutubeVideo: async () => {},
   playTrack: async () => {},
   togglePlayback: async () => {},
   seekBy: async () => {},
@@ -146,6 +165,16 @@ export function shouldHideMiniPlayerForSegments(segments: readonly string[]) {
 export function PersistentMediaPlayerProvider({
   children,
 }: PropsWithChildren) {
+  return (
+    <YoutubePlayerLayoutProvider>
+      <PersistentMediaPlayerProviderInner>
+        {children}
+      </PersistentMediaPlayerProviderInner>
+    </YoutubePlayerLayoutProvider>
+  );
+}
+
+function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
   const [activeSession, setActiveSession] = useState<ActiveMediaSession | null>(null);
   const [videoState, setVideoState] = useState<VideoPlaybackState>({
     currentTimeSeconds: 0,
@@ -154,8 +183,19 @@ export function PersistentMediaPlayerProvider({
     isPlaying: false,
     playbackError: null,
   });
+  const [youtubeState, setYoutubeState] = useState<VideoPlaybackState>({
+    currentTimeSeconds: 0,
+    durationSeconds: 0,
+    isBuffering: false,
+    isPlaying: false,
+    playbackError: null,
+  });
+  const [youtubePlayIntent, setYoutubePlayIntent] = useState(true);
   const [isVideoDurationFromPlayer, setIsVideoDurationFromPlayer] =
     useState(false);
+  const [isYoutubeDurationFromPlayer, setIsYoutubeDurationFromPlayer] =
+    useState(false);
+  const youtubePlayerRef = useRef<YoutubePlayerHandle>(null);
   const activeSessionRef = useRef<ActiveMediaSession | null>(null);
   const pendingResumeRef = useRef<{ contentId: string; seconds: number } | null>(
     null,
@@ -169,6 +209,8 @@ export function PersistentMediaPlayerProvider({
   const playIntentRef = useRef(true);
   const router = useRouter();
   const segments = useSegments();
+  const { slotLayout } = useYoutubePlayerLayout();
+  const onPlayerRoute = segments[0] === "player";
   const { isAuthenticated } = useConvexAuth();
   const { isMember } = useIsMember();
   const { enabledModules } = useAppTheme();
@@ -210,12 +252,23 @@ export function PersistentMediaPlayerProvider({
         isPlaying: false,
         playbackError: null,
       });
-      return;
+    } else {
+      videoPlayer.timeUpdateEventInterval = 0.25;
+      videoPlayer.staysActiveInBackground = true;
+      videoPlayer.showNowPlayingNotification = true;
     }
 
-    videoPlayer.timeUpdateEventInterval = 0.25;
-    videoPlayer.staysActiveInBackground = true;
-    videoPlayer.showNowPlayingNotification = true;
+    setIsYoutubeDurationFromPlayer(false);
+    if (activeSession?.kind !== "youtube") {
+      setYoutubeState({
+        currentTimeSeconds: 0,
+        durationSeconds: 0,
+        isBuffering: false,
+        isPlaying: false,
+        playbackError: null,
+      });
+      setYoutubePlayIntent(true);
+    }
   }, [activeSession, videoPlayer]);
 
   useEventListener(videoPlayer, "playingChange", ({ isPlaying }) => {
@@ -307,6 +360,15 @@ export function PersistentMediaPlayerProvider({
       : null;
   // One engine over the two backends: the provider reads/controls playback
   // through this seam instead of forking on session kind everywhere.
+  const youtubeCommands = useMemo(
+    () => ({
+      play: () => setYoutubePlayIntent(true),
+      pause: () => setYoutubePlayIntent(false),
+      seekTo: (seconds: number) => youtubePlayerRef.current?.seekTo(seconds),
+    }),
+    [],
+  );
+
   const engine =
     activeSession?.kind === "hostedVideo"
       ? createVideoPlaybackEngine({
@@ -315,13 +377,20 @@ export function PersistentMediaPlayerProvider({
           setState: setVideoState,
           fallbackDuration: activeSession.durationSeconds ?? 0,
         })
-      : activeSession?.kind === "episode"
-        ? createAudioPlaybackEngine({
-            player: audioPlayer,
-            status: audioStatus,
-            fallbackDuration: activeTrack?.durationSeconds ?? 0,
+      : activeSession?.kind === "youtube"
+        ? createYoutubePlaybackEngine({
+            state: youtubeState,
+            setState: setYoutubeState,
+            commands: youtubeCommands,
+            fallbackDuration: activeSession.durationSeconds ?? 0,
           })
-        : NULL_PLAYBACK_ENGINE;
+        : activeSession?.kind === "episode"
+          ? createAudioPlaybackEngine({
+              player: audioPlayer,
+              status: audioStatus,
+              fallbackDuration: activeTrack?.durationSeconds ?? 0,
+            })
+          : NULL_PLAYBACK_ENGINE;
 
   const currentTimeSeconds = engine.currentTime;
   const durationSeconds = engine.duration;
@@ -346,7 +415,7 @@ export function PersistentMediaPlayerProvider({
   const mediaKind =
     activeSession?.kind === "episode"
       ? "episode"
-      : activeSession?.kind === "hostedVideo"
+      : activeSession?.kind === "hostedVideo" || activeSession?.kind === "youtube"
         ? "video"
         : undefined;
   const progressRatio =
@@ -368,11 +437,15 @@ export function PersistentMediaPlayerProvider({
       ? isVideoDurationFromPlayer && videoState.durationSeconds > 0
         ? videoState.durationSeconds
         : undefined
-      : activeSession?.kind === "episode" &&
-          audioStatus.isLoaded &&
-          audioStatus.duration > 0
-        ? audioStatus.duration
-        : undefined;
+      : activeSession?.kind === "youtube"
+        ? isYoutubeDurationFromPlayer && youtubeState.durationSeconds > 0
+          ? youtubeState.durationSeconds
+          : undefined
+        : activeSession?.kind === "episode" &&
+            audioStatus.isLoaded &&
+            audioStatus.duration > 0
+          ? audioStatus.duration
+          : undefined;
 
   const { preferredResumeSeconds, saveFinal } = usePlaybackProgress({
     contentId: activeSession?.contentId ?? null,
@@ -446,12 +519,21 @@ export function PersistentMediaPlayerProvider({
       return;
     }
 
-    // Hosted video: apply directly, leaving pendingResumeRef as a fallback for
-    // the sourceLoad listener in case the source has not finished loading.
+    if (kind === "hostedVideo") {
+      // Hosted video: apply directly, leaving pendingResumeRef as a fallback for
+      // the sourceLoad listener in case the source has not finished loading.
+      appliedResumeRef.current = contentId;
+      pendingResumeRef.current = { contentId, seconds: target };
+      (videoPlayer as { currentTime?: number }).currentTime = target;
+      setVideoState((current) => ({ ...current, currentTimeSeconds: target }));
+      return;
+    }
+
+    // YouTube: seek via the persistent iframe host once it is ready.
     appliedResumeRef.current = contentId;
     pendingResumeRef.current = { contentId, seconds: target };
-    (videoPlayer as { currentTime?: number }).currentTime = target;
-    setVideoState((current) => ({ ...current, currentTimeSeconds: target }));
+    youtubePlayerRef.current?.seekTo(target);
+    setYoutubeState((current) => ({ ...current, currentTimeSeconds: target }));
   }, [
     activeSession,
     audioPlayer,
@@ -484,6 +566,7 @@ export function PersistentMediaPlayerProvider({
         () => videoPlayer.pause(),
         "Failed to pause hosted video player",
       );
+      setYoutubePlayIntent(false);
 
       // Build the player with the source already attached so it loads at
       // construction, then play immediately. This is the proven pattern; a
@@ -542,6 +625,7 @@ export function PersistentMediaPlayerProvider({
       flushActiveProgress();
       safelyReleasePlayer(() => audioPlayer.pause(), "Failed to pause audio player");
       disableAudioLockScreen();
+      setYoutubePlayIntent(false);
 
       const nextSession: ActiveMediaSession = { kind: "hostedVideo", ...track };
       activeSessionRef.current = nextSession;
@@ -563,6 +647,46 @@ export function PersistentMediaPlayerProvider({
     videoPlayer.play();
   };
 
+  const playYoutubeVideo = async (track: YoutubeVideoTrack) => {
+    const isSameTrack =
+      activeSessionRef.current?.kind === "youtube" &&
+      activeSessionRef.current.contentId === track.contentId &&
+      activeSessionRef.current.youtubeVideoId === track.youtubeVideoId;
+
+    playIntentRef.current = true;
+
+    if (!isSameTrack) {
+      flushActiveProgress();
+      safelyReleasePlayer(() => audioPlayer.pause(), "Failed to pause audio player");
+      disableAudioLockScreen();
+      safelyReleasePlayer(
+        () => videoPlayer.pause(),
+        "Failed to pause hosted video player",
+      );
+
+      appliedResumeRef.current = null;
+      const nextSession: ActiveMediaSession = { kind: "youtube", ...track };
+      activeSessionRef.current = nextSession;
+      setActiveSession(nextSession);
+      setYoutubePlayIntent(true);
+      setYoutubeState({
+        currentTimeSeconds: 0,
+        durationSeconds: track.durationSeconds || 0,
+        isBuffering: true,
+        isPlaying: true,
+        playbackError: null,
+      });
+      return;
+    }
+
+    if (hasFinished) {
+      youtubePlayerRef.current?.seekTo(0);
+      setYoutubeState((current) => ({ ...current, currentTimeSeconds: 0 }));
+    }
+
+    setYoutubePlayIntent(true);
+  };
+
   useEffect(() => {
     if (activeSession?.kind === "hostedVideo") {
       videoPlayer.play();
@@ -573,6 +697,7 @@ export function PersistentMediaPlayerProvider({
   // below): it survives navigation and decides restore/close via
   // resolvePipStopAction. The provider only supplies the player and intent.
   const hostedVideoActive = activeSession?.kind === "hostedVideo";
+  const youtubeActive = activeSession?.kind === "youtube";
 
   const togglePlayback = async () => {
     if (!activeSession) {
@@ -661,6 +786,7 @@ export function PersistentMediaPlayerProvider({
     videoPlayer,
     playEpisode,
     playHostedVideo,
+    playYoutubeVideo,
     playTrack: playEpisode,
     togglePlayback,
     seekBy,
@@ -679,6 +805,72 @@ export function PersistentMediaPlayerProvider({
         playIntentRef={playIntentRef}
         player={videoPlayer}
       />
+      <YoutubePlayerHost
+        active={youtubeActive}
+        onError={(error) => {
+          setYoutubeState((current) => ({ ...current, playbackError: error }));
+        }}
+        onPlayerRoute={onPlayerRoute}
+        onReady={() => {
+          const resume = pendingResumeRef.current;
+          if (
+            resume &&
+            activeSessionRef.current?.kind === "youtube" &&
+            activeSessionRef.current.contentId === resume.contentId
+          ) {
+            pendingResumeRef.current = null;
+            youtubePlayerRef.current?.seekTo(resume.seconds);
+            setYoutubeState((current) => ({
+              ...current,
+              currentTimeSeconds: resume.seconds,
+            }));
+          }
+          setYoutubeState((current) => ({
+            ...current,
+            isBuffering: false,
+          }));
+        }}
+        onSnapshotChange={(snapshot) => {
+          setYoutubeState((current) => {
+            if (snapshot.hasFinished && current.durationSeconds > 0) {
+              return {
+                ...current,
+                currentTimeSeconds: current.durationSeconds,
+                isPlaying: false,
+                isBuffering: snapshot.isBuffering,
+              };
+            }
+
+            return {
+              ...current,
+              isPlaying: snapshot.isPlaying,
+              isBuffering: snapshot.isBuffering,
+            };
+          });
+        }}
+        onTimeUpdate={({ currentSeconds, durationSeconds }) => {
+          if (durationSeconds > 0) {
+            setIsYoutubeDurationFromPlayer(true);
+          }
+          setYoutubeState((current) => ({
+            ...current,
+            currentTimeSeconds: currentSeconds,
+            durationSeconds:
+              durationSeconds > 0
+                ? durationSeconds
+                : current.durationSeconds,
+          }));
+        }}
+        play={youtubePlayIntent}
+        playerRef={youtubePlayerRef}
+        preferredResumeSeconds={preferredResumeSeconds}
+        slotLayout={slotLayout}
+        videoId={
+          activeSession?.kind === "youtube"
+            ? activeSession.youtubeVideoId
+            : null
+        }
+      />
     </PersistentMediaPlayerContext.Provider>
   );
 }
@@ -691,9 +883,9 @@ export function usePersistentMediaPlayerSpace() {
   const { activeSession } = usePersistentMediaPlayer();
   const segments = useSegments();
 
-  // Only the episode card occupies layout space the content must clear. Hosted
-  // video shows no card (just the PiP window), so it reserves nothing.
-  return activeSession?.kind === "episode" &&
+  // Episode and YouTube use the docked mini-player card. Hosted video shows no
+  // card (just the system PiP window), so it reserves nothing.
+  return (activeSession?.kind === "episode" || activeSession?.kind === "youtube") &&
     !shouldHideMiniPlayerForSegments(segments)
     ? PERSISTENT_MEDIA_PLAYER_HEIGHT + PERSISTENT_MEDIA_PLAYER_GAP
     : 0;

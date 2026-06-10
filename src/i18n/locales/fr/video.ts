@@ -17,6 +17,8 @@ export default {
   fullscreen: "Plein écran",
   rotateForFullscreen: "Tourne l'écran pour le plein écran",
   openExternal: "Ouvrir sur YouTube",
+  youtubeBackgroundNote:
+    "YouTube se met en pause lorsque l'app passe en arrière-plan ou que l'écran se verrouille.",
   premiumTitle: "Vidéo réservée aux membres",
   premiumBody:
     "Cette vidéo fait partie du catalogue premium. Connectez-vous pour la regarder.",

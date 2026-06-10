@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery } from "convex/react";
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
+import * as WebBrowser from "expo-web-browser";
 import { VideoView } from "expo-video";
 import { useTranslation } from "react-i18next";
 
@@ -26,7 +27,11 @@ import {
   ReplayGlyph,
   SkipGlyph,
 } from "../../src/components/media/player-icons";
-import { getContentCoverImageUrl } from "../../src/features/content/selectors";
+import {
+  getContentCoverImageUrl,
+  getYoutubeLaunchUrl,
+  getYoutubeVideoId,
+} from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
 import { useDownloads } from "../../src/features/downloads/use-downloads";
 import { resolvePremiumGate } from "../../src/features/membership/premium-gate";
@@ -34,6 +39,7 @@ import { useIsMember } from "../../src/features/membership/use-is-member";
 import { HapticsService } from "../../src/features/haptics/haptics";
 import { formatMediaClock } from "../../src/features/media/format-media-clock";
 import { usePersistentMediaPlayer } from "../../src/features/media/persistent-media-player";
+import { YoutubePlayerSlot } from "../../src/features/media/youtube-player-layout-context";
 import { getScrubTimeFromPress } from "../../src/features/media/scrubbing";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
@@ -58,6 +64,7 @@ export default function PlayerScreen() {
     isPlaying,
     playEpisode,
     playHostedVideo,
+    playYoutubeVideo,
     seekBy,
     seekTo,
     togglePlayback,
@@ -132,6 +139,29 @@ export default function PlayerScreen() {
     }
 
     if (resolvedContent.kind === "video") {
+      if (resolvedContent.videoSource?.kind === "youtube") {
+        const youtubeVideoId = getYoutubeVideoId(resolvedContent.videoSource);
+        if (!youtubeVideoId) {
+          return;
+        }
+
+        const isSameSession =
+          activeSession?.kind === "youtube" &&
+          activeSession.contentId === resolvedContent._id;
+
+        if (!isSameSession) {
+          void playYoutubeVideo({
+            contentId: resolvedContent._id,
+            title: resolvedContent.title,
+            youtubeVideoId,
+            artworkUrl: coverImageUrl,
+            durationSeconds: resolvedContent.durationSeconds,
+          });
+        }
+
+        return;
+      }
+
       const playbackUrl =
         downloadedItem?.localMediaPath ??
         (resolvedContent.videoSource?.kind === "hosted"
@@ -166,10 +196,14 @@ export default function PlayerScreen() {
     isLocked,
     playEpisode,
     playHostedVideo,
+    playYoutubeVideo,
     resolvedContent,
     router,
   ]);
 
+  const isYoutubeVideo =
+    resolvedContent?.kind === "video" &&
+    resolvedContent.videoSource?.kind === "youtube";
   const isHostedVideo =
     resolvedContent?.kind === "video" &&
     (resolvedContent.videoSource?.kind === "hosted" || Boolean(downloadedItem?.localMediaPath));
@@ -208,7 +242,9 @@ export default function PlayerScreen() {
       ? Boolean(downloadedItem?.localMediaPath || resolvedContent.audioUrl)
       : resolvedContent.kind === "video"
         ? Boolean(
-            downloadedItem?.localMediaPath || resolvedContent.videoSource?.kind === "hosted",
+            downloadedItem?.localMediaPath ||
+              resolvedContent.videoSource?.kind === "hosted" ||
+              resolvedContent.videoSource?.kind === "youtube",
           )
         : false)
       ? "ready"
@@ -323,7 +359,9 @@ export default function PlayerScreen() {
   const subtitle =
     resolvedContent.kind === "episode"
       ? `${resolvedContent.category || tEpisode("kicker")} · ${tEpisode("playerLabel")}`
-      : tVideo("providerLabel", { provider: tVideo("hostedProvider") });
+      : isYoutubeVideo
+        ? tVideo("providerLabel", { provider: tVideo("youtubeProvider") })
+        : tVideo("providerLabel", { provider: tVideo("hostedProvider") });
   const playLabel = hasFinished
     ? tEpisode("replay")
     : isPlaying
@@ -489,6 +527,17 @@ export default function PlayerScreen() {
               </Text>
             </View>
           </>
+        ) : isYoutubeVideo ? (
+          <YoutubePlayerSlot
+            style={[
+              styles.videoSurface,
+              {
+                borderRadius: 18,
+                borderColor: withAlpha(fg, 0.12),
+              },
+            ]}
+            testID="player-screen-youtube"
+          />
         ) : (
           <View
             style={[
@@ -635,12 +684,50 @@ export default function PlayerScreen() {
           </Pressable>
         </View>
 
-        {resolvedContent.kind === "video" && videoPlayer ? (
+        {resolvedContent.kind === "video" && isHostedVideo && videoPlayer ? (
           <Text
             style={[styles.rotateHint, { color: withAlpha(fg, 0.5) }]}
           >
             {tVideo("rotateForFullscreen")}
           </Text>
+        ) : null}
+
+        {isYoutubeVideo ? (
+          <>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                void HapticsService.light();
+                const launchUrl =
+                  resolvedContent.videoSource?.kind === "youtube"
+                    ? getYoutubeLaunchUrl(resolvedContent.videoSource)
+                    : undefined;
+                if (launchUrl) {
+                  void WebBrowser.openBrowserAsync(launchUrl);
+                }
+              }}
+              style={({ pressed }) => [
+                styles.externalLink,
+                {
+                  backgroundColor: withAlpha(fg, 0.08),
+                  borderRadius: theme.radii.pill,
+                },
+                pressed && styles.controlPressed,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.externalLinkText,
+                  { color: fg, fontSize: 13 * scaleFont },
+                ]}
+              >
+                {tVideo("openExternal")}
+              </Text>
+            </Pressable>
+            <Text style={[styles.rotateHint, { color: withAlpha(fg, 0.5) }]}>
+              {tVideo("youtubeBackgroundNote")}
+            </Text>
+          </>
         ) : null}
       </View>
     </SafeAreaView>
@@ -790,5 +877,14 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     marginTop: 8,
     textAlign: "center",
+  },
+  externalLink: {
+    alignSelf: "flex-start",
+    marginTop: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  externalLinkText: {
+    fontFamily: fontFamilies.bodySemiBold,
   },
 });

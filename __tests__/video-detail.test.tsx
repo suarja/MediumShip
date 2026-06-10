@@ -63,7 +63,7 @@ describe("video detail", () => {
     mockUseEventListener.mockReset();
   });
 
-  it("launches youtube inline and keeps an external fallback", () => {
+  it("opens the dedicated player route for youtube videos", async () => {
     mockUseQuery.mockImplementation((queryRef: unknown, args: unknown) => {
       if (args === "skip") {
         return undefined;
@@ -97,9 +97,9 @@ describe("video detail", () => {
 
     fireEvent.press(screen.getByLabelText("Play video"));
 
-    expect(screen.getByTestId("youtube-player")).toBeTruthy();
-    expect(screen.getByText("Open on YouTube")).toBeTruthy();
-    expect(mockPush).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith("/player/video_1");
+    });
     expect(WebBrowser.openBrowserAsync).not.toHaveBeenCalled();
   });
 

@@ -108,8 +108,12 @@ export default function VideoDetailScreen() {
             />
           ) : source ? (
             <VideoPlayerCard
+              contentId={resolvedContent._id}
               coverImageUrl={coverImageUrl}
               onHostedPlay={() => {
+                router.push(`/player/${resolvedContent._id}` as never);
+              }}
+              onYoutubePlay={() => {
                 router.push(`/player/${resolvedContent._id}` as never);
               }}
               onPlaybackIntent={closePlayer}

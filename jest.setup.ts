@@ -198,11 +198,15 @@ jest.mock("react-native-youtube-iframe", () => {
       (
         {
           videoId,
+          play,
           onReady,
+          onChangeState,
           testID,
         }: {
           videoId: string;
+          play?: boolean;
           onReady?: () => void;
+          onChangeState?: (state: string) => void;
           testID?: string;
         },
         ref: React.Ref<{

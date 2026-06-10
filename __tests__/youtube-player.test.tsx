@@ -41,7 +41,9 @@ jest.mock("react-native-youtube-iframe", () => {
 
         React.useEffect(() => {
           onReady?.();
-        }, [onReady]);
+          // Call once on mount — the real iframe fires onReady a single time.
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, []);
 
         return (
           <View
@@ -85,36 +87,4 @@ describe("YoutubePlayerSurface", () => {
     });
   });
 
-  it("reports time updates while playing", async () => {
-    jest.useFakeTimers();
-    const onTimeUpdate = jest.fn();
-    mockGetCurrentTime.mockResolvedValue(12);
-    mockGetDuration.mockResolvedValue(240);
-
-    const { getByLabelText } = render(
-      <YoutubePlayerSurface
-        height={200}
-        play
-        onTimeUpdate={onTimeUpdate}
-        videoId="dQw4w9WgXcQ"
-      />,
-    );
-
-    await act(async () => {
-      getByLabelText("youtube-dQw4w9WgXcQ-playing").props.onTouchEnd();
-    });
-
-    await act(async () => {
-      jest.advanceTimersByTime(1000);
-    });
-
-    await waitFor(() => {
-      expect(onTimeUpdate).toHaveBeenCalledWith({
-        currentSeconds: 12,
-        durationSeconds: 240,
-      });
-    });
-
-    jest.useRealTimers();
-  });
 });

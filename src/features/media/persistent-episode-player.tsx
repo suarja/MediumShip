@@ -3,7 +3,6 @@ import {
   PropsWithChildren,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -22,21 +21,14 @@ import { useIsMember } from "../membership/use-is-member";
 import { useContentEngagement } from "../discovery/use-content-engagement";
 import { hasCapability } from "../tenant/public-config";
 import { useAppTheme } from "../theme/theme-provider";
-import type { YoutubePlayerHandle } from "../../components/media/youtube-player";
 import {
   createAudioPlaybackEngine,
   createVideoPlaybackEngine,
-  createYoutubePlaybackEngine,
   NULL_PLAYBACK_ENGINE,
   type VideoPlaybackState,
 } from "./playback-engine";
 import { MIN_RESUMABLE_SECONDS } from "./playback-progress";
 import { usePlaybackProgress } from "./use-playback-progress";
-import {
-  YoutubePlayerLayoutProvider,
-  useYoutubePlayerLayout,
-} from "./youtube-player-layout-context";
-import { YoutubePlayerHost } from "./youtube-player-host";
 import { VideoPipHost } from "./video-pip-host";
 
 export const PERSISTENT_MEDIA_PLAYER_HEIGHT = 64;
@@ -46,8 +38,6 @@ const audioModeConfig = {
   playsInSilentMode: true,
   shouldPlayInBackground: true,
 };
-// Lock screen / Dynamic Island controls require interruptionMode "doNotMix"
-// (set above) so the OS associates the Now Playing session with our player.
 const audioLockScreenOptions = {
   showSeekForward: true,
   showSeekBackward: true,
@@ -76,18 +66,9 @@ export type HostedVideoTrack = {
   durationSeconds?: number;
 };
 
-export type YoutubeVideoTrack = {
-  contentId: string;
-  title: string;
-  youtubeVideoId: string;
-  artworkUrl?: string;
-  durationSeconds?: number;
-};
-
 export type ActiveMediaSession =
   | ({ kind: "episode" } & EpisodeTrack)
-  | ({ kind: "hostedVideo" } & HostedVideoTrack)
-  | ({ kind: "youtube" } & YoutubeVideoTrack);
+  | ({ kind: "hostedVideo" } & HostedVideoTrack);
 
 type PersistentMediaPlayerContextValue = {
   activeSession: ActiveMediaSession | null;
@@ -101,7 +82,6 @@ type PersistentMediaPlayerContextValue = {
   videoPlayer: VideoPlayer | null;
   playEpisode: (track: EpisodeTrack) => Promise<void>;
   playHostedVideo: (track: HostedVideoTrack) => Promise<void>;
-  playYoutubeVideo: (track: YoutubeVideoTrack) => Promise<void>;
   playTrack: (track: EpisodeTrack) => Promise<void>;
   togglePlayback: () => Promise<void>;
   seekBy: (deltaSeconds: number) => Promise<void>;
@@ -122,7 +102,6 @@ const fallbackContextValue: PersistentMediaPlayerContextValue = {
   videoPlayer: null,
   playEpisode: async () => {},
   playHostedVideo: async () => {},
-  playYoutubeVideo: async () => {},
   playTrack: async () => {},
   togglePlayback: async () => {},
   seekBy: async () => {},
@@ -165,16 +144,6 @@ export function shouldHideMiniPlayerForSegments(segments: readonly string[]) {
 export function PersistentMediaPlayerProvider({
   children,
 }: PropsWithChildren) {
-  return (
-    <YoutubePlayerLayoutProvider>
-      <PersistentMediaPlayerProviderInner>
-        {children}
-      </PersistentMediaPlayerProviderInner>
-    </YoutubePlayerLayoutProvider>
-  );
-}
-
-function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
   const [activeSession, setActiveSession] = useState<ActiveMediaSession | null>(null);
   const [videoState, setVideoState] = useState<VideoPlaybackState>({
     currentTimeSeconds: 0,
@@ -183,34 +152,16 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
     isPlaying: false,
     playbackError: null,
   });
-  const [youtubeState, setYoutubeState] = useState<VideoPlaybackState>({
-    currentTimeSeconds: 0,
-    durationSeconds: 0,
-    isBuffering: false,
-    isPlaying: false,
-    playbackError: null,
-  });
-  const [youtubePlayIntent, setYoutubePlayIntent] = useState(true);
   const [isVideoDurationFromPlayer, setIsVideoDurationFromPlayer] =
     useState(false);
-  const [isYoutubeDurationFromPlayer, setIsYoutubeDurationFromPlayer] =
-    useState(false);
-  const youtubePlayerRef = useRef<YoutubePlayerHandle>(null);
   const activeSessionRef = useRef<ActiveMediaSession | null>(null);
   const pendingResumeRef = useRef<{ contentId: string; seconds: number } | null>(
     null,
   );
-  // The contentId whose saved position we have already resumed, so resume is
-  // applied exactly once per open and never re-fires on return to the player.
   const appliedResumeRef = useRef<string | null>(null);
-  // User's *intent* to play, toggled only by explicit play/pause actions — not
-  // by iOS's transient pauses during the PiP-stop transition. Read by
-  // <VideoPipHost> to re-assert playback when returning to the player.
   const playIntentRef = useRef(true);
   const router = useRouter();
   const segments = useSegments();
-  const { slotLayout } = useYoutubePlayerLayout();
-  const onPlayerRoute = segments[0] === "player";
   const { isAuthenticated } = useConvexAuth();
   const { isMember } = useIsMember();
   const { enabledModules } = useAppTheme();
@@ -257,18 +208,6 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
       videoPlayer.staysActiveInBackground = true;
       videoPlayer.showNowPlayingNotification = true;
     }
-
-    setIsYoutubeDurationFromPlayer(false);
-    if (activeSession?.kind !== "youtube") {
-      setYoutubeState({
-        currentTimeSeconds: 0,
-        durationSeconds: 0,
-        isBuffering: false,
-        isPlaying: false,
-        playbackError: null,
-      });
-      setYoutubePlayIntent(true);
-    }
   }, [activeSession, videoPlayer]);
 
   useEventListener(videoPlayer, "playingChange", ({ isPlaying }) => {
@@ -308,7 +247,6 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
           : activeSessionRef.current?.durationSeconds ?? 0,
     }));
 
-    // The source is now loaded — resume to the saved position if any.
     const resume = pendingResumeRef.current;
     if (resume && resume.contentId === activeSessionRef.current.contentId) {
       pendingResumeRef.current = null;
@@ -358,16 +296,6 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
           title: activeSession.title,
         }
       : null;
-  // One engine over the two backends: the provider reads/controls playback
-  // through this seam instead of forking on session kind everywhere.
-  const youtubeCommands = useMemo(
-    () => ({
-      play: () => setYoutubePlayIntent(true),
-      pause: () => setYoutubePlayIntent(false),
-      seekTo: (seconds: number) => youtubePlayerRef.current?.seekTo(seconds),
-    }),
-    [],
-  );
 
   const engine =
     activeSession?.kind === "hostedVideo"
@@ -377,20 +305,13 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
           setState: setVideoState,
           fallbackDuration: activeSession.durationSeconds ?? 0,
         })
-      : activeSession?.kind === "youtube"
-        ? createYoutubePlaybackEngine({
-            state: youtubeState,
-            setState: setYoutubeState,
-            commands: youtubeCommands,
-            fallbackDuration: activeSession.durationSeconds ?? 0,
+      : activeSession?.kind === "episode"
+        ? createAudioPlaybackEngine({
+            player: audioPlayer,
+            status: audioStatus,
+            fallbackDuration: activeTrack?.durationSeconds ?? 0,
           })
-        : activeSession?.kind === "episode"
-          ? createAudioPlaybackEngine({
-              player: audioPlayer,
-              status: audioStatus,
-              fallbackDuration: activeTrack?.durationSeconds ?? 0,
-            })
-          : NULL_PLAYBACK_ENGINE;
+        : NULL_PLAYBACK_ENGINE;
 
   const currentTimeSeconds = engine.currentTime;
   const durationSeconds = engine.duration;
@@ -415,7 +336,7 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
   const mediaKind =
     activeSession?.kind === "episode"
       ? "episode"
-      : activeSession?.kind === "hostedVideo" || activeSession?.kind === "youtube"
+      : activeSession?.kind === "hostedVideo"
         ? "video"
         : undefined;
   const progressRatio =
@@ -429,23 +350,16 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
     consumption: { progressRatio },
   });
 
-  // PlaybackProgress: reconciles local + remote into a resume target and
-  // persists progress. We only *apply* the target (below); the hook owns the
-  // data, never the players.
   const persistableDurationSeconds =
     activeSession?.kind === "hostedVideo"
       ? isVideoDurationFromPlayer && videoState.durationSeconds > 0
         ? videoState.durationSeconds
         : undefined
-      : activeSession?.kind === "youtube"
-        ? isYoutubeDurationFromPlayer && youtubeState.durationSeconds > 0
-          ? youtubeState.durationSeconds
-          : undefined
-        : activeSession?.kind === "episode" &&
-            audioStatus.isLoaded &&
-            audioStatus.duration > 0
-          ? audioStatus.duration
-          : undefined;
+      : activeSession?.kind === "episode" &&
+          audioStatus.isLoaded &&
+          audioStatus.duration > 0
+        ? audioStatus.duration
+        : undefined;
 
   const { preferredResumeSeconds, saveFinal } = usePlaybackProgress({
     contentId: activeSession?.contentId ?? null,
@@ -471,7 +385,6 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
     };
   }, [audioPlayer]);
 
-  // Resume to the saved position once the freshly built player has loaded.
   useEffect(() => {
     const resume = pendingResumeRef.current;
     if (
@@ -485,11 +398,6 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
     }
   }, [activeSession, audioPlayer, audioStatus.isLoaded]);
 
-  // Apply the saved position ONCE per content, when it first becomes known.
-  // Resume is a launch concern: we must NOT re-seek when the user returns to the
-  // player or when a later progress save shifts the target — doing so would yank
-  // them back to a stale position. For members the hook waits for the remote
-  // value, so the first non-null target is already the merged local⊔remote one.
   useEffect(() => {
     if (!activeSession || preferredResumeSeconds === null) {
       return;
@@ -501,7 +409,6 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
     const { contentId, kind } = activeSession;
     const target = preferredResumeSeconds;
 
-    // Already at/after the target — nothing to resume; mark this content handled.
     if (target <= currentTimeSeconds + 1) {
       appliedResumeRef.current = contentId;
       return;
@@ -509,7 +416,6 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
 
     if (kind === "episode") {
       if (!audioStatus.isLoaded) {
-        // Not loaded yet — hand off to the on-load effect below.
         pendingResumeRef.current = { contentId, seconds: target };
         return;
       }
@@ -520,20 +426,11 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
     }
 
     if (kind === "hostedVideo") {
-      // Hosted video: apply directly, leaving pendingResumeRef as a fallback for
-      // the sourceLoad listener in case the source has not finished loading.
       appliedResumeRef.current = contentId;
       pendingResumeRef.current = { contentId, seconds: target };
       (videoPlayer as { currentTime?: number }).currentTime = target;
       setVideoState((current) => ({ ...current, currentTimeSeconds: target }));
-      return;
     }
-
-    // YouTube: seek via the persistent iframe host once it is ready.
-    appliedResumeRef.current = contentId;
-    pendingResumeRef.current = { contentId, seconds: target };
-    youtubePlayerRef.current?.seekTo(target);
-    setYoutubeState((current) => ({ ...current, currentTimeSeconds: target }));
   }, [
     activeSession,
     audioPlayer,
@@ -566,18 +463,12 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
         () => videoPlayer.pause(),
         "Failed to pause hosted video player",
       );
-      setYoutubePlayIntent(false);
 
-      // Build the player with the source already attached so it loads at
-      // construction, then play immediately. This is the proven pattern; a
-      // null player + replace() does not reliably load on iOS.
       const nextPlayer = createAudioPlayer(
         { uri: track.audioUrl },
         { updateInterval: 250 },
       );
       nextPlayer.play();
-      // Surface native Now Playing controls (lock screen, Dynamic Island,
-      // Control Center). The OS drives play/pause/seek directly on this player.
       safelyReleasePlayer(
         () =>
           nextPlayer.setActiveForLockScreen(
@@ -618,14 +509,12 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
       activeSessionRef.current.contentId === track.contentId &&
       activeSessionRef.current.playbackUrl === track.playbackUrl;
 
-    // Launching (or relaunching) a hosted video is an explicit intent to play.
     playIntentRef.current = true;
 
     if (!isSameTrack) {
       flushActiveProgress();
       safelyReleasePlayer(() => audioPlayer.pause(), "Failed to pause audio player");
       disableAudioLockScreen();
-      setYoutubePlayIntent(false);
 
       const nextSession: ActiveMediaSession = { kind: "hostedVideo", ...track };
       activeSessionRef.current = nextSession;
@@ -647,57 +536,13 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
     videoPlayer.play();
   };
 
-  const playYoutubeVideo = async (track: YoutubeVideoTrack) => {
-    const isSameTrack =
-      activeSessionRef.current?.kind === "youtube" &&
-      activeSessionRef.current.contentId === track.contentId &&
-      activeSessionRef.current.youtubeVideoId === track.youtubeVideoId;
-
-    playIntentRef.current = true;
-
-    if (!isSameTrack) {
-      flushActiveProgress();
-      safelyReleasePlayer(() => audioPlayer.pause(), "Failed to pause audio player");
-      disableAudioLockScreen();
-      safelyReleasePlayer(
-        () => videoPlayer.pause(),
-        "Failed to pause hosted video player",
-      );
-
-      appliedResumeRef.current = null;
-      const nextSession: ActiveMediaSession = { kind: "youtube", ...track };
-      activeSessionRef.current = nextSession;
-      setActiveSession(nextSession);
-      setYoutubePlayIntent(true);
-      setYoutubeState({
-        currentTimeSeconds: 0,
-        durationSeconds: track.durationSeconds || 0,
-        isBuffering: true,
-        isPlaying: true,
-        playbackError: null,
-      });
-      return;
-    }
-
-    if (hasFinished) {
-      youtubePlayerRef.current?.seekTo(0);
-      setYoutubeState((current) => ({ ...current, currentTimeSeconds: 0 }));
-    }
-
-    setYoutubePlayIntent(true);
-  };
-
   useEffect(() => {
     if (activeSession?.kind === "hostedVideo") {
       videoPlayer.play();
     }
   }, [activeSession, videoPlayer]);
 
-  // Picture-in-Picture for hosted video is owned by <VideoPipHost> (rendered
-  // below): it survives navigation and decides restore/close via
-  // resolvePipStopAction. The provider only supplies the player and intent.
   const hostedVideoActive = activeSession?.kind === "hostedVideo";
-  const youtubeActive = activeSession?.kind === "youtube";
 
   const togglePlayback = async () => {
     if (!activeSession) {
@@ -705,8 +550,6 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
     }
 
     if (engine.isPlaying) {
-      // Pausing is an explicit intent to stop; it must survive iOS's transient
-      // pauses during PiP transitions (only meaningful for hosted video).
       playIntentRef.current = false;
       engine.pause();
       return;
@@ -748,8 +591,6 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
       disableAudioLockScreen();
     }
 
-    // Persist the final position so the next open resumes here — same rule for
-    // audio and hosted video.
     if (closing && currentTimeSeconds >= MIN_RESUMABLE_SECONDS && !hasFinished) {
       saveFinal(currentTimeSeconds);
     }
@@ -764,9 +605,6 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
       return;
     }
 
-    // Idempotent: if we are already on the player route, don't stack another.
-    // This makes it safe to call from PiP-stop (the restore button), navigation,
-    // and the mini-player tap without producing duplicate routes.
     if (segments[0] === "player") {
       return;
     }
@@ -786,7 +624,6 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
     videoPlayer,
     playEpisode,
     playHostedVideo,
-    playYoutubeVideo,
     playTrack: playEpisode,
     togglePlayback,
     seekBy,
@@ -805,72 +642,6 @@ function PersistentMediaPlayerProviderInner({ children }: PropsWithChildren) {
         playIntentRef={playIntentRef}
         player={videoPlayer}
       />
-      <YoutubePlayerHost
-        active={youtubeActive}
-        onError={(error) => {
-          setYoutubeState((current) => ({ ...current, playbackError: error }));
-        }}
-        onPlayerRoute={onPlayerRoute}
-        onReady={() => {
-          const resume = pendingResumeRef.current;
-          if (
-            resume &&
-            activeSessionRef.current?.kind === "youtube" &&
-            activeSessionRef.current.contentId === resume.contentId
-          ) {
-            pendingResumeRef.current = null;
-            youtubePlayerRef.current?.seekTo(resume.seconds);
-            setYoutubeState((current) => ({
-              ...current,
-              currentTimeSeconds: resume.seconds,
-            }));
-          }
-          setYoutubeState((current) => ({
-            ...current,
-            isBuffering: false,
-          }));
-        }}
-        onSnapshotChange={(snapshot) => {
-          setYoutubeState((current) => {
-            if (snapshot.hasFinished && current.durationSeconds > 0) {
-              return {
-                ...current,
-                currentTimeSeconds: current.durationSeconds,
-                isPlaying: false,
-                isBuffering: snapshot.isBuffering,
-              };
-            }
-
-            return {
-              ...current,
-              isPlaying: snapshot.isPlaying,
-              isBuffering: snapshot.isBuffering,
-            };
-          });
-        }}
-        onTimeUpdate={({ currentSeconds, durationSeconds }) => {
-          if (durationSeconds > 0) {
-            setIsYoutubeDurationFromPlayer(true);
-          }
-          setYoutubeState((current) => ({
-            ...current,
-            currentTimeSeconds: currentSeconds,
-            durationSeconds:
-              durationSeconds > 0
-                ? durationSeconds
-                : current.durationSeconds,
-          }));
-        }}
-        play={youtubePlayIntent}
-        playerRef={youtubePlayerRef}
-        preferredResumeSeconds={preferredResumeSeconds}
-        slotLayout={slotLayout}
-        videoId={
-          activeSession?.kind === "youtube"
-            ? activeSession.youtubeVideoId
-            : null
-        }
-      />
     </PersistentMediaPlayerContext.Provider>
   );
 }
@@ -883,9 +654,7 @@ export function usePersistentMediaPlayerSpace() {
   const { activeSession } = usePersistentMediaPlayer();
   const segments = useSegments();
 
-  // Episode and YouTube use the docked mini-player card. Hosted video shows no
-  // card (just the system PiP window), so it reserves nothing.
-  return (activeSession?.kind === "episode" || activeSession?.kind === "youtube") &&
+  return activeSession?.kind === "episode" &&
     !shouldHideMiniPlayerForSegments(segments)
     ? PERSISTENT_MEDIA_PLAYER_HEIGHT + PERSISTENT_MEDIA_PLAYER_GAP
     : 0;

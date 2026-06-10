@@ -61,9 +61,7 @@ export function PersistentMediaMiniPlayer() {
   const kicker =
     activeSession.kind === "episode"
       ? tEpisode("playerLabel")
-      : activeSession.kind === "youtube"
-        ? tVideo("youtubeProvider")
-        : tVideo("playVideo");
+      : tVideo("playVideo");
   const progressRatio =
     durationSeconds > 0
       ? Math.min(currentTimeSeconds / durationSeconds, 1)

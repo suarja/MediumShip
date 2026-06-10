@@ -134,7 +134,10 @@ export function HistoryRow({ item, divider = true }: HistoryRowProps) {
             <View
               style={[
                 styles.progressBar,
-                { backgroundColor: theme.colors.border },
+                {
+                  backgroundColor: theme.colors.border,
+                  maxWidth: 120 * scaleSpace,
+                },
               ]}
             >
               <View
@@ -195,10 +198,12 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   progressBar: {
+    alignSelf: "flex-start",
     height: 3,
     borderRadius: 999,
     marginTop: 8,
     overflow: "hidden",
+    width: "100%",
   },
   progressFill: {
     height: "100%",

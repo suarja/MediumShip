@@ -28,7 +28,7 @@ type ResumeCardProps = {
 export function ResumeCard({ enabled = true, onPress }: ResumeCardProps = {}) {
   const { t } = useTranslation("library");
   const { theme } = useAppTheme();
-  const { scaleFont, scaleSpace } = useResponsive();
+  const { scaleFont } = useResponsive();
   const pushWithReturn = usePushWithReturn();
   const { data: resume, isLoading } = useResume({ enabled });
   const [localSnapshot, setLocalSnapshot] =
@@ -167,11 +167,7 @@ export function ResumeCard({ enabled = true, onPress }: ResumeCardProps = {}) {
       <View
         style={[
           styles.resumeBar,
-          {
-            backgroundColor: withAlpha(theme.colors.canvas, 0.16),
-            marginLeft: (40 + 10) * scaleSpace,
-            marginRight: (24 + 10) * scaleSpace,
-          },
+          { backgroundColor: withAlpha(theme.colors.canvas, 0.16) },
         ]}
       >
         <View

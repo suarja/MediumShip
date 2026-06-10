@@ -58,7 +58,12 @@ function mockThemeFromConfigs(
 ) {
   const featureConfigs = resolveEffectiveFeatureConfigs({ featureConfigs: featureConfigsInput });
   const effectiveNavigation = resolveEffectiveNavigation(featureConfigs, navOrder);
-  mockUseAppTheme.mockReturnValue({ featureConfigs, effectiveNavigation, isLoading });
+  mockUseAppTheme.mockReturnValue({
+    theme: { colors: { canvas: "#ffffff", accent: "#000000" } },
+    featureConfigs,
+    effectiveNavigation,
+    isLoading,
+  });
   return { featureConfigs, effectiveNavigation };
 }
 

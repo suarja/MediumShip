@@ -1,5 +1,6 @@
 import { Tabs, usePathname, useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 import { AppTabBar } from "../../src/components/navigation/app-tab-bar";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
@@ -46,7 +47,7 @@ function tabHref(
 
 // Public tab shell: reading surfaces stay available without authentication.
 export default function AppLayout() {
-  const { effectiveNavigation, isLoading } = useAppTheme();
+  const { theme, effectiveNavigation, isLoading } = useAppTheme();
   const pathname = usePathname();
   const router = useRouter();
   const bootRedirectHandledRef = useRef(false);
@@ -82,6 +83,18 @@ export default function AppLayout() {
     bootRedirectHandledRef.current = true;
   }, [effectiveNavigation, isLoading, pathname, router]);
 
+  // Hold the tab shell until the tenant theme resolves. Otherwise the tabs (and
+  // the feed skeleton) first paint with the default palette, then re-render with
+  // the tenant's — a visible double skeleton in the wrong colours. The spinner
+  // matches the root bootstrap screen (same default canvas) for a seamless boot.
+  if (isLoading) {
+    return (
+      <View style={[styles.bootstrap, { backgroundColor: theme.colors.canvas }]}>
+        <ActivityIndicator color={theme.colors.accent} />
+      </View>
+    );
+  }
+
   return (
     <Tabs
       tabBar={(props) => <AppTabBar {...props} />}
@@ -99,3 +112,11 @@ export default function AppLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  bootstrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});

@@ -76,6 +76,7 @@ const discoveryFeedItemValidator = v.object({
   ),
   externalId: v.optional(v.string()),
   canonicalUrl: v.optional(v.string()),
+  author: v.optional(v.string()),
   reason: v.union(
     v.literal("personalized"),
     v.literal("archive"),

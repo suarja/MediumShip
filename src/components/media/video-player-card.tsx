@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 
+import { useConvexAuth } from "convex/react";
 import { useEventListener } from "expo";
 import {
   isPictureInPictureSupported,
@@ -8,75 +9,38 @@ import {
   VideoView,
 } from "expo-video";
 import * as WebBrowser from "expo-web-browser";
-import { WebView } from "react-native-webview";
 import { useTranslation } from "react-i18next";
 
 import {
-  getYoutubeEmbedUrl,
   getYoutubeLaunchUrl,
+  getYoutubeVideoId,
 } from "../../features/content/selectors";
 import type { VideoSource } from "../../features/content/types";
 import { HapticsService } from "../../features/haptics/haptics";
+import { usePlaybackProgress } from "../../features/media/use-playback-progress";
+import { useIsMember } from "../../features/membership/use-is-member";
 import { useResponsive } from "../../features/responsive/use-responsive";
+import { hasCapability } from "../../features/tenant/public-config";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
-import { env } from "../../lib/env";
 import { MediaHeroPlayBando } from "./media-hero-play-bando";
+import { YoutubePlayerSurface } from "./youtube-player";
 
 type VideoPlayerCardProps = {
+  contentId?: string;
   coverImageUrl?: string;
   onHostedPlay?: () => void;
+  onYoutubePlay?: () => void;
   onPlaybackIntent?: () => void;
   playLabel: string;
   source: VideoSource;
 };
 
-const youtubeRefererUrl =
-  env.EXPO_PUBLIC_EMBED_REFERER_URL ??
-  env.EXPO_PUBLIC_CONVEX_SITE_URL ??
-  "https://mediumship.app";
-
-function buildYoutubeEmbedHtml(embedUrl: string) {
-  return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
-    />
-    <meta name="referrer" content="origin" />
-    <style>
-      html, body {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        background: #000;
-        overflow: hidden;
-      }
-
-      iframe {
-        width: 100%;
-        height: 100%;
-        border: 0;
-      }
-    </style>
-  </head>
-  <body>
-    <iframe
-      src="${embedUrl}"
-      title="YouTube player"
-      allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-      allowfullscreen
-    ></iframe>
-  </body>
-</html>`;
-}
-
 export function VideoPlayerCard({
+  contentId,
   coverImageUrl,
   onHostedPlay,
+  onYoutubePlay,
   onPlaybackIntent,
   playLabel,
   source,
@@ -84,11 +48,31 @@ export function VideoPlayerCard({
   const { t } = useTranslation("video");
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
+  const { width: windowWidth } = useWindowDimensions();
+  const { isAuthenticated } = useConvexAuth();
+  const { isMember } = useIsMember();
+  const { enabledModules } = useAppTheme();
   const hostedVideoRef = useRef<VideoView>(null);
   const [hasStarted, setHasStarted] = useState(false);
+  const [youtubeCurrentSeconds, setYoutubeCurrentSeconds] = useState(0);
+  const [youtubeDurationSeconds, setYoutubeDurationSeconds] = useState(0);
   const player = useVideoPlayer(
     source.kind === "hosted" ? { uri: source.playbackUrl } : null,
   );
+
+  const canSyncRemoteProgress =
+    isAuthenticated &&
+    isMember &&
+    hasCapability(enabledModules, "progressSync");
+
+  const { preferredResumeSeconds, saveFinal } = usePlaybackProgress({
+    contentId: source.kind === "youtube" ? (contentId ?? null) : null,
+    durationSeconds: youtubeDurationSeconds,
+    persistableDurationSeconds:
+      youtubeDurationSeconds > 0 ? youtubeDurationSeconds : undefined,
+    currentSeconds: youtubeCurrentSeconds,
+    canSyncRemote: canSyncRemoteProgress,
+  });
 
   useEventListener(player, "playingChange", ({ isPlaying }) => {
     if (source.kind === "hosted" && isPlaying) {
@@ -102,8 +86,24 @@ export function VideoPlayerCard({
     }
   }, [hasStarted, player, source.kind]);
 
+  useEffect(() => {
+    return () => {
+      if (
+        source.kind === "youtube" &&
+        hasStarted &&
+        youtubeCurrentSeconds > 0
+      ) {
+        saveFinal(youtubeCurrentSeconds);
+      }
+    };
+  }, [hasStarted, saveFinal, source.kind, youtubeCurrentSeconds]);
+
   const startYoutubePlayback = () => {
     onPlaybackIntent?.();
+    if (onYoutubePlay) {
+      onYoutubePlay();
+      return;
+    }
     setHasStarted(true);
   };
 
@@ -123,22 +123,22 @@ export function VideoPlayerCard({
   };
 
   if (source.kind === "youtube") {
-    const embedUrl = getYoutubeEmbedUrl(source);
+    const youtubeVideoId = getYoutubeVideoId(source);
     const launchUrl = getYoutubeLaunchUrl(source);
+    const playerHeight = Math.round((windowWidth * 9) / 16);
 
-    if (!embedUrl || !launchUrl) {
+    if (!youtubeVideoId || !launchUrl) {
       return (
-        <Text style={[styles.unavailable, { color: theme.colors.textMuted, fontSize: 14 * scaleFont }]}>
+        <Text
+          style={[
+            styles.unavailable,
+            { color: theme.colors.textMuted, fontSize: 14 * scaleFont },
+          ]}
+        >
           {t("unavailable")}
         </Text>
       );
     }
-
-    const startedEmbedUrl = new URL(embedUrl);
-    if (hasStarted) {
-      startedEmbedUrl.searchParams.set("autoplay", "1");
-    }
-    const youtubeEmbedHtml = buildYoutubeEmbedHtml(startedEmbedUrl.toString());
 
     return (
       <View style={styles.card}>
@@ -151,18 +151,17 @@ export function VideoPlayerCard({
           ]}
         >
           {hasStarted ? (
-            <WebView
-              allowsFullscreenVideo
-              allowsInlineMediaPlayback
-              javaScriptEnabled
-              mediaPlaybackRequiresUserAction={false}
-              scrollEnabled={false}
-              source={{
-                html: youtubeEmbedHtml,
-                baseUrl: youtubeRefererUrl,
+            <YoutubePlayerSurface
+              height={playerHeight}
+              play={hasStarted}
+              preferredResumeSeconds={preferredResumeSeconds}
+              videoId={youtubeVideoId}
+              onTimeUpdate={({ currentSeconds, durationSeconds }) => {
+                setYoutubeCurrentSeconds(currentSeconds);
+                if (durationSeconds > 0) {
+                  setYoutubeDurationSeconds(durationSeconds);
+                }
               }}
-              style={styles.webview}
-              testID="youtube-player"
             />
           ) : coverImageUrl ? (
             <Image
@@ -210,7 +209,12 @@ export function VideoPlayerCard({
                 pressed && styles.pressed,
               ]}
             >
-              <Text style={[styles.linkButtonText, { color: theme.colors.accent, fontSize: 14 * scaleFont }]}>
+              <Text
+                style={[
+                  styles.linkButtonText,
+                  { color: theme.colors.accent, fontSize: 14 * scaleFont },
+                ]}
+              >
                 {t("openExternal")}
               </Text>
             </Pressable>
@@ -311,10 +315,6 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   secondaryActions: {},
-  webview: {
-    flex: 1,
-    backgroundColor: "transparent",
-  },
   videoView: {
     width: "100%",
     height: "100%",

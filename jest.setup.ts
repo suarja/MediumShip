@@ -187,3 +187,45 @@ jest.mock("react-native-webview", () => {
       React.createElement(View, { testID }),
   };
 });
+
+jest.mock("react-native-youtube-iframe", () => {
+  const React = require("react");
+  const { View } = require("react-native");
+
+  return {
+    __esModule: true,
+    default: React.forwardRef(
+      (
+        {
+          videoId,
+          onReady,
+          testID,
+        }: {
+          videoId: string;
+          onReady?: () => void;
+          testID?: string;
+        },
+        ref: React.Ref<{
+          seekTo: (seconds: number, allowSeekAhead: boolean) => void;
+          getCurrentTime: () => Promise<number>;
+          getDuration: () => Promise<number>;
+        }>,
+      ) => {
+        React.useImperativeHandle(ref, () => ({
+          seekTo: jest.fn(),
+          getCurrentTime: jest.fn().mockResolvedValue(0),
+          getDuration: jest.fn().mockResolvedValue(300),
+        }));
+
+        React.useEffect(() => {
+          onReady?.();
+        }, [onReady]);
+
+        return React.createElement(View, {
+          testID: testID ?? "mock-youtube-iframe",
+          accessibilityLabel: `youtube-${videoId}`,
+        });
+      },
+    ),
+  };
+});

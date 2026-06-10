@@ -57,11 +57,13 @@ import type * as entitlements_authz from "../entitlements/authz.js";
 import type * as entitlements_model from "../entitlements/model.js";
 import type * as entitlements_mutations from "../entitlements/mutations.js";
 import type * as entitlements_queries from "../entitlements/queries.js";
+import type * as entitlements_revenuecatSync from "../entitlements/revenuecatSync.js";
 import type * as events_model from "../events/model.js";
 import type * as events_queries from "../events/queries.js";
 import type * as featureCatalog from "../featureCatalog.js";
 import type * as http from "../http.js";
 import type * as httpHandlers_clerkWebhook from "../httpHandlers/clerkWebhook.js";
+import type * as httpHandlers_revenuecatWebhook from "../httpHandlers/revenuecatWebhook.js";
 import type * as httpHandlers_svix from "../httpHandlers/svix.js";
 import type * as insights_agent from "../insights/agent.js";
 import type * as insights_cron from "../insights/cron.js";
@@ -91,6 +93,7 @@ import type * as playbackProgress_queries from "../playbackProgress/queries.js";
 import type * as playbackProgress_resume from "../playbackProgress/resume.js";
 import type * as readingHistory_mutations from "../readingHistory/mutations.js";
 import type * as readingHistory_queries from "../readingHistory/queries.js";
+import type * as revenuecat from "../revenuecat.js";
 import type * as tenants_mutations from "../tenants/mutations.js";
 import type * as tenants_queries from "../tenants/queries.js";
 import type * as tenants_seed from "../tenants/seed.js";
@@ -155,11 +158,13 @@ declare const fullApi: ApiFromModules<{
   "entitlements/model": typeof entitlements_model;
   "entitlements/mutations": typeof entitlements_mutations;
   "entitlements/queries": typeof entitlements_queries;
+  "entitlements/revenuecatSync": typeof entitlements_revenuecatSync;
   "events/model": typeof events_model;
   "events/queries": typeof events_queries;
   featureCatalog: typeof featureCatalog;
   http: typeof http;
   "httpHandlers/clerkWebhook": typeof httpHandlers_clerkWebhook;
+  "httpHandlers/revenuecatWebhook": typeof httpHandlers_revenuecatWebhook;
   "httpHandlers/svix": typeof httpHandlers_svix;
   "insights/agent": typeof insights_agent;
   "insights/cron": typeof insights_cron;
@@ -189,6 +194,7 @@ declare const fullApi: ApiFromModules<{
   "playbackProgress/resume": typeof playbackProgress_resume;
   "readingHistory/mutations": typeof readingHistory_mutations;
   "readingHistory/queries": typeof readingHistory_queries;
+  revenuecat: typeof revenuecat;
   "tenants/mutations": typeof tenants_mutations;
   "tenants/queries": typeof tenants_queries;
   "tenants/seed": typeof tenants_seed;
@@ -226,6 +232,7 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   agent: import("@convex-dev/agent/_generated/component.js").ComponentApi<"agent">;
+  revenuecat: import("convex-revenuecat/_generated/component.js").ComponentApi<"revenuecat">;
   youtubeMetadata: import("convex-youtube-cache/_generated/component.js").ComponentApi<"youtubeMetadata">;
   r2: import("@convex-dev/r2/_generated/component.js").ComponentApi<"r2">;
 };

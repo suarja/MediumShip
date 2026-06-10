@@ -1,6 +1,7 @@
 import { httpRouter } from "convex/server";
 
 import { clerkWebhookPost } from "./httpHandlers/clerkWebhook";
+import { revenuecatWebhookPost } from "./httpHandlers/revenuecatWebhook";
 
 const http = httpRouter();
 
@@ -12,6 +13,16 @@ http.route({
   path: "/clerk-webhook",
   method: "POST",
   handler: clerkWebhookPost,
+});
+
+// RevenueCat mobile IAP webhooks (via `convex-revenuecat` component).
+// Endpoint: /webhooks/revenuecat
+// Configure in RC dashboard: Integrations → Webhooks → Authorization header =
+// Convex env `REVENUECAT_WEBHOOK_AUTH`.
+http.route({
+  path: "/webhooks/revenuecat",
+  method: "POST",
+  handler: revenuecatWebhookPost,
 });
 
 export default http;

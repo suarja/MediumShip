@@ -134,19 +134,19 @@ export function useGoBack(fallback: Href = "/home") {
   const globalParams = useGlobalSearchParams<Record<string, string | string[]>>();
 
   return useCallback(() => {
-    const returnTo =
-      readReturnToParam(localParams) ?? readReturnToParam(globalParams);
-
-    if (returnTo) {
-      router.replace(returnTo as Href);
-      return;
-    }
-
+    // Prefer a real pop: it reveals the still-mounted previous screen instead of
+    // remounting it. `router.replace(returnTo)` navigates fresh to the target,
+    // which remounts feed screens and makes them reload from their loading state
+    // on every back. In the push case back() lands on the same screen returnTo
+    // points to, just without the remount.
     if (router.canGoBack()) {
       router.back();
       return;
     }
 
-    router.replace(fallback);
+    // No back stack (deep link / cold entry): fall back to the recorded origin.
+    const returnTo =
+      readReturnToParam(localParams) ?? readReturnToParam(globalParams);
+    router.replace((returnTo ?? fallback) as Href);
   }, [fallback, globalParams, localParams, router]);
 }

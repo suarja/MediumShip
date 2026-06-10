@@ -51,6 +51,8 @@ jest.mock("expo-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => children,
   useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
   usePathname: () => "/explore",
+  useLocalSearchParams: () => ({}),
+  useGlobalSearchParams: () => ({}),
 }));
 
 describe("explore screen", () => {

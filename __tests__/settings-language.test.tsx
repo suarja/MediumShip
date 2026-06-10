@@ -19,7 +19,11 @@ jest.mock("convex/react", () => ({
 }));
 
 jest.mock("expo-router", () => ({
-  useRouter: () => ({ push: jest.fn() }),
+  Link: ({ children }: { children: React.ReactNode }) => children,
+  useRouter: () => ({ push: jest.fn(), back: jest.fn(), replace: jest.fn(), canGoBack: () => false }),
+  usePathname: () => "/settings",
+  useLocalSearchParams: () => ({}),
+  useGlobalSearchParams: () => ({}),
 }));
 
 jest.mock("../src/features/auth/use-clerk-auth", () => ({

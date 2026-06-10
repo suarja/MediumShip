@@ -24,7 +24,9 @@ jest.mock("react-native-safe-area-context", () => {
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => children,
   useLocalSearchParams: () => ({ name: "Analyses" }),
-  useRouter: () => ({ back: mockBack }),
+  useGlobalSearchParams: () => ({}),
+  usePathname: () => "/category/Analyses",
+  useRouter: () => ({ back: mockBack, replace: jest.fn(), canGoBack: () => true }),
 }));
 
 jest.mock("../src/features/haptics/haptics", () => ({

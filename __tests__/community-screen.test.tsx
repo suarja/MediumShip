@@ -31,7 +31,10 @@ jest.mock("react-native-safe-area-context", () => {
 
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => children,
-  useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
+  useRouter: () => ({ push: jest.fn(), back: jest.fn(), replace: jest.fn(), canGoBack: () => true }),
+  usePathname: () => "/community",
+  useLocalSearchParams: () => ({}),
+  useGlobalSearchParams: () => ({}),
 }));
 
 const mockOpenPaywall = jest.fn();

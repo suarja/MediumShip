@@ -34,6 +34,9 @@ jest.mock("../src/features/categories/use-categories", () => ({
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => children,
   useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
+  usePathname: () => "/explore",
+  useLocalSearchParams: () => ({}),
+  useGlobalSearchParams: () => ({}),
 }));
 
 function makeTheme(enabledModules: string[]) {

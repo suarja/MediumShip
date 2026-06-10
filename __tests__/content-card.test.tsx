@@ -13,6 +13,9 @@ jest.mock("../src/features/theme/theme-provider", () => ({
 
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => children,
+  usePathname: () => "/",
+  useLocalSearchParams: () => ({}),
+  useGlobalSearchParams: () => ({}),
 }));
 
 const SAMPLE_ITEM: ContentCardModel = {

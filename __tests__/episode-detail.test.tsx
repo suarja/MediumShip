@@ -31,7 +31,9 @@ jest.mock("expo-router", () => ({
     return children as ReactNode;
   },
   useLocalSearchParams: () => ({ id: "episode_1" }),
-  useRouter: () => ({ push: mockPush }),
+  useGlobalSearchParams: () => ({}),
+  usePathname: () => "/episode/episode_1",
+  useRouter: () => ({ push: mockPush, back: jest.fn(), canGoBack: () => true, replace: jest.fn() }),
 }));
 
 jest.mock("../src/features/network/use-network-status", () => ({

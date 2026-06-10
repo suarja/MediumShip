@@ -44,7 +44,10 @@ const mockPush = jest.fn();
 
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => children,
-  useRouter: () => ({ push: mockPush, back: jest.fn() }),
+  useRouter: () => ({ push: mockPush, back: jest.fn(), replace: jest.fn(), canGoBack: () => true }),
+  usePathname: () => "/collections",
+  useLocalSearchParams: () => ({}),
+  useGlobalSearchParams: () => ({}),
 }));
 
 jest.mock("../src/features/haptics/haptics", () => ({
@@ -101,6 +104,8 @@ describe("collections index screen", () => {
     render(<CollectionsScreen />);
     fireEvent.press(screen.getByText("Le grand entretien"));
     expect(HapticsService.light).toHaveBeenCalledTimes(1);
-    expect(mockPush).toHaveBeenCalledWith("/collection/coll-1");
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: "/collection/coll-1" }),
+    );
   });
 });

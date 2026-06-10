@@ -55,6 +55,9 @@ const mockBack = jest.fn();
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => children,
   useRouter: () => ({ push: mockPush, back: mockBack }),
+  usePathname: () => "/agenda",
+  useLocalSearchParams: () => ({}),
+  useGlobalSearchParams: () => ({}),
 }));
 
 jest.mock("../src/features/haptics/haptics", () => ({
@@ -125,6 +128,8 @@ describe("agenda screen", () => {
     render(<AgendaScreen />);
     fireEvent.press(screen.getByText("Assemblée ouverte · Paris"));
     expect(HapticsService.light).toHaveBeenCalledTimes(1);
-    expect(mockPush).toHaveBeenCalledWith("/event/evt-1");
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: "/event/evt-1" }),
+    );
   });
 });

@@ -67,6 +67,9 @@ jest.mock("../src/features/content/content-actions-sheet-provider", () => ({
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => children,
   useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
+  usePathname: () => "/home",
+  useLocalSearchParams: () => ({}),
+  useGlobalSearchParams: () => ({}),
 }));
 
 function makeTheme(enabledModules: string[]) {

@@ -35,6 +35,9 @@ jest.mock("../src/features/media/persistent-media-player", () => ({
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => children,
   useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
+  usePathname: () => "/explore",
+  useLocalSearchParams: () => ({}),
+  useGlobalSearchParams: () => ({}),
 }));
 
 beforeAll(async () => {

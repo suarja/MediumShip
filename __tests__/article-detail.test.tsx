@@ -14,8 +14,10 @@ jest.mock("convex/react", () => ({
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: ReactNode }) => children,
   useLocalSearchParams: () => ({ id: "article_1" }),
+  useGlobalSearchParams: () => ({}),
   useSegments: () => ["(app)"],
-  useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
+  usePathname: () => "/article/article_1",
+  useRouter: () => ({ push: jest.fn(), back: jest.fn(), canGoBack: () => true, replace: jest.fn() }),
 }));
 
 jest.mock("../src/features/network/use-network-status", () => ({

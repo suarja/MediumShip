@@ -22,6 +22,9 @@ jest.mock("../src/features/haptics/haptics", () => ({
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: ReactNode }) => children,
   useRouter: () => ({ push: jest.fn() }),
+  usePathname: () => "/",
+  useLocalSearchParams: () => ({}),
+  useGlobalSearchParams: () => ({}),
 }));
 
 jest.mock("../src/features/auth/use-clerk-auth", () => ({

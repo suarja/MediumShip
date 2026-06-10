@@ -3,6 +3,8 @@ import { useEffect, useRef } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 import { AppTabBar } from "../../src/components/navigation/app-tab-bar";
+import { NotificationBootstrap } from "../../src/features/notifications/notification-bootstrap";
+import { NotificationPermissionProvider } from "../../src/features/notifications/permission";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 import type { FeatureKey } from "../../convex/featureCatalog";
 import {
@@ -96,20 +98,23 @@ export default function AppLayout() {
   }
 
   return (
-    <Tabs
-      tabBar={(props) => <AppTabBar {...props} />}
-      screenOptions={{ headerShown: false }}
-    >
-      {orderedRoutes.map((name) => (
-        <Tabs.Screen
-          key={name}
-          name={name}
-          options={{
-            href: tabHref(name, effectiveNavigation) as null | undefined,
-          }}
-        />
-      ))}
-    </Tabs>
+    <NotificationPermissionProvider>
+      <NotificationBootstrap />
+      <Tabs
+        tabBar={(props) => <AppTabBar {...props} />}
+        screenOptions={{ headerShown: false }}
+      >
+        {orderedRoutes.map((name) => (
+          <Tabs.Screen
+            key={name}
+            name={name}
+            options={{
+              href: tabHref(name, effectiveNavigation) as null | undefined,
+            }}
+          />
+        ))}
+      </Tabs>
+    </NotificationPermissionProvider>
   );
 }
 

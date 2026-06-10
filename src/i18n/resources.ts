@@ -11,6 +11,7 @@ import libraryEn from "./locales/en/library";
 import listsEn from "./locales/en/lists";
 import navigationEn from "./locales/en/navigation";
 import networkEn from "./locales/en/network";
+import notificationsEn from "./locales/en/notifications";
 import paywallEn from "./locales/en/paywall";
 import premiumEn from "./locales/en/premium";
 import profileEn from "./locales/en/profile";
@@ -29,6 +30,7 @@ import libraryFr from "./locales/fr/library";
 import listsFr from "./locales/fr/lists";
 import navigationFr from "./locales/fr/navigation";
 import networkFr from "./locales/fr/network";
+import notificationsFr from "./locales/fr/notifications";
 import paywallFr from "./locales/fr/paywall";
 import premiumFr from "./locales/fr/premium";
 import profileFr from "./locales/fr/profile";
@@ -55,6 +57,7 @@ export const resources = {
     episode: episodeEn,
     video: videoEn,
     network: networkEn,
+    notifications: notificationsEn,
   },
   fr: {
     common: commonFr,
@@ -75,6 +78,7 @@ export const resources = {
     episode: episodeFr,
     video: videoFr,
     network: networkFr,
+    notifications: notificationsFr,
   },
 } as const;
 

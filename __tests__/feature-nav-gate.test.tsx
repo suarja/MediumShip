@@ -17,6 +17,18 @@ jest.mock("../src/features/theme/theme-provider", () => ({
   useAppTheme: () => mockUseAppTheme(),
 }));
 
+jest.mock("../src/features/notifications/notification-bootstrap", () => ({
+  NotificationBootstrap: () => null,
+}));
+
+jest.mock("../src/features/notifications/permission", () => {
+  const React = require("react");
+  return {
+    NotificationPermissionProvider: ({ children }: { children: React.ReactNode }) =>
+      children,
+  };
+});
+
 jest.mock("expo-router", () => {
   const React = require("react");
   const { View } = require("react-native");

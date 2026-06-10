@@ -4,6 +4,20 @@ Idées soulevées mais non encore planifiées en slice. Rangées par **priorité
 
 ---
 
+## 💰 Vague monétisation — 1ʳᵉ soumission store (payant day-1)
+
+> **Décisions actées le 2026-06-10** (voir `docs/monetization-reflection.md` → « Décisions tranchées »). La démo **est** un produit **payant** : RevenueCat + IAP Apple, **2 €/mois + 2 sem. d'essai** (modèle Gleeph). Feature signature = **analyse de goûts + sélection connexe** (cron quotidien + page dédiée/historique). Sync **retirée** des leviers premium (inhérente Convex). **Ordre d'implémentation fixé : 1 → 2 → 3 → 4** ; gating par quantité différé. Implémentation **séquentielle** (plans suivants mis à jour après chaque slice si besoin). Plans : `docs/superpowers/plans/2026-06-10-monet-slice-*.md`.
+
+- **Slice 1 — Digest quotidien + notification locale (gratuit).** **La feature feed existe déjà** (`discovery/scoring`+`feed`) ; ce slice ajoute le **module de notifs locales** calqué sur `../editia/mobile/lib/notifications/` (permission passive, prompt explicite, fenêtre glissante, replay cold-start) qui **ritualise le retour quotidien** → l'utilisateur revient, voit son feed à jour. Pas de scoring neuf.
+- **Slice 2 — Analyse premium IA + sélection connexe (signature, gros morceau).** `@convex-dev/agent` (squelette `../editia/web/convex/agent/`). **CRON quotidien à heure fixe** génère pour chaque membre premium : **(1)** texte « journaliste » de goûts (LLM, analyse **globale**, pas de « pourquoi » par item) + **(2)** sélection de contenus connexes (**moteur `discovery/scoring` déterministe**, pas le LLM). **Page analyse dédiée + page historique** de toutes les analyses ; **nav auto** vers la nouvelle analyse à l'ouverture si non vue ; **carte d'entrée dans Profil**. Gatée `requiresPremium`. Réutilise la notif (slice 1) pour annoncer « ton analyse est prête ».
+- **Slice 3 — Sweep badges natifs.** Afficher le badge d'accès **uniquement si bloqué pour cet utilisateur** (`requiresPremium`/`requiresSignIn` de `use-feature-access.ts`), jamais sur `access === "premium"` brut. Aligner agenda, détail event, detail-hero, cards de feed sur la règle déjà appliquée à Profil. *(petit)*
+- **Slice 4 — Câblage RevenueCat + IAP (BLOQUANT soumission, en dernier).** `react-native-purchases` + produits App Store Connect (2 €/mois + 2 sem. essai) ; provider **écrit `entitlements`**, flip `PREMIUM_PAYMENT_DEFERRED = false`, **read path inchangé** ; paywall réel + restore. Prérequis : compte Apple Developer, produits, contrats.
+- **Différé — Gating par quantité.** Ex. collections/listes limitées en gratuit. Nouveau mécanisme (compteur + limite par feature ; modèle actuel binaire). Pas dans la 1ʳᵉ soumission.
+- **Après publication → landing pages** (démo + white-label + CMS) = chantier suivant désigné.
+- **🐞 [Autre repo : `../editia/web`] Bug RevenueCat — annulation = perte d'accès immédiate.** *(repéré pendant la planif monétisation 2026-06-10, à corriger dans une session dédiée à Editia, pas dans MediumShip.)* **Symptôme prod** : une utilisatrice annule son abonnement après le 1er prélèvement → perd premium **immédiatement** au lieu de garder l'accès jusqu'à la fin de période payée. **Cause racine** : `../editia/web/convex/entitlements/canonical.ts:125` ne considère « actif » que `status ∈ {active, trialing}` ; le webhook (`httpHandlers/revenuecatWebhook.ts`) patche `status: "canceled"` sur `CANCELLATION` → ligne exclue même si `expiresAt > now` → `isPro=false`. **Fix** : inclure `canceled` tant que `expiresAt > now`, ne révoquer que sur `expired`/`refunded` (+ test « annulation mi-période → reste pro »). **Sémantique RC** : `CANCELLATION` = auto-renew off, l'accès reste jusqu'à expiration ; RC envoie `EXPIRATION` quand l'accès finit vraiment. **Leçon appliquée à NOTRE Slice 4** (`docs/superpowers/plans/2026-06-10-monet-slice-4-revenuecat-iap.md`) : `isPro` dérivé de `hasEntitlement()` du composant, jamais d'un event/status brut. Cf. mémoire `revenuecat-cancellation-not-revocation`.
+
+---
+
 ## 🎯 Vague en cours — Config tenant & Mobile UI
 
 > Focus actuel : **refonte/professionnalisation du shell CMS**, la config de l'app côté CMS (sections de feed, modules) **et** le polish UI mobile (Bibliothèque, cartes, recherche Home). Pas de clés API pour l'instant (parqué plus bas).
@@ -104,11 +118,11 @@ Retours terrain après usage réel (favoris enregistrés, navigation Bibliothèq
 
 ## 🔭 Plus tard (parqué)
 
-### 💰 Démo & monétisation white-label (stratégie — à trancher)
+### 💰 Démo & monétisation white-label (stratégie)
 
-> **Réflexion dédiée : `docs/monetization-reflection.md`** (axes B2C/B2B, forks, questions ouvertes — à reprendre). Cette app est à la fois **notre démo** (vitrine, candidate à publication store) **et** la **référence de politique** du produit white-label.
+> **Axe B2C tranché → promu en « 💰 Vague monétisation » en tête de backlog** (2026-06-10). Réflexion : `docs/monetization-reflection.md`. Ne restent ci-dessous que les sujets **B2B white-label** non tranchés.
 
-- **Monétisation démo vs feature `premium` white-label.** Comment l'app démo se monétise (le cas échéant) et comment ça se conjugue avec le `premium` par-tenant du white-label (entitlements). Aujourd'hui `premium` passe par défaut (« premium gratuit », paiement non câblé — cf. couche Operator). Trancher : démo gratuite/vitrine, ou premium en conditions réelles ?
+- ~~**Monétisation démo vs feature `premium` white-label.**~~ **Tranché** : démo = produit payant réel (RevenueCat + IAP, analyse premium signature). Voir vague monétisation + réflexion.
 - **Publication store (App Store / Play) de la démo** : prévu (EAS déjà configuré). La **gestion de la publication depuis le CMS** n'est sans doute pas faisable pour la 1ʳᵉ soumission — à revoir plus tard.
 - **Richesse de contenu pour une démo crédible** : dépend des providers d'ingestion (podcasts/blogs ci-dessous) — une démo avec articles + vidéos + podcasts est plus convaincante.
 - **Croise** : couche Operator / câblage paiement (entitlements), providers d'ingestion.

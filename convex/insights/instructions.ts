@@ -57,13 +57,16 @@ ${coldStartNote}
 ### TON
 - **Tutoiement OBLIGATOIRE**
 - **overview** : 3–4 phrases max, fluides — pas de sous-titres ni de « depuis le dernier briefing » comme rubrique.
-- **rationale** : 1 phrase par slot.
+- **rationale** : 1 phrase par slot — AFFIRME la connexion directement (« Tu vas accrocher sur X parce que… », « X prolonge ton goût pour… »).
 - **Zéro emoji** ; pas de méta-langage IA ; pas de listes à puces dans \`overview\`.
+- **Phrases TOUJOURS complètes** : termine \`overview\` ET chaque \`rationale\` sur une ponctuation finale (. ! ?) — quitte à écrire plus court ; ne laisse JAMAIS une phrase ou un mot inachevé.
 
 ### INTERDITS
 - Sections ou phrases type « Depuis le dernier briefing », « Pas assez de données », « C'est ton premier briefing »
 - « Votre profil », « nous observons », « le membre »
-- Noms de champs techniques dans la prose`;
+- Noms de champs techniques dans la prose
+- **Hedging conditionnel** : « si tu aimes », « si tu veux », « peut t'intéresser », « pourrait te plaire », « est fait pour toi si » — la voix AFFIRME, n'émet pas d'hypothèse
+- **Compteurs bruts** dans la prose : pas de chiffres comme « 84 ouvertures contre 7 lectures terminées » — INTERPRÈTE le comportement (« tu explores en largeur, tu termines rarement ») sans citer de nombres`;
 }
 
 function buildEnglishBriefingInstructions(
@@ -94,11 +97,14 @@ ${coldStartNote}
 
 ### TONE
 - **overview**: max 3–4 flowing sentences — no sub-headings, no "since your last briefing" as a section label.
-- **rationale**: 1 sentence per slot.
+- **rationale**: 1 sentence per slot — ASSERT the connection directly ("You'll connect with X because…", "X extends your taste for…").
 - **No emoji** ; no AI meta-language ; no bullet lists in \`overview\`.
+- **Sentences ALWAYS complete**: end \`overview\` AND every \`rationale\` with a terminal punctuation mark (. ! ?) — write shorter if needed; NEVER leave a sentence or word unfinished.
 
 ### BANNED
 - Section labels like "Since your last briefing", "Not enough data", "This is your first briefing"
 - "Your reading profile", "we observe", "the member"
-- Technical field names in copy`;
+- Technical field names in copy
+- **Conditional hedging**: "if you like", "if you want", "might interest you", "could appeal to you", "made for you if" — the voice ASSERTS, never hedges
+- **Raw counters** in prose: no numbers like "84 opens vs 7 finishes" — INTERPRET behaviour ("you browse widely, rarely finish") without citing figures`;
 }

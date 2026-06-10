@@ -168,9 +168,9 @@ Rappels impératifs :
 - overview : un seul bloc de 3–4 phrases complètes — habitudes récentes + évolution (si <previous_analysis> existe) + tendance format/thème, tout fondu. Jamais de rubrique « depuis le dernier… » ni d'excuse sur le manque de données.
 - picks : une entrée par slot dans <candidate_picks> ; rationale en 1 phrase « tu », format ou titre cité.
 
-## LONGUEUR (impératif — phrase toujours terminée)
-- \`overview\` : vise ~${overviewTarget} caractères (≈3–4 phrases). Si tu approches la limite, conclus par une phrase courte plutôt que d'être coupé en plein mot.
-- \`picks[].rationale\` : vise ~${rationaleTarget} caractères, une phrase complète.`;
+## LONGUEUR (impératif — phrase TOUJOURS terminée)
+- \`overview\` : vise ~${overviewTarget} caractères (≈3–4 phrases). Termine TOUJOURS sur une ponctuation finale (. ! ?) — écris plus court si besoin, ne laisse JAMAIS une phrase ou un mot inachevé.
+- \`picks[].rationale\` : vise ~${rationaleTarget} caractères, une phrase complète — AFFIRME pourquoi ce contenu prolonge ses goûts sans émettre de condition ("si tu aimes…").`;
   }
 
   return `---
@@ -182,9 +182,9 @@ Hard reminders:
 - overview: one block of 3–4 complete sentences — recent habits + what shifted (if <previous_analysis> exists) + format/theme tendency, all woven together. Never a "since your last briefing" heading or apologies about missing data.
 - picks: one entry per slot in <candidate_picks>; 1-sentence "you" rationale citing format or title.
 
-## LENGTH (mandatory — always finish the sentence)
-- \`overview\`: target ~${overviewTarget} characters (~3–4 sentences). If nearing the limit, close with a short complete sentence rather than stopping mid-word.
-- \`picks[].rationale\`: target ~${rationaleTarget} characters, one complete sentence.`;
+## LENGTH (mandatory — ALWAYS finish the sentence)
+- \`overview\`: target ~${overviewTarget} characters (~3–4 sentences). ALWAYS end on terminal punctuation (. ! ?) — write shorter if needed, NEVER leave a sentence or word unfinished.
+- \`picks[].rationale\`: target ~${rationaleTarget} characters, one complete sentence — ASSERT why this content extends their taste; never hedge ("if you like…").`;
 }
 
 export function buildInsightsPrompt(

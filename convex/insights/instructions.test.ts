@@ -27,4 +27,20 @@ describe("buildBriefingInstructions", () => {
     expect(system).toContain("second person only");
     expect(system).toContain("FIRST BRIEFING");
   });
+
+  it("french prompt bans hedging and raw counters", () => {
+    const system = buildBriefingInstructions("fr", { isColdStart: false });
+    expect(system).toContain("Hedging conditionnel");
+    expect(system).toContain("si tu aimes");
+    expect(system).toContain("Compteurs bruts");
+    expect(system).toContain("Phrases TOUJOURS complètes");
+  });
+
+  it("english prompt bans hedging and raw counters", () => {
+    const system = buildBriefingInstructions("en", { isColdStart: false });
+    expect(system).toContain("Conditional hedging");
+    expect(system).toContain("if you like");
+    expect(system).toContain("Raw counters");
+    expect(system).toContain("Sentences ALWAYS complete");
+  });
 });

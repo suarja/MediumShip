@@ -342,6 +342,21 @@ export default defineSchema({
     // re-fetching the same top-N (which dedup-collapses to zero new content).
     searchOffset: v.optional(v.number()),
   }).index("by_tenant_and_category", ["tenantSlug", "categoryKey"]),
+  tasteAnalysis: defineTable({
+    tokenIdentifier: v.string(),
+    tenantSlug: v.string(),
+    dayKey: v.string(),
+    tasteText: v.string(),
+    relatedContentIds: v.array(v.id("contents")),
+    model: v.string(),
+    createdAt: v.number(),
+    seenAt: v.optional(v.number()),
+  })
+    .index("by_tokenIdentifier_and_dayKey", ["tokenIdentifier", "dayKey"])
+    .index("by_tokenIdentifier_and_createdAt", [
+      "tokenIdentifier",
+      "createdAt",
+    ]),
   youtubeWhitelistChannels: defineTable({
     channelId: v.string(),
     label: v.string(),

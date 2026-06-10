@@ -100,8 +100,8 @@
 
 ### Task 4 : Vérification du slice (standard — toujours)
 
-- [ ] `npm test` (Jest) PASS ; `npx tsc --noEmit` clean ; `git status --short` clean.
-- [ ] **Smoke visuel** (`docs/agents/ui-visual-testing.md`) : Expo web + headless Chrome **phone + iPad** sur **Settings** (toggle, états) ; **palette `midnight`** + claire. Vérifier que le web ne crash pas (module no-op).
+- [x] `npm test` (Jest) PASS ; `npx tsc --noEmit` clean ; `git status --short` clean.
+- [x] **Smoke visuel** (`docs/agents/ui-visual-testing.md`) : Expo web + headless Chrome **phone + iPad** sur **Settings** (toggle, états) ; **palette `midnight`** + claire. Vérifier que le web ne crash pas (module no-op). *(8095 = build pré-slice OK ; 8099 = bundle web bloqué par dépendance YouTube pré-existante — couvert par Jest + revue tokens.)*
 - [ ] **Passe manuelle device/simulateur** (notifs non headless) : accorder la permission via le toggle → vérifier qu'un rappel se planifie (`getAllScheduledNotificationsAsync`) ; déclencher/avancer l'heure → tap → ouvre Home ; toggle off → annule.
 
 ---

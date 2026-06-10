@@ -51,7 +51,7 @@ describe("ResumeCard", () => {
     expect(screen.getByText("Episode · 18:48 left · 37%")).toBeTruthy();
   });
 
-  it("navigates to the media detail on press", () => {
+  it("opens the dedicated player route on press", () => {
     mockUseResume.mockReturnValue({
       data: {
         contentId: "content_2",
@@ -67,7 +67,7 @@ describe("ResumeCard", () => {
     render(<ResumeCard enabled />);
     fireEvent.press(screen.getByTestId("resume-card"));
 
-    expect(mockPushWithReturn).toHaveBeenCalledWith("/video/content_2");
+    expect(mockPushWithReturn).toHaveBeenCalledWith("/player/content_2");
   });
 
   it("calls a custom onPress when provided", () => {

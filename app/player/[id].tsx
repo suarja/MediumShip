@@ -31,6 +31,7 @@ import type { ContentDoc } from "../../src/features/content/types";
 import { useDownloads } from "../../src/features/downloads/use-downloads";
 import { resolvePremiumGate } from "../../src/features/membership/premium-gate";
 import { useIsMember } from "../../src/features/membership/use-is-member";
+import { HapticsService } from "../../src/features/haptics/haptics";
 import { formatMediaClock } from "../../src/features/media/format-media-clock";
 import { usePersistentMediaPlayer } from "../../src/features/media/persistent-media-player";
 import { getScrubTimeFromPress } from "../../src/features/media/scrubbing";
@@ -372,6 +373,7 @@ export default function PlayerScreen() {
 
   const commitScrub = async (locationX: number) => {
     const nextTime = getScrubTime(locationX);
+    void HapticsService.selection();
     setScrubPreviewTime(nextTime);
     await seekTo(nextTime);
     setScrubPreviewTime(null);
@@ -391,7 +393,10 @@ export default function PlayerScreen() {
       >
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.back()}
+          onPress={() => {
+            void HapticsService.selection();
+            router.back();
+          }}
           style={styles.topAction}
         >
           <Text style={[styles.topActionText, { color: fg }]}>↓</Text>
@@ -407,6 +412,7 @@ export default function PlayerScreen() {
         <Pressable
           accessibilityRole="button"
           onPress={() => {
+            void HapticsService.light();
             // Close (×) ends the session — no Picture-in-Picture. (↓ minimises:
             // it just navigates back, so a playing video floats into PiP.) The
             // closing flag stops the autoplay effect from resuming playback when
@@ -586,7 +592,10 @@ export default function PlayerScreen() {
             accessibilityLabel={tEpisode("skipBack")}
             accessibilityRole="button"
             hitSlop={12}
-            onPress={() => void seekBy(-15)}
+            onPress={() => {
+              void HapticsService.selection();
+              void seekBy(-15);
+            }}
             style={({ pressed }) => [styles.secondaryControl, pressed && styles.controlPressed]}
           >
             <SkipGlyph color={withAlpha(fg, 0.82)} direction="back" seconds={15} size={30} />
@@ -594,7 +603,10 @@ export default function PlayerScreen() {
           <Pressable
             accessibilityLabel={playLabel}
             accessibilityRole="button"
-            onPress={() => void togglePlayback()}
+            onPress={() => {
+              void HapticsService.medium();
+              void togglePlayback();
+            }}
             style={({ pressed }) => [
               styles.primaryControl,
               { backgroundColor: fg },
@@ -613,7 +625,10 @@ export default function PlayerScreen() {
             accessibilityLabel={tEpisode("skipForward")}
             accessibilityRole="button"
             hitSlop={12}
-            onPress={() => void seekBy(30)}
+            onPress={() => {
+              void HapticsService.selection();
+              void seekBy(30);
+            }}
             style={({ pressed }) => [styles.secondaryControl, pressed && styles.controlPressed]}
           >
             <SkipGlyph color={withAlpha(fg, 0.82)} direction="forward" seconds={30} size={30} />

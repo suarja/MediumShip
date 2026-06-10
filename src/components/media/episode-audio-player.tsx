@@ -12,6 +12,7 @@ import {
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 
+import { HapticsService } from "../../features/haptics/haptics";
 import { usePersistentMediaPlayer } from "../../features/media/persistent-media-player";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
@@ -65,6 +66,7 @@ export function EpisodeAudioPlayer({
       : 0;
 
   const handleTogglePlayback = async () => {
+    void HapticsService.medium();
     if (!isActive) {
       await playTrack({
         contentId,
@@ -85,6 +87,7 @@ export function EpisodeAudioPlayer({
       return;
     }
 
+    void HapticsService.selection();
     await seekBy(deltaSeconds);
   };
 
@@ -93,6 +96,7 @@ export function EpisodeAudioPlayer({
       return;
     }
 
+    void HapticsService.selection();
     await seekTo(
       getScrubTimeFromPress(
         event.nativeEvent.locationX,

@@ -204,7 +204,7 @@ describe("signed-in profile", () => {
 
     expect(HapticsService.light).toHaveBeenCalledTimes(1);
     expect(mockPush).toHaveBeenCalledWith(
-      expect.objectContaining({ pathname: "/episode/content_resume" }),
+      expect.objectContaining({ pathname: "/player/content_resume" }),
     );
   });
 });

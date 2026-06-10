@@ -44,7 +44,11 @@ export function HistoryRow({ item, divider = true }: HistoryRowProps) {
 
   const handlePress = () => {
     void HapticsService.light();
-    pushWithReturn(`/${item.kind}/${item.contentId}`);
+    const destination =
+      item.progressRatio !== undefined
+        ? `/player/${item.contentId}`
+        : `/${item.kind}/${item.contentId}`;
+    pushWithReturn(destination);
   };
 
   return (

@@ -10,6 +10,8 @@ export default {
   duration: "{{minutes}} min d'écoute",
   audioNote: "Cet épisode n'a pas encore de source audio lisible.",
   playerLabel: "Écouter maintenant",
+  playEpisode: "Lire l'épisode",
+  resumeEpisode: "Revenir au lecteur",
   play: "Lire",
   pause: "Pause",
   replay: "Relancer",

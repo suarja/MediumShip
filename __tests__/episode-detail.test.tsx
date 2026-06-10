@@ -141,8 +141,8 @@ describe("episode detail", () => {
 
     render(<EpisodeDetailScreen />);
 
-    expect(screen.getAllByText("Listen now")).toHaveLength(1);
-    expect(screen.queryByText("Play")).toBeNull();
+    expect(screen.getByLabelText("Play episode")).toBeTruthy();
+    expect(screen.queryByText("Listen now")).toBeNull();
     expect(screen.queryByText(/Members-only episode/)).toBeNull();
   });
 
@@ -173,7 +173,7 @@ describe("episode detail", () => {
 
     render(<EpisodeDetailScreen />);
 
-    fireEvent.press(screen.getByText("Listen now"));
+    fireEvent.press(screen.getByLabelText("Play episode"));
 
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith("/player/episode_1");

@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text } from "react-native";
+import { StyleSheet, Text } from "react-native";
 
 import { useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -10,6 +10,7 @@ import { ContentActionsBar } from "../../src/components/content/content-actions-
 import { ContentDetailShell } from "../../src/components/content/content-detail-shell";
 import { DetailHeader } from "../../src/components/content/detail-header";
 import { DetailHero } from "../../src/components/content/detail-hero";
+import { EpisodePlayerCard } from "../../src/components/media/episode-player-card";
 import { PremiumPaywall } from "../../src/components/content/premium-paywall";
 import { getContentCoverImageUrl } from "../../src/features/content/selectors";
 import type { ContentDoc } from "../../src/features/content/types";
@@ -17,6 +18,7 @@ import { useDownloads } from "../../src/features/downloads/use-downloads";
 import { useContentEngagement } from "../../src/features/discovery/use-content-engagement";
 import { resolvePremiumGate } from "../../src/features/membership/premium-gate";
 import { useIsMember } from "../../src/features/membership/use-is-member";
+import { HapticsService } from "../../src/features/haptics/haptics";
 import { usePersistentMediaPlayer } from "../../src/features/media/persistent-media-player";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
@@ -57,6 +59,13 @@ export default function EpisodeDetailScreen() {
   const coverImageUrl =
     downloadedItem?.localCoverImagePath ??
     (resolvedContent ? getContentCoverImageUrl(resolvedContent) : undefined);
+  const hasPlayableAudio = Boolean(
+    resolvedContent?.audioUrl || downloadedItem?.localMediaPath,
+  );
+  const playLabel =
+    activeSession?.contentId === resolvedContent?._id
+      ? t("resumeEpisode")
+      : t("playEpisode");
 
   useContentEngagement({
     contentId: resolvedContent?._id as Id<"contents"> | undefined,
@@ -76,14 +85,34 @@ export default function EpisodeDetailScreen() {
       notFoundBody={t("notFoundBody")}
       hero={
         resolvedContent ? (
-          <DetailHero
-            key={resolvedContent._id}
-            coverImageUrl={coverImageUrl}
-            mediaKey={resolvedContent._id}
-            watermarkGlyph="▷"
-            height={210 * scaleSpace}
-            premiumLabel={resolvedContent.isPremium ? t("premiumTag") : undefined}
-          />
+          premiumGate === "locked" ? (
+            <DetailHero
+              key={resolvedContent._id}
+              coverImageUrl={coverImageUrl}
+              mediaKey={resolvedContent._id}
+              watermarkGlyph="▷"
+              height={210 * scaleSpace}
+              premiumLabel={t("premiumTag")}
+            />
+          ) : hasPlayableAudio ? (
+            <EpisodePlayerCard
+              coverImageUrl={coverImageUrl}
+              onPlay={() => {
+                void HapticsService.medium();
+                router.push(`/player/${resolvedContent._id}` as never);
+              }}
+              playLabel={playLabel}
+            />
+          ) : (
+            <DetailHero
+              key={resolvedContent._id}
+              coverImageUrl={coverImageUrl}
+              mediaKey={resolvedContent._id}
+              watermarkGlyph="▷"
+              height={210 * scaleSpace}
+              premiumLabel={resolvedContent.isPremium ? t("premiumTag") : undefined}
+            />
+          )
         ) : undefined
       }
       actions={
@@ -112,32 +141,11 @@ export default function EpisodeDetailScreen() {
               description={t("premiumBody")}
               ctaLabel={t("premiumCta")}
             />
-          ) : resolvedContent.audioUrl || downloadedItem?.localMediaPath ? (
-            activeSession?.contentId === resolvedContent._id ? null : (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => {
-                router.push(`/player/${resolvedContent._id}` as never);
-              }}
-              style={({ pressed }) => [
-                styles.playbackButton,
-                {
-                  backgroundColor: theme.colors.accent,
-                  borderRadius: 12,
-                },
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={[styles.playbackLabel, { color: theme.colors.accentContrast }]}>
-                {t("playerLabel")}
-              </Text>
-            </Pressable>
-            )
-          ) : (
+          ) : !hasPlayableAudio ? (
             <Text style={[styles.audioNote, { color: theme.colors.textMuted }]}>
               {t("audioNote")}
             </Text>
-          )}
+          ) : null}
         </>
       ) : null}
     </ContentDetailShell>
@@ -145,22 +153,5 @@ export default function EpisodeDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  playbackButton: {
-    minHeight: 52,
-    marginTop: 4,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  playbackLabel: {
-    fontFamily: fontFamilies.bodySemiBold,
-    fontSize: 15,
-    lineHeight: 18,
-    textAlign: "center",
-  },
-  pressed: {
-    opacity: 0.84,
-  },
   audioNote: { fontFamily: fontFamilies.body, fontSize: 14, lineHeight: 20, marginTop: 4 },
 });

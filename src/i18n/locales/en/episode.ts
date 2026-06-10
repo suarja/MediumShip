@@ -10,6 +10,8 @@ export default {
   duration: "{{minutes}} min listen",
   audioNote: "This episode does not have a playable audio source yet.",
   playerLabel: "Listen now",
+  playEpisode: "Play episode",
+  resumeEpisode: "Back to player",
   play: "Play",
   pause: "Pause",
   replay: "Replay",

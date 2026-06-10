@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { Ionicons } from "@expo/vector-icons";
 import { useEventListener } from "expo";
 import {
   isPictureInPictureSupported,
@@ -17,10 +16,12 @@ import {
   getYoutubeLaunchUrl,
 } from "../../features/content/selectors";
 import type { VideoSource } from "../../features/content/types";
+import { HapticsService } from "../../features/haptics/haptics";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 import { env } from "../../lib/env";
+import { MediaHeroPlayBando } from "./media-hero-play-bando";
 
 type VideoPlayerCardProps = {
   coverImageUrl?: string;
@@ -107,6 +108,7 @@ export function VideoPlayerCard({
   };
 
   const handlePrimaryPlay = () => {
+    void HapticsService.medium();
     if (source.kind === "hosted") {
       onPlaybackIntent?.();
       if (onHostedPlay) {
@@ -171,13 +173,13 @@ export function VideoPlayerCard({
           ) : null}
         </View>
 
-        <VideoControlBando
-          onPrimaryPlay={handlePrimaryPlay}
-          playLabel={playLabel}
-          scaleFont={scaleFont}
-          scaleSpace={scaleSpace}
-          showPrimaryPlay={!hasStarted}
-        />
+        {!hasStarted ? (
+          <MediaHeroPlayBando
+            accessibilityLabel={playLabel}
+            onPress={handlePrimaryPlay}
+            testID="video-play-button"
+          />
+        ) : null}
 
         {hasStarted ? (
           <View
@@ -193,6 +195,7 @@ export function VideoPlayerCard({
             <Pressable
               accessibilityRole="button"
               onPress={() => {
+                void HapticsService.light();
                 onPlaybackIntent?.();
                 void WebBrowser.openBrowserAsync(launchUrl);
               }}
@@ -248,13 +251,13 @@ export function VideoPlayerCard({
         ) : null}
       </View>
 
-      <VideoControlBando
-        onPrimaryPlay={handlePrimaryPlay}
-        playLabel={playLabel}
-        scaleFont={scaleFont}
-        scaleSpace={scaleSpace}
-        showPrimaryPlay={!hasStarted}
-      />
+      {!hasStarted ? (
+        <MediaHeroPlayBando
+          accessibilityLabel={playLabel}
+          onPress={handlePrimaryPlay}
+          testID="video-play-button"
+        />
+      ) : null}
 
       {hasStarted && pipSupported ? (
         <View
@@ -269,7 +272,10 @@ export function VideoPlayerCard({
         >
           <Pressable
             accessibilityRole="button"
-            onPress={() => void hostedVideoRef.current?.startPictureInPicture()}
+            onPress={() => {
+              void HapticsService.light();
+              void hostedVideoRef.current?.startPictureInPicture();
+            }}
             style={({ pressed }) => [
               styles.linkButton,
               { backgroundColor: theme.colors.accentSoft },
@@ -291,63 +297,6 @@ export function VideoPlayerCard({
   );
 }
 
-function VideoControlBando({
-  onPrimaryPlay,
-  playLabel,
-  scaleFont,
-  scaleSpace,
-  showPrimaryPlay,
-}: {
-  onPrimaryPlay: () => void;
-  playLabel: string;
-  scaleFont: number;
-  scaleSpace: number;
-  showPrimaryPlay: boolean;
-}) {
-  const { theme } = useAppTheme();
-  const bandoBg = theme.isDark ? theme.colors.canvasAccent : theme.colors.heading;
-  const playIconSize = 22 * scaleFont;
-
-  if (!showPrimaryPlay) {
-    return null;
-  }
-
-  return (
-    <View
-      style={[
-        styles.bando,
-        {
-          backgroundColor: bandoBg,
-          paddingHorizontal: theme.spacing.md * scaleSpace,
-          paddingVertical: 10 * scaleSpace,
-        },
-      ]}
-    >
-      <Pressable
-        accessibilityLabel={playLabel}
-        accessibilityRole="button"
-        onPress={onPrimaryPlay}
-        style={({ pressed }) => [
-          styles.playIconButton,
-          {
-            backgroundColor: theme.colors.accent,
-            borderRadius: theme.radii.pill,
-          },
-          pressed && styles.pressed,
-        ]}
-        testID="video-play-button"
-      >
-        <Ionicons
-          color={theme.colors.accentContrast}
-          name="play"
-          size={playIconSize}
-          style={styles.playIconGlyph}
-        />
-      </Pressable>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   card: {
     overflow: "hidden",
@@ -360,20 +309,6 @@ const styles = StyleSheet.create({
   coverImage: {
     width: "100%",
     height: "100%",
-  },
-  bando: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "flex-end",
-  },
-  playIconButton: {
-    alignItems: "center",
-    height: 40,
-    justifyContent: "center",
-    width: 40,
-  },
-  playIconGlyph: {
-    marginLeft: 2,
   },
   secondaryActions: {},
   webview: {

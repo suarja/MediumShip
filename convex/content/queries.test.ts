@@ -193,4 +193,38 @@ describe("editorial source isolation", () => {
     expect(topics.map((entry) => entry.tag)).toContain("histoire");
     expect(topics.length).toBeLessThanOrEqual(3);
   });
+
+  it("surfaces tag/category matches even when the title has no hit (trend tap)", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("contents", {
+        tenantSlug: "demo-media",
+        kind: "video",
+        status: "published",
+        slug: "robot-vid",
+        title: "Une vidéo passionnante", // title contains neither "robotique" nor "tech"
+        summary: "",
+        category: "tech",
+        tags: ["robotique", "ia"],
+        isPremium: false,
+        source: "youtube",
+        externalId: "robot-vid",
+        canonicalUrl: "https://youtube.com/watch?v=robot-vid",
+      });
+    });
+
+    // Tapping a trending tag whose word never appears in any title must still resolve.
+    const byTag = await t.query(api.content.queries.searchPublished, {
+      tenantSlug: "demo-media",
+      query: "robotique",
+    });
+    expect(byTag.contents.map((c) => c.title)).toEqual(["Une vidéo passionnante"]);
+
+    const byCategory = await t.query(api.content.queries.searchPublished, {
+      tenantSlug: "demo-media",
+      query: "tech",
+    });
+    expect(byCategory.contents).toHaveLength(1);
+  });
 });

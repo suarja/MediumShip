@@ -31,7 +31,25 @@ export const getPublishedById = query({
 export const searchPublished = query({
   args: { tenantSlug: v.string(), query: v.string() },
   handler: async (ctx, args) => {
-    const candidates = await ctx.db
+    const lower = args.query.trim().toLowerCase();
+    if (lower.length === 0) {
+      return { contents: [] };
+    }
+
+    // Search spans every source (CMS + Wikipedia/YouTube/RSS) AND every field.
+    const matches = (content: {
+      title: string;
+      summary: string;
+      category: string;
+      tags: string[];
+    }) =>
+      content.title.toLowerCase().includes(lower) ||
+      content.summary.toLowerCase().includes(lower) ||
+      content.category.toLowerCase().includes(lower) ||
+      content.tags.some((tag) => tag.toLowerCase().includes(lower));
+
+    // Ranked title matches (relevance from the full-text index).
+    const titleHits = await ctx.db
       .query("contents")
       .withSearchIndex("search_title", (q) =>
         q
@@ -41,18 +59,24 @@ export const searchPublished = query({
       )
       .take(40);
 
-    const lower = args.query.toLowerCase();
-    const results = candidates.filter((c) => {
-      if (c.status !== "published") return false;
-      // Search spans every source — editorial CMS content and ingested
-      // discovery content (Wikipedia, YouTube, RSS) alike.
-      return (
-        c.title.toLowerCase().includes(lower) ||
-        c.summary.toLowerCase().includes(lower) ||
-        c.category.toLowerCase().includes(lower) ||
-        c.tags.some((tag) => tag.toLowerCase().includes(lower))
-      );
-    });
+    // Field-wide matches the title index can't surface — e.g. tapping a trending
+    // tag whose word never appears in any title. Bounded scan for the demo set.
+    const scanned = await ctx.db
+      .query("contents")
+      .withIndex("by_tenant_and_status", (q) =>
+        q.eq("tenantSlug", args.tenantSlug).eq("status", "published"),
+      )
+      .take(2000);
+
+    const seen = new Set<string>();
+    const results: typeof titleHits = [];
+    for (const content of [...titleHits, ...scanned]) {
+      if (seen.has(content._id)) continue;
+      if (!matches(content)) continue;
+      seen.add(content._id);
+      results.push(content);
+      if (results.length >= 40) break;
+    }
 
     return { contents: results };
   },

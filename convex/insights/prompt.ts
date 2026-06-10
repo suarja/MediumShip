@@ -1,27 +1,37 @@
+import type { Doc } from "../_generated/dataModel";
 import type { TasteSignalSummary } from "./signals";
 import { sanitizeInsightsInput } from "./sanitizeUserInput";
 
 export type InsightsLocale = "fr" | "en";
 
-const JOURNALIST_TONE = {
-  fr: "Ton journaliste culturel, chaleureux et précis. 2 à 4 phrases courtes.",
-  en: "Warm cultural-journalist tone. 2 to 4 short sentences.",
-} as const;
+export type InsightsCandidatePick = {
+  slot: number;
+  category: string;
+  title: string;
+  summary: string;
+};
+
+export type PreviousAnalysisContext = {
+  dayKey: string;
+  overview: string;
+  reflection?: string;
+  trends?: string;
+} | null;
 
 function formatSummaryBlock(summary: TasteSignalSummary): string {
   const lines: string[] = [];
 
   if (summary.topCategories.length > 0) {
     lines.push(
-      `categories: ${summary.topCategories.map((row) => row.key).join(", ")}`,
+      `categories: ${summary.topCategories.map((row) => `${row.key}(${row.score})`).join(", ")}`,
     );
   }
   if (summary.topTags.length > 0) {
-    lines.push(`tags: ${summary.topTags.map((row) => row.key).join(", ")}`);
+    lines.push(`tags: ${summary.topTags.map((row) => `${row.key}(${row.score})`).join(", ")}`);
   }
   if (summary.topContentTypes.length > 0) {
     lines.push(
-      `formats: ${summary.topContentTypes.map((row) => row.key).join(", ")}`,
+      `formats: ${summary.topContentTypes.map((row) => `${row.key}(${row.score})`).join(", ")}`,
     );
   }
   if (summary.explicitInterests.length > 0) {
@@ -36,46 +46,113 @@ function formatSummaryBlock(summary: TasteSignalSummary): string {
   return lines.join("\n");
 }
 
+function formatCandidatesBlock(candidates: readonly InsightsCandidatePick[]): string {
+  return candidates
+    .map(
+      (pick) =>
+        `${pick.slot}. [${pick.category}] ${pick.title}\n   ${pick.summary}`,
+    )
+    .join("\n");
+}
+
+function formatPreviousBlock(previous: PreviousAnalysisContext): string {
+  if (!previous) {
+    return "none";
+  }
+
+  const lines = [`day: ${previous.dayKey}`, `overview: ${previous.overview}`];
+  if (previous.reflection) {
+    lines.push(`reflection: ${previous.reflection}`);
+  }
+  if (previous.trends) {
+    lines.push(`trends: ${previous.trends}`);
+  }
+  return lines.join("\n");
+}
+
 const SYSTEM_PROMPTS: Record<InsightsLocale, string> = {
-  fr: `Tu es un journaliste culturel qui décrit les goûts de lecture d'un membre.
-Tu reçois uniquement des agrégats anonymes (catégories, tags, formats, compteurs).
+  fr: `Tu es un journaliste culturel qui rédige un compte rendu premium sur les goûts de lecture d'un membre.
+Tu reçois des agrégats anonymes, le contexte de la dernière analyse, et une liste de contenus PRÉ-SÉLECTIONNÉS (numérotés 1..N).
 Règles :
-- Écris un court paragraphe (2 à 4 phrases) en français.
-- Décris les tendances globales, pas de liste à puces.
-- Ne cite aucun titre d'article, aucun nom, aucun identifiant de contenu.
-- Ne recommande aucun contenu précis — la sélection est gérée ailleurs.
+- Réponds UNIQUEMENT en JSON valide, sans markdown autour.
+- Schéma exact :
+  {
+    "overview": "2-3 phrases d'ouverture sur le profil global",
+    "reflection": "ce qui a changé depuis la dernière analyse — lectures aimées, évitées, rythme",
+    "trends": "tendances actuelles (formats, thèmes, intensité)",
+    "picks": [{ "slot": 1, "rationale": "pourquoi CE contenu précis maintenant, en 2-3 phrases" }]
+  }
+- Fournis une entrée "picks" pour CHAQUE slot fourni (aucun slot manquant).
+- Le ton est chaleureux, éditorial, comme un commentaire de rédaction — pas une liste sèche.
+- Ne cite aucun email, nom d'utilisateur, ni identifiant technique.
 - Si cold_start est true, adopte un ton d'accueil pour un profil encore léger.`,
 
-  en: `You are a cultural journalist describing a member's reading tastes.
-You receive only anonymous aggregates (categories, tags, formats, counts).
+  en: `You are a cultural journalist writing a premium reading-taste report for a member.
+You receive anonymous aggregates, the previous analysis context, and PRE-SELECTED content items (numbered 1..N).
 Rules:
-- Write a short paragraph (2–4 sentences) in English.
-- Describe global trends, not bullet lists.
-- Never cite article titles, names, or content IDs.
-- Do not recommend specific content — selection is handled elsewhere.
+- Reply ONLY with valid JSON, no markdown wrapper.
+- Exact schema:
+  {
+    "overview": "2-3 sentence opening on the overall profile",
+    "reflection": "what changed since the last analysis — liked reads, avoided topics, pace",
+    "trends": "current trends (formats, themes, intensity)",
+    "picks": [{ "slot": 1, "rationale": "why THIS specific pick right now, in 2-3 sentences" }]
+  }
+- Provide a "picks" entry for EVERY supplied slot (no missing slots).
+- Tone: warm editorial commentary — not a dry bullet list.
+- Never cite emails, user names, or technical identifiers.
 - If cold_start is true, use a welcoming tone for a light profile.`,
 };
 
 export function buildInsightsPrompt(
   summary: TasteSignalSummary,
   locale: InsightsLocale,
+  candidates: readonly InsightsCandidatePick[],
+  previous: PreviousAnalysisContext,
 ): { system: string; user: string } {
   const summaryBlock = formatSummaryBlock(summary);
   const { sanitized, lowConfidenceMatches } = sanitizeInsightsInput(summaryBlock);
 
   if (lowConfidenceMatches.length > 0) {
-    // Telemetry hook — no PII in the matched strings.
     console.warn("[insights] low-confidence prompt patterns", {
       count: lowConfidenceMatches.length,
     });
   }
 
-  const tone = JOURNALIST_TONE[locale];
+  const candidateBlock = formatCandidatesBlock(candidates);
+  const { sanitized: sanitizedCandidates } = sanitizeInsightsInput(candidateBlock);
+  const previousBlock = formatPreviousBlock(previous);
 
   return {
-    system: `${SYSTEM_PROMPTS[locale]}\n${tone}`,
-    user: `<taste_signals>\n${sanitized}\n</taste_signals>`,
+    system: SYSTEM_PROMPTS[locale],
+    user: [
+      "<previous_analysis>",
+      previousBlock,
+      "</previous_analysis>",
+      "",
+      "<taste_signals>",
+      sanitized,
+      "</taste_signals>",
+      "",
+      "<candidate_picks>",
+      sanitizedCandidates,
+      "</candidate_picks>",
+    ].join("\n"),
   };
+}
+
+export function toCandidatePicks(
+  contents: readonly Pick<
+    Doc<"contents">,
+    "_id" | "category" | "title" | "summary"
+  >[],
+): InsightsCandidatePick[] {
+  return contents.map((content, index) => ({
+    slot: index + 1,
+    category: content.category,
+    title: content.title,
+    summary: content.summary,
+  }));
 }
 
 /** Exported for tests — ensures no email/name-like PII leaks into prompts. */

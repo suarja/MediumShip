@@ -14,7 +14,12 @@ import {
 } from "./testHelpers";
 
 const NOW = Date.parse("2026-06-10T10:00:00.000Z");
-const MOCK_PROSE = "Vous aimez la politique et les analyses longues.";
+const MOCK_REPORT = {
+  overview: "Vous aimez la politique et les analyses longues.",
+  reflection: "Depuis la dernière analyse, plus d'épisodes longs.",
+  trends: "Les formats approfondis dominent.",
+  picks: [{ slot: 1, rationale: "Pour prolonger vos lectures récentes." }],
+};
 
 describe("generateForMember", () => {
   it("inserts a taste analysis with mocked prose", async () => {
@@ -27,7 +32,7 @@ describe("generateForMember", () => {
       tokenIdentifier: MEMBER.tokenIdentifier,
       tenantSlug: TENANT,
       now: NOW,
-      mockProse: MOCK_PROSE,
+      mockReport: MOCK_REPORT,
     });
 
     expect(analysisId).not.toBeNull();
@@ -36,7 +41,9 @@ describe("generateForMember", () => {
       analysisId ? ctx.db.get(analysisId) : null,
     );
 
-    expect(row?.tasteText).toBe(MOCK_PROSE);
+    expect(row?.tasteText).toBe(MOCK_REPORT.overview);
+    expect(row?.reflection).toBe(MOCK_REPORT.reflection);
+    expect(row?.relatedPicks?.[0]?.rationale).toBe(MOCK_REPORT.picks[0]?.rationale);
     expect(row?.dayKey).toBe(formatDayKey(NOW));
     expect(row?.relatedContentIds.length).toBeGreaterThan(0);
   });
@@ -51,14 +58,17 @@ describe("generateForMember", () => {
       tokenIdentifier: MEMBER.tokenIdentifier,
       tenantSlug: TENANT,
       now: NOW,
-      mockProse: MOCK_PROSE,
+      mockReport: MOCK_REPORT,
     });
 
     const second = await t.action(internal.insights.generate.generateForMember, {
       tokenIdentifier: MEMBER.tokenIdentifier,
       tenantSlug: TENANT,
       now: NOW + 60_000,
-      mockProse: "Should not insert",
+      mockReport: {
+        ...MOCK_REPORT,
+        overview: "Should not insert",
+      },
     });
 
     expect(first).not.toBeNull();

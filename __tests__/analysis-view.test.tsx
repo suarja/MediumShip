@@ -4,14 +4,13 @@ import { AnalysisView } from "../src/components/insights/analysis-view";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
 const mockOpenPaywall = jest.fn();
-const mockPush = jest.fn();
 
 jest.mock("../src/features/paywall/paywall-sheet-provider", () => ({
   usePaywallSheet: () => ({ openPaywall: mockOpenPaywall }),
 }));
 
-jest.mock("../src/features/navigation/app-navigation", () => ({
-  usePushWithReturn: () => mockPush,
+jest.mock("../src/components/content/content-overflow-button", () => ({
+  ContentOverflowButton: () => null,
 }));
 
 jest.mock("../src/features/tenant/use-feature-access", () => ({
@@ -51,11 +50,15 @@ function makeTheme(isDark = false) {
       radii: { pill: 99, md: 8, sm: 4, lg: 12, xl: 16 },
       isDark,
     },
+    enabledModules: ["bookmarks", "personalLists"],
   };
 }
 
 const SAMPLE = {
   tasteText: "Vous suivez la politique avec attention.",
+  reflection: "Depuis la dernière analyse, vous avez fini plus d'épisodes.",
+  trends: "Les formats longs dominent.",
+  dayKey: "2026-06-10",
   related: [
     {
       _id: "content_1" as never,
@@ -63,6 +66,8 @@ const SAMPLE = {
       title: "Story A",
       summary: "Summary",
       category: "Politique",
+      isPremium: false,
+      rationale: "Parce que vos lectures récentes vont dans ce sens.",
     },
   ],
 };
@@ -74,7 +79,6 @@ describe("AnalysisView", () => {
 
   beforeEach(() => {
     mockOpenPaywall.mockReset();
-    mockPush.mockReset();
     mockUseAppTheme.mockReturnValue(makeTheme());
   });
 
@@ -83,12 +87,14 @@ describe("AnalysisView", () => {
     expect(screen.getByTestId("analysis-view-loading")).toBeTruthy();
   });
 
-  it("renders ready state with related tap", async () => {
+  it("renders editorial sections and pick rationale", async () => {
     await changeAppLanguage("fr");
     render(<AnalysisView state="ready" analysis={SAMPLE} />);
     expect(screen.getByTestId("analysis-view-ready")).toBeTruthy();
-    fireEvent.press(screen.getByTestId("analysis-related-content_1"));
-    expect(mockPush).toHaveBeenCalledWith("/article/content_1");
+    expect(screen.getByTestId("analysis-section-overview")).toBeTruthy();
+    expect(screen.getByTestId("analysis-section-reflection")).toBeTruthy();
+    expect(screen.getByTestId("analysis-pick-content_1")).toBeTruthy();
+    expect(screen.getByText("Parce que vos lectures récentes vont dans ce sens.")).toBeTruthy();
   });
 
   it("opens paywall when locked", () => {

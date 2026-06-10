@@ -1,7 +1,6 @@
-import { ScrollView, StyleSheet, Text } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AnalysisView } from "../../src/components/insights/analysis-view";
 import { FeatureAccessGate } from "../../src/components/navigation/feature-access-gate";
@@ -11,6 +10,7 @@ import { useAnalysisById } from "../../src/features/insights/use-analysis";
 import { useGoBack } from "../../src/features/navigation/app-navigation";
 import { useFeatureAccess } from "../../src/features/tenant/use-feature-access";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
+import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -19,8 +19,8 @@ export default function AnalysisDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation("insights");
   const { theme } = useAppTheme();
-  const { scaleFont, scaleSpace, isTablet } = useResponsive();
-  const insets = useSafeAreaInsets();
+  const { scaleFont, scaleSpace } = useResponsive();
+  const tabBarSpace = useTabBarSpace();
   const router = useRouter();
   const goBack = useGoBack("/profile");
   const { isSignedIn } = useClerkAuth();
@@ -49,44 +49,59 @@ export default function AnalysisDetailScreen() {
   return (
     <Screen>
       <FeatureAccessGate featureKey="premiumInsights">
-        <ScrollView
-          contentContainerStyle={[
-            styles.container,
+        <View
+          style={[
+            styles.topBar,
             {
-              paddingTop: insets.top + theme.spacing.md * scaleSpace,
-              paddingBottom: insets.bottom + theme.spacing.xl * scaleSpace,
+              marginHorizontal: -(theme.spacing.lg * scaleSpace),
               paddingHorizontal: theme.spacing.lg * scaleSpace,
             },
           ]}
         >
-          <Text
-            accessibilityRole="button"
+          <Pressable
             onPress={goBack}
-            style={[
-              styles.back,
-              { color: theme.colors.accent, fontSize: 13 * scaleFont },
-            ]}
+            style={styles.topBarAction}
+            accessibilityRole="button"
+            accessibilityLabel={t("detail.back")}
           >
-            ←
-          </Text>
+            <Text
+              style={[
+                styles.topBarActionGlyph,
+                { color: theme.colors.heading, fontSize: 24 * scaleFont },
+              ]}
+            >
+              ‹
+            </Text>
+          </Pressable>
           <Text
             style={[
-              styles.title,
-              {
-                color: theme.colors.heading,
-                fontSize: 28 * scaleFont,
-                maxWidth: isTablet ? 720 : undefined,
-              },
+              styles.topBarTitle,
+              { color: theme.colors.heading, fontSize: 17 * scaleFont },
             ]}
           >
             {t("title")}
           </Text>
+          <View style={styles.topBarAction} />
+        </View>
 
+        <ScrollView
+          contentContainerStyle={{
+            paddingBottom: tabBarSpace + theme.spacing.xl * scaleSpace,
+            gap: theme.spacing.md * scaleSpace,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
           <AnalysisView
             state={viewState}
             analysis={
               analysis
-                ? { tasteText: analysis.tasteText, related: analysis.related }
+                ? {
+                    tasteText: analysis.tasteText,
+                    reflection: analysis.reflection,
+                    trends: analysis.trends,
+                    dayKey: analysis.dayKey,
+                    related: analysis.related,
+                  }
                 : null
             }
           />
@@ -97,15 +112,24 @@ export default function AnalysisDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    gap: 16,
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
   },
-  back: {
-    fontFamily: fontFamilies.mono,
-    alignSelf: "flex-start",
+  topBarAction: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  title: {
+  topBarActionGlyph: {
+    fontFamily: fontFamilies.body,
+    lineHeight: 28,
+  },
+  topBarTitle: {
     fontFamily: fontFamilies.display,
-    letterSpacing: -0.4,
+    letterSpacing: -0.2,
   },
 });

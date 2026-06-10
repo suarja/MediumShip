@@ -1,8 +1,14 @@
 import { v } from "convex/values";
 
+import type { Doc, Id } from "../_generated/dataModel";
 import { internalMutation, internalQuery } from "../_generated/server";
-import { pickRelated } from "./relatedSelection";
+import { DEFAULT_RELATED_LIMIT, pickRelated } from "./relatedSelection";
 import { summarizeSignals } from "./signals";
+
+const relatedPickValidator = v.object({
+  contentId: v.id("contents"),
+  rationale: v.string(),
+});
 
 export const getExistingAnalysisForDay = internalQuery({
   args: {
@@ -22,12 +28,93 @@ export const getExistingAnalysisForDay = internalQuery({
   },
 });
 
+export const getTasteThreadId = internalQuery({
+  args: {
+    tokenIdentifier: v.string(),
+  },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", args.tokenIdentifier),
+      )
+      .unique();
+
+    return user?.tasteInsightsThreadId ?? null;
+  },
+});
+
+export const saveTasteThreadId = internalMutation({
+  args: {
+    tokenIdentifier: v.string(),
+    threadId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", args.tokenIdentifier),
+      )
+      .unique();
+
+    if (user) {
+      await ctx.db.patch(user._id, {
+        tasteInsightsThreadId: args.threadId,
+      });
+    }
+
+    return null;
+  },
+});
+
+export const loadPreviousAnalysis = internalQuery({
+  args: {
+    tokenIdentifier: v.string(),
+    beforeCreatedAt: v.number(),
+  },
+  returns: v.union(
+    v.object({
+      dayKey: v.string(),
+      overview: v.string(),
+      reflection: v.optional(v.string()),
+      trends: v.optional(v.string()),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
+      .query("tasteAnalysis")
+      .withIndex("by_tokenIdentifier_and_createdAt", (q) =>
+        q.eq("tokenIdentifier", args.tokenIdentifier),
+      )
+      .order("desc")
+      .take(5);
+
+    const previous = rows.find((row) => row.createdAt < args.beforeCreatedAt);
+    if (!previous) {
+      return null;
+    }
+
+    return {
+      dayKey: previous.dayKey,
+      overview: previous.tasteText,
+      reflection: previous.reflection,
+      trends: previous.trends,
+    };
+  },
+});
+
 export const insertTasteAnalysis = internalMutation({
   args: {
     tokenIdentifier: v.string(),
     tenantSlug: v.string(),
     dayKey: v.string(),
     tasteText: v.string(),
+    reflection: v.optional(v.string()),
+    trends: v.optional(v.string()),
+    relatedPicks: v.array(relatedPickValidator),
     relatedContentIds: v.array(v.id("contents")),
     model: v.string(),
     createdAt: v.number(),
@@ -39,6 +126,9 @@ export const insertTasteAnalysis = internalMutation({
       tenantSlug: args.tenantSlug,
       dayKey: args.dayKey,
       tasteText: args.tasteText,
+      reflection: args.reflection,
+      trends: args.trends,
+      relatedPicks: args.relatedPicks,
       relatedContentIds: args.relatedContentIds,
       model: args.model,
       createdAt: args.createdAt,
@@ -101,20 +191,49 @@ export const loadSignalSummary = internalQuery({
   },
 });
 
-export const loadRelatedContentIds = internalQuery({
+export const loadRelatedCandidates = internalQuery({
   args: {
     tokenIdentifier: v.string(),
     tenantSlug: v.string(),
     now: v.number(),
+    limit: v.optional(v.number()),
   },
-  returns: v.array(v.id("contents")),
+  returns: v.array(
+    v.object({
+      _id: v.id("contents"),
+      kind: v.union(
+        v.literal("article"),
+        v.literal("episode"),
+        v.literal("video"),
+      ),
+      title: v.string(),
+      summary: v.string(),
+      category: v.string(),
+    }),
+  ),
   handler: async (ctx, args) => {
-    return pickRelated(
+    const ids = await pickRelated(
       ctx,
       args.tokenIdentifier,
       args.tenantSlug,
-      undefined,
+      args.limit ?? DEFAULT_RELATED_LIMIT,
       args.now,
     );
+
+    const contents: Array<Doc<"contents">> = [];
+    for (const contentId of ids) {
+      const content = await ctx.db.get(contentId);
+      if (content && content.status === "published") {
+        contents.push(content);
+      }
+    }
+
+    return contents.map((content) => ({
+      _id: content._id,
+      kind: content.kind,
+      title: content.title,
+      summary: content.summary,
+      category: content.category,
+    }));
   },
 });

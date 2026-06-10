@@ -10,9 +10,17 @@ export default {
     upgrade: "Découvrir Premium",
   },
   detail: {
-    relatedTitle: "Pour vous",
+    back: "Retour",
+    dateLabel: "Analyse du {{day}}",
+    overviewKicker: "Vue d'ensemble",
+    reflectionKicker: "Depuis la dernière analyse",
+    trendsKicker: "Tendances",
+    picksKicker: "Sélection",
+    relatedTitle: "Nos propositions pour vous",
     loading: "Chargement de votre analyse…",
     empty: "Aucune analyse disponible pour le moment.",
+    missingBody:
+      "Le compte rendu n'a pas pu être généré. Revenez demain ou relancez l'analyse.",
   },
   history: {
     empty: "Aucune analyse passée pour l'instant.",

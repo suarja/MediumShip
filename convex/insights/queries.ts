@@ -25,12 +25,15 @@ const relatedContentValidator = v.object({
   publishedAt: v.optional(v.string()),
   readingTimeMinutes: v.optional(v.number()),
   durationSeconds: v.optional(v.number()),
+  rationale: v.optional(v.string()),
 });
 
 const analysisValidator = v.object({
   _id: v.id("tasteAnalysis"),
   dayKey: v.string(),
   tasteText: v.string(),
+  reflection: v.optional(v.string()),
+  trends: v.optional(v.string()),
   model: v.string(),
   createdAt: v.number(),
   seenAt: v.optional(v.number()),
@@ -50,14 +53,15 @@ async function loadPublishedRelated(
   ctx: QueryCtx,
   tenantSlug: string,
   relatedContentIds: readonly Id<"contents">[],
-): Promise<Array<Doc<"contents">>> {
+  rationaleByContentId: Map<Id<"contents">, string>,
+): Promise<Array<Doc<"contents"> & { rationale?: string }>> {
   const tenant = await ctx.db
     .query("tenants")
     .withIndex("by_slug", (q) => q.eq("slug", tenantSlug))
     .unique();
 
   const enabledModules = tenant?.enabledModules ?? [];
-  const related: Array<Doc<"contents">> = [];
+  const related: Array<Doc<"contents"> & { rationale?: string }> = [];
 
   for (const contentId of relatedContentIds) {
     const content = await ctx.db.get(contentId);
@@ -67,14 +71,27 @@ async function loadPublishedRelated(
       content.tenantSlug === tenantSlug &&
       isContentVisible(content, enabledModules)
     ) {
-      related.push(content);
+      const rationale = rationaleByContentId.get(contentId);
+      related.push(rationale ? { ...content, rationale } : content);
     }
   }
 
   return related;
 }
 
-function toRelatedPayload(content: Doc<"contents">) {
+function rationaleMapFromAnalysis(
+  analysis: Doc<"tasteAnalysis">,
+): Map<Id<"contents">, string> {
+  const map = new Map<Id<"contents">, string>();
+  if (analysis.relatedPicks) {
+    for (const pick of analysis.relatedPicks) {
+      map.set(pick.contentId, pick.rationale);
+    }
+  }
+  return map;
+}
+
+function toRelatedPayload(content: Doc<"contents"> & { rationale?: string }) {
   return {
     _id: content._id,
     kind: content.kind,
@@ -87,6 +104,7 @@ function toRelatedPayload(content: Doc<"contents">) {
     publishedAt: content.publishedAt,
     readingTimeMinutes: content.readingTimeMinutes,
     durationSeconds: content.durationSeconds,
+    rationale: content.rationale,
   };
 }
 
@@ -100,16 +118,24 @@ async function loadAnalysisForMember(
     return null;
   }
 
+  const rationaleByContentId = rationaleMapFromAnalysis(analysis);
+  const orderedIds =
+    analysis.relatedPicks?.map((pick) => pick.contentId) ??
+    analysis.relatedContentIds;
+
   const relatedDocs = await loadPublishedRelated(
     ctx,
     analysis.tenantSlug,
-    analysis.relatedContentIds,
+    orderedIds,
+    rationaleByContentId,
   );
 
   return {
     _id: analysis._id,
     dayKey: analysis.dayKey,
     tasteText: analysis.tasteText,
+    reflection: analysis.reflection,
+    trends: analysis.trends,
     model: analysis.model,
     createdAt: analysis.createdAt,
     seenAt: analysis.seenAt,
@@ -201,7 +227,8 @@ export const listMyAnalyses = query({
     const summaries = [];
 
     for (const row of rows) {
-      const firstRelatedId = row.relatedContentIds[0];
+      const firstRelatedId =
+        row.relatedPicks?.[0]?.contentId ?? row.relatedContentIds[0];
       let previewTitle: string | undefined;
 
       if (firstRelatedId) {

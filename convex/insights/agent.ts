@@ -24,7 +24,8 @@ export const tasteInsightsAgent = new Agent(
     name: TASTE_INSIGHTS_AGENT_NAME,
     languageModel: gateway(TASTE_INSIGHTS_MODEL),
     instructions:
-      "You write short, warm editorial copy describing a reader's content tastes. " +
-      "Never recommend specific article titles or IDs — selection is handled elsewhere.",
+      "You write premium editorial taste reports as structured JSON. " +
+      "Each daily report reflects on changes since the prior analysis and explains " +
+      "why each pre-selected content slot fits the reader now.",
   },
 );

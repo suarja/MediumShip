@@ -80,4 +80,33 @@ describe("generateDailyAnalyses", () => {
 
     expect(count).toBe(1);
   });
+
+  it("forwards mockReport to generateForMember", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t);
+    await seedPremiumMember(t);
+    await insertPublishedContent(t, { title: "Cron structured" });
+
+    const mockReport = {
+      overview: "Vue d'ensemble cron.",
+      reflection: "Depuis la dernière fois.",
+      trends: "Plus de long format.",
+      picks: [{ slot: 1, rationale: "Parce que ça colle." }],
+    };
+
+    await t.action(internal.insights.cron.generateDailyAnalyses, {
+      now: NOW,
+      fallbackTenantSlug: TENANT,
+      mockReport,
+    });
+
+    const row = await t.run(async (ctx) => {
+      const rows = await ctx.db.query("tasteAnalysis").collect();
+      return rows[0] ?? null;
+    });
+
+    expect(row?.tasteText).toBe(mockReport.overview);
+    expect(row?.reflection).toBe(mockReport.reflection);
+    expect(row?.relatedPicks?.[0]?.rationale).toBe(mockReport.picks[0]?.rationale);
+  });
 });

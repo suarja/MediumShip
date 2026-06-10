@@ -36,7 +36,7 @@ describe("pickRelated", () => {
     });
 
     const picks = await t.run(async (ctx) =>
-      pickRelated(ctx, MEMBER.tokenIdentifier, TENANT, 8),
+      pickRelated(ctx, MEMBER.tokenIdentifier, TENANT, 5),
     );
 
     expect(picks).toContain(freshId);

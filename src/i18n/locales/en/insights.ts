@@ -10,9 +10,17 @@ export default {
     upgrade: "Explore Premium",
   },
   detail: {
-    relatedTitle: "Picked for you",
+    back: "Back",
+    dateLabel: "Analysis for {{day}}",
+    overviewKicker: "Overview",
+    reflectionKicker: "Since your last analysis",
+    trendsKicker: "Trends",
+    picksKicker: "Selection",
+    relatedTitle: "Our picks for you",
     loading: "Loading your analysis…",
     empty: "No analysis available yet.",
+    missingBody:
+      "The report could not be generated. Check back tomorrow or rerun the analysis.",
   },
   history: {
     empty: "No past analyses yet.",

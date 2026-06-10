@@ -1,5 +1,5 @@
 import { useConvexAuth, useQuery } from "convex/react";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../../convex/_generated/api";
@@ -13,7 +13,6 @@ export function useUnseenAnalysis() {
   const { canAccess, isLoading: isFeatureLoading } = useFeatureAccess("premiumInsights");
   const canQuery = isAuthenticated && isMember && canAccess;
   const { t } = useTranslation("insights");
-  const notifiedRef = useRef<string | null>(null);
 
   const analysis = useQuery(
     api.insights.queries.getUnseenAnalysis,
@@ -25,11 +24,6 @@ export function useUnseenAnalysis() {
       return;
     }
 
-    if (notifiedRef.current === analysis._id) {
-      return;
-    }
-
-    notifiedRef.current = analysis._id;
     void scheduleAnalysisReadyNotification({
       analysisId: analysis._id,
       title: t("notification.title"),

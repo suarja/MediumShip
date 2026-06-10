@@ -7,7 +7,8 @@ import {
 } from "../discovery/scoring";
 import { isContentVisible } from "../discovery/visibility";
 
-export const DEFAULT_RELATED_LIMIT = 8;
+export const DEFAULT_RELATED_LIMIT = 4;
+export const MAX_RELATED_LIMIT = 5;
 
 async function loadHiddenContentIds(
   ctx: QueryCtx,
@@ -100,6 +101,7 @@ export async function pickRelated(
   limit: number = DEFAULT_RELATED_LIMIT,
   now: number = Date.now(),
 ): Promise<Id<"contents">[]> {
+  const cappedLimit = Math.min(Math.max(limit, 1), MAX_RELATED_LIMIT);
   const tenant = await ctx.db
     .query("tenants")
     .withIndex("by_slug", (q) => q.eq("slug", tenantSlug))
@@ -133,7 +135,7 @@ export async function pickRelated(
   );
 
   if (candidates.length === 0) {
-    return popularityFallback(visible, excluded, hidden, limit);
+    return popularityFallback(visible, excluded, hidden, cappedLimit);
   }
 
   const scored = candidates
@@ -146,12 +148,12 @@ export async function pickRelated(
     }))
     .sort((left, right) => right.score - left.score);
 
-  const picks = scored.slice(0, limit).map((entry) => entry.id);
+  const picks = scored.slice(0, cappedLimit).map((entry) => entry.id);
 
-  if (picks.length < limit) {
+  if (picks.length < cappedLimit) {
     const picked = new Set(picks);
     for (const content of visible) {
-      if (picks.length >= limit) {
+      if (picks.length >= cappedLimit) {
         break;
       }
       if (

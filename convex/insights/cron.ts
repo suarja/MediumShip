@@ -4,6 +4,7 @@ import { internal } from "../_generated/api";
 import { internalAction, internalQuery } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { isProFromEntitlement } from "../entitlements/model";
+import { mockReportValidator } from "./mockReport";
 
 export const listPremiumMembersQuery = internalQuery({
   args: {},
@@ -47,6 +48,7 @@ export const generateDailyAnalyses = internalAction({
     now: v.optional(v.number()),
     fallbackTenantSlug: v.optional(v.string()),
     mockProse: v.optional(v.string()),
+    mockReport: v.optional(mockReportValidator),
   },
   returns: v.object({
     processed: v.number(),
@@ -73,6 +75,7 @@ export const generateDailyAnalyses = internalAction({
         tenantSlug: member.tenantSlug ?? fallbackTenantSlug,
         now,
         mockProse: args.mockProse,
+        mockReport: args.mockReport,
         },
       );
 

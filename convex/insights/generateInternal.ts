@@ -292,6 +292,7 @@ export const loadRelatedCandidates = internalQuery({
     tenantSlug: v.string(),
     now: v.number(),
     limit: v.optional(v.number()),
+    dayKey: v.optional(v.string()),
   },
   returns: v.array(
     v.object({
@@ -313,6 +314,7 @@ export const loadRelatedCandidates = internalQuery({
       args.tenantSlug,
       args.limit ?? DEFAULT_RELATED_LIMIT,
       args.now,
+      args.dayKey,
     );
 
     const contents: Array<Doc<"contents">> = [];

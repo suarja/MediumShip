@@ -104,7 +104,7 @@ export const generateForMember = internalAction({
 
     const candidates = await ctx.runQuery(
       internal.insights.generateInternal.loadRelatedCandidates,
-      { tokenIdentifier: args.tokenIdentifier, tenantSlug, now },
+      { tokenIdentifier: args.tokenIdentifier, tenantSlug, now, dayKey },
     );
 
     const candidateIds = candidates.map((row) => row._id);

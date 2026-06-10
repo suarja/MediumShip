@@ -78,6 +78,7 @@ import type * as insights_relatedSelection from "../insights/relatedSelection.js
 import type * as insights_reportFormat from "../insights/reportFormat.js";
 import type * as insights_reportSchema from "../insights/reportSchema.js";
 import type * as insights_sanitizeUserInput from "../insights/sanitizeUserInput.js";
+import type * as insights_seededRng from "../insights/seededRng.js";
 import type * as insights_signals from "../insights/signals.js";
 import type * as insights_testHelpers from "../insights/testHelpers.js";
 import type * as media_r2 from "../media/r2.js";
@@ -175,6 +176,7 @@ declare const fullApi: ApiFromModules<{
   "insights/reportFormat": typeof insights_reportFormat;
   "insights/reportSchema": typeof insights_reportSchema;
   "insights/sanitizeUserInput": typeof insights_sanitizeUserInput;
+  "insights/seededRng": typeof insights_seededRng;
   "insights/signals": typeof insights_signals;
   "insights/testHelpers": typeof insights_testHelpers;
   "media/r2": typeof media_r2;

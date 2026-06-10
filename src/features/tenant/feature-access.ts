@@ -5,8 +5,11 @@ export type FeatureAccessContext = {
   isPro: boolean;
 };
 
-/** Payment is deferred: premium-gated features pass until a provider writes entitlements. */
-export const PREMIUM_PAYMENT_DEFERRED = true;
+/**
+ * Kill-switch for launch: false = real entitlement gating active (isPro required for premium);
+ * true = premium open for everyone (demo / pre-payment-provider mode).
+ */
+export const PREMIUM_PAYMENT_DEFERRED = false;
 
 export function canAccessFeatureLevel(
   access: AccessLevel,

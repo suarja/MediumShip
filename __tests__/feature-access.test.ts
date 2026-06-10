@@ -21,10 +21,20 @@ describe("feature-access", () => {
     ).toBe(true);
   });
 
-  it("lets premium access pass while payment is deferred", () => {
-    expect(PREMIUM_PAYMENT_DEFERRED).toBe(true);
+  it("gates premium access on isPro (real entitlement gating active)", () => {
+    expect(PREMIUM_PAYMENT_DEFERRED).toBe(false);
+
+    // Non-pro users (guests and plain members) are blocked.
     expect(
       canAccessFeatureLevel("premium", { isAuthenticated: false, isPro: false }),
+    ).toBe(false);
+    expect(
+      canAccessFeatureLevel("premium", { isAuthenticated: true, isPro: false }),
+    ).toBe(false);
+
+    // Pro subscribers have access.
+    expect(
+      canAccessFeatureLevel("premium", { isAuthenticated: true, isPro: true }),
     ).toBe(true);
   });
 

@@ -10,6 +10,7 @@ import { LibraryOfflineLockedCard } from "../../src/components/library/library-o
 import { LibraryPersonalListRow } from "../../src/components/library/library-personal-list-row";
 import { LibrarySectionHeader } from "../../src/components/library/library-section-header";
 import { ResumeCard } from "../../src/components/library/resume-card";
+import { useResume } from "../../src/features/history/use-resume";
 import { SavedLibrarySection } from "../../src/components/library/saved-library-section";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
@@ -35,6 +36,7 @@ export default function LibraryScreen() {
   const canBookmark = hasCapability(enabledModules, "bookmarks");
   const canPersonalLists = hasCapability(enabledModules, "personalLists");
   const canOffline = hasCapability(enabledModules, "offline");
+  const canProgressSync = hasCapability(enabledModules, "progressSync");
   const { scaleFont, scaleSpace } = useResponsive();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
@@ -193,6 +195,7 @@ export default function LibraryScreen() {
       canBookmark={canBookmark}
       canOffline={canOffline}
       canPersonalLists={canPersonalLists}
+      canProgressSync={canProgressSync}
       persistentPlayerSpace={persistentPlayerSpace}
       tabBarSpace={tabBarSpace}
     />
@@ -203,6 +206,7 @@ type SignedInLibraryContentProps = {
   canBookmark: boolean;
   canPersonalLists: boolean;
   canOffline: boolean;
+  canProgressSync: boolean;
   tabBarSpace: number;
   persistentPlayerSpace: number;
 };
@@ -211,6 +215,7 @@ function SignedInLibraryContent({
   canBookmark,
   canPersonalLists,
   canOffline,
+  canProgressSync,
   tabBarSpace,
   persistentPlayerSpace,
 }: SignedInLibraryContentProps) {
@@ -291,10 +296,7 @@ function SignedInLibraryContent({
           ))}
         </View>
 
-        <View style={styles.sectionBlockFirst}>
-          <LibrarySectionHeader title={t("library:screen.sections.resume")} />
-          <ResumeCard />
-        </View>
+        <ResumeSection canProgressSync={canProgressSync} />
 
         {canBookmark ? (
           <View style={styles.sectionBlock}>
@@ -353,6 +355,22 @@ function SignedInLibraryContent({
         ) : null}
       </ScrollView>
     </Screen>
+  );
+}
+
+function ResumeSection({ canProgressSync }: { canProgressSync: boolean }) {
+  const { t } = useTranslation("library");
+  const { data: resume, isLoading } = useResume({ enabled: canProgressSync });
+
+  if (!canProgressSync || (!isLoading && !resume)) {
+    return null;
+  }
+
+  return (
+    <View style={styles.sectionBlockFirst}>
+      <LibrarySectionHeader title={t("library:screen.sections.resume")} />
+      <ResumeCard enabled={canProgressSync} />
+    </View>
   );
 }
 

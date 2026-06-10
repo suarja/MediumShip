@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Alert } from "react-native";
 import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import ProfileScreen from "../app/(app)/profile";
@@ -63,6 +62,28 @@ jest.mock("../src/features/downloads/use-downloads", () => ({
 
 jest.mock("../src/features/personal-lists/use-personal-lists", () => ({
   usePersonalLists: () => ({ lists: [] }),
+}));
+
+jest.mock("../src/features/history/use-resume", () => ({
+  useResume: () => ({
+    data: {
+      contentId: "content_resume",
+      kind: "episode",
+      title: "The care economy",
+      seconds: 420,
+      durationSeconds: 1800,
+      progressRatio: 0.23,
+    },
+    isLoading: false,
+  }),
+}));
+
+jest.mock("../src/features/history/use-reading-history", () => ({
+  useReadingHistory: () => ({
+    data: [],
+    isLoading: false,
+    clearReadingHistory: jest.fn(),
+  }),
 }));
 
 jest.mock("../src/features/profile/use-avatar-edit", () => ({
@@ -176,19 +197,14 @@ describe("signed-in profile", () => {
     );
   });
 
-  it("shows stub feedback when the resume card is pressed", () => {
-    const alertSpy = jest.spyOn(Alert, "alert").mockImplementation(() => {});
-
+  it("navigates to the resumed media detail when the resume card is pressed", () => {
     render(<ProfileScreen />);
 
     fireEvent.press(screen.getByTestId("resume-card"));
 
     expect(HapticsService.light).toHaveBeenCalledTimes(1);
-    expect(alertSpy).toHaveBeenCalledWith(
-      "The care economy",
-      "This action will be available in an upcoming update.",
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: "/episode/content_resume" }),
     );
-
-    alertSpy.mockRestore();
   });
 });

@@ -21,8 +21,8 @@ export default {
       offline: "Hors ligne",
     },
     resumeKicker: "Reprendre · synchronise",
-    resumeTitle: "L'economie du soin",
-    resumeMeta: "Episode · 22:48 restantes · 62%",
+    resumeMetaWithRemaining: "{{kind}} · {{remaining}} restantes · {{percent}}%",
+    resumeMetaPercentOnly: "{{kind}} · {{percent}}%",
     savedMeta: "Gratuit",
     savedSubtitle:
       "Tous les contenus que vous avez choisi de garder, quel que soit le format.",
@@ -50,6 +50,18 @@ export default {
   historyScreen: {
     back: "Retour",
     title: "Historique & progression",
+    empty: "Aucun contenu consulte pour l'instant. Ouvrez un article, un episode ou une video pour le retrouver ici.",
+    clear: "Effacer",
+    clearConfirmTitle: "Effacer l'historique ?",
+    clearConfirmBody:
+      "Votre historique de consultation sera masque sur cet appareil. Vos signaux d'affinite restent intacts.",
+    clearConfirmCta: "Effacer l'historique",
+    cancel: "Annuler",
+    guestTitle: "Historique reserve aux membres",
+    guestBody:
+      "Connectez-vous avec un compte membre et activez la synchronisation de progression pour retrouver vos lectures et ecoutes recentes.",
+    rowMeta: "{{kind}} · consulte le {{date}}",
+    rowMetaWithProgress: "{{kind}} · consulte le {{date}} · {{percent}}%",
   },
   listsScreen: {
     back: "Retour",

@@ -21,8 +21,8 @@ export default {
       offline: "Offline",
     },
     resumeKicker: "Resume · synced",
-    resumeTitle: "The care economy",
-    resumeMeta: "Episode · 22:48 left · 62%",
+    resumeMetaWithRemaining: "{{kind}} · {{remaining}} left · {{percent}}%",
+    resumeMetaPercentOnly: "{{kind}} · {{percent}}%",
     savedMeta: "Free",
     savedSubtitle:
       "Everything you chose to keep, across articles, episodes, and videos.",
@@ -50,6 +50,18 @@ export default {
   historyScreen: {
     back: "Back",
     title: "History & progress",
+    empty: "No viewed content yet. Open an article, episode, or video to find it here.",
+    clear: "Clear",
+    clearConfirmTitle: "Clear history?",
+    clearConfirmBody:
+      "Your viewing history will be hidden on this device. Affinity signals stay intact.",
+    clearConfirmCta: "Clear history",
+    cancel: "Cancel",
+    guestTitle: "History is for members",
+    guestBody:
+      "Sign in with a member account and progress sync enabled to revisit your recent reads and listens.",
+    rowMeta: "{{kind}} · viewed {{date}}",
+    rowMetaWithProgress: "{{kind}} · viewed {{date}} · {{percent}}%",
   },
   listsScreen: {
     back: "Back",

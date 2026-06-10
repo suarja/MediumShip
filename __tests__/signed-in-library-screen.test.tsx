@@ -64,6 +64,10 @@ jest.mock("../src/features/personal-lists/use-personal-lists", () => ({
   }),
 }));
 
+jest.mock("../src/features/history/use-resume", () => ({
+  useResume: () => ({ data: null, isLoading: false }),
+}));
+
 describe("signed-in library screen", () => {
   beforeAll(async () => {
     await initI18n();

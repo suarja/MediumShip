@@ -22,6 +22,7 @@ import { ProfileStatStrip } from "../../src/components/profile/profile-stat-stri
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
 import { useBookmarks } from "../../src/features/bookmarks/use-bookmarks";
 import { useDownloads } from "../../src/features/downloads/use-downloads";
+import { useReadingHistory } from "../../src/features/history/use-reading-history";
 import { usePersonalLists } from "../../src/features/personal-lists/use-personal-lists";
 import { usePersistentMediaPlayerSpace } from "../../src/features/media/persistent-media-player";
 import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
@@ -69,6 +70,7 @@ function ProfileDashboard() {
   const { bookmarks, isMember } = useBookmarks();
   const { lists } = usePersonalLists();
   const { downloads } = useDownloads({ enabled: isSignedIn && isMember });
+  const { data: readingHistory } = useReadingHistory();
   const { openPaywall } = usePaywallSheet();
 
   useEffect(() => {
@@ -79,7 +81,7 @@ function ProfileDashboard() {
 
   const savedCount = bookmarks.length;
   const downloadedCount = downloads.length;
-  const historyCount = 0;
+  const historyCount = readingHistory.length;
   const name = fullName ?? me?.name ?? email ?? t("guestName");
   const avatarUrl = user?.imageUrl ?? me?.avatarUrl ?? null;
   const brandInitial = (tenantName.trim().charAt(0) || "M").toUpperCase();
@@ -256,7 +258,7 @@ function ProfileDashboard() {
           editableAvatar
         />
 
-        <ResumeCard />
+        {canProgressSync ? <ResumeCard enabled={canProgressSync} /> : null}
 
         {canBookmark || canOffline || canProgressSync ? (
           <ProfileStatStrip

@@ -1,39 +1,43 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View, type ViewStyle } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { formatResumeMeta } from "../../features/history/format-resume-meta";
+import { useResume } from "../../features/history/use-resume";
 import { HapticsService } from "../../features/haptics/haptics";
+import { usePushWithReturn } from "../../features/navigation/app-navigation";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 type ResumeCardProps = {
+  enabled?: boolean;
   onPress?: () => void;
 };
 
-function showResumePendingAlert(title: string, body: string) {
-  Alert.alert(title, body);
-}
-
-/**
- * Static "resume / continue listening" card matching the mockup `p2__resume`.
- * Resume/progress wiring is deferred — this is faithful decoration shared by the
- * Library and Profile surfaces so the visual stays in one place.
- */
-export function ResumeCard({ onPress }: ResumeCardProps = {}) {
+export function ResumeCard({ enabled = true, onPress }: ResumeCardProps = {}) {
   const { t } = useTranslation("library");
   const { theme } = useAppTheme();
   const { scaleFont } = useResponsive();
+  const pushWithReturn = usePushWithReturn();
+  const { data: resume, isLoading } = useResume({ enabled });
 
-  const resumeTitle = t("library:screen.resumeTitle");
+  if (!enabled || isLoading || !resume) {
+    return null;
+  }
+
+  const resumeTitle = resume.title;
+  const resumeMeta = formatResumeMeta(resume, t);
+  const progressPercent = `${Math.min(100, Math.max(0, resume.progressRatio * 100))}%`;
+
   const handlePress = () => {
     void HapticsService.light();
     if (onPress) {
       onPress();
       return;
     }
-    showResumePendingAlert(resumeTitle, t("library:listsScreen.pendingAction"));
+    pushWithReturn(`/${resume.kind}/${resume.contentId}`);
   };
 
   return (
@@ -71,7 +75,19 @@ export function ResumeCard({ onPress }: ResumeCardProps = {}) {
               backgroundColor: theme.colors.accent,
             },
           ]}
-        />
+        >
+          {resume.heroImageUrl ? (
+            <Image
+              accessibilityIgnoresInvertColors
+              resizeMode="cover"
+              source={{ uri: resume.heroImageUrl }}
+              style={[
+                styles.resumeCoverImage,
+                { borderRadius: theme.radii.md },
+              ]}
+            />
+          ) : null}
+        </View>
         <View style={styles.resumeCopy}>
           <Text
             style={[
@@ -81,6 +97,7 @@ export function ResumeCard({ onPress }: ResumeCardProps = {}) {
                 fontSize: 14 * scaleFont,
               },
             ]}
+            numberOfLines={2}
           >
             {resumeTitle}
           </Text>
@@ -92,8 +109,9 @@ export function ResumeCard({ onPress }: ResumeCardProps = {}) {
                 fontSize: 10 * scaleFont,
               },
             ]}
+            numberOfLines={1}
           >
-            {t("library:screen.resumeMeta")}
+            {resumeMeta}
           </Text>
         </View>
         <View
@@ -120,7 +138,10 @@ export function ResumeCard({ onPress }: ResumeCardProps = {}) {
         <View
           style={[
             styles.resumeProgress,
-            { backgroundColor: theme.colors.accent },
+            {
+              width: progressPercent as ViewStyle["width"],
+              backgroundColor: theme.colors.accent,
+            },
           ]}
         />
       </View>
@@ -151,6 +172,11 @@ const styles = StyleSheet.create({
   resumeCover: {
     width: 40,
     height: 40,
+    overflow: "hidden",
+  },
+  resumeCoverImage: {
+    width: "100%",
+    height: "100%",
   },
   resumeCopy: {
     flex: 1,
@@ -179,7 +205,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   resumeProgress: {
-    width: "62%",
     height: "100%",
     borderRadius: 999,
   },

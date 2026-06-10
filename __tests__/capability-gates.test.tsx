@@ -64,6 +64,10 @@ jest.mock("../src/features/media/persistent-media-player", () => ({
   usePersistentMediaPlayerSpace: () => 0,
 }));
 
+jest.mock("../src/features/history/use-resume", () => ({
+  useResume: () => ({ data: null, isLoading: false }),
+}));
+
 jest.mock("../src/components/library/resume-card", () => ({
   ResumeCard: () => null,
 }));

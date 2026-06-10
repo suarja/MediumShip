@@ -107,9 +107,15 @@ export function composePreviewText(report: ParsedInsightsReport): string {
   return report.overview.trim();
 }
 
-const SENTENCE_END_RE = /[.!?…](?:\s|$)/;
+/** Matches a terminal punctuation character (period, exclamation, question, ellipsis). */
+const TERMINAL_PUNCT_RE = /[.!?…]/g;
 
-/** Hard cap for briefing prose — trims at sentence boundary when possible. */
+/**
+ * Returns the text up to and including the last terminal punctuation at or
+ * before `maxChars`. If no terminal punctuation exists within the window,
+ * trims to the last complete word and appends a period — never emits a
+ * mid-word or mid-clause fragment.
+ */
 export function truncateBriefingProse(text: string, maxChars: number): string {
   const trimmed = text.trim();
   if (trimmed.length <= maxChars) {
@@ -117,13 +123,56 @@ export function truncateBriefingProse(text: string, maxChars: number): string {
   }
 
   const slice = trimmed.slice(0, maxChars);
-  const lastSentence = slice.search(SENTENCE_END_RE);
-  if (lastSentence > maxChars * 0.4) {
-    return slice.slice(0, lastSentence + 1).trim();
+
+  // Find the rightmost terminal punctuation within the window.
+  let lastTerminalIndex = -1;
+  let match: RegExpExecArray | null;
+  TERMINAL_PUNCT_RE.lastIndex = 0;
+  while ((match = TERMINAL_PUNCT_RE.exec(slice)) !== null) {
+    lastTerminalIndex = match.index;
   }
 
+  if (lastTerminalIndex >= 0) {
+    return slice.slice(0, lastTerminalIndex + 1).trim();
+  }
+
+  // No terminal punctuation found — cut to last word boundary and add a period.
   const lastSpace = slice.lastIndexOf(" ");
-  return (lastSpace > 0 ? slice.slice(0, lastSpace) : slice).trim() + "…";
+  const wordEnd = lastSpace > 0 ? lastSpace : slice.length;
+  return slice.slice(0, wordEnd).trim() + ".";
+}
+
+/**
+ * Removes a trailing incomplete sentence from overview prose. If the text
+ * does not end with terminal punctuation, strips everything after the last
+ * terminal punctuation. If no terminal punctuation exists, returns the text
+ * as-is (short cold-start text should not be mangled).
+ */
+export function repairOverview(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  const last = trimmed[trimmed.length - 1];
+  if (last === "." || last === "!" || last === "?" || last === "…") {
+    return trimmed;
+  }
+
+  // Find the last terminal punctuation in the text.
+  let lastTerminalIndex = -1;
+  let match: RegExpExecArray | null;
+  TERMINAL_PUNCT_RE.lastIndex = 0;
+  while ((match = TERMINAL_PUNCT_RE.exec(trimmed)) !== null) {
+    lastTerminalIndex = match.index;
+  }
+
+  if (lastTerminalIndex >= 0) {
+    return trimmed.slice(0, lastTerminalIndex + 1).trim();
+  }
+
+  // No terminal punctuation — text is short/single-word, keep as-is.
+  return trimmed;
 }
 
 /** Prompt-facing targets — the model self-limits; never hard-truncate overview after generation. */
@@ -139,8 +188,9 @@ export const BRIEFING_SCHEMA_MAX = {
 } as const;
 
 export function clampInsightsReport(report: ParsedInsightsReport): ParsedInsightsReport {
+  const overview = repairOverview(report.overview.trim());
   return {
-    overview: report.overview.trim(),
+    overview,
     picks: report.picks.map((pick) => ({
       slot: pick.slot,
       rationale: truncateBriefingProse(

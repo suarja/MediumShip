@@ -1,4 +1,3 @@
-import { useGoBack, usePushWithReturn } from "../src/features/navigation/app-navigation";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -12,14 +11,15 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
-import { Screen } from "../src/components/layout/screen";
-import { LibraryPersonalListRow } from "../src/components/library/library-personal-list-row";
-import { usePersonalLists } from "../src/features/personal-lists/use-personal-lists";
-import { usePaywallSheet } from "../src/features/paywall/paywall-sheet-provider";
-import { useResponsive } from "../src/features/responsive/use-responsive";
-import { withAlpha } from "../src/features/theme/contrast";
-import { fontFamilies } from "../src/features/theme/fonts";
-import { useAppTheme } from "../src/features/theme/theme-provider";
+import { Screen } from "../../src/components/layout/screen";
+import { LibraryPersonalListRow } from "../../src/components/library/library-personal-list-row";
+import { useGoBack, usePushWithReturn } from "../../src/features/navigation/app-navigation";
+import { usePersonalLists } from "../../src/features/personal-lists/use-personal-lists";
+import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
+import { useResponsive } from "../../src/features/responsive/use-responsive";
+import { withAlpha } from "../../src/features/theme/contrast";
+import { fontFamilies } from "../../src/features/theme/fonts";
+import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 export default function ListsScreen() {
   const { t } = useTranslation(["lists", "library"]);

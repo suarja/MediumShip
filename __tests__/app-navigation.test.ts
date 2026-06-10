@@ -1,19 +1,42 @@
-import { appendReturnTo } from "../src/features/navigation/app-navigation";
+import {
+  appendReturnTo,
+  buildBackTarget,
+  encodeReturnTo,
+} from "../src/features/navigation/app-navigation";
 
 describe("appendReturnTo", () => {
-  it("adds returnTo query param to string hrefs", () => {
-    expect(appendReturnTo("/favorites", "/profile")).toBe(
-      "/favorites?returnTo=%2Fprofile",
-    );
+  it("adds returnTo as a route param for static hrefs", () => {
+    expect(appendReturnTo("/favorites", "/profile")).toEqual({
+      pathname: "/favorites",
+      params: { returnTo: "/profile" },
+    });
   });
 
-  it("preserves existing query params", () => {
-    expect(appendReturnTo("/article/abc?foo=bar", "/explore")).toBe(
-      "/article/abc?foo=bar&returnTo=%2Fexplore",
-    );
+  it("maps list detail paths to the dynamic route", () => {
+    expect(appendReturnTo("/list/abc", "/lists")).toEqual({
+      pathname: "/list/[id]",
+      params: { id: "abc", returnTo: "/lists" },
+    });
   });
 
   it("leaves href unchanged when returnTo is empty", () => {
     expect(appendReturnTo("/lists", "")).toBe("/lists");
+  });
+});
+
+describe("buildBackTarget", () => {
+  it("chains a parent returnTo when pushing from an overlay screen", () => {
+    expect(buildBackTarget("/lists", "/profile")).toBe("/lists?returnTo=%2Fprofile");
+  });
+});
+
+describe("encodeReturnTo", () => {
+  it("serializes href objects with nested params", () => {
+    expect(
+      encodeReturnTo({
+        pathname: "/lists",
+        params: { returnTo: "/profile" },
+      }),
+    ).toBe("/lists?returnTo=%2Fprofile");
   });
 });

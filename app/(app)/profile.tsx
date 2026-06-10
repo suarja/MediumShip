@@ -29,6 +29,7 @@ import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { HapticsService } from "../../src/features/haptics/haptics";
+import { hasCapability } from "../../src/features/tenant/public-config";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 export default function ProfileScreen() {
@@ -55,7 +56,10 @@ export default function ProfileScreen() {
 function ProfileDashboard() {
   const { t } = useTranslation("profile");
   const { isSignedIn, email, fullName, user, signOut } = useClerkAuth();
-  const { theme, tenantName } = useAppTheme();
+  const { theme, tenantName, enabledModules } = useAppTheme();
+  const canBookmark = hasCapability(enabledModules, "bookmarks");
+  const canOffline = hasCapability(enabledModules, "offline");
+  const canProgressSync = hasCapability(enabledModules, "progressSync");
   const { scaleFont, scaleSpace } = useResponsive();
   const { isAuthenticated } = useConvexAuth();
   const tabBarSpace = useTabBarSpace();
@@ -254,16 +258,21 @@ function ProfileDashboard() {
 
         <ResumeCard />
 
-        <ProfileStatStrip
-          savedCount={savedCount}
-          offlineCount={downloadedCount}
-          historyCount={historyCount}
-          labels={{
-            saved: t("stats.savedLabel"),
-            offline: t("stats.offlineLabel"),
-            history: t("stats.historyLabel"),
-          }}
-        />
+        {canBookmark || canOffline || canProgressSync ? (
+          <ProfileStatStrip
+            savedCount={savedCount}
+            offlineCount={downloadedCount}
+            historyCount={historyCount}
+            showSaved={canBookmark}
+            showOffline={canOffline}
+            showHistory={canProgressSync}
+            labels={{
+              saved: t("stats.savedLabel"),
+              offline: t("stats.offlineLabel"),
+              history: t("stats.historyLabel"),
+            }}
+          />
+        ) : null}
 
         <ProfileLibraryRows
           isMember={isMember}

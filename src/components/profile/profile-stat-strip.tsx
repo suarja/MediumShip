@@ -12,6 +12,9 @@ type ProfileStatStripProps = {
   savedCount: number;
   offlineCount: number;
   historyCount: number;
+  showSaved?: boolean;
+  showOffline?: boolean;
+  showHistory?: boolean;
   labels: {
     saved: string;
     offline: string;
@@ -27,34 +30,46 @@ export function ProfileStatStrip({
   savedCount,
   offlineCount,
   historyCount,
+  showSaved = true,
+  showOffline = true,
+  showHistory = true,
   labels,
 }: ProfileStatStripProps) {
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
 
-  const stats: { key: string; icon: IconName; value: number; label: string; tone: string }[] = [
-    {
+  const stats: { key: string; icon: IconName; value: number; label: string; tone: string }[] =
+    [];
+
+  if (showSaved) {
+    stats.push({
       key: "saved",
       icon: savedCount > 0 ? "bookmark" : "bookmark-outline",
       value: savedCount,
       label: labels.saved,
       tone: theme.colors.accent,
-    },
-    {
+    });
+  }
+
+  if (showOffline) {
+    stats.push({
       key: "offline",
       icon: offlineCount > 0 ? "download" : "download-outline",
       value: offlineCount,
       label: labels.offline,
       tone: theme.colors.premium,
-    },
-    {
+    });
+  }
+
+  if (showHistory) {
+    stats.push({
       key: "history",
       icon: "time-outline",
       value: historyCount,
       label: labels.history,
       tone: theme.colors.textMuted,
-    },
-  ];
+    });
+  }
 
   return (
     <View style={[styles.strip, { gap: theme.spacing.sm * scaleSpace }]}>
@@ -84,7 +99,7 @@ export function ProfileStatStrip({
           <Text
             style={[
               styles.label,
-              { color: theme.colors.textMuted, fontSize: 9 * scaleFont },
+              { color: theme.colors.textMuted, fontSize: 10 * scaleFont },
             ]}
           >
             {stat.label}

@@ -8,6 +8,7 @@ import { GateBadge, type GateTone } from "../library/gate-badge";
 import { HapticsService } from "../../features/haptics/haptics";
 import { usePaywallSheet } from "../../features/paywall/paywall-sheet-provider";
 import { useResponsive } from "../../features/responsive/use-responsive";
+import { hasCapability } from "../../features/tenant/public-config";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
@@ -36,10 +37,15 @@ export function ProfileLibraryRows({
   onGoPremium,
 }: ProfileLibraryRowsProps) {
   const { t } = useTranslation("profile");
-  const { theme } = useAppTheme();
+  const { theme, enabledModules } = useAppTheme();
   const { scaleSpace } = useResponsive();
   const pushWithReturn = usePushWithReturn();
   const { openPaywall } = usePaywallSheet();
+
+  const canBookmark = hasCapability(enabledModules, "bookmarks");
+  const canOffline = hasCapability(enabledModules, "offline");
+  const canPersonalLists = hasCapability(enabledModules, "personalLists");
+  const canProgressSync = hasCapability(enabledModules, "progressSync");
 
   const openLists = () => {
     void HapticsService.light();
@@ -56,59 +62,93 @@ export function ProfileLibraryRows({
     openPaywall("offline");
   };
 
+  type LibraryRowConfig = {
+    key: string;
+    icon: IconName;
+    title: string;
+    subtitle: string;
+    /** Premium upsell badge — only rendered when the user is not premium yet. */
+    showPremiumBadge?: boolean;
+    onPress: () => void;
+  };
+
+  const libraryRowConfigs: LibraryRowConfig[] = [];
+
+  if (canBookmark) {
+    libraryRowConfigs.push({
+      key: "saved",
+      icon: "bookmark-outline",
+      title: t("rows.saved.title"),
+      subtitle: t("rows.saved.sub", { count: savedCount }),
+      onPress: () => {
+        void HapticsService.light();
+        pushWithReturn("/favorites");
+      },
+    });
+  }
+
+  if (canOffline) {
+    libraryRowConfigs.push({
+      key: "downloads",
+      icon: "download-outline",
+      title: t("rows.downloads.title"),
+      subtitle: isMember
+        ? t("rows.downloads.subMember", { count: downloadCount })
+        : t("rows.downloads.sub"),
+      showPremiumBadge: true,
+      onPress: openDownloads,
+    });
+  }
+
+  if (canPersonalLists) {
+    libraryRowConfigs.push({
+      key: "lists",
+      icon: "list-outline",
+      title: t("rows.lists.title"),
+      subtitle:
+        listsCount > 0
+          ? t("rows.lists.subMember", { count: listsCount })
+          : isMember
+            ? t("rows.lists.subMemberEmpty")
+            : t("rows.lists.sub"),
+      showPremiumBadge: true,
+      onPress: openLists,
+    });
+  }
+
+  if (canProgressSync) {
+    libraryRowConfigs.push({
+      key: "history",
+      icon: "time-outline",
+      title: t("rows.history.title"),
+      subtitle: t("rows.history.sub"),
+      onPress: () => {
+        void HapticsService.light();
+        pushWithReturn("/history");
+      },
+    });
+  }
+
   return (
     <View style={{ gap: theme.spacing.lg * scaleSpace }}>
-      <Section kicker={t("sections.myLibrary")}>
-        <ProfileRow
-          first
-          icon="bookmark-outline"
-          title={t("rows.saved.title")}
-          gate="free"
-          gateLabel={t("badges.free")}
-          subtitle={t("rows.saved.sub", { count: savedCount })}
-          onPress={() => {
-            void HapticsService.light();
-            pushWithReturn("/favorites");
-          }}
-        />
-        <ProfileRow
-          icon="download-outline"
-          title={t("rows.downloads.title")}
-          gate="premium"
-          gateLabel={t("badges.premium")}
-          subtitle={
-            isMember
-              ? t("rows.downloads.subMember", { count: downloadCount })
-              : t("rows.downloads.sub")
-          }
-          onPress={openDownloads}
-        />
-        <ProfileRow
-          icon="list-outline"
-          title={t("rows.lists.title")}
-          gate="premium"
-          gateLabel={t("badges.premium")}
-          subtitle={
-            listsCount > 0
-              ? t("rows.lists.subMember", { count: listsCount })
-              : isMember
-                ? t("rows.lists.subMemberEmpty")
-                : t("rows.lists.sub")
-          }
-          onPress={openLists}
-        />
-        <ProfileRow
-          icon="time-outline"
-          title={t("rows.history.title")}
-          gate="member"
-          gateLabel={t("badges.member")}
-          subtitle={t("rows.history.sub")}
-          onPress={() => {
-            void HapticsService.light();
-            pushWithReturn("/history");
-          }}
-        />
-      </Section>
+      {libraryRowConfigs.length > 0 ? (
+        <Section kicker={t("sections.myLibrary")}>
+          {libraryRowConfigs.map((row, index) => (
+            <ProfileRow
+              key={row.key}
+              first={index === 0}
+              icon={row.icon}
+              title={row.title}
+              subtitle={row.subtitle}
+              gate={row.showPremiumBadge && !isMember ? "premium" : undefined}
+              gateLabel={
+                row.showPremiumBadge && !isMember ? t("badges.premium") : undefined
+              }
+              onPress={row.onPress}
+            />
+          ))}
+        </Section>
+      ) : null}
 
       <Section kicker={t("sections.account")}>
         {isMember ? (
@@ -158,7 +198,7 @@ function Section({ kicker, children }: { kicker: string; children: ReactNode }) 
           styles.kicker,
           {
             color: theme.colors.textMuted,
-            fontSize: 10 * scaleFont,
+            fontSize: 11 * scaleFont,
             marginBottom: theme.spacing.xs * scaleSpace,
           },
         ]}
@@ -215,7 +255,7 @@ function ProfileRow({
           },
         ]}
       >
-        <Ionicons color={theme.colors.accent} name={icon} size={14 * scaleFont} />
+        <Ionicons color={theme.colors.accent} name={icon} size={16 * scaleFont} />
       </View>
 
       <View style={styles.rowMeta}>
@@ -223,7 +263,7 @@ function ProfileRow({
           <Text
             style={[
               styles.rowTitle,
-              { color: theme.colors.heading, fontSize: 14 * scaleFont },
+              { color: theme.colors.heading, fontSize: 15 * scaleFont },
             ]}
           >
             {title}
@@ -233,7 +273,7 @@ function ProfileRow({
         <Text
           style={[
             styles.rowSub,
-            { color: theme.colors.textMuted, fontSize: 10 * scaleFont },
+            { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
           ]}
         >
           {subtitle}
@@ -291,11 +331,12 @@ const styles = StyleSheet.create({
   },
   rowTitle: {
     fontFamily: fontFamilies.display,
-    lineHeight: 18,
+    lineHeight: 20,
   },
   rowSub: {
     fontFamily: fontFamilies.body,
-    marginTop: 1,
+    lineHeight: 16,
+    marginTop: 2,
   },
   chevron: {
     fontFamily: fontFamilies.body,

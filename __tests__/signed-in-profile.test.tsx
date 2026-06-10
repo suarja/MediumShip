@@ -31,6 +31,8 @@ jest.mock("expo-router", () => ({
   Link: ({ children }: { children: ReactNode }) => children,
   useRouter: () => ({ push: mockPush, replace: jest.fn() }),
   usePathname: () => "/profile",
+  useLocalSearchParams: () => ({}),
+  useGlobalSearchParams: () => ({}),
 }));
 
 jest.mock("../src/features/auth/use-clerk-auth", () => ({
@@ -131,7 +133,9 @@ describe("signed-in profile", () => {
     fireEvent.press(screen.getByText("My lists"));
 
     expect(HapticsService.light).toHaveBeenCalledTimes(1);
-    expect(mockPush).toHaveBeenCalledWith(expect.stringContaining("/lists"));
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: "/lists" }),
+    );
     expect(mockOpenPaywall).not.toHaveBeenCalled();
   });
 
@@ -156,7 +160,9 @@ describe("signed-in profile", () => {
 
     fireEvent.press(screen.getByText("Downloads"));
 
-    expect(mockPush).toHaveBeenCalledWith(expect.stringContaining("/downloads"));
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: "/downloads" }),
+    );
     expect(mockOpenPaywall).not.toHaveBeenCalled();
   });
 
@@ -165,7 +171,9 @@ describe("signed-in profile", () => {
 
     fireEvent.press(screen.getAllByText("Favorites")[1]!);
 
-    expect(mockPush).toHaveBeenCalledWith(expect.stringContaining("/favorites"));
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: "/favorites" }),
+    );
   });
 
   it("shows stub feedback when the resume card is pressed", () => {

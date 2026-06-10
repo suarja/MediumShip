@@ -193,7 +193,7 @@ export function ProfileIdentity({
               styles.status,
               {
                 color: theme.colors.premium,
-                fontSize: 9 * scaleFont,
+                fontSize: 10 * scaleFont,
               },
             ]}
           >
@@ -204,7 +204,7 @@ export function ProfileIdentity({
               styles.since,
               {
                 color: theme.colors.textMuted,
-                fontSize: 11 * scaleFont,
+                fontSize: 12 * scaleFont,
               },
             ]}
           >

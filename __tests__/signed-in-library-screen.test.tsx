@@ -10,6 +10,9 @@ const mockPush = jest.fn();
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: ReactNode }) => children,
   useRouter: () => ({ push: mockPush, replace: jest.fn(), back: jest.fn() }),
+  usePathname: () => "/library",
+  useLocalSearchParams: () => ({}),
+  useGlobalSearchParams: () => ({}),
 }));
 
 jest.mock("../src/features/auth/use-clerk-auth", () => ({
@@ -90,7 +93,9 @@ describe("signed-in library screen", () => {
 
     fireEvent.press(screen.getAllByLabelText("See all")[0]);
 
-    expect(mockPush).toHaveBeenCalledWith("/favorites");
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: "/favorites" }),
+    );
   });
 
   it("navigates to the full downloads list from the offline section", () => {
@@ -100,7 +105,9 @@ describe("signed-in library screen", () => {
 
     fireEvent.press(screen.getAllByLabelText("See all")[1]);
 
-    expect(mockPush).toHaveBeenCalledWith("/downloads");
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: "/downloads" }),
+    );
   });
 
   it("does not render a top-bar search loupe", () => {
@@ -123,7 +130,9 @@ describe("signed-in library screen", () => {
 
     fireEvent.press(screen.getByLabelText("Listen in the car"));
 
-    expect(mockPush).toHaveBeenCalledWith("/lists");
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: "/lists" }),
+    );
     expect(mockOpenPaywall).not.toHaveBeenCalled();
   });
 
@@ -134,7 +143,9 @@ describe("signed-in library screen", () => {
 
     fireEvent.press(screen.getByLabelText("Listen in the car"));
 
-    expect(mockPush).toHaveBeenCalledWith("/lists");
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: "/lists" }),
+    );
     expect(mockOpenPaywall).not.toHaveBeenCalled();
     expect(screen.getByText("Offline shelf section")).toBeTruthy();
   });

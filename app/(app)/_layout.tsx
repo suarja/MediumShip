@@ -26,6 +26,7 @@ const HIDDEN_ROUTE_NAMES = [
   "favorites",
   "downloads",
   "history",
+  "lists",
 ] as const;
 
 function tabHref(

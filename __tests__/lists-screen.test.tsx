@@ -1,14 +1,24 @@
 import { fireEvent, render, screen } from "@testing-library/react-native";
 
-import ListsScreen from "../app/lists";
+import ListsScreen from "../app/(app)/lists";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 
 const mockOpenPaywall = jest.fn();
 const mockPush = jest.fn();
 const mockCreateList = jest.fn();
 
+const mockReplace = jest.fn();
+
 jest.mock("expo-router", () => ({
-  useRouter: () => ({ push: mockPush, back: jest.fn() }),
+  useRouter: () => ({
+    push: mockPush,
+    replace: mockReplace,
+    back: jest.fn(),
+    canGoBack: () => false,
+  }),
+  usePathname: () => "/lists",
+  useLocalSearchParams: () => ({ returnTo: "/profile" }),
+  useGlobalSearchParams: () => ({ returnTo: "/profile" }),
 }));
 
 jest.mock("react-native-safe-area-context", () => {
@@ -53,6 +63,7 @@ describe("lists screen", () => {
   beforeEach(async () => {
     mockOpenPaywall.mockClear();
     mockPush.mockClear();
+    mockReplace.mockClear();
     mockCreateList.mockClear();
     await changeAppLanguage("en");
   });
@@ -70,6 +81,20 @@ describe("lists screen", () => {
 
     fireEvent.press(screen.getByLabelText("Listen in the car"));
 
-    expect(mockPush).toHaveBeenCalledWith("/list/list_1");
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: "/list/[id]",
+      params: {
+        id: "list_1",
+        returnTo: "/lists?returnTo=%2Fprofile",
+      },
+    });
+  });
+
+  it("returns to profile when opened from profile", () => {
+    render(<ListsScreen />);
+
+    fireEvent.press(screen.getByLabelText("Back"));
+
+    expect(mockReplace).toHaveBeenCalledWith("/profile");
   });
 });

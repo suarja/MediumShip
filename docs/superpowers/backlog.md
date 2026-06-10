@@ -62,8 +62,9 @@ Retours terrain après usage réel (favoris enregistrés, navigation Bibliothèq
 - **Rows Profil → pages ciblées, pas la Bibliothèque générique.** La section dupliquée avec la page Bibliothèque peut rester, mais chaque row doit router directement : **Favoris** → page Favoris, **Téléchargements** → page Téléchargements, etc. Aujourd'hui tout mène vers `/library`.
 
 **Historique & progression** *(issue à part — pas juste polish)*
-- **CRUD / modèle backend** pour l'historique de lecture et la progression (aujourd'hui absent ou stub).
-- **Re-câbler « Reprendre la lecture »** : le petit composant est **en dur** ; le brancher sur les vraies données une fois le modèle en place.
+> **UI livrée (branche `feat/mobile-card-vitality`, à merger)** : la **page Historique** et le **composant progression** existent maintenant — mais **ni l'un ni l'autre n'est câblé** (pas de modèle backend ; « Reprendre la lecture » toujours en dur).
+- **CRUD / modèle backend** pour l'historique de lecture et la progression (aujourd'hui absent ou stub) — **prérequis** pour câbler l'UI livrée.
+- **Re-câbler « Reprendre la lecture » + page Historique** sur les vraies données une fois le modèle en place.
 - **Chips / mini-cartes Profil** (Hors-ligne, Historique, stats) : aligner sur les compteurs réels ; aujourd'hui Favoris semble OK, **Hors-ligne et Historique ne reflètent pas la réalité** (cf. bugs ci-dessous).
 
 **Favoris / Enregistrés**
@@ -103,9 +104,20 @@ Retours terrain après usage réel (favoris enregistrés, navigation Bibliothèq
 
 ## 🔭 Plus tard (parqué)
 
+### 💰 Démo & monétisation white-label (stratégie — à trancher)
+
+> Cette app est à la fois **notre démo** (vitrine, candidate à publication store) **et** la **référence de politique** du produit white-label. Décisions de modèle à prendre avant publication.
+
+- **Monétisation démo vs feature `premium` white-label.** Comment l'app démo se monétise (le cas échéant) et comment ça se conjugue avec le `premium` par-tenant du white-label (entitlements). Aujourd'hui `premium` passe par défaut (« premium gratuit », paiement non câblé — cf. couche Operator). Trancher : démo gratuite/vitrine, ou premium en conditions réelles ?
+- **Publication store (App Store / Play) de la démo** : prévu (EAS déjà configuré). La **gestion de la publication depuis le CMS** n'est sans doute pas faisable pour la 1ʳᵉ soumission — à revoir plus tard.
+- **Richesse de contenu pour une démo crédible** : dépend des providers d'ingestion (podcasts/blogs ci-dessous) — une démo avec articles + vidéos + podcasts est plus convaincante.
+- **Croise** : couche Operator / câblage paiement (entitlements), providers d'ingestion.
+
 ### 📺 Providers
 
-- **Provider YouTube (chaîne du tenant).** Le prochain vrai adapter produit, **débloqué** par le GATE (seam durci, Slice M) : se branche sur le seam prouvé via `providerConfigs.youtube`, sans réintroduire de paramètres spécifiques dans le port partagé. Touche le modèle `Video` (ADR : `YouTubeVideo` vs `HostedVideo`).
+- **Provider YouTube (chaîne du tenant)** → **✅ Fait** (Slice N, mergé `dev`) : adapter `videos.list` (tags par vidéo), whitelist gérable depuis le CMS, isolation source, filtres shorts/embeddable + nom de chaîne.
+- **Provider Podcasts (RSS audio) — PAS FAIT.** Ingérer des **podcasts** via flux RSS audio → `kind: "episode"` (`audioUrl` + durée). **Débloque le filtre/recherche « Podcasts » aujourd'hui vide** (aucun épisode en base — les providers actuels ne produisent que `article`/`video`). Se branche sur le seam provider prouvé (comme `rss`).
+- **Provider Blogs (RSS/Atom) — PAS FAIT.** Élargir l'ingestion aux **blogs** (flux RSS/Atom d'articles), sources éditoriales curatées par tenant, au-delà du `rss` générique.
 - **Langue des articles Wikipedia alignée sur la langue app (membre).** La locale Wikipédia est aujourd'hui une config **tenant** (CMS, `providerConfigs.wikipedia.locale`). Reste à voir si on l'aligne aussi sur la sélection de langue **membre** (`language-item` / `useSelectedLanguage`) pour le fetch perso. Candidat onboarding plus tard. Hors scope immédiat.
 
 ### 🎯 Richesse du feed / scoring

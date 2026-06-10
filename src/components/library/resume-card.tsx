@@ -1,9 +1,18 @@
+import { useEffect, useMemo, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Image, Pressable, StyleSheet, Text, View, type ViewStyle } from "react-native";
 import { useTranslation } from "react-i18next";
 
-import { formatResumeMeta } from "../../features/history/format-resume-meta";
+import {
+  formatResumeMeta,
+  resolveResumeDisplayProgress,
+} from "../../features/history/format-resume-meta";
+import { mergeResumeWithLocalSnapshot } from "../../features/history/merge-resume-display";
 import { useResume } from "../../features/history/use-resume";
+import {
+  loadPlaybackProgressSnapshot,
+  type PlaybackProgressSnapshot,
+} from "../../features/media/playback-progress";
 import { HapticsService } from "../../features/haptics/haptics";
 import { usePushWithReturn } from "../../features/navigation/app-navigation";
 import { useResponsive } from "../../features/responsive/use-responsive";
@@ -22,14 +31,40 @@ export function ResumeCard({ enabled = true, onPress }: ResumeCardProps = {}) {
   const { scaleFont } = useResponsive();
   const pushWithReturn = usePushWithReturn();
   const { data: resume, isLoading } = useResume({ enabled });
+  const [localSnapshot, setLocalSnapshot] =
+    useState<PlaybackProgressSnapshot | null>(null);
 
-  if (!enabled || isLoading || !resume) {
+  useEffect(() => {
+    if (!resume?.contentId) {
+      setLocalSnapshot(null);
+      return;
+    }
+
+    let cancelled = false;
+    void loadPlaybackProgressSnapshot(resume.contentId).then((snapshot) => {
+      if (!cancelled) {
+        setLocalSnapshot(snapshot);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [resume?.contentId, resume?.seconds, resume?.observedDurationSeconds]);
+
+  const displayResume = useMemo(
+    () => (resume ? mergeResumeWithLocalSnapshot(resume, localSnapshot) : null),
+    [localSnapshot, resume],
+  );
+
+  if (!enabled || isLoading || !displayResume) {
     return null;
   }
 
-  const resumeTitle = resume.title;
-  const resumeMeta = formatResumeMeta(resume, t);
-  const progressPercent = `${Math.min(100, Math.max(0, resume.progressRatio * 100))}%`;
+  const resumeTitle = displayResume.title;
+  const resumeMeta = formatResumeMeta(displayResume, t);
+  const { percent } = resolveResumeDisplayProgress(displayResume);
+  const progressPercent = `${percent}%`;
 
   const handlePress = () => {
     void HapticsService.light();
@@ -37,7 +72,7 @@ export function ResumeCard({ enabled = true, onPress }: ResumeCardProps = {}) {
       onPress();
       return;
     }
-    pushWithReturn(`/${resume.kind}/${resume.contentId}`);
+    pushWithReturn(`/player/${displayResume.contentId}`);
   };
 
   return (
@@ -76,11 +111,11 @@ export function ResumeCard({ enabled = true, onPress }: ResumeCardProps = {}) {
             },
           ]}
         >
-          {resume.heroImageUrl ? (
+          {displayResume.heroImageUrl ? (
             <Image
               accessibilityIgnoresInvertColors
               resizeMode="cover"
-              source={{ uri: resume.heroImageUrl }}
+              source={{ uri: displayResume.heroImageUrl }}
               style={[
                 styles.resumeCoverImage,
                 { borderRadius: theme.radii.md },

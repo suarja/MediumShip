@@ -10,15 +10,35 @@ type ResumeMetaInput = {
   durationSeconds?: number;
 };
 
+export function resolveResumeDisplayProgress(item: ResumeMetaInput): {
+  percent: number;
+  remainingSeconds: number | null;
+} {
+  const elapsedSeconds = Math.max(0, Math.floor(item.seconds));
+  const durationSeconds = Math.floor(item.durationSeconds ?? 0);
+
+  if (durationSeconds > 0) {
+    const remainingSeconds = Math.max(0, durationSeconds - elapsedSeconds);
+    return {
+      percent: Math.min(100, Math.floor((elapsedSeconds / durationSeconds) * 100)),
+      remainingSeconds,
+    };
+  }
+
+  return {
+    percent: Math.min(100, Math.max(0, Math.round(item.progressRatio * 100))),
+    remainingSeconds: null,
+  };
+}
+
 export function formatResumeMeta(
   item: ResumeMetaInput,
   t: TFunction<"library">,
 ): string {
   const kindLabel = t(`kinds.${item.kind}`);
-  const percent = Math.round(item.progressRatio * 100);
+  const { percent, remainingSeconds } = resolveResumeDisplayProgress(item);
 
-  if (item.durationSeconds !== undefined && item.durationSeconds > 0) {
-    const remainingSeconds = Math.max(0, item.durationSeconds - item.seconds);
+  if (remainingSeconds !== null) {
     return t("screen.resumeMetaWithRemaining", {
       kind: kindLabel,
       remaining: formatMediaClock(remainingSeconds),

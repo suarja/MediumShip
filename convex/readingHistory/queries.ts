@@ -6,6 +6,7 @@ import { requireMember } from "../entitlements/authz";
 import {
   isResumableProgress,
   progressRatioFromSeconds,
+  resolveProgressDuration,
 } from "../playbackProgress/resume";
 
 const HISTORY_LIMIT = 50;
@@ -20,6 +21,8 @@ const resumeItemValidator = v.object({
   title: v.string(),
   heroImageUrl: v.optional(v.string()),
   seconds: v.number(),
+  catalogDurationSeconds: v.optional(v.number()),
+  observedDurationSeconds: v.optional(v.number()),
   durationSeconds: v.optional(v.number()),
   progressRatio: v.number(),
 });
@@ -93,12 +96,27 @@ export const getResume = query({
         continue;
       }
 
-      if (!isResumableProgress(progress.seconds, content.durationSeconds)) {
+      if (
+        !isResumableProgress(
+          progress.seconds,
+          progress.durationSeconds,
+          content.durationSeconds,
+        )
+      ) {
         continue;
       }
 
+      const durationSeconds = resolveProgressDuration(
+        progress.seconds,
+        progress.durationSeconds,
+        content.durationSeconds,
+      );
       const progressRatio =
-        progressRatioFromSeconds(progress.seconds, content.durationSeconds) ?? 0;
+        progressRatioFromSeconds(
+          progress.seconds,
+          progress.durationSeconds,
+          content.durationSeconds,
+        ) ?? 0;
 
       return {
         contentId: content._id,
@@ -106,7 +124,9 @@ export const getResume = query({
         title: content.title,
         heroImageUrl: content.heroImageUrl,
         seconds: progress.seconds,
-        durationSeconds: content.durationSeconds,
+        catalogDurationSeconds: content.durationSeconds,
+        observedDurationSeconds: progress.durationSeconds,
+        durationSeconds,
         progressRatio,
       };
     }
@@ -165,7 +185,11 @@ export const getReadingHistory = query({
 
       const progressRatio =
         progress !== null
-          ? progressRatioFromSeconds(progress.seconds, content.durationSeconds)
+          ? progressRatioFromSeconds(
+              progress.seconds,
+              progress.durationSeconds,
+              content.durationSeconds,
+            )
           : undefined;
 
       items.push({

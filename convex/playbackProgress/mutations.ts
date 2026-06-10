@@ -7,6 +7,7 @@ export const saveMyPlaybackProgress = mutation({
   args: {
     contentId: v.id("contents"),
     seconds: v.number(),
+    durationSeconds: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const entitlement = await requireMember(ctx);
@@ -17,11 +18,24 @@ export const saveMyPlaybackProgress = mutation({
       )
       .unique();
 
+    const flooredSeconds = Math.max(0, Math.floor(args.seconds));
+    let durationSeconds = existing?.durationSeconds;
+    if (args.durationSeconds !== undefined && args.durationSeconds > 0) {
+      durationSeconds = Math.max(
+        Math.floor(args.durationSeconds),
+        durationSeconds ?? 0,
+        flooredSeconds,
+      );
+    }
+
     const patch = {
       tokenIdentifier: entitlement.tokenIdentifier,
       contentId: args.contentId,
-      seconds: Math.max(0, Math.floor(args.seconds)),
+      seconds: flooredSeconds,
       updatedAt: Date.now(),
+      ...(durationSeconds !== undefined && durationSeconds > 0
+        ? { durationSeconds }
+        : {}),
     };
 
     if (existing) {

@@ -21,6 +21,7 @@ export const getMyPlaybackProgress = query({
 
     return {
       seconds: progress.seconds,
+      durationSeconds: progress.durationSeconds,
       updatedAt: progress.updatedAt,
     };
   },

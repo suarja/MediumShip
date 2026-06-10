@@ -287,6 +287,69 @@ describe("getResume", () => {
     await expect(asMember.query(api.readingHistory.queries.getResume, {})).resolves.toBeNull();
   });
 
+  it("uses player-measured duration when catalog metadata is too long", async () => {
+    const t = convexTest(schema, modules);
+    await seedMember(t);
+    const contentId = await insertContent(t, {
+      kind: "episode",
+      title: "Short clip",
+      durationSeconds: 3240,
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("playbackProgress", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        contentId,
+        seconds: 90,
+        durationSeconds: 180,
+        updatedAt: Date.now(),
+      });
+    });
+
+    const asMember = t.withIdentity(MEMBER);
+    const resume = await asMember.query(api.readingHistory.queries.getResume, {});
+
+    expect(resume?.contentId).toBe(contentId);
+    expect(resume?.durationSeconds).toBe(180);
+    expect(resume?.progressRatio).toBeCloseTo(0.5);
+  });
+
+  it("prefers the episode when it was updated more recently than a video", async () => {
+    const t = convexTest(schema, modules);
+    await seedMember(t);
+    const video = await insertContent(t, {
+      kind: "video",
+      title: "Older video",
+      durationSeconds: 600,
+    });
+    const episode = await insertContent(t, {
+      kind: "episode",
+      title: "Newer episode",
+      durationSeconds: 3600,
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("playbackProgress", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        contentId: video,
+        seconds: MIN_RESUMABLE_SECONDS + 30,
+        updatedAt: 1_000,
+      });
+      await ctx.db.insert("playbackProgress", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        contentId: episode,
+        seconds: MIN_RESUMABLE_SECONDS + 60,
+        updatedAt: 2_000,
+      });
+    });
+
+    const asMember = t.withIdentity(MEMBER);
+    const resume = await asMember.query(api.readingHistory.queries.getResume, {});
+
+    expect(resume?.contentId).toBe(episode);
+    expect(resume?.kind).toBe("episode");
+  });
+
   it("returns the most recent resumable media item", async () => {
     const t = convexTest(schema, modules);
     await seedMember(t);

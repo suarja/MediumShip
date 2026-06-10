@@ -255,6 +255,8 @@ export default defineSchema({
     tokenIdentifier: v.string(),
     contentId: v.id("contents"),
     seconds: v.number(),
+    /** Player-measured duration when it differs from CMS metadata. */
+    durationSeconds: v.optional(v.number()),
     updatedAt: v.number(),
   })
     .index("by_tokenIdentifier_and_contentId", ["tokenIdentifier", "contentId"])

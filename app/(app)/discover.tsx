@@ -14,6 +14,7 @@ import {
   ContentCardOverflowAction,
 } from "../../src/components/content/content-card-actions";
 import { ContentCard } from "../../src/components/content/content-card";
+import { FeedSkeleton } from "../../src/components/content/feed-skeleton";
 import { Screen } from "../../src/components/layout/screen";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import {
@@ -152,7 +153,11 @@ export default function DiscoverScreen() {
           </View>
         }
         ListEmptyComponent={
-          isLoading ? <DiscoverSkeleton /> : items.length === 0 ? <DiscoverEmpty /> : null
+          isLoading ? (
+            <FeedSkeleton testID="discover-loading" />
+          ) : items.length === 0 ? (
+            <DiscoverEmpty />
+          ) : null
         }
         ListFooterComponent={
           items.length > 0 ? (
@@ -245,75 +250,6 @@ function DiscoverFeedFooter({
   );
 }
 
-function DiscoverSkeleton() {
-  const { theme } = useAppTheme();
-  const { scaleSpace } = useResponsive();
-
-  return (
-    <View
-      testID="discover-loading"
-      style={[
-        styles.skeletonStack,
-        { gap: theme.spacing.md * scaleSpace },
-      ]}
-    >
-      {Array.from({ length: 4 }, (_, index) => (
-        <View
-          key={index}
-          style={[
-            styles.skeletonRow,
-            {
-              gap: theme.spacing.md * scaleSpace,
-              paddingTop: index > 0 ? theme.spacing.md * scaleSpace : 0,
-              borderTopWidth: index > 0 ? StyleSheet.hairlineWidth : 0,
-              borderTopColor: theme.colors.border,
-            },
-          ]}
-        >
-          <View
-            style={[
-              styles.skeletonTile,
-              {
-                borderRadius: theme.radii.sm,
-                backgroundColor: withAlpha(theme.colors.heading, 0.08),
-              },
-            ]}
-          />
-          <View style={[styles.skeletonCopy, { gap: theme.spacing.xs * scaleSpace }]}>
-            <View
-              style={[
-                styles.skeletonLine,
-                {
-                  width: "28%",
-                  backgroundColor: withAlpha(theme.colors.accent, 0.18),
-                },
-              ]}
-            />
-            <View
-              style={[
-                styles.skeletonLine,
-                {
-                  width: "88%",
-                  backgroundColor: withAlpha(theme.colors.heading, 0.1),
-                },
-              ]}
-            />
-            <View
-              style={[
-                styles.skeletonLine,
-                {
-                  width: "42%",
-                  backgroundColor: withAlpha(theme.colors.heading, 0.06),
-                },
-              ]}
-            />
-          </View>
-        </View>
-      ))}
-    </View>
-  );
-}
-
 function DiscoverEmpty() {
   const { t } = useTranslation("discover");
   const { theme } = useAppTheme();
@@ -367,22 +303,6 @@ const styles = StyleSheet.create({
   footerHint: {
     fontFamily: fontFamilies.body,
     lineHeight: 16,
-  },
-  skeletonStack: {},
-  skeletonRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  skeletonTile: {
-    width: 60,
-    height: 60,
-  },
-  skeletonCopy: {
-    flex: 1,
-  },
-  skeletonLine: {
-    height: 10,
-    borderRadius: 4,
   },
   empty: {
     borderWidth: StyleSheet.hairlineWidth,

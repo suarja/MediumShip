@@ -14,6 +14,7 @@ import {
 } from "../../src/components/content/feed-filter-chips";
 import { FeedHeroCard } from "../../src/components/content/feed-hero-card";
 import { FeedRow } from "../../src/components/content/feed-row";
+import { FeedSkeleton } from "../../src/components/content/feed-skeleton";
 import { StatusBannerStack } from "../../src/components/content/status-banner-stack";
 import { Screen } from "../../src/components/layout/screen";
 import { BrandHeader } from "../../src/components/navigation/brand-header";
@@ -141,11 +142,15 @@ export default function HomeFeedScreen() {
         showsVerticalScrollIndicator={false}
       >
         {filteredSections.every((group) => group.items.length === 0) ? (
-          <EmptyState
-            isLoading={isLoading}
-            isOffline={networkState === "offline"}
-            hasAnyContent={hasAnyContent}
-          />
+          isLoading && networkState !== "offline" ? (
+            <FeedSkeleton testID="home-loading" />
+          ) : (
+            <EmptyState
+              isLoading={isLoading}
+              isOffline={networkState === "offline"}
+              hasAnyContent={hasAnyContent}
+            />
+          )
         ) : (
           filteredSections.map((group, groupIndex) => {
             if (group.items.length === 0) {

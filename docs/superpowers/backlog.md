@@ -61,11 +61,11 @@ Retours terrain après usage réel (favoris enregistrés, navigation Bibliothèq
 **Profil — section « Ma bibliothèque » (deep links)**
 - **Rows Profil → pages ciblées, pas la Bibliothèque générique.** La section dupliquée avec la page Bibliothèque peut rester, mais chaque row doit router directement : **Favoris** → page Favoris, **Téléchargements** → page Téléchargements, etc. Aujourd'hui tout mène vers `/library`.
 
-**Historique & progression** *(issue à part — pas juste polish)*
-> **UI livrée (branche `feat/mobile-card-vitality`, à merger)** : la **page Historique** et le **composant progression** existent maintenant — mais **ni l'un ni l'autre n'est câblé** (pas de modèle backend ; « Reprendre la lecture » toujours en dur).
-- **CRUD / modèle backend** pour l'historique de lecture et la progression (aujourd'hui absent ou stub) — **prérequis** pour câbler l'UI livrée.
-- **Re-câbler « Reprendre la lecture » + page Historique** sur les vraies données une fois le modèle en place.
-- **Chips / mini-cartes Profil** (Hors-ligne, Historique, stats) : aligner sur les compteurs réels ; aujourd'hui Favoris semble OK, **Hors-ligne et Historique ne reflètent pas la réalité** (cf. bugs ci-dessous).
+**Historique & progression** *(issue à part — pas juste polish)* → **📋 Planifié** : `docs/superpowers/plans/2026-06-10-mobile-slice-resume-and-reading-history.md`
+> **Constat (audit 2026-06-10) :** le backend est en fait **déjà à ~80 %** — `playbackProgress` (position, câblé épisode/vidéo via `usePlaybackProgress`) + `contentInteractions` (signal `open` enregistré sur chaque détail). Seul l'**UI** est en dur (`ResumeCard` décoratif 62 %, `history.tsx` = un stub, `historyCount = 0`). Décisions verrouillées : **Resume = média uniquement** (plus récent `playbackProgress` non terminé) ; **Historique = `contentInteractions(open)`** réutilisé (index date + query lecture, **zéro nouvelle écriture**) ; **effacer = soft-clear** (marqueur `clearedAt`, l'affinité reste intacte) ; reprise-scroll d'article **parquée**. Termes ajoutés à `CONTEXT.md` (`Resume`, `ReadingHistory`).
+- **Re-câbler « Reprendre la lecture » + page Historique** sur les vraies données (queries `getResume`/`getReadingHistory` + mutation `clearReadingHistory`) — cf. plan ci-dessus.
+- **Reprise-scroll d'article** (texte) : *plus tard* — articles sans `seconds` ; à modéliser à part.
+- **Chips / mini-cartes Profil** (Hors-ligne, Historique, stats) : `historyCount` réel inclus dans la slice ; **Hors-ligne** reste à aligner (cf. bug stats offline ci-dessous).
 
 **Favoris / Enregistrés**
 - **Renommer « Enregistrés » → « Favoris »** partout dans l'app (Profil, Bibliothèque, stats, i18n).

@@ -216,6 +216,14 @@ _Avoid_: Favorite
 Trace spécifique à un membre de la progression de consommation d'un contenu audio ou vidéo.
 _Avoid_: Watch state, listen checkpoint
 
+**Resume**:
+Le contenu reprenable le plus frais d'un membre — un seul item, dérivé du `PlaybackProgress` le plus récent non terminé — proposé pour replonger directement à la position sauvegardée. Concerne le média à position temporelle (épisode, vidéo).
+_Avoid_: Continue watching, reprise (générique)
+
+**ReadingHistory**:
+Journal chronologique des `Content` qu'un membre a consultés, dérivé des signaux d'ouverture de l'`Engagement` (un par contenu, le plus récent gagne), exposé pour y revenir. L'effacement est un repère de lecture (le membre masque son historique) et ne détruit pas le signal d'`Affinity` sous-jacent.
+_Avoid_: Activity log, vues récentes, watch history
+
 **Notification**:
 Message push ou in-app destiné à ramener un membre vers un contenu ou un état produit.
 _Avoid_: Alert, ping

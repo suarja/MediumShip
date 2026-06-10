@@ -119,8 +119,8 @@
 
 - [x] `npm test` PASS ; `npm run test:convex` PASS ; `npx tsc --noEmit` **et** `-p convex` clean ; `git status --short` clean.
 - [x] **Déployer** : `npx convex dev --once` (agent + table + cron + fonctions) ; `npx convex env list` (clé modèle) ; vérifier le cron enregistré.
-- [x] **Smoke visuel** (`docs/agents/ui-visual-testing.md`) : Expo web + headless Chrome **phone + iPad** sur page analyse, historique, carte Profil ; **`midnight`** + claire.
-- [x] **Gates premium/auth + cron** (non headless) : tests + **passe manuelle** — déclencher le cron (`npx convex run` sur l'action interne) pour un membre premium, vérifier l'insert, l'**ouverture → nav auto**, le `seenAt` posé (2ᵉ ouverture ne renavigue pas), non-premium → verrouillé. Rappel `PREMIUM_PAYMENT_DEFERRED=true` en dev.
+- [ ] **Smoke visuel** (`docs/agents/ui-visual-testing.md`) : Expo web + headless Chrome **phone + iPad** sur page analyse, historique, carte Profil ; **`midnight`** + claire.
+- [ ] **Gates premium/auth + cron** (non headless) : tests + **passe manuelle** — déclencher le cron (`npx convex run` sur l'action interne) pour un membre premium, vérifier l'insert, l'**ouverture → nav auto**, le `seenAt` posé (2ᵉ ouverture ne renavigue pas), non-premium → verrouillé. Rappel `PREMIUM_PAYMENT_DEFERRED=true` en dev.
 
 ---
 

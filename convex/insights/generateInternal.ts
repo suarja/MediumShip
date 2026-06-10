@@ -199,6 +199,7 @@ export const loadSignalSummary = internalQuery({
     recentFinishes: v.number(),
     bookmarkCount: v.number(),
     isColdStart: v.boolean(),
+    recentTitles: v.array(v.string()),
   }),
   handler: async (ctx, args) => {
     return summarizeSignals(

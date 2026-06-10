@@ -65,6 +65,13 @@ function formatSummaryBlock(
       );
     }
 
+    if (summary.recentTitles.length > 0) {
+      const sanitizedTitles = summary.recentTitles
+        .map((t) => sanitizeInsightsInput(t).sanitized)
+        .join(", ");
+      lines.push(`Contenus récents qui l'ont accroché : ${sanitizedTitles}`);
+    }
+
     lines.push(`Ouvertures récentes : ${summary.recentOpens}`);
     lines.push(`Lectures terminées récemment : ${summary.recentFinishes}`);
     lines.push(`Favoris enregistrés : ${summary.bookmarkCount}`);
@@ -101,6 +108,13 @@ function formatSummaryBlock(
     lines.push(
       `Declared interests: ${summary.explicitInterests.map(humanizeCategoryKey).join(", ")}`,
     );
+  }
+
+  if (summary.recentTitles.length > 0) {
+    const sanitizedTitles = summary.recentTitles
+      .map((t) => sanitizeInsightsInput(t).sanitized)
+      .join(", ");
+    lines.push(`Recent content they engaged with: ${sanitizedTitles}`);
   }
 
   lines.push(`Recent opens: ${summary.recentOpens}`);

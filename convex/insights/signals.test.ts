@@ -98,4 +98,175 @@ describe("summarizeSignals", () => {
     expect(summary.isColdStart).toBe(true);
     expect(summary.bookmarkCount).toBe(0);
   });
+
+  it("recentTitles: includes titles from recent open/finish interactions (published only)", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t);
+    const now = Date.now();
+
+    const contentId = await t.run(async (ctx) => {
+      return ctx.db.insert("contents", {
+        tenantSlug: TENANT,
+        kind: "article",
+        status: "published",
+        slug: "recent-story",
+        title: "Recent Story",
+        summary: "s",
+        category: "Politique",
+        tags: [],
+        isPremium: false,
+      });
+    });
+
+    const draftContentId = await t.run(async (ctx) => {
+      return ctx.db.insert("contents", {
+        tenantSlug: TENANT,
+        kind: "article",
+        status: "draft",
+        slug: "draft-story",
+        title: "Draft Story",
+        summary: "s",
+        category: "Politique",
+        tags: [],
+        isPremium: false,
+      });
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("contentInteractions", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        tenantSlug: TENANT,
+        contentId,
+        type: "open",
+        createdAt: now - 1000,
+      });
+      await ctx.db.insert("contentInteractions", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        tenantSlug: TENANT,
+        contentId: draftContentId,
+        type: "open",
+        createdAt: now - 2000,
+      });
+    });
+
+    const summary = await t.run(async (ctx) =>
+      summarizeSignals(ctx, MEMBER.tokenIdentifier, TENANT, now),
+    );
+
+    expect(summary.recentTitles).toContain("Recent Story");
+    expect(summary.recentTitles).not.toContain("Draft Story");
+  });
+
+  it("recentTitles: deduplicates content (same contentId opened multiple times)", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t);
+    const now = Date.now();
+
+    const contentId = await t.run(async (ctx) => {
+      return ctx.db.insert("contents", {
+        tenantSlug: TENANT,
+        kind: "article",
+        status: "published",
+        slug: "dedup-story",
+        title: "Dedup Story",
+        summary: "s",
+        category: "Politique",
+        tags: [],
+        isPremium: false,
+      });
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("contentInteractions", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        tenantSlug: TENANT,
+        contentId,
+        type: "open",
+        createdAt: now - 1000,
+      });
+      await ctx.db.insert("contentInteractions", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        tenantSlug: TENANT,
+        contentId,
+        type: "finish",
+        createdAt: now - 500,
+      });
+    });
+
+    const summary = await t.run(async (ctx) =>
+      summarizeSignals(ctx, MEMBER.tokenIdentifier, TENANT, now),
+    );
+
+    const count = summary.recentTitles.filter((t) => t === "Dedup Story").length;
+    expect(count).toBe(1);
+  });
+
+  it("recentTitles: capped at 5 entries", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t);
+    const now = Date.now();
+
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 8; i++) {
+        const contentId = await ctx.db.insert("contents", {
+          tenantSlug: TENANT,
+          kind: "article",
+          status: "published",
+          slug: `story-${i}`,
+          title: `Story ${i}`,
+          summary: "s",
+          category: "Politique",
+          tags: [],
+          isPremium: false,
+        });
+        await ctx.db.insert("contentInteractions", {
+          tokenIdentifier: MEMBER.tokenIdentifier,
+          tenantSlug: TENANT,
+          contentId,
+          type: "open",
+          createdAt: now - i * 1000,
+        });
+      }
+    });
+
+    const summary = await t.run(async (ctx) =>
+      summarizeSignals(ctx, MEMBER.tokenIdentifier, TENANT, now),
+    );
+
+    expect(summary.recentTitles.length).toBeLessThanOrEqual(5);
+  });
+
+  it("recentTitles: filled from bookmarks when interactions don't cover cap", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t);
+    const now = Date.now();
+
+    const bookmarkedId = await t.run(async (ctx) => {
+      return ctx.db.insert("contents", {
+        tenantSlug: TENANT,
+        kind: "article",
+        status: "published",
+        slug: "bookmarked-story",
+        title: "Bookmarked Story",
+        summary: "s",
+        category: "Politique",
+        tags: [],
+        isPremium: false,
+      });
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("bookmarks", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        contentId: bookmarkedId,
+        createdAt: now - 1000,
+      });
+    });
+
+    const summary = await t.run(async (ctx) =>
+      summarizeSignals(ctx, MEMBER.tokenIdentifier, TENANT, now),
+    );
+
+    expect(summary.recentTitles).toContain("Bookmarked Story");
+  });
 });

@@ -7,6 +7,7 @@ const mockUseQuery = jest.fn();
 const mockUsePersistentMediaPlayer = jest.fn();
 
 jest.mock("convex/react", () => ({
+  useConvexAuth: () => ({ isAuthenticated: false }),
   useQuery: (...args: unknown[]) => mockUseQuery(...args),
 }));
 

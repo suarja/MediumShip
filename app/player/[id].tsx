@@ -9,10 +9,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useQuery } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
-import * as WebBrowser from "expo-web-browser";
 import { VideoView } from "expo-video";
 import { useTranslation } from "react-i18next";
 
@@ -21,6 +20,7 @@ import { ContentDetailShell } from "../../src/components/content/content-detail-
 import { DetailHeader } from "../../src/components/content/detail-header";
 import { DetailHero } from "../../src/components/content/detail-hero";
 import { PremiumPaywall } from "../../src/components/content/premium-paywall";
+import { YoutubeInlinePlayer } from "../../src/components/media/youtube-inline-player";
 import {
   PauseGlyph,
   PlayGlyph,
@@ -39,7 +39,7 @@ import { useIsMember } from "../../src/features/membership/use-is-member";
 import { HapticsService } from "../../src/features/haptics/haptics";
 import { formatMediaClock } from "../../src/features/media/format-media-clock";
 import { usePersistentMediaPlayer } from "../../src/features/media/persistent-media-player";
-import { YoutubePlayerSlot } from "../../src/features/media/youtube-player-layout-context";
+import { hasCapability } from "../../src/features/tenant/public-config";
 import { getScrubTimeFromPress } from "../../src/features/media/scrubbing";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
@@ -64,7 +64,6 @@ export default function PlayerScreen() {
     isPlaying,
     playEpisode,
     playHostedVideo,
-    playYoutubeVideo,
     seekBy,
     seekTo,
     togglePlayback,
@@ -80,6 +79,10 @@ export default function PlayerScreen() {
   const isClosingRef = useRef(false);
 
   const { isMember } = useIsMember();
+  const { isAuthenticated } = useConvexAuth();
+  const { enabledModules } = useAppTheme();
+  const canSyncRemoteProgress =
+    isAuthenticated && isMember && hasCapability(enabledModules, "progressSync");
 
   const content = useQuery(
     api.content.queries.getPublishedById,
@@ -140,25 +143,6 @@ export default function PlayerScreen() {
 
     if (resolvedContent.kind === "video") {
       if (resolvedContent.videoSource?.kind === "youtube") {
-        const youtubeVideoId = getYoutubeVideoId(resolvedContent.videoSource);
-        if (!youtubeVideoId) {
-          return;
-        }
-
-        const isSameSession =
-          activeSession?.kind === "youtube" &&
-          activeSession.contentId === resolvedContent._id;
-
-        if (!isSameSession) {
-          void playYoutubeVideo({
-            contentId: resolvedContent._id,
-            title: resolvedContent.title,
-            youtubeVideoId,
-            artworkUrl: coverImageUrl,
-            durationSeconds: resolvedContent.durationSeconds,
-          });
-        }
-
         return;
       }
 
@@ -196,7 +180,6 @@ export default function PlayerScreen() {
     isLocked,
     playEpisode,
     playHostedVideo,
-    playYoutubeVideo,
     resolvedContent,
     router,
   ]);
@@ -355,6 +338,10 @@ export default function PlayerScreen() {
     );
   }
 
+  const youtubeVideoId =
+    isYoutubeVideo && resolvedContent.videoSource?.kind === "youtube"
+      ? getYoutubeVideoId(resolvedContent.videoSource)
+      : null;
   const title = resolvedContent.title;
   const subtitle =
     resolvedContent.kind === "episode"
@@ -426,6 +413,7 @@ export default function PlayerScreen() {
       <View
         style={[
           styles.topBar,
+          styles.topBarAboveVideo,
           { paddingHorizontal: theme.spacing.lg * scaleSpace },
         ]}
       >
@@ -451,12 +439,14 @@ export default function PlayerScreen() {
           accessibilityRole="button"
           onPress={() => {
             void HapticsService.light();
-            // Close (×) ends the session — no Picture-in-Picture. (↓ minimises:
-            // it just navigates back, so a playing video floats into PiP.) The
-            // closing flag stops the autoplay effect from resuming playback when
-            // the session is cleared while this screen is still mounted.
-            isClosingRef.current = true;
-            closePlayer();
+            if (!isYoutubeVideo) {
+              // Close (×) ends the native session — no Picture-in-Picture. (↓
+              // minimises: it just navigates back, so a playing video floats into
+              // PiP.) YouTube is self-contained on this route: leaving unmounts
+              // the inline player and stops playback.
+              isClosingRef.current = true;
+              closePlayer();
+            }
             router.back();
           }}
           style={styles.topAction}
@@ -527,16 +517,22 @@ export default function PlayerScreen() {
               </Text>
             </View>
           </>
-        ) : isYoutubeVideo ? (
-          <YoutubePlayerSlot
-            style={[
-              styles.videoSurface,
-              {
-                borderRadius: 18,
-                borderColor: withAlpha(fg, 0.12),
-              },
-            ]}
+        ) : isYoutubeVideo && youtubeVideoId ? (
+          <YoutubeInlinePlayer
+            canSyncRemote={canSyncRemoteProgress}
+            contentId={resolvedContent._id}
+            durationSeconds={resolvedContent.durationSeconds}
+            foregroundColor={fg}
+            launchUrl={
+              resolvedContent.videoSource?.kind === "youtube"
+                ? getYoutubeLaunchUrl(resolvedContent.videoSource)
+                : undefined
+            }
+            subtitle={tVideo("providerLabel", { provider: tVideo("youtubeProvider") })}
+            summary={resolvedContent.summary}
             testID="player-screen-youtube"
+            title={resolvedContent.title}
+            videoId={youtubeVideoId}
           />
         ) : (
           <View
@@ -563,7 +559,7 @@ export default function PlayerScreen() {
           </View>
         )}
 
-        {resolvedContent.kind === "video" ? (
+        {resolvedContent.kind === "video" && !isYoutubeVideo ? (
           <>
             <Text
               style={[
@@ -583,15 +579,18 @@ export default function PlayerScreen() {
             </Text>
           </>
         ) : null}
-        <Text
-          style={[
-            styles.summary,
-            { fontSize: 13 * scaleFont, color: withAlpha(fg, 0.62) },
-          ]}
-        >
-          {resolvedContent.summary}
-        </Text>
+        {!isYoutubeVideo ? (
+          <Text
+            style={[
+              styles.summary,
+              { fontSize: 13 * scaleFont, color: withAlpha(fg, 0.62) },
+            ]}
+          >
+            {resolvedContent.summary}
+          </Text>
+        ) : null}
 
+        {!isYoutubeVideo ? (
         <View style={styles.progressWrap}>
           <View
             onLayout={(event) => {
@@ -635,7 +634,9 @@ export default function PlayerScreen() {
             </Text>
           </View>
         </View>
+        ) : null}
 
+        {!isYoutubeVideo ? (
         <View style={styles.controls}>
           <Pressable
             accessibilityLabel={tEpisode("skipBack")}
@@ -683,6 +684,7 @@ export default function PlayerScreen() {
             <SkipGlyph color={withAlpha(fg, 0.82)} direction="forward" seconds={30} size={30} />
           </Pressable>
         </View>
+        ) : null}
 
         {resolvedContent.kind === "video" && isHostedVideo && videoPlayer ? (
           <Text
@@ -692,43 +694,6 @@ export default function PlayerScreen() {
           </Text>
         ) : null}
 
-        {isYoutubeVideo ? (
-          <>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => {
-                void HapticsService.light();
-                const launchUrl =
-                  resolvedContent.videoSource?.kind === "youtube"
-                    ? getYoutubeLaunchUrl(resolvedContent.videoSource)
-                    : undefined;
-                if (launchUrl) {
-                  void WebBrowser.openBrowserAsync(launchUrl);
-                }
-              }}
-              style={({ pressed }) => [
-                styles.externalLink,
-                {
-                  backgroundColor: withAlpha(fg, 0.08),
-                  borderRadius: theme.radii.pill,
-                },
-                pressed && styles.controlPressed,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.externalLinkText,
-                  { color: fg, fontSize: 13 * scaleFont },
-                ]}
-              >
-                {tVideo("openExternal")}
-              </Text>
-            </Pressable>
-            <Text style={[styles.rotateHint, { color: withAlpha(fg, 0.5) }]}>
-              {tVideo("youtubeBackgroundNote")}
-            </Text>
-          </>
-        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -744,6 +709,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingBottom: 8,
     paddingTop: 4,
+  },
+  topBarAboveVideo: {
+    zIndex: 30,
   },
   topAction: {
     alignItems: "center",

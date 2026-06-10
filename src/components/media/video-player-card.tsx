@@ -1,30 +1,20 @@
 import { useEffect, useRef, useState } from "react";
-import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { useConvexAuth } from "convex/react";
 import { useEventListener } from "expo";
 import {
   isPictureInPictureSupported,
   useVideoPlayer,
   VideoView,
 } from "expo-video";
-import * as WebBrowser from "expo-web-browser";
 import { useTranslation } from "react-i18next";
 
-import {
-  getYoutubeLaunchUrl,
-  getYoutubeVideoId,
-} from "../../features/content/selectors";
 import type { VideoSource } from "../../features/content/types";
 import { HapticsService } from "../../features/haptics/haptics";
-import { usePlaybackProgress } from "../../features/media/use-playback-progress";
-import { useIsMember } from "../../features/membership/use-is-member";
 import { useResponsive } from "../../features/responsive/use-responsive";
-import { hasCapability } from "../../features/tenant/public-config";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 import { MediaHeroPlayBando } from "./media-hero-play-bando";
-import { YoutubePlayerSurface } from "./youtube-player";
 
 type VideoPlayerCardProps = {
   contentId?: string;
@@ -37,7 +27,6 @@ type VideoPlayerCardProps = {
 };
 
 export function VideoPlayerCard({
-  contentId,
   coverImageUrl,
   onHostedPlay,
   onYoutubePlay,
@@ -48,31 +37,11 @@ export function VideoPlayerCard({
   const { t } = useTranslation("video");
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
-  const { width: windowWidth } = useWindowDimensions();
-  const { isAuthenticated } = useConvexAuth();
-  const { isMember } = useIsMember();
-  const { enabledModules } = useAppTheme();
   const hostedVideoRef = useRef<VideoView>(null);
   const [hasStarted, setHasStarted] = useState(false);
-  const [youtubeCurrentSeconds, setYoutubeCurrentSeconds] = useState(0);
-  const [youtubeDurationSeconds, setYoutubeDurationSeconds] = useState(0);
   const player = useVideoPlayer(
     source.kind === "hosted" ? { uri: source.playbackUrl } : null,
   );
-
-  const canSyncRemoteProgress =
-    isAuthenticated &&
-    isMember &&
-    hasCapability(enabledModules, "progressSync");
-
-  const { preferredResumeSeconds, saveFinal } = usePlaybackProgress({
-    contentId: source.kind === "youtube" ? (contentId ?? null) : null,
-    durationSeconds: youtubeDurationSeconds,
-    persistableDurationSeconds:
-      youtubeDurationSeconds > 0 ? youtubeDurationSeconds : undefined,
-    currentSeconds: youtubeCurrentSeconds,
-    canSyncRemote: canSyncRemoteProgress,
-  });
 
   useEventListener(player, "playingChange", ({ isPlaying }) => {
     if (source.kind === "hosted" && isPlaying) {
@@ -86,27 +55,6 @@ export function VideoPlayerCard({
     }
   }, [hasStarted, player, source.kind]);
 
-  useEffect(() => {
-    return () => {
-      if (
-        source.kind === "youtube" &&
-        hasStarted &&
-        youtubeCurrentSeconds > 0
-      ) {
-        saveFinal(youtubeCurrentSeconds);
-      }
-    };
-  }, [hasStarted, saveFinal, source.kind, youtubeCurrentSeconds]);
-
-  const startYoutubePlayback = () => {
-    onPlaybackIntent?.();
-    if (onYoutubePlay) {
-      onYoutubePlay();
-      return;
-    }
-    setHasStarted(true);
-  };
-
   const handlePrimaryPlay = () => {
     void HapticsService.medium();
     if (source.kind === "hosted") {
@@ -119,27 +67,15 @@ export function VideoPlayerCard({
       return;
     }
 
-    startYoutubePlayback();
+    if (onYoutubePlay) {
+      onYoutubePlay();
+      return;
+    }
+
+    onPlaybackIntent?.();
   };
 
   if (source.kind === "youtube") {
-    const youtubeVideoId = getYoutubeVideoId(source);
-    const launchUrl = getYoutubeLaunchUrl(source);
-    const playerHeight = Math.round((windowWidth * 9) / 16);
-
-    if (!youtubeVideoId || !launchUrl) {
-      return (
-        <Text
-          style={[
-            styles.unavailable,
-            { color: theme.colors.textMuted, fontSize: 14 * scaleFont },
-          ]}
-        >
-          {t("unavailable")}
-        </Text>
-      );
-    }
-
     return (
       <View style={styles.card}>
         <View
@@ -150,20 +86,7 @@ export function VideoPlayerCard({
             },
           ]}
         >
-          {hasStarted ? (
-            <YoutubePlayerSurface
-              height={playerHeight}
-              play={hasStarted}
-              preferredResumeSeconds={preferredResumeSeconds}
-              videoId={youtubeVideoId}
-              onTimeUpdate={({ currentSeconds, durationSeconds }) => {
-                setYoutubeCurrentSeconds(currentSeconds);
-                if (durationSeconds > 0) {
-                  setYoutubeDurationSeconds(durationSeconds);
-                }
-              }}
-            />
-          ) : coverImageUrl ? (
+          {coverImageUrl ? (
             <Image
               accessibilityLabel="Video cover"
               source={{ uri: coverImageUrl }}
@@ -172,54 +95,11 @@ export function VideoPlayerCard({
           ) : null}
         </View>
 
-        {!hasStarted ? (
-          <MediaHeroPlayBando
-            accessibilityLabel={playLabel}
-            onPress={handlePrimaryPlay}
-            testID="video-play-button"
-          />
-        ) : null}
-
-        {hasStarted ? (
-          <View
-            style={[
-              styles.secondaryActions,
-              {
-                paddingHorizontal: theme.spacing.lg * scaleSpace,
-                paddingTop: theme.spacing.md * scaleSpace,
-                paddingBottom: theme.spacing.lg * scaleSpace,
-              },
-            ]}
-          >
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => {
-                void HapticsService.light();
-                onPlaybackIntent?.();
-                void WebBrowser.openBrowserAsync(launchUrl);
-              }}
-              style={({ pressed }) => [
-                styles.linkButton,
-                {
-                  backgroundColor: theme.colors.accentSoft,
-                  borderRadius: theme.radii.pill,
-                  paddingHorizontal: 18 * scaleSpace,
-                  paddingVertical: 12 * scaleSpace,
-                },
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.linkButtonText,
-                  { color: theme.colors.accent, fontSize: 14 * scaleFont },
-                ]}
-              >
-                {t("openExternal")}
-              </Text>
-            </Pressable>
-          </View>
-        ) : null}
+        <MediaHeroPlayBando
+          accessibilityLabel={playLabel}
+          onPress={handlePrimaryPlay}
+          testID="video-play-button"
+        />
       </View>
     );
   }
@@ -327,12 +207,6 @@ const styles = StyleSheet.create({
   linkButtonText: {
     fontFamily: fontFamilies.bodySemiBold,
     fontSize: 14,
-  },
-  unavailable: {
-    fontFamily: fontFamilies.body,
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 4,
   },
   pressed: {
     opacity: 0.84,

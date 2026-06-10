@@ -26,6 +26,7 @@
 - `src/components/content/detail-hero.tsx` (~l.138 : styles `premium`).
 - Cards de feed / listes (`src/components/content/*`, `src/features/content/card-presentation.ts`) — vérifier tout badge d'accès.
 - `src/components/navigation/feature-access-gate.tsx` (déjà sur la bonne logique — confirmer cohérence).
+- **NOUVEAU (Slice 2) — surfaces premium « Ta lecture du jour »** : carte Profil + verrou de l'analyse (`src/components/profile/*` carte insights, `src/components/insights/*`, `src/components/library/library-briefing-locked-card.tsx`). Elles utilisent déjà `useFeatureAccess("premiumInsights")`/`requiresPremium` — **confirmer** qu'elles n'affichent un badge/lock que verrouillées (cohérent avec la règle) et router tout badge `access`-brut résiduel par `resolveAccessBadge`.
 
 **Source de vérité :** `src/features/tenant/use-feature-access.ts` (`requiresPremium`/`requiresSignIn`/`canAccess`), `src/features/tenant/feature-access.ts` (`canAccessFeatureLevel`).
 

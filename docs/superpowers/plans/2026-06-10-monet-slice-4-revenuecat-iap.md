@@ -120,7 +120,7 @@
 - [ ] `npm test` PASS ; `npm run test:convex` PASS ; `npx tsc --noEmit` **et** `-p convex` clean ; `git status --short` clean.
 - [ ] **Déployer** : `npx convex dev --once` (mutation interne + route webhook) ; `npx convex env list` (secret webhook).
 - [ ] **Smoke visuel** (`docs/agents/ui-visual-testing.md`) : Expo web + iPad sur le paywall (offre, essai, restore, erreur) ; **`midnight`** + claire. Vérifier web no-op (pas de crash).
-- [ ] **Passe manuelle SANDBOX (obligatoire, non headless)** : **dev build** (`expo:expo-dev-client`) ; compte sandbox Apple/Play ; achat → webhook → `entitlements.isPro=true` → surfaces premium débloquées **réactivement** ; **restore** ; **⚠️ annulation mi-période → l'accès RESTE débloqué jusqu'à l'expiration** (le piège Editia : vérifier que `isPro` ne saute pas sur `CANCELLATION`) ; expiration réelle / refund → re-verrouille.
+- [ ] **Passe manuelle SANDBOX (obligatoire, non headless)** : **dev build** (`expo:expo-dev-client`) ; compte sandbox Apple/Play ; achat → webhook → `entitlements.isPro=true` → surfaces premium débloquées **réactivement** (carte **« Ta lecture du jour »** + pages `/analysis`, offline downloads, listes) ; **restore** ; **⚠️ annulation mi-période → l'accès RESTE débloqué jusqu'à l'expiration** (le piège Editia : vérifier que `isPro` ne saute pas sur `CANCELLATION`) ; expiration réelle / refund → re-verrouille.
 - [ ] **Checklist soumission** (hors code, à acter avec le user) : produits App Store Connect/Play créés, contrats Paid Apps signés, RevenueCat relié, métadonnées store + mentions abonnement/essai conformes (cf. `expo:expo-deployment`).
 
 ---

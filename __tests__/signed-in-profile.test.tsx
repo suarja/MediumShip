@@ -21,9 +21,23 @@ jest.mock("../src/features/haptics/haptics", () => ({
 }));
 
 jest.mock("convex/react", () => ({
-  useConvexAuth: () => ({ isAuthenticated: true }),
+  useConvexAuth: () => ({ isAuthenticated: true, isLoading: false }),
   useMutation: () => jest.fn(),
   useQuery: () => ({ name: "Camille Renard", avatarUrl: null }),
+}));
+
+jest.mock("../src/features/insights/use-analysis", () => ({
+  useProfileBriefing: () => ({
+    analysis: null,
+    hasUnseen: false,
+    isLoading: false,
+    canAccess: false,
+  }),
+  useAnalysisHistory: () => ({
+    analyses: [],
+    isLoading: false,
+    canAccess: false,
+  }),
 }));
 
 jest.mock("expo-router", () => ({

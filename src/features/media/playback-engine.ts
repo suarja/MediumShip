@@ -3,9 +3,10 @@ import type { Dispatch, SetStateAction } from "react";
 import type { AudioPlayer, AudioStatus } from "expo-audio";
 import type { VideoPlayer } from "expo-video";
 
-// One interface over the two playback backends (expo-audio for Episode,
-// expo-video for HostedVideo) so the provider stops forking on session kind for
-// every transport call and every derived read. Two adapters = a real seam.
+// One interface over the three playback backends (expo-audio for Episode,
+// expo-video for HostedVideo, react-native-youtube-iframe for YouTube) so the
+// provider stops forking on session kind for every transport call and every
+// derived read.
 export type PlaybackEngine = {
   readonly currentTime: number;
   readonly duration: number;
@@ -77,6 +78,43 @@ export function createVideoPlaybackEngine(input: {
     pause: () => player.pause(),
     seekTo: (seconds: number) => {
       (player as { currentTime?: number }).currentTime = seconds;
+      setState((current) => ({ ...current, currentTimeSeconds: seconds }));
+    },
+  };
+}
+
+export type YoutubePlaybackCommands = {
+  play: () => void;
+  pause: () => void;
+  seekTo: (seconds: number) => void;
+};
+
+export function createYoutubePlaybackEngine(input: {
+  state: VideoPlaybackState;
+  setState: Dispatch<SetStateAction<VideoPlaybackState>>;
+  commands: YoutubePlaybackCommands;
+  fallbackDuration: number;
+}): PlaybackEngine {
+  const { state, setState, commands, fallbackDuration } = input;
+  return {
+    currentTime: state.currentTimeSeconds,
+    duration: state.durationSeconds || fallbackDuration || 0,
+    isPlaying: state.isPlaying,
+    isBuffering: state.isBuffering,
+    error: state.playbackError,
+    justFinished:
+      state.durationSeconds > 0 &&
+      state.currentTimeSeconds >= state.durationSeconds,
+    play: () => {
+      commands.play();
+      setState((current) => ({ ...current, isPlaying: true }));
+    },
+    pause: () => {
+      commands.pause();
+      setState((current) => ({ ...current, isPlaying: false }));
+    },
+    seekTo: (seconds: number) => {
+      commands.seekTo(seconds);
       setState((current) => ({ ...current, currentTimeSeconds: seconds }));
     },
   };

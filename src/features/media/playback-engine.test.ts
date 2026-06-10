@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from "react";
 import {
   createAudioPlaybackEngine,
   createVideoPlaybackEngine,
+  createYoutubePlaybackEngine,
   NULL_PLAYBACK_ENGINE,
   type VideoPlaybackState,
 } from "./playback-engine";
@@ -82,6 +83,50 @@ describe("createVideoPlaybackEngine", () => {
     void engine.seekTo(33);
     expect(player.currentTime).toBe(33);
     expect(next?.currentTimeSeconds).toBe(33);
+  });
+});
+
+describe("createYoutubePlaybackEngine", () => {
+  it("maps state and delegates transport commands to the iframe handle", () => {
+    const state: VideoPlaybackState = {
+      currentTimeSeconds: 18,
+      durationSeconds: 0,
+      isBuffering: true,
+      isPlaying: false,
+      playbackError: null,
+    };
+    const calls: string[] = [];
+    let next: VideoPlaybackState | undefined;
+    const setState: Dispatch<SetStateAction<VideoPlaybackState>> = (updater) => {
+      next =
+        typeof updater === "function"
+          ? (updater as (c: VideoPlaybackState) => VideoPlaybackState)(state)
+          : updater;
+    };
+
+    const engine = createYoutubePlaybackEngine({
+      state,
+      setState,
+      commands: {
+        play: () => calls.push("play"),
+        pause: () => calls.push("pause"),
+        seekTo: (seconds: number) => calls.push(`seek:${seconds}`),
+      },
+      fallbackDuration: 480,
+    });
+
+    expect(engine.currentTime).toBe(18);
+    expect(engine.duration).toBe(480);
+    expect(engine.isBuffering).toBe(true);
+    expect(engine.isPlaying).toBe(false);
+
+    engine.play();
+    engine.pause();
+    void engine.seekTo(55);
+
+    expect(calls).toEqual(["play", "pause", "seek:55"]);
+    expect(next?.isPlaying).toBe(false);
+    expect(next?.currentTimeSeconds).toBe(55);
   });
 });
 

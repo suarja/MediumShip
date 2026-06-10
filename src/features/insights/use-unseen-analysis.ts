@@ -6,6 +6,7 @@ import { api } from "../../../convex/_generated/api";
 import { scheduleAnalysisReadyNotification } from "../notifications/schedule-analysis-ready";
 import { useIsMember } from "../membership/use-is-member";
 import { useFeatureAccess } from "../tenant/use-feature-access";
+import { useAppTheme } from "../theme/theme-provider";
 
 export function useUnseenAnalysis() {
   const { isAuthenticated, isLoading: isAuthLoading } = useConvexAuth();
@@ -13,6 +14,7 @@ export function useUnseenAnalysis() {
   const { canAccess, isLoading: isFeatureLoading } = useFeatureAccess("premiumInsights");
   const canQuery = isAuthenticated && isMember && canAccess;
   const { t } = useTranslation("insights");
+  const { tenantName } = useAppTheme();
   const nowRef = useRef(Date.now());
 
   const analysis = useQuery(
@@ -25,12 +27,15 @@ export function useUnseenAnalysis() {
       return;
     }
 
+    // Pass appName for interpolation; fall back to the notification body if
+    // the tenant name is somehow empty so {{appName}} is never rendered raw.
+    const appName = tenantName?.trim() || t("notification.body");
     void scheduleAnalysisReadyNotification({
       analysisId: analysis._id,
-      title: t("notification.title"),
+      title: t("notification.title", { appName }),
       body: t("notification.body"),
     });
-  }, [analysis, t]);
+  }, [analysis, t, tenantName]);
 
   return {
     analysis,

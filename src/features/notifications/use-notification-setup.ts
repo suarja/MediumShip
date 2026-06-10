@@ -10,6 +10,7 @@ import {
   scheduleDailyDigest,
 } from "./schedule-daily-digest";
 import { useDigestReminderSettings } from "./use-digest-reminder-settings";
+import { useAppTheme } from "../theme/theme-provider";
 
 /**
  * Mount once in the app tab shell. Passive permission read only — never auto-prompts.
@@ -20,6 +21,7 @@ export function useNotificationSetup(): void {
   const { i18n } = useTranslation();
   const { status } = usePermissionStatus();
   const { enabled, hour, isLoading } = useDigestReminderSettings();
+  const { tenantName } = useAppTheme();
 
   useEffect(() => {
     if (!notificationsModule || Platform.OS === "web") {
@@ -48,6 +50,7 @@ export function useNotificationSetup(): void {
         await scheduleDailyDigest({
           hour,
           locale: i18n.language,
+          tenantName,
         });
       } catch {
         // Notifications are non-critical — never block the app shell.
@@ -57,5 +60,5 @@ export function useNotificationSetup(): void {
     return () => {
       cancelled = true;
     };
-  }, [enabled, hour, i18n.language, isLoading, status]);
+  }, [enabled, hour, i18n.language, isLoading, status, tenantName]);
 }

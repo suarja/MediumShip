@@ -76,11 +76,11 @@ export default {
       sub: "Resume synced across your devices",
     },
     briefing: {
-      title: "Briefings",
-      sub: "Reading reports · Premium",
-      subMember_one: "{{count}} saved briefing",
-      subMember_other: "{{count}} saved briefings",
-      subMemberEmpty: "Your reading reports",
+      title: "Readings of the day",
+      sub: "Interpreted readings · Premium",
+      subMember_one: "{{count}} saved reading",
+      subMember_other: "{{count}} saved readings",
+      subMemberEmpty: "Your readings of the day",
     },
     subscription: {
       title: "Subscription · Annual",

@@ -52,10 +52,10 @@ describe("buildInsightsPrompt", () => {
     );
 
     expect(system).toContain("Tutoiement OBLIGATOIRE");
-    expect(system).toContain("curateur lecture");
+    expect(system).toContain("compagnon de lecture");
     expect(user).toContain("politique");
     expect(user).toContain("candidate_picks");
-    expect(user).toContain("Rédige le briefing JSON");
+    expect(user).toContain("Rédige la lecture du jour JSON");
     expect(user).toContain("video/youtube");
     expect(user).not.toContain("@");
     expect(summaryContainsPii(user)).toBe(false);

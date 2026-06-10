@@ -76,11 +76,11 @@ export default {
       sub: "Reprise synchronisee sur vos appareils",
     },
     briefing: {
-      title: "Briefings",
-      sub: "Comptes rendus de lecture · Premium",
-      subMember_one: "{{count}} briefing enregistre",
-      subMember_other: "{{count}} briefings enregistres",
-      subMemberEmpty: "Vos comptes rendus de lecture",
+      title: "Lectures du jour",
+      sub: "Lectures interprétées · Premium",
+      subMember_one: "{{count}} lecture enregistrée",
+      subMember_other: "{{count}} lectures enregistrées",
+      subMemberEmpty: "Tes lectures du jour",
     },
     subscription: {
       title: "Abonnement · Annuel",

@@ -18,7 +18,7 @@ export default {
       resume: "Resume",
       saved: "Favorites",
       lists: "Lists",
-      briefing: "Briefings",
+      briefing: "Readings of the day",
       offline: "Offline",
     },
     resumeKicker: "Resume",
@@ -38,11 +38,11 @@ export default {
     offlineTitle: "Download to listen without a network",
     offlineBody:
       "Premium unlocks offline downloads for articles, episodes, and hosted videos.",
-    briefingTitle: "Your reading briefings, in one place",
+    briefingTitle: "Your readings of the day, in one place",
     briefingBody:
-      "Premium unlocks personalised briefings on what you read and what to pick next.",
-    briefingPreviewTitle: "Your reading briefings",
-    briefingPreviewMeta: "Personalised picks and reading notes",
+      "Premium unlocks a companion that interprets your reading and suggests what to explore next.",
+    briefingPreviewTitle: "Your readings of the day",
+    briefingPreviewMeta: "Personalised picks and taste interpretation",
     seeAll: "See all",
   },
   favoritesScreen: {

@@ -77,7 +77,7 @@ function formatSummaryBlock(
     lines.push(`Favoris enregistrés : ${summary.bookmarkCount}`);
     lines.push(
       summary.isColdStart
-        ? "Premier briefing — peu d'historique de lecture"
+        ? "Première lecture du jour — peu d'historique de lecture"
         : "Historique de lecture établi",
     );
 
@@ -122,7 +122,7 @@ function formatSummaryBlock(
   lines.push(`Saved bookmarks: ${summary.bookmarkCount}`);
   lines.push(
     summary.isColdStart
-      ? "First briefing — limited reading history"
+      ? "First reading of the day — limited reading history"
       : "Established reading history",
   );
 
@@ -150,13 +150,13 @@ function formatPreviousBlock(
   locale: InsightsLocale,
 ): string {
   if (!previous) {
-    return locale === "fr" ? "Aucun briefing précédent." : "No previous briefing.";
+    return locale === "fr" ? "Aucune lecture précédente." : "No previous reading.";
   }
 
   const dateLabel =
     locale === "fr"
-      ? `Briefing du ${previous.dayKey}`
-      : `Briefing for ${previous.dayKey}`;
+      ? `Lecture du ${previous.dayKey}`
+      : `Reading for ${previous.dayKey}`;
 
   const lines = [dateLabel, `Overview : ${previous.overview}`];
   if (previous.reflection) {
@@ -175,11 +175,11 @@ function buildTaskBlock(locale: InsightsLocale): string {
   if (locale === "fr") {
     return `---
 
-Rédige le briefing JSON pour CE lecteur.
+Rédige la lecture du jour JSON pour CE lecteur.
 
 Rappels impératifs :
 - Tutoiement partout.
-- overview : un seul bloc de 3–4 phrases complètes — habitudes récentes + évolution (si <previous_analysis> existe) + tendance format/thème, tout fondu. Jamais de rubrique « depuis le dernier… » ni d'excuse sur le manque de données.
+- overview : un seul bloc de 3–4 phrases complètes — habitudes récentes + évolution (si <previous_analysis> existe) + tendance format/thème, tout fondu. Jamais de rubrique « depuis la dernière lecture… » ni d'excuse sur le manque de données. N'emploie JAMAIS le mot « briefing ».
 - picks : une entrée par slot dans <candidate_picks> ; rationale en 1 phrase « tu », format ou titre cité.
 
 ## LONGUEUR (impératif — phrase TOUJOURS terminée)
@@ -189,11 +189,11 @@ Rappels impératifs :
 
   return `---
 
-Write the JSON briefing for THIS reader.
+Write the reading of the day JSON for THIS reader.
 
 Hard reminders:
 - Second person ("you") throughout.
-- overview: one block of 3–4 complete sentences — recent habits + what shifted (if <previous_analysis> exists) + format/theme tendency, all woven together. Never a "since your last briefing" heading or apologies about missing data.
+- overview: one block of 3–4 complete sentences — recent habits + what shifted (if <previous_analysis> exists) + format/theme tendency, all woven together. Never a "since your last reading" heading or apologies about missing data. NEVER use the word "briefing".
 - picks: one entry per slot in <candidate_picks>; 1-sentence "you" rationale citing format or title.
 
 ## LENGTH (mandatory — ALWAYS finish the sentence)

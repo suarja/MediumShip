@@ -185,22 +185,22 @@ describe("signed-in library screen", () => {
     expect(mockOpenPaywall).toHaveBeenCalledWith("offline");
   });
 
-  it("shows the briefing locked promo for non-premium members", () => {
+  it("shows the reading-of-the-day locked promo for non-premium members", () => {
     render(<LibraryScreen />);
 
-    expect(screen.getByText("Briefings")).toBeTruthy();
-    expect(screen.getByText("Your reading briefings, in one place")).toBeTruthy();
+    expect(screen.getByText("Readings of the day")).toBeTruthy();
+    expect(screen.getByText("Your readings of the day, in one place")).toBeTruthy();
   });
 
-  it("pressing the briefing locked card opens the content paywall", () => {
+  it("pressing the reading-of-the-day locked card opens the content paywall", () => {
     render(<LibraryScreen />);
 
-    fireEvent.press(screen.getByText("Your reading briefings, in one place"));
+    fireEvent.press(screen.getByText("Your readings of the day, in one place"));
 
     expect(mockOpenPaywall).toHaveBeenCalledWith("content");
   });
 
-  it("navigates to briefing history for premium members", () => {
+  it("navigates to reading history for premium members", () => {
     mockUseIsMember.mockReturnValue({ isMember: true, isLoading: false });
     mockUseAnalysisHistory.mockReturnValue({
       analyses: [
@@ -217,7 +217,7 @@ describe("signed-in library screen", () => {
 
     render(<LibraryScreen />);
 
-    fireEvent.press(screen.getByLabelText("Briefings"));
+    fireEvent.press(screen.getByLabelText("Readings of the day"));
 
     expect(mockPush).toHaveBeenCalledWith(
       expect.objectContaining({ pathname: "/analysis" }),

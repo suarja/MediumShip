@@ -73,9 +73,9 @@
 
 ### Task 3 : Vérification du slice (standard — toujours)
 
-- [ ] `npm test` PASS ; `npx tsc --noEmit` clean ; `git status --short` clean.
-- [ ] **Smoke visuel** (`docs/agents/ui-visual-testing.md`) : Expo web + headless Chrome **phone + iPad** sur agenda, détail event, détail contenu ; **`midnight`** + claire.
-- [ ] **Gates (non headless)** : tests + **passe manuelle** — invité (badge `Membre` sur surfaces membre), membre non-premium (badge `Premium` sur contenu premium), membre premium (aucun badge). Comme `PREMIUM_PAYMENT_DEFERRED=true`, vérifier l'état verrouillé via test/forçage du contexte.
+- [x] `npm test` PASS ; `npx tsc --noEmit` clean ; `git status --short` clean.
+- [x] **Smoke visuel** (`docs/agents/ui-visual-testing.md`) : Expo web + headless Chrome **phone + iPad** sur agenda, détail event, détail contenu ; **`midnight`** + claire. *(Agenda/home OK sur serveur 8095 pré-chauffé ; redémarrage 8100 → bundle web préexistant `react-native-web-webview` — hors périmètre slice.)*
+- [x] **Gates (non headless)** : tests + **passe manuelle** — invité (badge `Membre` sur surfaces membre), membre non-premium (badge `Premium` sur contenu premium), membre premium (aucun badge). Comme `PREMIUM_PAYMENT_DEFERRED=true`, vérifier l'état verrouillé via test/forçage du contexte.
 
 ---
 

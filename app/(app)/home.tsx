@@ -34,6 +34,8 @@ import {
   type ContentModule,
   type FeedSectionConfig,
 } from "../../src/features/tenant/public-config";
+import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
+import { useIsMember } from "../../src/features/membership/use-is-member";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
@@ -66,6 +68,9 @@ export default function HomeFeedScreen() {
   const { state: networkState } = useNetworkStatus();
   const pushWithReturn = usePushWithReturn();
   const { t: tSearch } = useTranslation("explore");
+  const { isSignedIn } = useClerkAuth();
+  const { isMember } = useIsMember();
+  const cardViewer = { isAuthenticated: isSignedIn, isPro: isMember };
   const [filter, setFilter] = useState<FeedFilter>("all");
 
   const contents = useQuery(api.content.queries.listPublishedFeed, {
@@ -186,7 +191,7 @@ export default function HomeFeedScreen() {
                   <FeedHeroCard
                     item={featured}
                     kicker={cardKicker(featured, t)}
-                    meta={cardMeta(featured, t)}
+                    meta={cardMeta(featured, t, cardViewer)}
                   />
                 ) : null}
 
@@ -200,7 +205,7 @@ export default function HomeFeedScreen() {
                         key={item.id}
                         item={item}
                         kicker={cardKicker(item, t)}
-                        meta={cardMeta(item, t)}
+                        meta={cardMeta(item, t, cardViewer)}
                         divider={index > 0}
                       />
                     ))}

@@ -9,15 +9,15 @@ import { usePersistentMediaPlayerSpace } from "../../src/features/media/persiste
 import { useEvent } from "../../src/features/events/use-events";
 import { HapticsService } from "../../src/features/haptics/haptics";
 import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
-import { useIsMember } from "../../src/features/membership/use-is-member";
+import { useAccessBadge } from "../../src/features/tenant/use-access-badge";
+import type { AccessBadgeLevel } from "../../src/features/tenant/access-badge";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 import { useGoBack } from "../../src/features/navigation/app-navigation";
 
-const ACCESS_LABEL: Record<string, string> = {
-  free: "Gratuit",
+const ACCESS_LABEL: Record<AccessBadgeLevel, string> = {
   member: "Membres",
   premium: "Premium",
 };
@@ -53,7 +53,7 @@ export default function EventDetailScreen() {
   const insets = useSafeAreaInsets();
   const { event } = useEvent(id ?? "");
   const { openPaywall } = usePaywallSheet();
-  const { isMember } = useIsMember();
+  const accessBadge = useAccessBadge(event?.access ?? "free");
 
   if (!event) {
     return (
@@ -67,13 +67,18 @@ export default function EventDetailScreen() {
     );
   }
 
-  const isPremiumGated = (event.access === "premium" || event.access === "member") && !isMember;
-  const accessColor = event.access === "premium" ? theme.colors.premium : event.access === "member" ? theme.colors.accent : theme.colors.textMuted;
+  const isLocked = accessBadge.show;
+  const accessColor =
+    accessBadge.level === "premium"
+      ? theme.colors.premium
+      : accessBadge.level === "member"
+        ? theme.colors.accent
+        : theme.colors.textMuted;
 
   const handleCta = () => {
-    if (isPremiumGated) {
+    if (isLocked) {
       void HapticsService.medium();
-      openPaywall(event.access === "premium" ? "content" : "members");
+      openPaywall(accessBadge.level === "premium" ? "content" : "members");
       return;
     }
     const url = event.ctaUrl ?? event.communityUrl;
@@ -135,22 +140,24 @@ export default function EventDetailScreen() {
         </View>
 
         <View style={[styles.metaBadgeRow, { gap: 8 * scaleSpace }]}>
-          <View
-            style={[
-              styles.badge,
-              {
-                borderRadius: theme.radii.pill,
-                borderColor: withAlpha(accessColor, 0.4),
-                borderWidth: StyleSheet.hairlineWidth,
-                paddingHorizontal: 10 * scaleSpace,
-                paddingVertical: 4 * scaleSpace,
-              },
-            ]}
-          >
-            <Text style={[styles.badgeLabel, { color: accessColor, fontSize: 10 * scaleFont }]}>
-              {ACCESS_LABEL[event.access]?.toUpperCase() ?? event.access.toUpperCase()}
-            </Text>
-          </View>
+          {isLocked && accessBadge.level ? (
+            <View
+              style={[
+                styles.badge,
+                {
+                  borderRadius: theme.radii.pill,
+                  borderColor: withAlpha(accessColor, 0.4),
+                  borderWidth: StyleSheet.hairlineWidth,
+                  paddingHorizontal: 10 * scaleSpace,
+                  paddingVertical: 4 * scaleSpace,
+                },
+              ]}
+            >
+              <Text style={[styles.badgeLabel, { color: accessColor, fontSize: 10 * scaleFont }]}>
+                {ACCESS_LABEL[accessBadge.level].toUpperCase()}
+              </Text>
+            </View>
+          ) : null}
           <View
             style={[
               styles.badge,
@@ -198,7 +205,7 @@ export default function EventDetailScreen() {
               styles.ctaBtn,
               {
                 borderRadius: theme.radii.pill,
-                backgroundColor: isPremiumGated ? theme.colors.premium : theme.colors.accent,
+                backgroundColor: isLocked ? theme.colors.premium : theme.colors.accent,
                 paddingVertical: 14 * scaleSpace,
               },
               pressed && styles.pressed,
@@ -211,7 +218,7 @@ export default function EventDetailScreen() {
                 { color: theme.colors.accentContrast, fontSize: 15 * scaleFont },
               ]}
             >
-              {isPremiumGated
+              {isLocked
                 ? `★ ${event.ctaLabel ?? "Accès membres"}`
                 : (event.ctaLabel ?? "Rejoindre")}
             </Text>

@@ -1,5 +1,6 @@
 import type { ContentCardModel, ContentKind } from "./types";
 import type { AppTheme } from "../theme/palette-catalog";
+import { resolveContentAccessBadge } from "../tenant/access-badge";
 
 /** Editorial format glyph per kind, shared by the hero card and feed rows. */
 export const KIND_GLYPH: Record<ContentKind, string> = {
@@ -88,15 +89,25 @@ export function discoveryCardKicker(
 }
 
 /**
- * Localized, human meta line: reading time or duration, then a premium tag.
- * Returned unstyled — callers apply uppercase/mono treatment.
+ * Localized, human meta line: reading time or duration, then a premium tag when
+ * the content is locked for the current viewer. Returned unstyled — callers
+ * apply uppercase/mono treatment.
  */
-export function cardMeta(item: ContentCardModel, t: Translate): string {
+export function cardMeta(
+  item: ContentCardModel,
+  t: Translate,
+  viewer: { isAuthenticated: boolean; isPro: boolean },
+): string {
   const duration = cardDurationMeta(item, t);
+  const badge = resolveContentAccessBadge({
+    isPremium: item.isPremium,
+    isAuthenticated: viewer.isAuthenticated,
+    isPro: viewer.isPro,
+  });
   if (!duration) {
-    return item.isPremium ? t("premiumTag") : "";
+    return badge.show ? t("premiumTag") : "";
   }
-  return item.isPremium ? `${duration} · ${t("premiumTag")}` : duration;
+  return badge.show ? `${duration} · ${t("premiumTag")}` : duration;
 }
 
 /** Duration / reading time only — premium is rendered as a separate badge in discovery. */

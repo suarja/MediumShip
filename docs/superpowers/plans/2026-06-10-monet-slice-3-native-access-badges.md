@@ -60,16 +60,16 @@
 
 ### Task 1 : Helper de badge (Jest-first)
 
-- [ ] **Step 1 (Jest) :** `access-badge.ts` → `resolveAccessBadge({ access, isAuthenticated, isPro })` → `{ show: boolean, level?: "member"|"premium" }`. Règle : `free` → `show:false` ; `member` → show si `!isAuthenticated` ; `premium` → show si `!canAccessFeatureLevel("premium", …)`. **Réutilise** `canAccessFeatureLevel` pour rester cohérent avec `PREMIUM_PAYMENT_DEFERRED`. Tester la matrice complète.
-- [ ] **Step 2 :** `npm test` PASS. **Commit** — `feat(access): centralized badge visibility helper (locked-for-user only)`.
+- [x] **Step 1 (Jest) :** `access-badge.ts` → `resolveAccessBadge({ access, isAuthenticated, isPro })` → `{ show: boolean, level?: "member"|"premium" }`. Règle : `free` → `show:false` ; `member` → show si `!isAuthenticated` ; `premium` → show si `!canAccessFeatureLevel("premium", …)`. **Réutilise** `canAccessFeatureLevel` pour rester cohérent avec `PREMIUM_PAYMENT_DEFERRED`. Tester la matrice complète.
+- [x] **Step 2 :** `npm test` PASS. **Commit** — `feat(access): centralized badge visibility helper (locked-for-user only)`.
 
 ### Task 2 : Aligner les surfaces (Jest-first)
 
-- [ ] **Step 1 :** `app/(app)/agenda.tsx` — remplacer le badge sur `event.access` brut par `resolveAccessBadge(...)` (+ contexte auth/membership). Pas de badge si accès accordé.
-- [ ] **Step 2 :** `app/event/[id].tsx` — idem ; conserver `openPaywall` **uniquement** quand verrouillé.
-- [ ] **Step 3 :** `src/components/content/detail-hero.tsx` + cards de feed — idem ; retirer la logique de badge basée sur `access` brut (dead code).
-- [ ] **Step 4 (Jest) :** specs par surface — badge présent **seulement** verrouillé, absent si accès ; tap verrouillé → paywall. Tokens/responsive/`midnight`.
-- [ ] **Step 5 :** `npm test` + `npx tsc --noEmit` clean. **Commit** — `refactor(access): show access badges only when locked for the current user`.
+- [x] **Step 1 :** `app/(app)/agenda.tsx` — remplacer le badge sur `event.access` brut par `resolveAccessBadge(...)` (+ contexte auth/membership). Pas de badge si accès accordé.
+- [x] **Step 2 :** `app/event/[id].tsx` — idem ; conserver `openPaywall` **uniquement** quand verrouillé.
+- [x] **Step 3 :** `src/components/content/detail-hero.tsx` + cards de feed — idem ; retirer la logique de badge basée sur `access` brut (dead code).
+- [x] **Step 4 (Jest) :** specs par surface — badge présent **seulement** verrouillé, absent si accès ; tap verrouillé → paywall. Tokens/responsive/`midnight`.
+- [x] **Step 5 :** `npm test` + `npx tsc --noEmit` clean. **Commit** — `refactor(access): show access badges only when locked for the current user`.
 
 ### Task 3 : Vérification du slice (standard — toujours)
 

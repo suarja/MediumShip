@@ -72,6 +72,13 @@ jest.mock("../src/features/haptics/haptics", () => ({
   },
 }));
 
+const mockUseAccessBadge = jest.fn();
+
+jest.mock("../src/features/tenant/use-access-badge", () => ({
+  useAccessBadge: (access: string) => mockUseAccessBadge(access),
+  useContentAccessBadge: jest.fn(),
+}));
+
 describe("agenda screen", () => {
   beforeAll(async () => {
     await initI18n();
@@ -80,6 +87,11 @@ describe("agenda screen", () => {
   beforeEach(async () => {
     await changeAppLanguage("en");
     jest.clearAllMocks();
+    mockUseAccessBadge.mockImplementation((access: string) => {
+      if (access === "member") return { show: true, level: "member" };
+      if (access === "premium") return { show: true, level: "premium" };
+      return { show: false };
+    });
     mockUseAppTheme.mockReturnValue({
       enabledModules: ["agenda"],
       featureConfigs: resolveEffectiveFeatureConfigs({ enabledModules: ["agenda"] }),
@@ -131,5 +143,23 @@ describe("agenda screen", () => {
     expect(mockPush).toHaveBeenCalledWith(
       expect.objectContaining({ pathname: "/event/evt-1" }),
     );
+  });
+
+  it("shows member access badges only on locked member events", () => {
+    render(<AgendaScreen />);
+
+    expect(screen.getByText("MEMBRES")).toBeTruthy();
+    expect(screen.queryByText("GRATUIT")).toBeNull();
+    expect(screen.queryByText("PREMIUM")).toBeNull();
+  });
+
+  it("hides access badges when the viewer already has access", () => {
+    mockUseAccessBadge.mockReturnValue({ show: false });
+
+    render(<AgendaScreen />);
+
+    expect(screen.queryByText("MEMBRES")).toBeNull();
+    expect(screen.queryByText("PREMIUM")).toBeNull();
+    expect(screen.queryByText("GRATUIT")).toBeNull();
   });
 });

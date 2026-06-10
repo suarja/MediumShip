@@ -4,6 +4,7 @@ import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { KIND_GLYPH, PREMIUM_ON_FILL, kindAccent } from "../../features/content/card-presentation";
 import { HapticsService } from "../../features/haptics/haptics";
 import type { ContentCardModel } from "../../features/content/types";
+import { useContentAccessBadge } from "../../features/tenant/use-access-badge";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
@@ -31,6 +32,7 @@ export function FeedHeroCard({
   const heroBg = theme.isDark ? theme.colors.canvasAccent : theme.colors.heading;
   const onHero = theme.isDark ? theme.colors.heading : theme.colors.canvas;
   const kAccent = kindAccent(item.kind, theme);
+  const accessBadge = useContentAccessBadge(item.isPremium);
   const glowColor = item.isPremium ? theme.colors.premium : kAccent.accent;
   const chipColor = item.isPremium ? theme.colors.premium : kAccent.accent;
   const onChipColor = item.isPremium ? PREMIUM_ON_FILL : theme.colors.accentContrast;
@@ -74,8 +76,11 @@ export function FeedHeroCard({
             </>
           )}
 
-          {item.isPremium ? (
-            <View style={[styles.premiumTag, { backgroundColor: theme.colors.premium }]}>
+          {accessBadge.show ? (
+            <View
+              testID="content-card-premium-badge"
+              style={[styles.premiumTag, { backgroundColor: theme.colors.premium }]}
+            >
               <Text style={[styles.premiumTagText, { color: PREMIUM_ON_FILL }]}>
                 ★ Premium
               </Text>

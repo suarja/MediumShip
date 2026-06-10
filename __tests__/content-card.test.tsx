@@ -18,6 +18,13 @@ jest.mock("expo-router", () => ({
   useGlobalSearchParams: () => ({}),
 }));
 
+const mockUseContentAccessBadge = jest.fn();
+
+jest.mock("../src/features/tenant/use-access-badge", () => ({
+  useContentAccessBadge: (isPremium: boolean) => mockUseContentAccessBadge(isPremium),
+  useAccessBadge: jest.fn(),
+}));
+
 const SAMPLE_ITEM: ContentCardModel = {
   id: "article-1",
   kind: "article",
@@ -63,6 +70,7 @@ describe("ContentCard", () => {
 
   beforeEach(async () => {
     mockUseAppTheme.mockReturnValue(makeTheme());
+    mockUseContentAccessBadge.mockReturnValue({ show: false });
     await changeAppLanguage("fr");
   });
 
@@ -102,7 +110,9 @@ describe("ContentCard", () => {
     expect(screen.queryByTestId("content-card-compact")).toBeNull();
   });
 
-  it("renders an explicit premium label on premium items", () => {
+  it("renders a premium badge only when premium content is locked for the viewer", () => {
+    mockUseContentAccessBadge.mockReturnValue({ show: true, level: "premium" });
+
     render(
       <ContentCard
         variant="feature"
@@ -115,6 +125,36 @@ describe("ContentCard", () => {
     expect(screen.getByTestId("content-card-premium-badge")).toHaveTextContent(
       /★\s*Premium/i,
     );
+  });
+
+  it("hides the premium badge when the viewer already has access", () => {
+    mockUseContentAccessBadge.mockReturnValue({ show: false });
+
+    render(
+      <ContentCard
+        variant="feature"
+        item={{ ...SAMPLE_ITEM, isPremium: true }}
+        kicker="Analyse"
+        meta="18 min"
+      />,
+    );
+
+    expect(screen.queryByTestId("content-card-premium-badge")).toBeNull();
+  });
+
+  it("shows a compact-row premium badge only when locked", () => {
+    mockUseContentAccessBadge.mockReturnValue({ show: true, level: "premium" });
+
+    render(
+      <ContentCard
+        variant="compact"
+        item={{ ...SAMPLE_ITEM, isPremium: true }}
+        kicker="Analyse"
+        meta="18 min"
+      />,
+    );
+
+    expect(screen.getByTestId("content-card-premium-badge")).toBeTruthy();
   });
 
   it("renders action slots only when provided", () => {

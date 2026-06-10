@@ -2,6 +2,7 @@ import { AppLink } from "../navigation/app-link";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { KIND_GLYPH, PREMIUM_ON_FILL, kindAccent } from "../../features/content/card-presentation";
+import { useContentAccessBadge } from "../../features/tenant/use-access-badge";
 import { HapticsService } from "../../features/haptics/haptics";
 import type { ContentCardModel } from "../../features/content/types";
 import { hasCapability } from "../../features/tenant/public-config";
@@ -39,6 +40,7 @@ export function FeedRow({
   const { scaleFont, scaleSpace } = useResponsive();
   const tile = 60 * scaleSpace;
   const kAccent = kindAccent(item.kind, theme);
+  const accessBadge = useContentAccessBadge(item.isPremium);
 
   return (
     <View
@@ -81,8 +83,11 @@ export function FeedRow({
                 {KIND_GLYPH[item.kind]}
               </Text>
           )}
-          {item.isPremium ? (
-            <View style={[styles.premiumBadge, { backgroundColor: theme.colors.premium }]}>
+          {accessBadge.show ? (
+            <View
+              testID="content-card-premium-badge"
+              style={[styles.premiumBadge, { backgroundColor: theme.colors.premium }]}
+            >
               <Text style={[styles.premiumStar, { color: PREMIUM_ON_FILL }]}>★</Text>
             </View>
           ) : null}

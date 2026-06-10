@@ -7,7 +7,10 @@ import { HapticsService } from "../../src/features/haptics/haptics";
 import { useCollection } from "../../src/features/collections/use-collections";
 import type { CollectionItem } from "../../src/features/collections/types";
 import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
+import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
 import { useIsMember } from "../../src/features/membership/use-is-member";
+import { resolveContentAccessBadge } from "../../src/features/tenant/access-badge";
+import { useContentAccessBadge } from "../../src/features/tenant/use-access-badge";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
@@ -30,6 +33,7 @@ export default function CollectionDetailScreen() {
   const { collection } = useCollection(id ?? "");
   const { openPaywall } = usePaywallSheet();
   const { isMember } = useIsMember();
+  const { isSignedIn } = useClerkAuth();
 
   if (!collection) {
     return (
@@ -115,7 +119,12 @@ export default function CollectionDetailScreen() {
             item={item}
             divider={index !== 0}
             onPress={() => {
-              if (item.isPremium && !isMember) {
+              const badge = resolveContentAccessBadge({
+                isPremium: item.isPremium,
+                isAuthenticated: isSignedIn,
+                isPro: isMember,
+              });
+              if (badge.show) {
                 void HapticsService.medium();
                 openPaywall("content");
               } else {
@@ -143,6 +152,7 @@ function CollectionItemRow({
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
   const glyph = KIND_GLYPH[item.kind] ?? "◉";
+  const accessBadge = useContentAccessBadge(item.isPremium);
   const accentColor = item.isPremium ? theme.colors.premium : theme.colors.accent;
 
   return (
@@ -179,7 +189,7 @@ function CollectionItemRow({
         <Text
           style={[styles.itemKicker, { color: accentColor, fontSize: 10 * scaleFont }]}
         >
-          {item.category.toUpperCase()}{item.isPremium ? " · ★" : ""}
+          {item.category.toUpperCase()}{accessBadge.show ? " · ★" : ""}
         </Text>
         <Text
           style={[styles.itemTitle, { color: theme.colors.heading, fontSize: 15 * scaleFont }]}

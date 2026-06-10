@@ -18,6 +18,8 @@ import { useDownloads } from "../../src/features/downloads/use-downloads";
 import { useContentEngagement } from "../../src/features/discovery/use-content-engagement";
 import { resolvePremiumGate } from "../../src/features/membership/premium-gate";
 import { useIsMember } from "../../src/features/membership/use-is-member";
+import { resolveContentAccessBadge } from "../../src/features/tenant/access-badge";
+import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
 import { HapticsService } from "../../src/features/haptics/haptics";
 import { usePersistentMediaPlayer } from "../../src/features/media/persistent-media-player";
 import { useNetworkStatus } from "../../src/features/network/use-network-status";
@@ -34,6 +36,7 @@ export default function EpisodeDetailScreen() {
   const router = useRouter();
   const { activeSession } = usePersistentMediaPlayer();
   const { isMember } = useIsMember();
+  const { isSignedIn } = useClerkAuth();
 
   const content = useQuery(
     api.content.queries.getPublishedById,
@@ -45,6 +48,13 @@ export default function EpisodeDetailScreen() {
   const premiumGate = resolvedContent
     ? resolvePremiumGate({ isPremium: resolvedContent.isPremium, isMember })
     : "open";
+  const premiumBadge = resolvedContent
+    ? resolveContentAccessBadge({
+        isPremium: resolvedContent.isPremium,
+        isAuthenticated: isSignedIn,
+        isPro: isMember,
+      })
+    : { show: false as const };
 
   const state =
     resolvedContent && resolvedContent.kind === "episode"
@@ -110,7 +120,7 @@ export default function EpisodeDetailScreen() {
               mediaKey={resolvedContent._id}
               watermarkGlyph="▷"
               height={210 * scaleSpace}
-              premiumLabel={resolvedContent.isPremium ? t("premiumTag") : undefined}
+              premiumLabel={premiumBadge.show ? t("premiumTag") : undefined}
             />
           )
         ) : undefined

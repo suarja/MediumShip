@@ -15,9 +15,10 @@ import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
+import { useAccessBadge } from "../../src/features/tenant/use-access-badge";
+import type { AccessBadgeLevel } from "../../src/features/tenant/access-badge";
 
-const ACCESS_BADGE: Record<string, string> = {
-  free: "GRATUIT",
+const ACCESS_BADGE: Record<AccessBadgeLevel, string> = {
   member: "MEMBRES",
   premium: "PREMIUM",
 };
@@ -175,7 +176,13 @@ function EventRow({
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
   const { day, month } = formatEventDate(event.startsAt);
-  const accessColor = event.access === "premium" ? theme.colors.premium : event.access === "member" ? theme.colors.accent : theme.colors.textMuted;
+  const accessBadge = useAccessBadge(event.access);
+  const accessColor =
+    accessBadge.level === "premium"
+      ? theme.colors.premium
+      : accessBadge.level === "member"
+        ? theme.colors.accent
+        : theme.colors.textMuted;
 
   return (
     <Pressable
@@ -229,8 +236,8 @@ function EventRow({
             style={[
               styles.tag,
               {
-                color: accessColor,
-                borderColor: withAlpha(accessColor, 0.3),
+                color: theme.colors.textMuted,
+                borderColor: withAlpha(theme.colors.textMuted, 0.3),
                 fontSize: 9 * scaleFont,
                 paddingHorizontal: 6 * scaleSpace,
                 paddingVertical: 2 * scaleSpace,
@@ -241,22 +248,24 @@ function EventRow({
           >
             {MODE_TAG[event.mode] ?? event.mode.toUpperCase()}
           </Text>
-          <Text
-            style={[
-              styles.tag,
-              {
-                color: accessColor,
-                borderColor: withAlpha(accessColor, 0.3),
-                fontSize: 9 * scaleFont,
-                paddingHorizontal: 6 * scaleSpace,
-                paddingVertical: 2 * scaleSpace,
-                borderRadius: theme.radii.pill,
-                borderWidth: StyleSheet.hairlineWidth,
-              },
-            ]}
-          >
-            {ACCESS_BADGE[event.access] ?? event.access.toUpperCase()}
-          </Text>
+          {accessBadge.show && accessBadge.level ? (
+            <Text
+              style={[
+                styles.tag,
+                {
+                  color: accessColor,
+                  borderColor: withAlpha(accessColor, 0.3),
+                  fontSize: 9 * scaleFont,
+                  paddingHorizontal: 6 * scaleSpace,
+                  paddingVertical: 2 * scaleSpace,
+                  borderRadius: theme.radii.pill,
+                  borderWidth: StyleSheet.hairlineWidth,
+                },
+              ]}
+            >
+              {ACCESS_BADGE[accessBadge.level]}
+            </Text>
+          ) : null}
         </View>
       </View>
     </Pressable>

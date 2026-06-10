@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { KIND_GLYPH, PREMIUM_ON_FILL, kindAccent } from "../../features/content/card-presentation";
 import { HapticsService } from "../../features/haptics/haptics";
 import type { ContentCardModel } from "../../features/content/types";
+import { useContentAccessBadge } from "../../features/tenant/use-access-badge";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
@@ -34,7 +35,8 @@ export function ContentFeatureCard({
   const { scaleFont, scaleSpace } = useResponsive();
   const thumb = 72 * scaleSpace;
   const hasEditorialCategory = Boolean(item.category?.trim());
-  const showFooter = Boolean(meta || item.isPremium || actions);
+  const accessBadge = useContentAccessBadge(item.isPremium);
+  const showFooter = Boolean(meta || accessBadge.show || actions);
   const kAccent = kindAccent(item.kind, theme);
 
   return (
@@ -175,7 +177,7 @@ export function ContentFeatureCard({
                     {meta}
                   </Text>
                 ) : null}
-                {item.isPremium ? (
+                {accessBadge.show ? (
                   <View
                     testID="content-card-premium-badge"
                     style={[

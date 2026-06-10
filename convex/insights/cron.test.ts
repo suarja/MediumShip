@@ -81,7 +81,7 @@ describe("generateDailyAnalyses", () => {
     expect(count).toBe(1);
   });
 
-  it("skips members who still have an unseen briefing", async () => {
+  it("skips member with unseen briefing when no new signal since briefing", async () => {
     const t = convexTest(schema, modules);
     await seedTenant(t);
     await seedPremiumMember(t);
@@ -97,6 +97,7 @@ describe("generateDailyAnalyses", () => {
         model: "mock",
         createdAt: NOW - 86_400_000,
       });
+      // No interactions or bookmarks after createdAt → anti-cost guard skips.
     });
 
     const result = await t.action(internal.insights.cron.generateDailyAnalyses, {
@@ -110,6 +111,50 @@ describe("generateDailyAnalyses", () => {
 
     const rows = await t.run(async (ctx) => ctx.db.query("tasteAnalysis").collect());
     expect(rows).toHaveLength(1);
+  });
+
+  it("refreshes unseen briefing in-place when new signals exist (no duplicate row)", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t);
+    await seedPremiumMember(t);
+    const contentId = await insertPublishedContent(t, { title: "Cron refresh" });
+    const UNSEEN_CREATED_AT = NOW - 86_400_000;
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("tasteAnalysis", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        tenantSlug: TENANT,
+        dayKey: formatDayKey(UNSEEN_CREATED_AT),
+        tasteText: "Ancien briefing non lu.",
+        relatedContentIds: [],
+        model: "mock",
+        createdAt: UNSEEN_CREATED_AT,
+        // seenAt intentionally absent → unseen
+      });
+      // New interaction AFTER the unseen briefing → triggers refresh.
+      await ctx.db.insert("contentInteractions", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        tenantSlug: TENANT,
+        contentId,
+        type: "open",
+        createdAt: UNSEEN_CREATED_AT + 3_600_000,
+      });
+    });
+
+    const result = await t.action(internal.insights.cron.generateDailyAnalyses, {
+      now: NOW,
+      fallbackTenantSlug: TENANT,
+      mockProse: "Briefing rafraîchi.",
+    });
+
+    expect(result.created).toBe(1);
+    expect(result.skipped).toBe(0);
+
+    // Must still be exactly 1 row (refreshed in-place, not a new insert).
+    const rows = await t.run(async (ctx) => ctx.db.query("tasteAnalysis").collect());
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.tasteText).toBe("Briefing rafraîchi.");
+    expect(rows[0]?.dayKey).toBe(formatDayKey(NOW));
   });
 
   it("forwards mockReport to generateForMember", async () => {

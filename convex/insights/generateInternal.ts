@@ -28,24 +28,6 @@ export const getExistingAnalysisForDay = internalQuery({
   },
 });
 
-/** True when the member still has a briefing they have not opened (seenAt unset). */
-export const memberHasUnseenBriefing = internalQuery({
-  args: {
-    tokenIdentifier: v.string(),
-  },
-  returns: v.boolean(),
-  handler: async (ctx, args) => {
-    const latest = await ctx.db
-      .query("tasteAnalysis")
-      .withIndex("by_tokenIdentifier_and_createdAt", (q) =>
-        q.eq("tokenIdentifier", args.tokenIdentifier),
-      )
-      .order("desc")
-      .first();
-
-    return latest !== null && latest.seenAt === undefined;
-  },
-});
 
 export const getTasteThreadId = internalQuery({
   args: {
@@ -109,9 +91,12 @@ export const loadPreviousAnalysis = internalQuery({
         q.eq("tokenIdentifier", args.tokenIdentifier),
       )
       .order("desc")
-      .take(5);
+      .take(10);
 
-    const previous = rows.find((row) => row.createdAt < args.beforeCreatedAt);
+    // Anchor only on the last *seen* briefing before the current timestamp.
+    const previous = rows.find(
+      (row) => row.createdAt < args.beforeCreatedAt && row.seenAt !== undefined,
+    );
     if (!previous) {
       return null;
     }
@@ -122,6 +107,96 @@ export const loadPreviousAnalysis = internalQuery({
       reflection: previous.reflection,
       trends: previous.trends,
     };
+  },
+});
+
+/**
+ * Returns the _id and createdAt of the latest unseen briefing (seenAt absent)
+ * for the member, or null if none exists. Used by the cron for refresh-in-place.
+ */
+export const getUnseenBriefing = internalQuery({
+  args: {
+    tokenIdentifier: v.string(),
+  },
+  returns: v.union(
+    v.object({ id: v.id("tasteAnalysis"), createdAt: v.number() }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    const latest = await ctx.db
+      .query("tasteAnalysis")
+      .withIndex("by_tokenIdentifier_and_createdAt", (q) =>
+        q.eq("tokenIdentifier", args.tokenIdentifier),
+      )
+      .order("desc")
+      .first();
+
+    if (latest === null || latest.seenAt !== undefined) {
+      return null;
+    }
+
+    return { id: latest._id, createdAt: latest.createdAt };
+  },
+});
+
+/**
+ * Returns the most recent createdAt across contentInteractions and bookmarks
+ * for the member, or null when neither table has any row.
+ */
+export const latestNewSignalAt = internalQuery({
+  args: {
+    tokenIdentifier: v.string(),
+  },
+  returns: v.union(v.number(), v.null()),
+  handler: async (ctx, args) => {
+    const interaction = await ctx.db
+      .query("contentInteractions")
+      .withIndex("by_tokenIdentifier_and_createdAt", (q) =>
+        q.eq("tokenIdentifier", args.tokenIdentifier),
+      )
+      .order("desc")
+      .first();
+
+    const bookmark = await ctx.db
+      .query("bookmarks")
+      .withIndex("by_tokenIdentifier_and_createdAt", (q) =>
+        q.eq("tokenIdentifier", args.tokenIdentifier),
+      )
+      .order("desc")
+      .first();
+
+    const candidates = [interaction?.createdAt, bookmark?.createdAt].filter(
+      (x): x is number => x !== undefined,
+    );
+
+    return candidates.length > 0 ? Math.max(...candidates) : null;
+  },
+});
+
+/**
+ * Patches an existing unseen briefing with fresh content (refresh-in-place).
+ */
+export const updateTasteAnalysis = internalMutation({
+  args: {
+    id: v.id("tasteAnalysis"),
+    tasteText: v.string(),
+    relatedPicks: v.array(relatedPickValidator),
+    relatedContentIds: v.array(v.id("contents")),
+    model: v.string(),
+    dayKey: v.string(),
+    createdAt: v.number(),
+  },
+  returns: v.id("tasteAnalysis"),
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, {
+      tasteText: args.tasteText,
+      relatedPicks: args.relatedPicks,
+      relatedContentIds: args.relatedContentIds,
+      model: args.model,
+      dayKey: args.dayKey,
+      createdAt: args.createdAt,
+    });
+    return args.id;
   },
 });
 

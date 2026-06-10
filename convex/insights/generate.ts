@@ -66,6 +66,11 @@ export const generateForMember = internalAction({
     mockProse: v.optional(v.string()),
     /** Structured test hook — full editorial report. */
     mockReport: v.optional(mockReportValidator),
+    /**
+     * When set, refresh this existing unseen briefing in-place rather than
+     * inserting a new row. Supplied by the cron when refresh-in-place logic fires.
+     */
+    existingIdToUpdate: v.optional(v.id("tasteAnalysis")),
   },
   returns: v.union(v.id("tasteAnalysis"), v.null()),
   handler: async (ctx, args) => {
@@ -73,13 +78,16 @@ export const generateForMember = internalAction({
     const dayKey = formatDayKey(now);
     const locale: InsightsLocale = args.locale ?? "fr";
 
-    const existingId: Id<"tasteAnalysis"> | null = await ctx.runQuery(
-      internal.insights.generateInternal.getExistingAnalysisForDay,
-      { tokenIdentifier: args.tokenIdentifier, dayKey },
-    );
+    // If we are NOT doing a refresh-in-place, check idempotency by day key.
+    if (!args.existingIdToUpdate) {
+      const existingId: Id<"tasteAnalysis"> | null = await ctx.runQuery(
+        internal.insights.generateInternal.getExistingAnalysisForDay,
+        { tokenIdentifier: args.tokenIdentifier, dayKey },
+      );
 
-    if (existingId) {
-      return null;
+      if (existingId) {
+        return null;
+      }
     }
 
     const tenantSlug: string =
@@ -198,22 +206,41 @@ export const generateForMember = internalAction({
     const relatedPicks = mapReportToPicks(report, candidateIds);
     const relatedContentIds = relatedPicks.map((pick) => pick.contentId);
 
-    const analysisId: Id<"tasteAnalysis"> = await ctx.runMutation(
-      internal.insights.generateInternal.insertTasteAnalysis,
-      {
-        tokenIdentifier: args.tokenIdentifier,
-        tenantSlug,
-        dayKey,
-        tasteText: overview,
-        relatedPicks,
-        relatedContentIds,
-        model:
-          args.mockReport !== undefined || args.mockProse !== undefined
-            ? "mock"
-            : TASTE_INSIGHTS_MODEL,
-        createdAt: now,
-      },
-    );
+    const model =
+      args.mockReport !== undefined || args.mockProse !== undefined
+        ? "mock"
+        : TASTE_INSIGHTS_MODEL;
+
+    let analysisId: Id<"tasteAnalysis">;
+
+    if (args.existingIdToUpdate) {
+      analysisId = await ctx.runMutation(
+        internal.insights.generateInternal.updateTasteAnalysis,
+        {
+          id: args.existingIdToUpdate,
+          tasteText: overview,
+          relatedPicks,
+          relatedContentIds,
+          model,
+          dayKey,
+          createdAt: now,
+        },
+      );
+    } else {
+      analysisId = await ctx.runMutation(
+        internal.insights.generateInternal.insertTasteAnalysis,
+        {
+          tokenIdentifier: args.tokenIdentifier,
+          tenantSlug,
+          dayKey,
+          tasteText: overview,
+          relatedPicks,
+          relatedContentIds,
+          model,
+          createdAt: now,
+        },
+      );
+    }
 
     return analysisId;
   },

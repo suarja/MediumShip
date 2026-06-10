@@ -69,14 +69,32 @@ export const generateDailyAnalyses = internalAction({
     let skipped = 0;
 
     for (const member of premiumMembers) {
-      const hasUnseen: boolean = await ctx.runQuery(
-        internal.insights.generateInternal.memberHasUnseenBriefing,
-        { tokenIdentifier: member.tokenIdentifier },
-      );
+      const unseen: { id: Id<"tasteAnalysis">; createdAt: number } | null =
+        await ctx.runQuery(
+          internal.insights.generateInternal.getUnseenBriefing,
+          { tokenIdentifier: member.tokenIdentifier },
+        );
 
-      if (hasUnseen) {
-        skipped += 1;
-        continue;
+      let existingIdToUpdate: Id<"tasteAnalysis"> | undefined;
+
+      if (unseen !== null) {
+        // Anti-cost guard: only refresh if there is at least one new signal
+        // (interaction or bookmark) created AFTER the unseen briefing itself.
+        const latestSignalAt: number | null = await ctx.runQuery(
+          internal.insights.generateInternal.latestNewSignalAt,
+          { tokenIdentifier: member.tokenIdentifier },
+        );
+
+        const hasNewSignal =
+          latestSignalAt !== null && latestSignalAt > unseen.createdAt;
+
+        if (!hasNewSignal) {
+          skipped += 1;
+          continue;
+        }
+
+        // Refresh in-place: regenerate with today's signals.
+        existingIdToUpdate = unseen.id;
       }
 
       const result: Id<"tasteAnalysis"> | null = await ctx.runAction(
@@ -88,6 +106,7 @@ export const generateDailyAnalyses = internalAction({
           mockProse: args.mockProse,
           mockReport: args.mockReport,
           locale: args.locale,
+          existingIdToUpdate,
         },
       );
 

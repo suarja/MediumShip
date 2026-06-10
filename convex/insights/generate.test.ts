@@ -106,4 +106,47 @@ describe("generateForMember", () => {
 
     expect(analysisId).not.toBeNull();
   });
+
+  it("loadPreviousAnalysis anchor: returns last seen briefing, not unseen", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t);
+    await seedPremiumMember(t);
+
+    const SEEN_AT = NOW - 2 * 86_400_000;
+    const UNSEEN_AT = NOW - 86_400_000;
+
+    await t.run(async (ctx) => {
+      // Older briefing, seen.
+      await ctx.db.insert("tasteAnalysis", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        tenantSlug: TENANT,
+        dayKey: formatDayKey(SEEN_AT),
+        tasteText: "Briefing vu.",
+        relatedContentIds: [],
+        model: "mock",
+        createdAt: SEEN_AT,
+        seenAt: SEEN_AT + 3600,
+      });
+      // More recent briefing, NOT seen.
+      await ctx.db.insert("tasteAnalysis", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        tenantSlug: TENANT,
+        dayKey: formatDayKey(UNSEEN_AT),
+        tasteText: "Briefing non vu.",
+        relatedContentIds: [],
+        model: "mock",
+        createdAt: UNSEEN_AT,
+        // seenAt absent
+      });
+    });
+
+    const previous = await t.query(
+      internal.insights.generateInternal.loadPreviousAnalysis,
+      { tokenIdentifier: MEMBER.tokenIdentifier, beforeCreatedAt: NOW },
+    );
+
+    // Must anchor on the seen briefing, not the more recent unseen one.
+    expect(previous?.overview).toBe("Briefing vu.");
+    expect(previous?.dayKey).toBe(formatDayKey(SEEN_AT));
+  });
 });

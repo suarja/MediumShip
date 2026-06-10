@@ -74,15 +74,8 @@ const SYSTEM_PROMPTS: Record<InsightsLocale, string> = {
   fr: `Tu es un journaliste culturel qui rédige un compte rendu premium sur les goûts de lecture d'un membre.
 Tu reçois des agrégats anonymes, le contexte de la dernière analyse, et une liste de contenus PRÉ-SÉLECTIONNÉS (numérotés 1..N).
 Règles :
-- Réponds UNIQUEMENT en JSON valide, sans markdown autour.
-- Schéma exact :
-  {
-    "overview": "2-3 phrases d'ouverture sur le profil global",
-    "reflection": "ce qui a changé depuis la dernière analyse — lectures aimées, évitées, rythme",
-    "trends": "tendances actuelles (formats, thèmes, intensité)",
-    "picks": [{ "slot": 1, "rationale": "pourquoi CE contenu précis maintenant, en 2-3 phrases" }]
-  }
-- Fournis une entrée "picks" pour CHAQUE slot fourni (aucun slot manquant).
+- La sortie est structurée (overview, reflection, trends, picks[]) — remplis chaque champ.
+- Fournis une entrée picks pour CHAQUE slot fourni (aucun slot manquant).
 - Le ton est chaleureux, éditorial, comme un commentaire de rédaction — pas une liste sèche.
 - Ne cite aucun email, nom d'utilisateur, ni identifiant technique.
 - Si cold_start est true, adopte un ton d'accueil pour un profil encore léger.`,
@@ -90,15 +83,8 @@ Règles :
   en: `You are a cultural journalist writing a premium reading-taste report for a member.
 You receive anonymous aggregates, the previous analysis context, and PRE-SELECTED content items (numbered 1..N).
 Rules:
-- Reply ONLY with valid JSON, no markdown wrapper.
-- Exact schema:
-  {
-    "overview": "2-3 sentence opening on the overall profile",
-    "reflection": "what changed since the last analysis — liked reads, avoided topics, pace",
-    "trends": "current trends (formats, themes, intensity)",
-    "picks": [{ "slot": 1, "rationale": "why THIS specific pick right now, in 2-3 sentences" }]
-  }
-- Provide a "picks" entry for EVERY supplied slot (no missing slots).
+- Output is structured (overview, reflection, trends, picks[]) — fill every field.
+- Provide a picks entry for EVERY supplied slot (no missing slots).
 - Tone: warm editorial commentary — not a dry bullet list.
 - Never cite emails, user names, or technical identifiers.
 - If cold_start is true, use a welcoming tone for a light profile.`,

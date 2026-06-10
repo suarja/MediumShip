@@ -11,10 +11,10 @@ import { buildInsightsPrompt, toCandidatePicks, type InsightsLocale } from "./pr
 import {
   buildFallbackReport,
   composePreviewText,
-  parseInsightsReport,
   type ParsedInsightsReport,
 } from "./reportFormat";
 import { mockReportValidator } from "./mockReport";
+import { insightsReportZodSchema } from "./reportSchema";
 import { PromptInjectionRejected } from "./sanitizeUserInput";
 
 const GENERATION_TIMEOUT_MS = 60_000;
@@ -159,15 +159,21 @@ export const generateForMember = internalAction({
         });
 
         const result = await withTimeout(
-          thread.generateText({ system, prompt: user }),
+          thread.generateObject({
+            system,
+            prompt: user,
+            schema: insightsReportZodSchema,
+          }),
           GENERATION_TIMEOUT_MS,
           "taste_insights_report",
         );
 
-        const parsed = parseInsightsReport(result.text, candidateIds.length);
-        report =
-          parsed ??
-          buildFallbackReport(locale, Math.max(candidateIds.length, 1));
+        report = {
+          overview: result.object.overview,
+          reflection: result.object.reflection,
+          trends: result.object.trends,
+          picks: result.object.picks,
+        };
       }
     } catch (error) {
       if (error instanceof PromptInjectionRejected) {

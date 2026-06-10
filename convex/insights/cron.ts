@@ -49,6 +49,7 @@ export const generateDailyAnalyses = internalAction({
     fallbackTenantSlug: v.optional(v.string()),
     mockProse: v.optional(v.string()),
     mockReport: v.optional(mockReportValidator),
+    locale: v.optional(v.union(v.literal("fr"), v.literal("en"))),
   },
   returns: v.object({
     processed: v.number(),
@@ -76,6 +77,7 @@ export const generateDailyAnalyses = internalAction({
         now,
         mockProse: args.mockProse,
         mockReport: args.mockReport,
+        locale: args.locale,
         },
       );
 

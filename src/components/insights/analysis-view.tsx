@@ -1,8 +1,7 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
-import { FeedRow } from "../content/feed-row";
-import { cardKicker, cardMeta } from "../../features/content/card-presentation";
+import { AnalysisPickCard } from "./analysis-pick-card";
 import type { ContentCardModel, ContentKind } from "../../features/content/types";
 import { getContentCoverImageUrl } from "../../features/content/selectors";
 import { usePaywallSheet } from "../../features/paywall/paywall-sheet-provider";
@@ -24,6 +23,7 @@ export type AnalysisRelatedItem = {
   readingTimeMinutes?: number;
   durationSeconds?: number;
   rationale?: string;
+  isLiked: boolean;
 };
 
 export type AnalysisViewData = {
@@ -45,17 +45,6 @@ function toCardModel(item: AnalysisRelatedItem): ContentCardModel {
       ? Math.round(item.durationSeconds / 60)
       : undefined;
 
-  const metaParts: string[] = [];
-  if (item.readingTimeMinutes) {
-    metaParts.push(`${item.readingTimeMinutes} min read`);
-  }
-  if (durationMinutes) {
-    metaParts.push(`${durationMinutes} min`);
-  }
-  if (item.isPremium) {
-    metaParts.push("Premium");
-  }
-
   return {
     id: item._id,
     kind: item.kind,
@@ -63,7 +52,7 @@ function toCardModel(item: AnalysisRelatedItem): ContentCardModel {
     category: item.category,
     title: item.title,
     summary: item.summary,
-    metaLabel: metaParts.join(" · "),
+    metaLabel: "",
     readingTimeMinutes: item.readingTimeMinutes,
     durationMinutes,
     href: `/${item.kind}/${item._id}`,
@@ -76,58 +65,76 @@ function toCardModel(item: AnalysisRelatedItem): ContentCardModel {
   };
 }
 
-function ReportSection({
-  kicker,
-  body,
-  testID,
-}: {
+type ReportSectionData = {
+  id: string;
   kicker: string;
   body: string;
-  testID?: string;
-}) {
+  testID: string;
+};
+
+function StructuredReportSections({ sections }: { sections: ReportSectionData[] }) {
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
 
+  if (sections.length === 0) {
+    return null;
+  }
+
   return (
     <View
-      testID={testID}
+      testID="analysis-report-sections"
       style={[
-        styles.section,
+        styles.reportShell,
         {
-          gap: theme.spacing.sm * scaleSpace,
-          paddingVertical: theme.spacing.md * scaleSpace,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: theme.colors.border,
+          borderRadius: theme.radii.lg,
+          borderColor: theme.colors.border,
+          backgroundColor: withAlpha(theme.colors.surface, theme.isDark ? 0.55 : 1),
         },
       ]}
     >
-      <Text
-        style={[
-          styles.sectionKicker,
-          { color: theme.colors.accent, fontSize: 11 * scaleFont },
-        ]}
-      >
-        {kicker}
-      </Text>
-      <Text
-        style={[
-          styles.sectionBody,
-          {
-            color: theme.colors.text,
-            fontSize: 17 * scaleFont,
-            lineHeight: 27 * scaleFont,
-          },
-        ]}
-      >
-        {body}
-      </Text>
+      {sections.map((section, index) => (
+        <View
+          key={section.id}
+          testID={section.testID}
+          style={[
+            styles.reportSection,
+            {
+              gap: theme.spacing.sm * scaleSpace,
+              padding: theme.spacing.lg * scaleSpace,
+              borderTopWidth: index === 0 ? 0 : StyleSheet.hairlineWidth,
+              borderTopColor: theme.colors.border,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.sectionKicker,
+              { color: theme.colors.accent, fontSize: 11 * scaleFont },
+            ]}
+          >
+            {section.kicker}
+          </Text>
+          <Text
+            style={[
+              styles.sectionBody,
+              {
+                color: theme.colors.text,
+                fontSize: 17 * scaleFont,
+                lineHeight: 27 * scaleFont,
+              },
+            ]}
+          >
+            {section.body}
+          </Text>
+        </View>
+      ))}
     </View>
   );
 }
 
 export function AnalysisView({ state, analysis }: AnalysisViewProps) {
-  const { t } = useTranslation(["insights", "home"]);
-  const { theme } = useAppTheme();
+  const { t } = useTranslation("insights");
+  const { theme, tenantSlug } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
   const { openPaywall } = usePaywallSheet();
   const { requiresPremium } = useFeatureAccess("premiumInsights");
@@ -142,7 +149,7 @@ export function AnalysisView({ state, analysis }: AnalysisViewProps) {
             { color: theme.colors.textMuted, fontSize: 14 * scaleFont },
           ]}
         >
-          {t("insights:detail.loading")}
+          {t("detail.loading")}
         </Text>
       </View>
     );
@@ -157,7 +164,7 @@ export function AnalysisView({ state, analysis }: AnalysisViewProps) {
             { color: theme.colors.heading, fontSize: 22 * scaleFont },
           ]}
         >
-          {t("insights:profileCard.title")}
+          {t("profileCard.title")}
         </Text>
         <Text
           style={[
@@ -165,7 +172,7 @@ export function AnalysisView({ state, analysis }: AnalysisViewProps) {
             { color: theme.colors.textMuted, fontSize: 15 * scaleFont },
           ]}
         >
-          {t("insights:profileCard.locked")}
+          {t("profileCard.locked")}
         </Text>
         <Pressable
           accessibilityRole="button"
@@ -181,7 +188,7 @@ export function AnalysisView({ state, analysis }: AnalysisViewProps) {
           ]}
         >
           <Text style={[styles.ctaLabel, { color: theme.colors.accentContrast }]}>
-            {t("insights:profileCard.upgrade")}
+            {t("profileCard.upgrade")}
           </Text>
         </Pressable>
       </View>
@@ -197,19 +204,49 @@ export function AnalysisView({ state, analysis }: AnalysisViewProps) {
             { color: theme.colors.textMuted, fontSize: 15 * scaleFont },
           ]}
         >
-          {t("insights:detail.empty")}
+          {t("detail.empty")}
         </Text>
       </View>
     );
   }
 
-  const hasNarrative =
-    analysis.tasteText.trim().length > 0 ||
-    Boolean(analysis.reflection?.trim()) ||
-    Boolean(analysis.trends?.trim());
+  const sections: ReportSectionData[] = [];
+
+  if (analysis.tasteText.trim().length > 0) {
+    sections.push({
+      id: "overview",
+      kicker: t("detail.overviewKicker"),
+      body: analysis.tasteText,
+      testID: "analysis-section-overview",
+    });
+  }
+  if (analysis.reflection?.trim()) {
+    sections.push({
+      id: "reflection",
+      kicker: t("detail.reflectionKicker"),
+      body: analysis.reflection,
+      testID: "analysis-section-reflection",
+    });
+  }
+  if (analysis.trends?.trim()) {
+    sections.push({
+      id: "trends",
+      kicker: t("detail.trendsKicker"),
+      body: analysis.trends,
+      testID: "analysis-section-trends",
+    });
+  }
+
+  const hasNarrative = sections.length > 0;
 
   return (
-    <View style={styles.container} testID="analysis-view-ready">
+    <View
+      style={[
+        styles.container,
+        { gap: theme.spacing.xl * scaleSpace },
+      ]}
+      testID="analysis-view-ready"
+    >
       {analysis.dayKey ? (
         <Text
           style={[
@@ -217,7 +254,7 @@ export function AnalysisView({ state, analysis }: AnalysisViewProps) {
             { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
           ]}
         >
-          {t("insights:detail.dateLabel", { day: analysis.dayKey })}
+          {t("detail.dateLabel", { day: analysis.dayKey })}
         </Text>
       ) : null}
 
@@ -232,55 +269,37 @@ export function AnalysisView({ state, analysis }: AnalysisViewProps) {
             },
           ]}
         >
-          {t("insights:detail.missingBody")}
+          {t("detail.missingBody")}
         </Text>
-      ) : null}
-
-      {analysis.tasteText.trim().length > 0 ? (
-        <ReportSection
-          testID="analysis-section-overview"
-          kicker={t("insights:detail.overviewKicker")}
-          body={analysis.tasteText}
-        />
-      ) : null}
-
-      {analysis.reflection?.trim() ? (
-        <ReportSection
-          testID="analysis-section-reflection"
-          kicker={t("insights:detail.reflectionKicker")}
-          body={analysis.reflection}
-        />
-      ) : null}
-
-      {analysis.trends?.trim() ? (
-        <ReportSection
-          testID="analysis-section-trends"
-          kicker={t("insights:detail.trendsKicker")}
-          body={analysis.trends}
-        />
-      ) : null}
+      ) : (
+        <StructuredReportSections sections={sections} />
+      )}
 
       {analysis.related.length > 0 ? (
         <View
           style={[
             styles.picksBlock,
-            {
-              gap: theme.spacing.lg * scaleSpace,
-              marginTop: theme.spacing.md * scaleSpace,
-              paddingTop: theme.spacing.lg * scaleSpace,
-              borderTopWidth: StyleSheet.hairlineWidth,
-              borderTopColor: theme.colors.border,
-            },
+            { gap: theme.spacing.md * scaleSpace },
           ]}
         >
-          <View style={{ gap: theme.spacing.xs * scaleSpace }}>
+          <View
+            style={[
+              styles.picksHeader,
+              {
+                gap: theme.spacing.xs * scaleSpace,
+                paddingBottom: theme.spacing.sm * scaleSpace,
+                borderBottomWidth: StyleSheet.hairlineWidth,
+                borderBottomColor: theme.colors.border,
+              },
+            ]}
+          >
             <Text
               style={[
                 styles.sectionKicker,
                 { color: theme.colors.accent, fontSize: 11 * scaleFont },
               ]}
             >
-              {t("insights:detail.picksKicker")}
+              {t("detail.picksKicker")}
             </Text>
             <Text
               style={[
@@ -292,55 +311,20 @@ export function AnalysisView({ state, analysis }: AnalysisViewProps) {
                 },
               ]}
             >
-              {t("insights:detail.relatedTitle")}
+              {t("detail.relatedTitle")}
             </Text>
           </View>
 
-          {analysis.related.map((item) => {
-            const card = toCardModel(item);
-            return (
-              <View
-                key={item._id}
-                testID={`analysis-pick-${item._id}`}
-                style={[
-                  styles.pickCard,
-                  {
-                    gap: theme.spacing.md * scaleSpace,
-                    padding: theme.spacing.md * scaleSpace,
-                    borderRadius: theme.radii.lg,
-                    backgroundColor: withAlpha(
-                      theme.colors.surface,
-                      theme.isDark ? 0.55 : 1,
-                    ),
-                    borderColor: theme.colors.border,
-                  },
-                ]}
-              >
-                {item.rationale?.trim() ? (
-                  <Text
-                    style={[
-                      styles.rationale,
-                      {
-                        color: theme.colors.text,
-                        fontSize: 15 * scaleFont,
-                        lineHeight: 23 * scaleFont,
-                      },
-                    ]}
-                  >
-                    {item.rationale}
-                  </Text>
-                ) : null}
-
-                <FeedRow
-                  item={card}
-                  kicker={cardKicker(card, (key) => t(`home:${key}`))}
-                  meta={cardMeta(card, (key, opts) => t(`home:${key}`, opts))}
-                  divider={false}
-                  showOverflowActions
-                />
-              </View>
-            );
-          })}
+          {analysis.related.map((item, index) => (
+            <AnalysisPickCard
+              key={item._id}
+              index={index}
+              item={toCardModel(item)}
+              rationale={item.rationale}
+              isLiked={item.isLiked}
+              tenantSlug={tenantSlug}
+            />
+          ))}
         </View>
       ) : null}
     </View>
@@ -372,9 +356,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
-  section: {
-    width: "100%",
+  reportShell: {
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: "hidden",
   },
+  reportSection: {},
   sectionKicker: {
     fontFamily: fontFamilies.mono,
     letterSpacing: 1.2,
@@ -386,15 +372,10 @@ const styles = StyleSheet.create({
   picksBlock: {
     width: "100%",
   },
+  picksHeader: {},
   picksLead: {
     fontFamily: fontFamilies.display,
     letterSpacing: -0.3,
-  },
-  pickCard: {
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  rationale: {
-    fontFamily: fontFamilies.body,
   },
   cta: {
     marginTop: 8,

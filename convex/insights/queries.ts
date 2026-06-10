@@ -26,6 +26,7 @@ const relatedContentValidator = v.object({
   readingTimeMinutes: v.optional(v.number()),
   durationSeconds: v.optional(v.number()),
   rationale: v.optional(v.string()),
+  isLiked: v.boolean(),
 });
 
 const analysisValidator = v.object({
@@ -49,19 +50,38 @@ const analysisSummaryValidator = v.object({
   previewTitle: v.optional(v.string()),
 });
 
+async function loadLikedContentIds(
+  ctx: QueryCtx,
+  tokenIdentifier: string,
+): Promise<Set<Id<"contents">>> {
+  const likes = await ctx.db
+    .query("contentInteractions")
+    .withIndex("by_tokenIdentifier_and_type", (q) =>
+      q.eq("tokenIdentifier", tokenIdentifier).eq("type", "like"),
+    )
+    .collect();
+
+  return new Set(likes.map((row) => row.contentId));
+}
+
 async function loadPublishedRelated(
   ctx: QueryCtx,
   tenantSlug: string,
   relatedContentIds: readonly Id<"contents">[],
   rationaleByContentId: Map<Id<"contents">, string>,
-): Promise<Array<Doc<"contents"> & { rationale?: string }>> {
+  likedContentIds: Set<Id<"contents">>,
+): Promise<
+  Array<Doc<"contents"> & { rationale?: string; isLiked: boolean }>
+> {
   const tenant = await ctx.db
     .query("tenants")
     .withIndex("by_slug", (q) => q.eq("slug", tenantSlug))
     .unique();
 
   const enabledModules = tenant?.enabledModules ?? [];
-  const related: Array<Doc<"contents"> & { rationale?: string }> = [];
+  const related: Array<
+    Doc<"contents"> & { rationale?: string; isLiked: boolean }
+  > = [];
 
   for (const contentId of relatedContentIds) {
     const content = await ctx.db.get(contentId);
@@ -72,7 +92,11 @@ async function loadPublishedRelated(
       isContentVisible(content, enabledModules)
     ) {
       const rationale = rationaleByContentId.get(contentId);
-      related.push(rationale ? { ...content, rationale } : content);
+      related.push({
+        ...content,
+        rationale,
+        isLiked: likedContentIds.has(contentId),
+      });
     }
   }
 
@@ -91,7 +115,9 @@ function rationaleMapFromAnalysis(
   return map;
 }
 
-function toRelatedPayload(content: Doc<"contents"> & { rationale?: string }) {
+function toRelatedPayload(
+  content: Doc<"contents"> & { rationale?: string; isLiked: boolean },
+) {
   return {
     _id: content._id,
     kind: content.kind,
@@ -105,6 +131,7 @@ function toRelatedPayload(content: Doc<"contents"> & { rationale?: string }) {
     readingTimeMinutes: content.readingTimeMinutes,
     durationSeconds: content.durationSeconds,
     rationale: content.rationale,
+    isLiked: content.isLiked,
   };
 }
 
@@ -123,11 +150,14 @@ async function loadAnalysisForMember(
     analysis.relatedPicks?.map((pick) => pick.contentId) ??
     analysis.relatedContentIds;
 
+  const likedContentIds = await loadLikedContentIds(ctx, tokenIdentifier);
+
   const relatedDocs = await loadPublishedRelated(
     ctx,
     analysis.tenantSlug,
     orderedIds,
     rationaleByContentId,
+    likedContentIds,
   );
 
   return {

@@ -9,9 +9,22 @@ jest.mock("../src/features/paywall/paywall-sheet-provider", () => ({
   usePaywallSheet: () => ({ openPaywall: mockOpenPaywall }),
 }));
 
-jest.mock("../src/components/content/content-overflow-button", () => ({
-  ContentOverflowButton: () => null,
-}));
+jest.mock("../src/components/insights/analysis-pick-card", () => {
+  const { Text, View } = require("react-native");
+  return {
+    AnalysisPickCard: ({
+      item,
+      rationale,
+    }: {
+      item: { id: string };
+      rationale?: string;
+    }) => (
+      <View testID={`analysis-pick-${item.id}`}>
+        {rationale ? <Text>{rationale}</Text> : null}
+      </View>
+    ),
+  };
+});
 
 jest.mock("../src/features/tenant/use-feature-access", () => ({
   useFeatureAccess: () => ({
@@ -30,6 +43,7 @@ jest.mock("../src/features/theme/theme-provider", () => ({
 
 function makeTheme(isDark = false) {
   return {
+    tenantSlug: "demo-media",
     theme: {
       colors: {
         heading: isDark ? "#F4F1E8" : "#14110E",
@@ -68,6 +82,7 @@ const SAMPLE = {
       category: "Politique",
       isPremium: false,
       rationale: "Parce que vos lectures récentes vont dans ce sens.",
+      isLiked: false,
     },
   ],
 };
@@ -91,6 +106,7 @@ describe("AnalysisView", () => {
     await changeAppLanguage("fr");
     render(<AnalysisView state="ready" analysis={SAMPLE} />);
     expect(screen.getByTestId("analysis-view-ready")).toBeTruthy();
+    expect(screen.getByTestId("analysis-report-sections")).toBeTruthy();
     expect(screen.getByTestId("analysis-section-overview")).toBeTruthy();
     expect(screen.getByTestId("analysis-section-reflection")).toBeTruthy();
     expect(screen.getByTestId("analysis-pick-content_1")).toBeTruthy();

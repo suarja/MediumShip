@@ -14,7 +14,7 @@ export default {
     openSettings: "Open settings",
   },
   message: {
-    title: "Knowly",
+    title: "{{appName}}",
     body: "Your feed for today is ready",
   },
 } as const;

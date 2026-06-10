@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react-native";
 
 import LibraryScreen from "../app/(app)/library";
 import { changeAppLanguage, initI18n } from "../src/i18n";
+import type { ProfileBriefingPreview } from "../src/features/insights/use-analysis";
 
 const mockOpenPaywall = jest.fn();
 const mockPush = jest.fn();
@@ -69,7 +70,7 @@ jest.mock("../src/features/history/use-resume", () => ({
 }));
 
 const mockUseAnalysisHistory = jest.fn(() => ({
-  analyses: [],
+  analyses: [] as ProfileBriefingPreview[],
   isLoading: false,
   canAccess: false,
 }));
@@ -204,7 +205,7 @@ describe("signed-in library screen", () => {
     mockUseAnalysisHistory.mockReturnValue({
       analyses: [
         {
-          _id: "analysis_1",
+          _id: "analysis_1" as ProfileBriefingPreview["_id"],
           dayKey: "2026-06-10",
           tasteText: "You follow politics closely.",
           createdAt: 1,

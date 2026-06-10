@@ -16,6 +16,7 @@ const baseSummary: TasteSignalSummary = {
   recentFinishes: 1,
   bookmarkCount: 2,
   isColdStart: false,
+  recentTitles: [],
 };
 
 describe("sanitizeInsightsInput", () => {

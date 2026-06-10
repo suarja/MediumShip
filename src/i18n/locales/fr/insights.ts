@@ -28,7 +28,7 @@ export default {
     rowLabel: "Briefing du {{day}}",
   },
   notification: {
-    title: "Knowly",
+    title: "{{appName}}",
     body: "Ton briefing est prêt",
   },
   invite: {

@@ -63,6 +63,7 @@ export const CAPABILITIES = [
   "offline",
   "personalLists",
   "membersRoom",
+  "premiumInsights",
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 

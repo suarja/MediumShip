@@ -59,6 +59,7 @@ describe("cms/mutations — updateModuleSettings", () => {
       "explore",
       "library",
       "profile",
+      "premiumInsights",
     ]);
     // articles is a content feature → inBar is always false
     expect(tenant.featureConfigs?.articles).toEqual({

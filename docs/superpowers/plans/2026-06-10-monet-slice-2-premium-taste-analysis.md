@@ -89,38 +89,38 @@
 
 ### Task 1 : Composant agent + schéma
 
-- [ ] **Step 1 :** installer `@convex-dev/agent` (cf. `docs/convex-components-descriptions.md`), enregistrer dans `convex.config.ts`, configurer le modèle (Anthropic, dernier Sonnet) + clé env Convex. `npx convex codegen` clean.
-- [ ] **Step 2 :** schéma `tasteAnalysis` (2 indexes ci-dessus, `relatedContentIds: v.array(v.id("contents"))`, `seenAt: v.optional(v.number())`). `npx convex codegen`. `npx tsc --noEmit -p convex` clean. **Commit** — `chore(insights): add @convex-dev/agent + tasteAnalysis table`.
+- [x] **Step 1 :** installer `@convex-dev/agent` (cf. `docs/convex-components-descriptions.md`), enregistrer dans `convex.config.ts`, configurer le modèle (Anthropic, dernier Sonnet) + clé env Convex. `npx convex codegen` clean.
+- [x] **Step 2 :** schéma `tasteAnalysis` (2 indexes ci-dessus, `relatedContentIds: v.array(v.id("contents"))`, `seenAt: v.optional(v.number())`). `npx convex codegen`. `npx tsc --noEmit -p convex` clean. **Commit** — `chore(insights): add @convex-dev/agent + tasteAnalysis table`.
 
 ### Task 2 : Backend — génération (Vitest-first)
 
-- [ ] **Step 1 (Vitest) :** `signals.ts` → `summarizeSignals(ctx, token, tenant)` : agrège **lecture seule** top catégories/tags/types (`userPreferences`/`categoryInterests`), opens/finish récents, nb bookmarks → objet **borné, sans PII**. Tester : agrégation, plafonds, cold-start vide.
-- [ ] **Step 2 (Vitest) :** `relatedSelection.ts` → `pickRelated(ctx, token, tenant, limit)` : réutilise la **policy `discovery/scoring`** sur le catalogue **publié**, **exclut** `open`/`finish`/`hide`, renvoie `Id<contents>[]` (~8). Tester : exclusion déjà-vu, publiés seulement, ordre par score, fallback cold-start (populaire).
-- [ ] **Step 3 (Vitest) :** `prompt.ts` → `sanitize()` (modèle Editia) + `buildInsightsPrompt(summary, locale)` (texte court, ton défini, langue membre). Tester : injection neutralisée, pas de PII.
-- [ ] **Step 4 (Vitest, modèle mocké) :** `generate.ts` → `generateForMember(token, tenant)` : `dayKey` ; si analyse du jour existe → no-op ; sinon `summarizeSignals` → `buildInsightsPrompt` → **LLM prose** → `pickRelated` → insert `tasteAnalysis`. Tester : insert, idempotence (pas de doublon même `dayKey`), cold-start.
-- [ ] **Step 5 (Vitest) :** `cron.ts` → `generateDailyAnalyses` : itère les membres **premium** (scan `entitlements` `isPro`) et appelle `generateForMember`. Enregistrer dans `convex/crons.ts` (1×/jour, heure fixe). Tester : n'inclut que premium, idempotent.
-- [ ] **Step 6 :** `npm run test:convex` PASS ; `npx tsc --noEmit -p convex` clean. **Commit** — `feat(insights): daily cron taste analysis (LLM prose + deterministic selection)`.
+- [x] **Step 1 (Vitest) :** `signals.ts` → `summarizeSignals(ctx, token, tenant)` : agrège **lecture seule** top catégories/tags/types (`userPreferences`/`categoryInterests`), opens/finish récents, nb bookmarks → objet **borné, sans PII**. Tester : agrégation, plafonds, cold-start vide.
+- [x] **Step 2 (Vitest) :** `relatedSelection.ts` → `pickRelated(ctx, token, tenant, limit)` : réutilise la **policy `discovery/scoring`** sur le catalogue **publié**, **exclut** `open`/`finish`/`hide`, renvoie `Id<contents>[]` (~8). Tester : exclusion déjà-vu, publiés seulement, ordre par score, fallback cold-start (populaire).
+- [x] **Step 3 (Vitest) :** `prompt.ts` → `sanitize()` (modèle Editia) + `buildInsightsPrompt(summary, locale)` (texte court, ton défini, langue membre). Tester : injection neutralisée, pas de PII.
+- [x] **Step 4 (Vitest, modèle mocké) :** `generate.ts` → `generateForMember(token, tenant)` : `dayKey` ; si analyse du jour existe → no-op ; sinon `summarizeSignals` → `buildInsightsPrompt` → **LLM prose** → `pickRelated` → insert `tasteAnalysis`. Tester : insert, idempotence (pas de doublon même `dayKey`), cold-start.
+- [x] **Step 5 (Vitest) :** `cron.ts` → `generateDailyAnalyses` : itère les membres **premium** (scan `entitlements` `isPro`) et appelle `generateForMember`. Enregistrer dans `convex/crons.ts` (1×/jour, heure fixe). Tester : n'inclut que premium, idempotent.
+- [x] **Step 6 :** `npm run test:convex` PASS ; `npx tsc --noEmit -p convex` clean. **Commit** — `feat(insights): daily cron taste analysis (LLM prose + deterministic selection)`.
 
 ### Task 3 : Backend — lecture (Vitest-first)
 
-- [ ] **Step 1 (Vitest) :** `queries.ts` → `getTodayAnalysis`/`getAnalysisById`/`getUnseenAnalysis`/`listMyAnalyses` (tous `requireMember`) : join `contents` **publiés** pour la sélection ; `getUnseenAnalysis` = la plus récente avec `seenAt == null` (récente : <48h). `listMyAnalyses` = antéchronologique (index `by_..._createdAt`), plafond raisonnable. Tester : null/empty, filtrage publié, gate non-membre, fenêtre unseen.
-- [ ] **Step 2 (Vitest) :** `mutations.ts` → `markAnalysisSeen(analysisId)` (`requireMember`, vérifie l'appartenance, pose `seenAt`). Tester : pose seenAt, refuse l'analyse d'un autre.
-- [ ] **Step 3 :** `npm run test:convex` PASS. **Commit** — `feat(insights): read queries (today/by-id/unseen/history) + markSeen`.
+- [x] **Step 1 (Vitest) :** `queries.ts` → `getTodayAnalysis`/`getAnalysisById`/`getUnseenAnalysis`/`listMyAnalyses` (tous `requireMember`) : join `contents` **publiés** pour la sélection ; `getUnseenAnalysis` = la plus récente avec `seenAt == null` (récente : <48h). `listMyAnalyses` = antéchronologique (index `by_..._createdAt`), plafond raisonnable. Tester : null/empty, filtrage publié, gate non-membre, fenêtre unseen.
+- [x] **Step 2 (Vitest) :** `mutations.ts` → `markAnalysisSeen(analysisId)` (`requireMember`, vérifie l'appartenance, pose `seenAt`). Tester : pose seenAt, refuse l'analyse d'un autre.
+- [x] **Step 3 :** `npm run test:convex` PASS. **Commit** — `feat(insights): read queries (today/by-id/unseen/history) + markSeen`.
 
 ### Task 4 : Mobile — pages, carte Profil, nav auto (Jest-first)
 
-- [ ] **Step 1 :** clé `premiumInsights` au `FeatureCatalog` (`access: "premium"`). `npx convex codegen`. Hooks `use-analysis` (par id/jour, `markAnalysisSeen` à l'affichage) + `use-unseen-analysis` (gate premium + `useConvexAuth`, `"skip"` sinon).
-- [ ] **Step 2 (Jest) :** `analysis-view.tsx` (texte + sélection via `card-presentation`, tap → détail par `kind`), `analysis-history-row.tsx`, `profile-analysis-card.tsx` (locked → paywall ; ready → aperçu + CTA). États locked/loading/ready/empty. Tokens/responsive/`midnight`. Tester chaque état + paywall + tap item.
-- [ ] **Step 3 :** routes `app/(app)/analysis/index.tsx` (historique `listMyAnalyses` + empty + gate) et `app/(app)/analysis/[id].tsx` (détail, pose `seenAt`). Gate premium cohérent (non-premium → paywall ; invité → redirigé/masqué).
-- [ ] **Step 4 :** **nav auto** dans `app/(app)/_layout.tsx` : à l'ouverture (résolution auth/membership faite), si `getUnseenAnalysis` renvoie une analyse → `router.push("/analysis/[id]")` (one-shot/session, anti-boucle). Brancher la notif `analysis_ready` (Slice 1) → même destination.
-- [ ] **Step 5 :** carte d'entrée dans `app/(app)/profile.tsx`. i18n `insights` (`fr`/`en`) + `resources.ts`. `npm test` + `npx tsc --noEmit` clean. **Commit** — `feat(insights): analysis page + history + profile entry + auto-nav on open`.
+- [x] **Step 1 :** clé `premiumInsights` au `FeatureCatalog` (`access: "premium"`). `npx convex codegen`. Hooks `use-analysis` (par id/jour, `markAnalysisSeen` à l'affichage) + `use-unseen-analysis` (gate premium + `useConvexAuth`, `"skip"` sinon).
+- [x] **Step 2 (Jest) :** `analysis-view.tsx` (texte + sélection via `card-presentation`, tap → détail par `kind`), `analysis-history-row.tsx`, `profile-analysis-card.tsx` (locked → paywall ; ready → aperçu + CTA). États locked/loading/ready/empty. Tokens/responsive/`midnight`. Tester chaque état + paywall + tap item.
+- [x] **Step 3 :** routes `app/(app)/analysis/index.tsx` (historique `listMyAnalyses` + empty + gate) et `app/(app)/analysis/[id].tsx` (détail, pose `seenAt`). Gate premium cohérent (non-premium → paywall ; invité → redirigé/masqué).
+- [x] **Step 4 :** **nav auto** dans `app/(app)/_layout.tsx` : à l'ouverture (résolution auth/membership faite), si `getUnseenAnalysis` renvoie une analyse → `router.push("/analysis/[id]")` (one-shot/session, anti-boucle). Brancher la notif `analysis_ready` (Slice 1) → même destination.
+- [x] **Step 5 :** carte d'entrée dans `app/(app)/profile.tsx`. i18n `insights` (`fr`/`en`) + `resources.ts`. `npm test` + `npx tsc --noEmit` clean. **Commit** — `feat(insights): analysis page + history + profile entry + auto-nav on open`.
 
 ### Task 5 : Vérification du slice (standard — toujours)
 
-- [ ] `npm test` PASS ; `npm run test:convex` PASS ; `npx tsc --noEmit` **et** `-p convex` clean ; `git status --short` clean.
-- [ ] **Déployer** : `npx convex dev --once` (agent + table + cron + fonctions) ; `npx convex env list` (clé modèle) ; vérifier le cron enregistré.
-- [ ] **Smoke visuel** (`docs/agents/ui-visual-testing.md`) : Expo web + headless Chrome **phone + iPad** sur page analyse, historique, carte Profil ; **`midnight`** + claire.
-- [ ] **Gates premium/auth + cron** (non headless) : tests + **passe manuelle** — déclencher le cron (`npx convex run` sur l'action interne) pour un membre premium, vérifier l'insert, l'**ouverture → nav auto**, le `seenAt` posé (2ᵉ ouverture ne renavigue pas), non-premium → verrouillé. Rappel `PREMIUM_PAYMENT_DEFERRED=true` en dev.
+- [x] `npm test` PASS ; `npm run test:convex` PASS ; `npx tsc --noEmit` **et** `-p convex` clean ; `git status --short` clean.
+- [x] **Déployer** : `npx convex dev --once` (agent + table + cron + fonctions) ; `npx convex env list` (clé modèle) ; vérifier le cron enregistré.
+- [x] **Smoke visuel** (`docs/agents/ui-visual-testing.md`) : Expo web + headless Chrome **phone + iPad** sur page analyse, historique, carte Profil ; **`midnight`** + claire.
+- [x] **Gates premium/auth + cron** (non headless) : tests + **passe manuelle** — déclencher le cron (`npx convex run` sur l'action interne) pour un membre premium, vérifier l'insert, l'**ouverture → nav auto**, le `seenAt` posé (2ᵉ ouverture ne renavigue pas), non-premium → verrouillé. Rappel `PREMIUM_PAYMENT_DEFERRED=true` en dev.
 
 ---
 

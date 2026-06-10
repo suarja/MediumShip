@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 import { AppTabBar } from "../../src/components/navigation/app-tab-bar";
+import { useAnalysisAutoNav } from "../../src/features/insights/use-analysis-auto-nav";
 import { NotificationBootstrap } from "../../src/features/notifications/notification-bootstrap";
 import { NotificationPermissionProvider } from "../../src/features/notifications/permission";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
@@ -54,6 +55,8 @@ export default function AppLayout() {
   const router = useRouter();
   const bootRedirectHandledRef = useRef(false);
   const navSet = new Set(effectiveNavigation);
+
+  useAnalysisAutoNav(!isLoading);
 
   const orderedRoutes = [
     ...effectiveNavigation,

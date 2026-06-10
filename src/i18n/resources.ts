@@ -7,6 +7,7 @@ import episodeEn from "./locales/en/episode";
 import exploreEn from "./locales/en/explore";
 import featuresEn from "./locales/en/features";
 import homeEn from "./locales/en/home";
+import insightsEn from "./locales/en/insights";
 import libraryEn from "./locales/en/library";
 import listsEn from "./locales/en/lists";
 import navigationEn from "./locales/en/navigation";
@@ -26,6 +27,7 @@ import episodeFr from "./locales/fr/episode";
 import exploreFr from "./locales/fr/explore";
 import featuresFr from "./locales/fr/features";
 import homeFr from "./locales/fr/home";
+import insightsFr from "./locales/fr/insights";
 import libraryFr from "./locales/fr/library";
 import listsFr from "./locales/fr/lists";
 import navigationFr from "./locales/fr/navigation";
@@ -44,6 +46,7 @@ export const resources = {
     discover: discoverEn,
     auth: authEn,
     home: homeEn,
+    insights: insightsEn,
     explore: exploreEn,
     features: featuresEn,
     library: libraryEn,
@@ -65,6 +68,7 @@ export const resources = {
     discover: discoverFr,
     auth: authFr,
     home: homeFr,
+    insights: insightsFr,
     explore: exploreFr,
     features: featuresFr,
     library: libraryFr,

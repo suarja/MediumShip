@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import {
   ActivityIndicator,
   Pressable,
@@ -18,6 +18,7 @@ import { ResumeCard } from "../../src/components/library/resume-card";
 import { useTabBarSpace } from "../../src/components/navigation/app-tab-bar";
 import { ProfileIdentity } from "../../src/components/profile/profile-identity";
 import { ProfileLibraryRows } from "../../src/components/profile/profile-library-rows";
+import { ProfileAnalysisCard } from "../../src/components/insights/profile-analysis-card";
 import { ProfileStatStrip } from "../../src/components/profile/profile-stat-strip";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
 import { useBookmarks } from "../../src/features/bookmarks/use-bookmarks";
@@ -30,6 +31,8 @@ import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { HapticsService } from "../../src/features/haptics/haptics";
+import { useTodayAnalysis } from "../../src/features/insights/use-analysis";
+import { useFeatureAccess } from "../../src/features/tenant/use-feature-access";
 import { hasCapability } from "../../src/features/tenant/public-config";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
@@ -72,6 +75,17 @@ function ProfileDashboard() {
   const { downloads } = useDownloads({ enabled: isSignedIn && isMember });
   const { data: readingHistory } = useReadingHistory();
   const { openPaywall } = usePaywallSheet();
+  const router = useRouter();
+  const {
+    enabled: insightsEnabled,
+    requiresPremium,
+    isLoading: isInsightsGateLoading,
+  } = useFeatureAccess("premiumInsights");
+  const {
+    analysis: todayAnalysis,
+    isLoading: isTodayAnalysisLoading,
+    isMember: isPremiumMember,
+  } = useTodayAnalysis();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -259,6 +273,32 @@ function ProfileDashboard() {
         />
 
         {canProgressSync ? <ResumeCard enabled={canProgressSync} /> : null}
+
+        {insightsEnabled ? (
+          <ProfileAnalysisCard
+            state={(() => {
+              if (isInsightsGateLoading || isTodayAnalysisLoading) {
+                return "loading";
+              }
+              if (requiresPremium || !isPremiumMember) {
+                return "locked";
+              }
+              if (!todayAnalysis) {
+                return "empty";
+              }
+              return "ready";
+            })()}
+            previewText={todayAnalysis?.tasteText}
+            onOpen={() => {
+              if (todayAnalysis?._id) {
+                router.push(`/analysis/${todayAnalysis._id}`);
+              }
+            }}
+            onOpenHistory={() => {
+              router.push("/analysis");
+            }}
+          />
+        ) : null}
 
         {canBookmark || canOffline || canProgressSync ? (
           <ProfileStatStrip

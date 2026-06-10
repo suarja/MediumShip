@@ -220,6 +220,16 @@ const FEATURE_DEFINITIONS: FeatureDefinition[] = [
     defaultAccess: "member",
     defaultIconKey: "community",
   },
+  {
+    key: "premiumInsights",
+    label: "Analyse de goûts",
+    desc: "Analyse premium quotidienne et sélection connexe.",
+    nature: "capability",
+    group: "Capacités membres",
+    lockAccess: true,
+    defaultAccess: "premium",
+    defaultIconKey: "analyses",
+  },
 ];
 
 const FEATURE_BY_KEY = Object.fromEntries(

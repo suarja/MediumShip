@@ -1,4 +1,5 @@
 export const DAILY_DIGEST_KIND = "daily_digest" as const;
+export const ANALYSIS_READY_KIND = "analysis_ready" as const;
 
 export const DEFAULT_DIGEST_HOUR = 9;
 export const DEFAULT_DIGEST_MINUTE = 0;

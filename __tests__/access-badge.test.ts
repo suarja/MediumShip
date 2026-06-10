@@ -1,0 +1,141 @@
+import {
+  resolveAccessBadge,
+  resolveContentAccessBadge,
+} from "../src/features/tenant/access-badge";
+import * as featureAccess from "../src/features/tenant/feature-access";
+
+describe("resolveAccessBadge", () => {
+  describe("free access", () => {
+    it.each([
+      { isAuthenticated: false, isPro: false },
+      { isAuthenticated: true, isPro: false },
+      { isAuthenticated: true, isPro: true },
+    ])("never shows a badge (%p)", ({ isAuthenticated, isPro }) => {
+      expect(
+        resolveAccessBadge({ access: "free", isAuthenticated, isPro }),
+      ).toEqual({ show: false });
+    });
+  });
+
+  describe("member access", () => {
+    it("shows a member badge for guests", () => {
+      expect(
+        resolveAccessBadge({
+          access: "member",
+          isAuthenticated: false,
+          isPro: false,
+        }),
+      ).toEqual({ show: true, level: "member" });
+    });
+
+    it("hides the badge once signed in", () => {
+      expect(
+        resolveAccessBadge({
+          access: "member",
+          isAuthenticated: true,
+          isPro: false,
+        }),
+      ).toEqual({ show: false });
+    });
+
+    it("hides the badge for premium members", () => {
+      expect(
+        resolveAccessBadge({
+          access: "member",
+          isAuthenticated: true,
+          isPro: true,
+        }),
+      ).toEqual({ show: false });
+    });
+  });
+
+  describe("premium access with PREMIUM_PAYMENT_DEFERRED", () => {
+    it("hides the badge for everyone while payment is deferred", () => {
+      expect(featureAccess.PREMIUM_PAYMENT_DEFERRED).toBe(true);
+
+      expect(
+        resolveAccessBadge({
+          access: "premium",
+          isAuthenticated: false,
+          isPro: false,
+        }),
+      ).toEqual({ show: false });
+
+      expect(
+        resolveAccessBadge({
+          access: "premium",
+          isAuthenticated: true,
+          isPro: false,
+        }),
+      ).toEqual({ show: false });
+    });
+  });
+
+  describe("premium access when payment is enforced", () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it("shows a premium badge for guests and non-pro members", () => {
+      jest.spyOn(featureAccess, "canAccessFeatureLevel").mockImplementation((access, ctx) => {
+        if (access === "free") return true;
+        if (access === "member") return ctx.isAuthenticated;
+        return ctx.isPro;
+      });
+
+      expect(
+        resolveAccessBadge({
+          access: "premium",
+          isAuthenticated: false,
+          isPro: false,
+        }),
+      ).toEqual({ show: true, level: "premium" });
+
+      expect(
+        resolveAccessBadge({
+          access: "premium",
+          isAuthenticated: true,
+          isPro: false,
+        }),
+      ).toEqual({ show: true, level: "premium" });
+    });
+
+    it("hides the badge for pro members", () => {
+      jest.spyOn(featureAccess, "canAccessFeatureLevel").mockImplementation((access, ctx) => {
+        if (access === "free") return true;
+        if (access === "member") return ctx.isAuthenticated;
+        return ctx.isPro;
+      });
+
+      expect(
+        resolveAccessBadge({
+          access: "premium",
+          isAuthenticated: true,
+          isPro: true,
+        }),
+      ).toEqual({ show: false });
+    });
+  });
+});
+
+describe("resolveContentAccessBadge", () => {
+  it("maps non-premium content to no badge", () => {
+    expect(
+      resolveContentAccessBadge({
+        isPremium: false,
+        isAuthenticated: false,
+        isPro: false,
+      }),
+    ).toEqual({ show: false });
+  });
+
+  it("delegates premium content to resolveAccessBadge", () => {
+    expect(
+      resolveContentAccessBadge({
+        isPremium: true,
+        isAuthenticated: false,
+        isPro: false,
+      }),
+    ).toEqual(resolveAccessBadge({ access: "premium", isAuthenticated: false, isPro: false }));
+  });
+});

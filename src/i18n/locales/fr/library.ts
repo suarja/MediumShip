@@ -20,7 +20,7 @@ export default {
       lists: "Listes",
       offline: "Hors ligne",
     },
-    resumeKicker: "Reprendre · synchronise",
+    resumeKicker: "Reprendre",
     resumeMetaWithRemaining: "{{kind}} · {{remaining}} restantes · {{percent}}%",
     resumeMetaPercentOnly: "{{kind}} · {{percent}}%",
     savedMeta: "Gratuit",

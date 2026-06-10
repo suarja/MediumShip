@@ -1,12 +1,12 @@
 export default {
-  title: "Votre briefing",
+  title: "Ton briefing",
   historyTitle: "Historique",
   profileCard: {
     sectionKicker: "Premium",
     title: "Briefing du jour",
-    subtitle: "Ce qui a changé dans vos lectures — et quoi lire ensuite",
+    subtitle: "Ce qui a changé dans tes lectures — et quoi lire ensuite",
     cta: "Lire le briefing",
-    empty: "Votre premier briefing arrive bientôt",
+    empty: "Ton premier briefing arrive bientôt",
     locked: "Réservé aux abonnés premium",
     upgrade: "Découvrir Premium",
   },
@@ -17,11 +17,11 @@ export default {
     reflectionKicker: "Depuis le dernier briefing",
     trendsKicker: "Tendances",
     picksKicker: "Sélection",
-    relatedTitle: "Nos propositions pour vous",
-    loading: "Chargement de votre briefing…",
+    relatedTitle: "Nos propositions pour toi",
+    loading: "Chargement de ton briefing…",
     empty: "Aucun briefing disponible pour le moment.",
     missingBody:
-      "Le compte rendu n'a pas pu être généré. Revenez demain ou relancez le briefing.",
+      "Le compte rendu n'a pas pu être généré. Reviens demain ou relance le briefing.",
   },
   history: {
     empty: "Aucun briefing passé pour l'instant.",

@@ -17,6 +17,7 @@ import {
   PersistentMediaPlayerProvider,
 } from "../src/features/media/persistent-media-player";
 import { ContentActionsSheetProvider } from "../src/features/content/content-actions-sheet-provider";
+import { PurchasesBootstrap } from "../src/features/billing/purchases-bootstrap";
 import { PaywallSheetProvider } from "../src/features/paywall/paywall-sheet-provider";
 import { NetworkStatusDebugProvider } from "../src/features/network/use-network-status";
 import {
@@ -97,6 +98,7 @@ export default function RootLayout() {
         tokenCache={tokenCache}
       >
         <ConvexProviderWithClerk client={convex} useAuth={useStableAuth}>
+          <PurchasesBootstrap />
           <NetworkStatusDebugProvider>
             <AppThemeProvider>
               <PersistentMediaPlayerProvider>

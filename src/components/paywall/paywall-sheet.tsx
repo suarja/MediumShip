@@ -1,9 +1,11 @@
 import { Link } from "expo-router";
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
+import { usePurchasePremium } from "../../features/billing/use-purchase-premium";
 import { HapticsService } from "../../features/haptics/haptics";
+import { useIsMember } from "../../features/membership/use-is-member";
 import type { PaywallReason } from "../../features/paywall/paywall-copy";
 import { resolvePaywallCopyKeys } from "../../features/paywall/paywall-copy";
 import { useResponsive } from "../../features/responsive/use-responsive";
@@ -18,20 +20,55 @@ type Props = {
   onDismiss: () => void;
 };
 
+function resolveStatusMessage(
+  status: ReturnType<typeof usePurchasePremium>["status"],
+  errorMessage: string | null,
+  t: (key: string) => string,
+): string | null {
+  switch (status) {
+    case "success":
+      return t("purchaseSuccess");
+    case "cancelled":
+      return t("purchaseCancelled");
+    case "error":
+      return errorMessage ?? t("purchaseError");
+    case "already":
+      return t("alreadySubscribed");
+    default:
+      return null;
+  }
+}
+
 // Contextual paywall bottom sheet. Uses the RN Modal's native `slide`
 // animation and a flush flex-end layout (mirroring the proven `../editia/mobile`
 // `ui/Modal`), instead of a manual spring — the spring's overshoot was leaving a
-// gap below the sheet. The sheet always carries a primary call to action:
-// guest -> sign-in, signed-in non-member -> the membership surface.
+// gap below the sheet. Signed-in members purchase via RevenueCat IAP; access is
+// read from Convex entitlements reactively (never from CustomerInfo).
 export function PaywallSheet({ visible, reason, isSignedIn, onDismiss }: Props) {
   const { t } = useTranslation("paywall");
   const { theme } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
   const insets = useSafeAreaInsets();
+  const { isMember } = useIsMember();
+  const {
+    package: premiumPackage,
+    isLoadingOffering,
+    purchase,
+    restore,
+    status,
+    errorMessage,
+    purchasesSupported,
+  } = usePurchasePremium();
 
   const keys = resolvePaywallCopyKeys(reason);
   const benefits = t("benefits", { returnObjects: true }) as string[];
   const maxWidth = isTablet ? 520 : undefined;
+  const statusMessage = resolveStatusMessage(status, errorMessage, t);
+  const isPending = status === "pending";
+  const priceString = premiumPackage?.product.priceString ?? "€2";
+  const purchaseLabel = purchasesSupported
+    ? t("purchaseCta", { price: priceString })
+    : t("purchaseCtaFallback");
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss}>
@@ -109,33 +146,84 @@ export function PaywallSheet({ visible, reason, isSignedIn, onDismiss }: Props) 
 
             {isSignedIn ? (
               <>
-                <Link href="/premium" asChild>
-                  <Pressable
-                    accessibilityRole="link"
-                    onPress={() => {
-                      void HapticsService.medium();
-                      onDismiss();
-                    }}
-                    style={({ pressed }) => [
-                      styles.primaryCta,
+                {isMember ? (
+                  <Text style={[styles.statusBody, { color: theme.colors.accent, fontSize: 13 * scaleFont }]}>
+                    {t("alreadySubscribed")}
+                  </Text>
+                ) : purchasesSupported ? (
+                  <>
+                    <Text style={[styles.trialNote, { color: theme.colors.textMuted, fontSize: 12 * scaleFont }]}>
+                      {t("trialNote")}
+                    </Text>
+
+                    <Pressable
+                      accessibilityRole="button"
+                      disabled={isPending || isLoadingOffering || !premiumPackage}
+                      onPress={() => {
+                        void HapticsService.medium();
+                        void purchase();
+                      }}
+                      style={({ pressed }) => [
+                        styles.primaryCta,
+                        {
+                          borderRadius: theme.radii.pill,
+                          backgroundColor: theme.colors.premium,
+                          paddingVertical: 14 * scaleSpace,
+                          opacity: isPending || isLoadingOffering || !premiumPackage ? 0.6 : 1,
+                        },
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      {isPending ? (
+                        <ActivityIndicator color={theme.colors.accentContrast} />
+                      ) : (
+                        <Text
+                          style={[
+                            styles.primaryCtaLabel,
+                            { color: theme.colors.accentContrast, fontSize: 15 * scaleFont },
+                          ]}
+                        >
+                          {isLoadingOffering ? t("purchasing") : purchaseLabel}
+                        </Text>
+                      )}
+                    </Pressable>
+
+                    <Pressable
+                      accessibilityRole="button"
+                      disabled={isPending}
+                      onPress={() => {
+                        void HapticsService.light();
+                        void restore();
+                      }}
+                      style={({ pressed }) => [pressed && styles.pressed]}
+                    >
+                      <Text style={[styles.restoreLabel, { color: theme.colors.textMuted, fontSize: 12 * scaleFont }]}>
+                        {t("restoreCta")}
+                      </Text>
+                    </Pressable>
+                  </>
+                ) : (
+                  <Text style={[styles.pendingBody, { color: theme.colors.textMuted, fontSize: 12 * scaleFont }]}>
+                    {t("webPurchaseHint")}
+                  </Text>
+                )}
+
+                {statusMessage ? (
+                  <Text
+                    style={[
+                      styles.statusBody,
                       {
-                        borderRadius: theme.radii.pill,
-                        backgroundColor: theme.colors.premium,
-                        paddingVertical: 14 * scaleSpace,
+                        color:
+                          status === "success" || status === "already"
+                            ? theme.colors.accent
+                            : theme.colors.textMuted,
+                        fontSize: 12 * scaleFont,
                       },
-                      pressed && styles.pressed,
                     ]}
                   >
-                    <Text
-                      style={[styles.primaryCtaLabel, { color: theme.colors.accentContrast, fontSize: 15 * scaleFont }]}
-                    >
-                      {t("becomeMemberCta")}
-                    </Text>
-                  </Pressable>
-                </Link>
-                <Text style={[styles.pendingBody, { color: theme.colors.textMuted, fontSize: 12 * scaleFont }]}>
-                  {t("pendingBody")}
-                </Text>
+                    {statusMessage}
+                  </Text>
+                ) : null}
               </>
             ) : (
               <Link href="/sign-in" asChild>
@@ -249,9 +337,27 @@ const styles = StyleSheet.create({
   },
   primaryCta: {
     alignItems: "center",
+    justifyContent: "center",
+    minHeight: 48,
   },
   primaryCtaLabel: {
     fontFamily: fontFamilies.bodySemiBold,
+    textAlign: "center",
+  },
+  trialNote: {
+    fontFamily: fontFamilies.body,
+    lineHeight: 18,
+    textAlign: "center",
+  },
+  restoreLabel: {
+    fontFamily: fontFamilies.mono,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+    textAlign: "center",
+  },
+  statusBody: {
+    fontFamily: fontFamilies.body,
+    lineHeight: 18,
     textAlign: "center",
   },
   pendingBody: {

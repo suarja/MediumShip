@@ -1,7 +1,10 @@
-import { render, screen, fireEvent } from "@testing-library/react-native";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react-native";
 
 import { PaywallSheet } from "../src/components/paywall/paywall-sheet";
 import { changeAppLanguage, initI18n } from "../src/i18n";
+
+const mockPurchase = jest.fn();
+const mockRestore = jest.fn();
 
 jest.mock("react-native-safe-area-context", () => ({
   useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 34, left: 0 }),
@@ -39,6 +42,28 @@ jest.mock("../src/features/theme/theme-provider", () => ({
   }),
 }));
 
+jest.mock("../src/features/membership/use-is-member", () => ({
+  useIsMember: () => ({ isMember: false, isLoading: false }),
+}));
+
+jest.mock("../src/features/billing/use-purchase-premium", () => ({
+  usePurchasePremium: () => ({
+    offering: { identifier: "default" },
+    package: {
+      identifier: "monthly",
+      packageType: "MONTHLY",
+      product: { priceString: "€2.00" },
+    },
+    isLoadingOffering: false,
+    purchase: mockPurchase,
+    restore: mockRestore,
+    status: "idle",
+    errorMessage: null,
+    resetStatus: jest.fn(),
+    purchasesSupported: true,
+  }),
+}));
+
 jest.mock("expo-router", () => ({
   Link: ({ children, onPress }: { children: React.ReactNode; onPress?: () => void }) =>
     children,
@@ -53,6 +78,8 @@ describe("PaywallSheet", () => {
 
   beforeEach(async () => {
     dismissMock.mockClear();
+    mockPurchase.mockClear();
+    mockRestore.mockClear();
     await changeAppLanguage("en");
   });
 
@@ -80,10 +107,10 @@ describe("PaywallSheet", () => {
       />,
     );
     expect(screen.getAllByText(/Sign in to continue/i).length).toBeGreaterThan(0);
-    expect(screen.queryByText(/Membership not yet active/i)).toBeNull();
+    expect(screen.queryByText(/2-week free trial/i)).toBeNull();
   });
 
-  it("shows pending note for signed-in non-member", () => {
+  it("shows purchase CTA and trial note for signed-in non-member", () => {
     render(
       <PaywallSheet
         visible
@@ -92,8 +119,37 @@ describe("PaywallSheet", () => {
         onDismiss={dismissMock}
       />,
     );
-    expect(screen.getAllByText(/Become a member/i).length).toBeGreaterThan(0);
-    expect(screen.queryByText(/Sign in to continue/i)).toBeNull();
+    expect(screen.getAllByText(/Start Premium/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/2-week free trial/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Restore purchases/i).length).toBeGreaterThan(0);
+  });
+
+  it("calls purchase when the primary CTA is pressed", async () => {
+    render(
+      <PaywallSheet
+        visible
+        reason="support"
+        isSignedIn
+        onDismiss={dismissMock}
+      />,
+    );
+
+    fireEvent.press(screen.getAllByText(/Start Premium/i)[0]);
+    await waitFor(() => expect(mockPurchase).toHaveBeenCalledTimes(1));
+  });
+
+  it("calls restore when restore CTA is pressed", async () => {
+    render(
+      <PaywallSheet
+        visible
+        reason="support"
+        isSignedIn
+        onDismiss={dismissMock}
+      />,
+    );
+
+    fireEvent.press(screen.getAllByText(/Restore purchases/i)[0]);
+    await waitFor(() => expect(mockRestore).toHaveBeenCalledTimes(1));
   });
 
   it("calls onDismiss when dismiss CTA is pressed", () => {

@@ -68,6 +68,7 @@ import type * as insights_cron from "../insights/cron.js";
 import type * as insights_dayKey from "../insights/dayKey.js";
 import type * as insights_generate from "../insights/generate.js";
 import type * as insights_generateInternal from "../insights/generateInternal.js";
+import type * as insights_instructions from "../insights/instructions.js";
 import type * as insights_mockReport from "../insights/mockReport.js";
 import type * as insights_mutations from "../insights/mutations.js";
 import type * as insights_prompt from "../insights/prompt.js";
@@ -164,6 +165,7 @@ declare const fullApi: ApiFromModules<{
   "insights/dayKey": typeof insights_dayKey;
   "insights/generate": typeof insights_generate;
   "insights/generateInternal": typeof insights_generateInternal;
+  "insights/instructions": typeof insights_instructions;
   "insights/mockReport": typeof insights_mockReport;
   "insights/mutations": typeof insights_mutations;
   "insights/prompt": typeof insights_prompt;

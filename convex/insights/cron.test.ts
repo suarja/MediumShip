@@ -81,6 +81,37 @@ describe("generateDailyAnalyses", () => {
     expect(count).toBe(1);
   });
 
+  it("skips members who still have an unseen briefing", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t);
+    await seedPremiumMember(t);
+    await insertPublishedContent(t, { title: "Cron unseen skip" });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("tasteAnalysis", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        tenantSlug: TENANT,
+        dayKey: formatDayKey(NOW - 86_400_000),
+        tasteText: "Briefing non lu.",
+        relatedContentIds: [],
+        model: "mock",
+        createdAt: NOW - 86_400_000,
+      });
+    });
+
+    const result = await t.action(internal.insights.cron.generateDailyAnalyses, {
+      now: NOW,
+      fallbackTenantSlug: TENANT,
+      mockProse: "Should not be created",
+    });
+
+    expect(result.created).toBe(0);
+    expect(result.skipped).toBe(1);
+
+    const rows = await t.run(async (ctx) => ctx.db.query("tasteAnalysis").collect());
+    expect(rows).toHaveLength(1);
+  });
+
   it("forwards mockReport to generateForMember", async () => {
     const t = convexTest(schema, modules);
     await seedTenant(t);
@@ -105,8 +136,10 @@ describe("generateDailyAnalyses", () => {
       return rows[0] ?? null;
     });
 
-    expect(row?.tasteText).toBe(mockReport.overview);
-    expect(row?.reflection).toBe(mockReport.reflection);
+    expect(row?.tasteText).toBe(
+      `${mockReport.overview} ${mockReport.reflection} ${mockReport.trends}`,
+    );
+    expect(row?.reflection).toBeUndefined();
     expect(row?.relatedPicks?.[0]?.rationale).toBe(mockReport.picks[0]?.rationale);
   });
 });

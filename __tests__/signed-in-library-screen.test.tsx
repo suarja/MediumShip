@@ -68,6 +68,16 @@ jest.mock("../src/features/history/use-resume", () => ({
   useResume: () => ({ data: null, isLoading: false }),
 }));
 
+const mockUseAnalysisHistory = jest.fn(() => ({
+  analyses: [],
+  isLoading: false,
+  canAccess: false,
+}));
+
+jest.mock("../src/features/insights/use-analysis", () => ({
+  useAnalysisHistory: () => mockUseAnalysisHistory(),
+}));
+
 describe("signed-in library screen", () => {
   beforeAll(async () => {
     await initI18n();
@@ -77,6 +87,11 @@ describe("signed-in library screen", () => {
     mockOpenPaywall.mockClear();
     mockPush.mockClear();
     mockUseIsMember.mockReturnValue({ isMember: false, isLoading: false });
+    mockUseAnalysisHistory.mockReturnValue({
+      analyses: [],
+      isLoading: false,
+      canAccess: false,
+    });
     await changeAppLanguage("en");
   });
 
@@ -126,7 +141,7 @@ describe("signed-in library screen", () => {
     expect(screen.getByText("Favorites")).toBeTruthy();
     expect(screen.queryByText("Saved")).toBeNull();
     expect(screen.queryByText("Free")).toBeNull();
-    expect(screen.getAllByText("Premium")).toHaveLength(2);
+    expect(screen.getAllByText("Premium")).toHaveLength(3);
   });
 
   it("pressing the lists row opens the lists screen for signed-in members", () => {
@@ -167,5 +182,44 @@ describe("signed-in library screen", () => {
     fireEvent.press(screen.getByText("Download to listen without a network"));
 
     expect(mockOpenPaywall).toHaveBeenCalledWith("offline");
+  });
+
+  it("shows the briefing locked promo for non-premium members", () => {
+    render(<LibraryScreen />);
+
+    expect(screen.getByText("Briefings")).toBeTruthy();
+    expect(screen.getByText("Your reading briefings, in one place")).toBeTruthy();
+  });
+
+  it("pressing the briefing locked card opens the content paywall", () => {
+    render(<LibraryScreen />);
+
+    fireEvent.press(screen.getByText("Your reading briefings, in one place"));
+
+    expect(mockOpenPaywall).toHaveBeenCalledWith("content");
+  });
+
+  it("navigates to briefing history for premium members", () => {
+    mockUseIsMember.mockReturnValue({ isMember: true, isLoading: false });
+    mockUseAnalysisHistory.mockReturnValue({
+      analyses: [
+        {
+          _id: "analysis_1",
+          dayKey: "2026-06-10",
+          tasteText: "You follow politics closely.",
+          createdAt: 1,
+        },
+      ],
+      isLoading: false,
+      canAccess: true,
+    });
+
+    render(<LibraryScreen />);
+
+    fireEvent.press(screen.getByLabelText("Briefings"));
+
+    expect(mockPush).toHaveBeenCalledWith(
+      expect.objectContaining({ pathname: "/analysis" }),
+    );
   });
 });

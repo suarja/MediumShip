@@ -46,13 +46,13 @@ describe("insights queries", () => {
     await seedTenant(t);
 
     await expect(
-      t.query(api.insights.queries.getTodayAnalysis, {}),
+      t.query(api.insights.queries.getTodayAnalysis, { dayKey: "2026-06-10" }),
     ).rejects.toThrow(/Unauthenticated/);
 
     const asFree = t.withIdentity(FREE_USER);
-    await expect(asFree.query(api.insights.queries.getTodayAnalysis, {})).rejects.toThrow(
-      /Member access required/,
-    );
+    await expect(
+      asFree.query(api.insights.queries.getTodayAnalysis, { dayKey: "2026-06-10" }),
+    ).rejects.toThrow(/Member access required/);
   });
 
   it("returns today analysis with published related only", async () => {
@@ -77,9 +77,24 @@ describe("insights queries", () => {
 
     await seedAnalysis(t, { relatedIds: [publishedId] });
 
-    const today = await asMember.query(api.insights.queries.getTodayAnalysis, {});
+    const today = await asMember.query(api.insights.queries.getTodayAnalysis, {
+      dayKey: "2026-06-10",
+    });
     expect(today?.related).toHaveLength(1);
     expect(today?.related[0]?._id).toBe(publishedId);
+  });
+
+  it("returns the latest analysis regardless of dayKey", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t);
+    await seedPremiumMember(t);
+    const asMember = t.withIdentity(MEMBER);
+
+    await seedAnalysis(t, { createdAt: NOW - 10_000 });
+    const latestId = await seedAnalysis(t, { createdAt: NOW });
+
+    const latest = await asMember.query(api.insights.queries.getLatestAnalysis, {});
+    expect(latest?._id).toBe(latestId);
   });
 
   it("returns the newest unseen analysis within 48h", async () => {
@@ -101,6 +116,21 @@ describe("insights queries", () => {
     expect(unseen?._id).toBe(unseenId);
   });
 
+  it("accepts legacy asOf arg", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t);
+    await seedPremiumMember(t);
+    const asMember = t.withIdentity(MEMBER);
+
+    const unseenId = await seedAnalysis(t, { createdAt: NOW - 30_000 });
+
+    const unseen = await asMember.query(api.insights.queries.getUnseenAnalysis, {
+      asOf: NOW,
+    });
+
+    expect(unseen?._id).toBe(unseenId);
+  });
+
   it("returns null when unseen is older than 48h", async () => {
     const t = convexTest(schema, modules);
     await seedTenant(t);
@@ -116,6 +146,20 @@ describe("insights queries", () => {
     });
 
     expect(unseen).toBeNull();
+  });
+
+  it("returns newest unseen without now cutoff", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t);
+    await seedPremiumMember(t);
+    const asMember = t.withIdentity(MEMBER);
+
+    const oldUnseenId = await seedAnalysis(t, {
+      createdAt: NOW - 49 * 60 * 60 * 1000,
+    });
+
+    const unseen = await asMember.query(api.insights.queries.getUnseenAnalysis, {});
+    expect(unseen?._id).toBe(oldUnseenId);
   });
 
   it("lists analyses antechronologically with cap", async () => {

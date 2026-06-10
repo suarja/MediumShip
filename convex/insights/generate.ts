@@ -10,6 +10,7 @@ import { formatDayKey } from "./dayKey";
 import { buildInsightsPrompt, toCandidatePicks, type InsightsLocale } from "./prompt";
 import {
   buildFallbackReport,
+  clampInsightsReport,
   composePreviewText,
   type ParsedInsightsReport,
 } from "./reportFormat";
@@ -116,23 +117,26 @@ export const generateForMember = internalAction({
 
     try {
       if (args.mockReport !== undefined) {
+        const mockOverview = [
+          args.mockReport.overview,
+          args.mockReport.reflection,
+          args.mockReport.trends,
+        ]
+          .filter((part): part is string => Boolean(part?.trim()))
+          .join(" ");
         report = {
-          overview: args.mockReport.overview,
-          reflection: args.mockReport.reflection,
-          trends: args.mockReport.trends,
+          overview: mockOverview,
           picks: args.mockReport.picks,
         };
       } else if (args.mockProse !== undefined) {
         report = {
           overview: args.mockProse,
-          reflection: undefined,
-          trends: undefined,
           picks: candidateIds.map((_, index) => ({
             slot: index + 1,
             rationale:
               locale === "fr"
-                ? "Ce contenu prolonge vos lectures récentes."
-                : "This pick extends your recent reading.",
+                ? "Ce format te correspond — il suit ce que tu as ouvert récemment."
+                : "This format fits you — it follows what you've opened recently.",
           })),
         };
       } else {
@@ -170,8 +174,6 @@ export const generateForMember = internalAction({
 
         report = {
           overview: result.object.overview,
-          reflection: result.object.reflection,
-          trends: result.object.trends,
           picks: result.object.picks,
         };
       }
@@ -190,6 +192,8 @@ export const generateForMember = internalAction({
       throw error;
     }
 
+    report = clampInsightsReport(report);
+
     const overview = report.overview.trim() || composePreviewText(report);
     const relatedPicks = mapReportToPicks(report, candidateIds);
     const relatedContentIds = relatedPicks.map((pick) => pick.contentId);
@@ -201,8 +205,6 @@ export const generateForMember = internalAction({
         tenantSlug,
         dayKey,
         tasteText: overview,
-        reflection: report.reflection,
-        trends: report.trends,
         relatedPicks,
         relatedContentIds,
         model:

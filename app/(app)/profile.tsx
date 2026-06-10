@@ -31,7 +31,11 @@ import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { HapticsService } from "../../src/features/haptics/haptics";
-import { useTodayAnalysis } from "../../src/features/insights/use-analysis";
+import { briefingPreviewText } from "../../src/features/insights/briefing-preview";
+import {
+  useAnalysisHistory,
+  useProfileBriefing,
+} from "../../src/features/insights/use-analysis";
 import { useFeatureAccess } from "../../src/features/tenant/use-feature-access";
 import { hasCapability } from "../../src/features/tenant/public-config";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
@@ -82,10 +86,11 @@ function ProfileDashboard() {
     isLoading: isInsightsGateLoading,
   } = useFeatureAccess("premiumInsights");
   const {
-    analysis: todayAnalysis,
-    isLoading: isTodayAnalysisLoading,
-    isMember: isPremiumMember,
-  } = useTodayAnalysis();
+    analysis: profileBriefing,
+    isLoading: isBriefingLoading,
+    canAccess: isPremiumMember,
+  } = useProfileBriefing();
+  const { analyses: briefingHistory } = useAnalysisHistory();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -277,25 +282,24 @@ function ProfileDashboard() {
         {insightsEnabled ? (
           <ProfileAnalysisCard
             state={(() => {
-              if (isInsightsGateLoading || isTodayAnalysisLoading) {
+              if (isInsightsGateLoading || isBriefingLoading) {
                 return "loading";
               }
               if (requiresPremium || !isPremiumMember) {
                 return "locked";
               }
-              if (!todayAnalysis) {
+              if (!profileBriefing) {
                 return "empty";
               }
               return "ready";
             })()}
-            previewText={todayAnalysis?.tasteText}
+            previewText={
+              profileBriefing ? briefingPreviewText(profileBriefing) : undefined
+            }
             onOpen={() => {
-              if (todayAnalysis?._id) {
-                router.push(`/analysis/${todayAnalysis._id}`);
+              if (profileBriefing?._id) {
+                router.push(`/analysis/${profileBriefing._id}`);
               }
-            }}
-            onOpenHistory={() => {
-              router.push("/analysis");
             }}
           />
         ) : null}
@@ -321,6 +325,14 @@ function ProfileDashboard() {
           savedCount={savedCount}
           downloadCount={downloadedCount}
           listsCount={lists.length}
+          briefingCount={briefingHistory.length}
+          onOpenBriefingHistory={
+            insightsEnabled
+              ? () => {
+                  router.push("/analysis");
+                }
+              : undefined
+          }
           onSignOut={() => {
             void signOut();
           }}

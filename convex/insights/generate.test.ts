@@ -41,8 +41,10 @@ describe("generateForMember", () => {
       analysisId ? ctx.db.get(analysisId) : null,
     );
 
-    expect(row?.tasteText).toBe(MOCK_REPORT.overview);
-    expect(row?.reflection).toBe(MOCK_REPORT.reflection);
+    expect(row?.tasteText).toBe(
+      `${MOCK_REPORT.overview} ${MOCK_REPORT.reflection} ${MOCK_REPORT.trends}`,
+    );
+    expect(row?.reflection).toBeUndefined();
     expect(row?.relatedPicks?.[0]?.rationale).toBe(MOCK_REPORT.picks[0]?.rationale);
     expect(row?.dayKey).toBe(formatDayKey(NOW));
     expect(row?.relatedContentIds.length).toBeGreaterThan(0);

@@ -76,7 +76,7 @@ export default function AnalysisDetailScreen() {
           <Text
             style={[
               styles.topBarTitle,
-              { color: theme.colors.heading, fontSize: 17 * scaleFont },
+              { color: theme.colors.heading, fontSize: 20 * scaleFont },
             ]}
           >
             {t("title")}

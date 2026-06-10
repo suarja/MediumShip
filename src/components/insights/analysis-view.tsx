@@ -7,7 +7,6 @@ import { getContentCoverImageUrl } from "../../features/content/selectors";
 import { usePaywallSheet } from "../../features/paywall/paywall-sheet-provider";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { useFeatureAccess } from "../../features/tenant/use-feature-access";
-import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -65,71 +64,9 @@ function toCardModel(item: AnalysisRelatedItem): ContentCardModel {
   };
 }
 
-type ReportSectionData = {
-  id: string;
-  kicker: string;
-  body: string;
-  testID: string;
-};
-
-function StructuredReportSections({ sections }: { sections: ReportSectionData[] }) {
-  const { theme } = useAppTheme();
-  const { scaleFont, scaleSpace } = useResponsive();
-
-  if (sections.length === 0) {
-    return null;
-  }
-
-  return (
-    <View
-      testID="analysis-report-sections"
-      style={[
-        styles.reportShell,
-        {
-          borderRadius: theme.radii.lg,
-          borderColor: theme.colors.border,
-          backgroundColor: withAlpha(theme.colors.surface, theme.isDark ? 0.55 : 1),
-        },
-      ]}
-    >
-      {sections.map((section, index) => (
-        <View
-          key={section.id}
-          testID={section.testID}
-          style={[
-            styles.reportSection,
-            {
-              gap: theme.spacing.sm * scaleSpace,
-              padding: theme.spacing.lg * scaleSpace,
-              borderTopWidth: index === 0 ? 0 : StyleSheet.hairlineWidth,
-              borderTopColor: theme.colors.border,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.sectionKicker,
-              { color: theme.colors.accent, fontSize: 11 * scaleFont },
-            ]}
-          >
-            {section.kicker}
-          </Text>
-          <Text
-            style={[
-              styles.sectionBody,
-              {
-                color: theme.colors.text,
-                fontSize: 17 * scaleFont,
-                lineHeight: 27 * scaleFont,
-              },
-            ]}
-          >
-            {section.body}
-          </Text>
-        </View>
-      ))}
-    </View>
-  );
+/** Single overview block — legacy reflection/trends are not shown as sections. */
+function briefingOverviewBody(analysis: AnalysisViewData): string {
+  return analysis.tasteText.trim();
 }
 
 export function AnalysisView({ state, analysis }: AnalysisViewProps) {
@@ -210,55 +147,21 @@ export function AnalysisView({ state, analysis }: AnalysisViewProps) {
     );
   }
 
-  const sections: ReportSectionData[] = [];
-
-  if (analysis.tasteText.trim().length > 0) {
-    sections.push({
-      id: "overview",
-      kicker: t("detail.overviewKicker"),
-      body: analysis.tasteText,
-      testID: "analysis-section-overview",
-    });
-  }
-  if (analysis.reflection?.trim()) {
-    sections.push({
-      id: "reflection",
-      kicker: t("detail.reflectionKicker"),
-      body: analysis.reflection,
-      testID: "analysis-section-reflection",
-    });
-  }
-  if (analysis.trends?.trim()) {
-    sections.push({
-      id: "trends",
-      kicker: t("detail.trendsKicker"),
-      body: analysis.trends,
-      testID: "analysis-section-trends",
-    });
-  }
-
-  const hasNarrative = sections.length > 0;
+  const overviewBody = briefingOverviewBody(analysis);
+  const hasOverview = overviewBody.length > 0;
 
   return (
     <View
       style={[
         styles.container,
-        { gap: theme.spacing.xl * scaleSpace },
+        {
+          paddingTop: theme.spacing.md * scaleSpace,
+          gap: theme.spacing.xl * scaleSpace,
+        },
       ]}
       testID="analysis-view-ready"
     >
-      {analysis.dayKey ? (
-        <Text
-          style={[
-            styles.dateLabel,
-            { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
-          ]}
-        >
-          {t("detail.dateLabel", { day: analysis.dayKey })}
-        </Text>
-      ) : null}
-
-      {!hasNarrative ? (
+      {!hasOverview ? (
         <Text
           style={[
             styles.muted,
@@ -272,38 +175,14 @@ export function AnalysisView({ state, analysis }: AnalysisViewProps) {
           {t("detail.missingBody")}
         </Text>
       ) : (
-        <StructuredReportSections sections={sections} />
-      )}
-
-      {analysis.related.length > 0 ? (
         <View
-          style={[
-            styles.picksBlock,
-            { gap: theme.spacing.md * scaleSpace },
-          ]}
+          testID="analysis-section-overview"
+          style={{ gap: theme.spacing.sm * scaleSpace }}
         >
-          <View
-            style={[
-              styles.picksHeader,
-              {
-                gap: theme.spacing.xs * scaleSpace,
-                paddingBottom: theme.spacing.sm * scaleSpace,
-                borderBottomWidth: StyleSheet.hairlineWidth,
-                borderBottomColor: theme.colors.border,
-              },
-            ]}
-          >
+          {analysis.dayKey ? (
             <Text
               style={[
-                styles.sectionKicker,
-                { color: theme.colors.accent, fontSize: 11 * scaleFont },
-              ]}
-            >
-              {t("detail.picksKicker")}
-            </Text>
-            <Text
-              style={[
-                styles.picksLead,
+                styles.sectionTitle,
                 {
                   color: theme.colors.heading,
                   fontSize: 22 * scaleFont,
@@ -311,20 +190,50 @@ export function AnalysisView({ state, analysis }: AnalysisViewProps) {
                 },
               ]}
             >
-              {t("detail.relatedTitle")}
+              {t("detail.dateLabel", { day: analysis.dayKey })}
             </Text>
-          </View>
+          ) : null}
+          <Text
+            style={[
+              styles.sectionBody,
+              {
+                color: theme.colors.text,
+                fontSize: 17 * scaleFont,
+                lineHeight: 27 * scaleFont,
+              },
+            ]}
+          >
+            {overviewBody}
+          </Text>
+        </View>
+      )}
 
-          {analysis.related.map((item, index) => (
-            <AnalysisPickCard
-              key={item._id}
-              index={index}
-              item={toCardModel(item)}
-              rationale={item.rationale}
-              isLiked={item.isLiked}
-              tenantSlug={tenantSlug}
-            />
-          ))}
+      {analysis.related.length > 0 ? (
+        <View style={{ gap: theme.spacing.md * scaleSpace }}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              {
+                color: theme.colors.heading,
+                fontSize: 22 * scaleFont,
+                lineHeight: 28 * scaleFont,
+              },
+            ]}
+          >
+            {t("detail.relatedTitle")}
+          </Text>
+
+          <View style={{ gap: theme.spacing.lg * scaleSpace }}>
+            {analysis.related.map((item) => (
+              <AnalysisPickCard
+                key={item._id}
+                item={toCardModel(item)}
+                rationale={item.rationale}
+                isLiked={item.isLiked}
+                tenantSlug={tenantSlug}
+              />
+            ))}
+          </View>
         </View>
       ) : null}
     </View>
@@ -351,31 +260,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 22,
   },
-  dateLabel: {
-    fontFamily: fontFamilies.mono,
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-  },
-  reportShell: {
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: "hidden",
-  },
-  reportSection: {},
-  sectionKicker: {
-    fontFamily: fontFamilies.mono,
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
+  sectionTitle: {
+    fontFamily: fontFamilies.display,
+    letterSpacing: -0.3,
   },
   sectionBody: {
     fontFamily: fontFamilies.body,
-  },
-  picksBlock: {
-    width: "100%",
-  },
-  picksHeader: {},
-  picksLead: {
-    fontFamily: fontFamilies.display,
-    letterSpacing: -0.3,
   },
   cta: {
     marginTop: 8,

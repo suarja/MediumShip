@@ -13,14 +13,12 @@ type ProfileAnalysisCardProps = {
   state: "loading" | "locked" | "ready" | "empty";
   previewText?: string;
   onOpen?: () => void;
-  onOpenHistory?: () => void;
 };
 
 export function ProfileAnalysisCard({
   state,
   previewText,
   onOpen,
-  onOpenHistory,
 }: ProfileAnalysisCardProps) {
   const { t } = useTranslation("insights");
   const { theme } = useAppTheme();
@@ -50,12 +48,13 @@ export function ProfileAnalysisCard({
     >
       <Text
         style={[
-          styles.kicker,
+          styles.sectionKicker,
           { color: theme.colors.accent, fontSize: 11 * scaleFont },
         ]}
       >
-        PREMIUM
+        {t("profileCard.sectionKicker")}
       </Text>
+
       <Text
         style={[
           styles.title,
@@ -64,6 +63,7 @@ export function ProfileAnalysisCard({
       >
         {t("profileCard.title")}
       </Text>
+
       <Text
         style={[
           styles.subtitle,
@@ -86,7 +86,7 @@ export function ProfileAnalysisCard({
             openPaywall("content");
           }}
           style={({ pressed }) => [
-            styles.cta,
+            styles.button,
             {
               borderRadius: theme.radii.pill,
               backgroundColor: theme.colors.accent,
@@ -94,7 +94,7 @@ export function ProfileAnalysisCard({
             },
           ]}
         >
-          <Text style={[styles.ctaLabel, { color: theme.colors.accentContrast }]}>
+          <Text style={[styles.buttonLabel, { color: theme.colors.accentContrast }]}>
             {t("profileCard.upgrade")}
           </Text>
         </Pressable>
@@ -109,56 +109,38 @@ export function ProfileAnalysisCard({
         </Text>
       ) : (
         <>
-          <Text
-            numberOfLines={3}
-            style={[
-              styles.preview,
-              { color: theme.colors.text, fontSize: 15 * scaleFont },
-            ]}
-          >
-            {previewText}
-          </Text>
-          <View style={[styles.actions, { gap: theme.spacing.sm * scaleSpace }]}>
-            <Pressable
-              accessibilityRole="button"
-              testID="profile-analysis-open"
-              onPress={() => {
-                void HapticsService.medium();
-                onOpen?.();
-              }}
-              style={({ pressed }) => [
-                styles.cta,
-                {
-                  borderRadius: theme.radii.pill,
-                  backgroundColor: theme.colors.heading,
-                  opacity: pressed ? 0.9 : 1,
-                },
+          {previewText ? (
+            <Text
+              numberOfLines={3}
+              style={[
+                styles.preview,
+                { color: theme.colors.text, fontSize: 15 * scaleFont },
               ]}
             >
-              <Text style={[styles.ctaLabel, { color: theme.colors.canvas }]}>
-                {t("profileCard.cta")}
-              </Text>
-            </Pressable>
-            {onOpenHistory ? (
-              <Pressable
-                accessibilityRole="button"
-                testID="profile-analysis-history"
-                onPress={() => {
-                  void HapticsService.light();
-                  onOpenHistory();
-                }}
-              >
-                <Text
-                  style={[
-                    styles.link,
-                    { color: theme.colors.accent, fontSize: 13 * scaleFont },
-                  ]}
-                >
-                  {t("historyTitle")}
-                </Text>
-              </Pressable>
-            ) : null}
-          </View>
+              {previewText}
+            </Text>
+          ) : null}
+
+          <Pressable
+            accessibilityRole="button"
+            testID="profile-analysis-open"
+            onPress={() => {
+              void HapticsService.medium();
+              onOpen?.();
+            }}
+            style={({ pressed }) => [
+              styles.button,
+              {
+                borderRadius: theme.radii.pill,
+                backgroundColor: theme.colors.heading,
+                opacity: pressed ? 0.9 : 1,
+              },
+            ]}
+          >
+            <Text style={[styles.buttonLabel, { color: theme.colors.canvas }]}>
+              {t("profileCard.cta")}
+            </Text>
+          </Pressable>
         </>
       )}
     </View>
@@ -169,9 +151,10 @@ const styles = StyleSheet.create({
   card: {
     borderWidth: StyleSheet.hairlineWidth,
   },
-  kicker: {
+  sectionKicker: {
     fontFamily: fontFamilies.mono,
     letterSpacing: 1,
+    textTransform: "uppercase",
   },
   title: {
     fontFamily: fontFamilies.display,
@@ -185,21 +168,16 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.body,
     lineHeight: 22,
   },
-  actions: {
+  button: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 18,
+    paddingVertical: 11,
     marginTop: 4,
   },
-  cta: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  ctaLabel: {
+  buttonLabel: {
     fontFamily: fontFamilies.mono,
     fontSize: 12,
     letterSpacing: 0.8,
     textTransform: "uppercase",
-  },
-  link: {
-    fontFamily: fontFamilies.bodyMedium,
   },
 });

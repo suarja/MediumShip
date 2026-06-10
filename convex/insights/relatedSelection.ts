@@ -10,6 +10,15 @@ import { isContentVisible } from "../discovery/visibility";
 export const DEFAULT_RELATED_LIMIT = 4;
 export const MAX_RELATED_LIMIT = 5;
 
+/** Cap Wikipedia-heavy briefings — discovery ingests many wiki stubs. */
+export const MAX_WIKIPEDIA_PICKS = 2;
+
+type ScoredCandidate = {
+  id: Id<"contents">;
+  score: number;
+  content: Doc<"contents">;
+};
+
 async function loadHiddenContentIds(
   ctx: QueryCtx,
   tokenIdentifier: string,
@@ -71,13 +80,90 @@ function referenceTimeFrom(contents: readonly Doc<"contents">[]): number {
   }, 0);
 }
 
+function isYouTubeVideo(content: Doc<"contents">): boolean {
+  return (
+    content.kind === "video" &&
+    (content.source === "youtube" ||
+      content.videoSource?.kind === "youtube")
+  );
+}
+
+function canTryAdd(
+  content: Doc<"contents">,
+  wikipediaCount: number,
+): boolean {
+  if (content.source === "wikipedia" && wikipediaCount >= MAX_WIKIPEDIA_PICKS) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Ensures briefing picks span formats: at least one YouTube video when available,
+ * caps Wikipedia articles, then fills by score.
+ */
+export function applyInsightsPickDiversity(
+  scored: readonly ScoredCandidate[],
+  limit: number,
+  enabledModules: readonly string[],
+): Id<"contents">[] {
+  const cappedLimit = Math.min(Math.max(limit, 1), MAX_RELATED_LIMIT);
+  const picks: Id<"contents">[] = [];
+  const used = new Set<Id<"contents">>();
+  let wikipediaCount = 0;
+
+  const add = (entry: ScoredCandidate): boolean => {
+    if (picks.length >= cappedLimit || used.has(entry.id)) {
+      return false;
+    }
+    if (!canTryAdd(entry.content, wikipediaCount)) {
+      return false;
+    }
+    picks.push(entry.id);
+    used.add(entry.id);
+    if (entry.content.source === "wikipedia") {
+      wikipediaCount += 1;
+    }
+    return true;
+  };
+
+  const videosEnabled = enabledModules.includes("videos");
+  const episodesEnabled = enabledModules.includes("episodes");
+
+  if (videosEnabled) {
+    const bestYouTube = scored.find((entry) => isYouTubeVideo(entry.content));
+    if (bestYouTube) {
+      add(bestYouTube);
+    }
+  }
+
+  if (episodesEnabled) {
+    const bestEpisode = scored.find(
+      (entry) => entry.content.kind === "episode" && !used.has(entry.id),
+    );
+    if (bestEpisode) {
+      add(bestEpisode);
+    }
+  }
+
+  for (const entry of scored) {
+    if (picks.length >= cappedLimit) {
+      break;
+    }
+    add(entry);
+  }
+
+  return picks;
+}
+
 function popularityFallback(
   visible: readonly Doc<"contents">[],
   excluded: Set<Id<"contents">>,
   hidden: Set<Id<"contents">>,
   limit: number,
+  enabledModules: readonly string[],
 ): Id<"contents">[] {
-  return [...visible]
+  const eligible = [...visible]
     .filter(
       (content) => !excluded.has(content._id) && !hidden.has(content._id),
     )
@@ -85,9 +171,15 @@ function popularityFallback(
       const leftAt = left.publishedAt ? Date.parse(left.publishedAt) : 0;
       const rightAt = right.publishedAt ? Date.parse(right.publishedAt) : 0;
       return rightAt - leftAt;
-    })
-    .slice(0, limit)
-    .map((content) => content._id);
+    });
+
+  const scored: ScoredCandidate[] = eligible.map((content) => ({
+    id: content._id,
+    score: 0,
+    content,
+  }));
+
+  return applyInsightsPickDiversity(scored, limit, enabledModules);
 }
 
 /**
@@ -135,12 +227,19 @@ export async function pickRelated(
   );
 
   if (candidates.length === 0) {
-    return popularityFallback(visible, excluded, hidden, cappedLimit);
+    return popularityFallback(
+      visible,
+      excluded,
+      hidden,
+      cappedLimit,
+      enabledModules,
+    );
   }
 
-  const scored = candidates
+  const scored: ScoredCandidate[] = candidates
     .map((content) => ({
       id: content._id,
+      content,
       score: scoreContent(content, affinities, referenceTime || now, {
         interestCategories,
         rng: () => 0,
@@ -148,24 +247,5 @@ export async function pickRelated(
     }))
     .sort((left, right) => right.score - left.score);
 
-  const picks = scored.slice(0, cappedLimit).map((entry) => entry.id);
-
-  if (picks.length < cappedLimit) {
-    const picked = new Set(picks);
-    for (const content of visible) {
-      if (picks.length >= cappedLimit) {
-        break;
-      }
-      if (
-        !picked.has(content._id) &&
-        !excluded.has(content._id) &&
-        !hidden.has(content._id)
-      ) {
-        picks.push(content._id);
-        picked.add(content._id);
-      }
-    }
-  }
-
-  return picks;
+  return applyInsightsPickDiversity(scored, cappedLimit, enabledModules);
 }

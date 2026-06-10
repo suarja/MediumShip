@@ -40,6 +40,8 @@ describe("buildInsightsPrompt", () => {
       [
         {
           slot: 1,
+          kind: "video",
+          source: "youtube",
           category: "Politique",
           title: "Story A",
           summary: "A short summary.",
@@ -48,9 +50,12 @@ describe("buildInsightsPrompt", () => {
       null,
     );
 
-    expect(system).toContain("journaliste");
+    expect(system).toContain("Tutoiement OBLIGATOIRE");
+    expect(system).toContain("curateur lecture");
     expect(user).toContain("politique");
     expect(user).toContain("candidate_picks");
+    expect(user).toContain("Rédige le briefing JSON");
+    expect(user).toContain("video/youtube");
     expect(user).not.toContain("@");
     expect(summaryContainsPii(user)).toBe(false);
   });

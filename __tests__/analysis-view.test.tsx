@@ -69,9 +69,8 @@ function makeTheme(isDark = false) {
 }
 
 const SAMPLE = {
-  tasteText: "Vous suivez la politique avec attention.",
-  reflection: "Depuis la dernière analyse, vous avez fini plus d'épisodes.",
-  trends: "Les formats longs dominent.",
+  tasteText:
+    "Tu suis la politique de près en ce moment, surtout en article. Les formats longs reviennent quand un sujet t'accroche.",
   dayKey: "2026-06-10",
   related: [
     {
@@ -102,13 +101,12 @@ describe("AnalysisView", () => {
     expect(screen.getByTestId("analysis-view-loading")).toBeTruthy();
   });
 
-  it("renders editorial sections and pick rationale", async () => {
+  it("renders overview and pick rationale only", async () => {
     await changeAppLanguage("fr");
     render(<AnalysisView state="ready" analysis={SAMPLE} />);
     expect(screen.getByTestId("analysis-view-ready")).toBeTruthy();
-    expect(screen.getByTestId("analysis-report-sections")).toBeTruthy();
     expect(screen.getByTestId("analysis-section-overview")).toBeTruthy();
-    expect(screen.getByTestId("analysis-section-reflection")).toBeTruthy();
+    expect(screen.queryByTestId("analysis-section-reflection")).toBeNull();
     expect(screen.getByTestId("analysis-pick-content_1")).toBeTruthy();
     expect(screen.getByText("Parce que vos lectures récentes vont dans ce sens.")).toBeTruthy();
   });

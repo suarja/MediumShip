@@ -69,15 +69,25 @@ export const generateDailyAnalyses = internalAction({
     let skipped = 0;
 
     for (const member of premiumMembers) {
+      const hasUnseen: boolean = await ctx.runQuery(
+        internal.insights.generateInternal.memberHasUnseenBriefing,
+        { tokenIdentifier: member.tokenIdentifier },
+      );
+
+      if (hasUnseen) {
+        skipped += 1;
+        continue;
+      }
+
       const result: Id<"tasteAnalysis"> | null = await ctx.runAction(
         internal.insights.generate.generateForMember,
         {
-        tokenIdentifier: member.tokenIdentifier,
-        tenantSlug: member.tenantSlug ?? fallbackTenantSlug,
-        now,
-        mockProse: args.mockProse,
-        mockReport: args.mockReport,
-        locale: args.locale,
+          tokenIdentifier: member.tokenIdentifier,
+          tenantSlug: member.tenantSlug ?? fallbackTenantSlug,
+          now,
+          mockProse: args.mockProse,
+          mockReport: args.mockReport,
+          locale: args.locale,
         },
       );
 

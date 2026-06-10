@@ -4,8 +4,6 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { query, type QueryCtx } from "../_generated/server";
 import { requireMember } from "../entitlements/authz";
 import { isContentVisible } from "../discovery/visibility";
-import { formatDayKey } from "./dayKey";
-
 const LIST_CAP = 60;
 const UNSEEN_WINDOW_MS = 48 * 60 * 60 * 1000;
 
@@ -186,19 +184,18 @@ export const getAnalysisById = query({
 
 export const getTodayAnalysis = query({
   args: {
-    dayKey: v.optional(v.string()),
+    dayKey: v.string(),
   },
   returns: v.union(analysisValidator, v.null()),
   handler: async (ctx, args) => {
     const entitlement = await requireMember(ctx);
-    const dayKey = args.dayKey ?? formatDayKey(Date.now());
 
     const analysis = await ctx.db
       .query("tasteAnalysis")
       .withIndex("by_tokenIdentifier_and_dayKey", (q) =>
         q
           .eq("tokenIdentifier", entitlement.tokenIdentifier)
-          .eq("dayKey", dayKey),
+          .eq("dayKey", args.dayKey),
       )
       .unique();
 
@@ -210,15 +207,40 @@ export const getTodayAnalysis = query({
   },
 });
 
+export const getLatestAnalysis = query({
+  args: {},
+  returns: v.union(analysisValidator, v.null()),
+  handler: async (ctx) => {
+    const entitlement = await requireMember(ctx);
+
+    const analysis = await ctx.db
+      .query("tasteAnalysis")
+      .withIndex("by_tokenIdentifier_and_createdAt", (q) =>
+        q.eq("tokenIdentifier", entitlement.tokenIdentifier),
+      )
+      .order("desc")
+      .first();
+
+    if (!analysis) {
+      return null;
+    }
+
+    return loadAnalysisForMember(ctx, entitlement.tokenIdentifier, analysis._id);
+  },
+});
+
 export const getUnseenAnalysis = query({
   args: {
+    /** Client clock for the 48h window — never default to server `Date.now()`. */
     now: v.optional(v.number()),
+    /** @deprecated Use `now` — kept for clients deployed before rename. */
+    asOf: v.optional(v.number()),
   },
   returns: v.union(analysisValidator, v.null()),
   handler: async (ctx, args) => {
     const entitlement = await requireMember(ctx);
-    const now = args.now ?? Date.now();
-    const cutoff = now - UNSEEN_WINDOW_MS;
+    const asOf = args.now ?? args.asOf;
+    const cutoff = asOf !== undefined ? asOf - UNSEEN_WINDOW_MS : undefined;
 
     const rows = await ctx.db
       .query("tasteAnalysis")
@@ -228,9 +250,15 @@ export const getUnseenAnalysis = query({
       .order("desc")
       .take(10);
 
-    const unseen = rows.find(
-      (row) => row.seenAt === undefined && row.createdAt >= cutoff,
-    );
+    const unseen = rows.find((row) => {
+      if (row.seenAt !== undefined) {
+        return false;
+      }
+      if (cutoff !== undefined && row.createdAt < cutoff) {
+        return false;
+      }
+      return true;
+    });
 
     if (!unseen) {
       return null;

@@ -18,6 +18,7 @@ export default {
       resume: "Resume",
       saved: "Favorites",
       lists: "Lists",
+      briefing: "Briefings",
       offline: "Offline",
     },
     resumeKicker: "Resume",
@@ -37,6 +38,11 @@ export default {
     offlineTitle: "Download to listen without a network",
     offlineBody:
       "Premium unlocks offline downloads for articles, episodes, and hosted videos.",
+    briefingTitle: "Your reading briefings, in one place",
+    briefingBody:
+      "Premium unlocks personalised briefings on what you read and what to pick next.",
+    briefingPreviewTitle: "Your reading briefings",
+    briefingPreviewMeta: "Personalised picks and reading notes",
     seeAll: "See all",
   },
   favoritesScreen: {

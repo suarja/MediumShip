@@ -75,6 +75,13 @@ export default {
       title: "Historique & progression",
       sub: "Reprise synchronisee sur vos appareils",
     },
+    briefing: {
+      title: "Briefings",
+      sub: "Comptes rendus de lecture · Premium",
+      subMember_one: "{{count}} briefing enregistre",
+      subMember_other: "{{count}} briefings enregistres",
+      subMemberEmpty: "Vos comptes rendus de lecture",
+    },
     subscription: {
       title: "Abonnement · Annuel",
       sub: "Details de facturation a venir",

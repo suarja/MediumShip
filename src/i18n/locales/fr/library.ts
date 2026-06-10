@@ -18,6 +18,7 @@ export default {
       resume: "Reprendre",
       saved: "Favoris",
       lists: "Listes",
+      briefing: "Briefings",
       offline: "Hors ligne",
     },
     resumeKicker: "Reprendre",
@@ -37,6 +38,11 @@ export default {
     offlineTitle: "Telecharger pour ecouter sans reseau",
     offlineBody:
       "Le premium debloque les telechargements hors ligne pour les articles, episodes et videos hebergees.",
+    briefingTitle: "Vos briefings de lecture, au meme endroit",
+    briefingBody:
+      "Le premium debloque des comptes rendus personnalises sur vos lectures et vos prochaines pistes.",
+    briefingPreviewTitle: "Vos briefings de lecture",
+    briefingPreviewMeta: "Pistes personnalisees et notes de lecture",
     seeAll: "Voir tout",
   },
   favoritesScreen: {

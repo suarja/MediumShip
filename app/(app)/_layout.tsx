@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 import { AppTabBar } from "../../src/components/navigation/app-tab-bar";
-import { useAnalysisAutoNav } from "../../src/features/insights/use-analysis-auto-nav";
+import { BriefingInviteProvider } from "../../src/features/insights/briefing-invite-provider";
 import { NotificationBootstrap } from "../../src/features/notifications/notification-bootstrap";
 import { NotificationPermissionProvider } from "../../src/features/notifications/permission";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
@@ -56,8 +56,6 @@ export default function AppLayout() {
   const bootRedirectHandledRef = useRef(false);
   const navSet = new Set(effectiveNavigation);
 
-  useAnalysisAutoNav(!isLoading);
-
   const orderedRoutes = [
     ...effectiveNavigation,
     ...ALL_TAB_ROUTE_NAMES.filter((route) => !navSet.has(route)),
@@ -101,23 +99,25 @@ export default function AppLayout() {
   }
 
   return (
-    <NotificationPermissionProvider>
-      <NotificationBootstrap />
-      <Tabs
-        tabBar={(props) => <AppTabBar {...props} />}
-        screenOptions={{ headerShown: false }}
-      >
-        {orderedRoutes.map((name) => (
-          <Tabs.Screen
-            key={name}
-            name={name}
-            options={{
-              href: tabHref(name, effectiveNavigation) as null | undefined,
-            }}
-          />
-        ))}
-      </Tabs>
-    </NotificationPermissionProvider>
+    <BriefingInviteProvider enabled={!isLoading}>
+      <NotificationPermissionProvider>
+        <NotificationBootstrap />
+        <Tabs
+          tabBar={(props) => <AppTabBar {...props} />}
+          screenOptions={{ headerShown: false }}
+        >
+          {orderedRoutes.map((name) => (
+            <Tabs.Screen
+              key={name}
+              name={name}
+              options={{
+                href: tabHref(name, effectiveNavigation) as null | undefined,
+              }}
+            />
+          ))}
+        </Tabs>
+      </NotificationPermissionProvider>
+    </BriefingInviteProvider>
   );
 }
 

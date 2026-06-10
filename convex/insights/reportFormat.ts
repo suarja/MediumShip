@@ -7,8 +7,6 @@ export type InsightsPickSlot = {
 
 export type ParsedInsightsReport = {
   overview: string;
-  reflection?: string;
-  trends?: string;
   picks: InsightsPickSlot[];
 };
 
@@ -36,20 +34,21 @@ export function parseInsightsReport(
       picks?: unknown;
     };
 
-    const overview =
+    let overview =
       typeof parsed.overview === "string" ? parsed.overview.trim() : "";
     if (!overview) {
       return null;
     }
 
-    const reflection =
-      typeof parsed.reflection === "string" && parsed.reflection.trim().length > 0
-        ? parsed.reflection.trim()
-        : undefined;
-    const trends =
-      typeof parsed.trends === "string" && parsed.trends.trim().length > 0
-        ? parsed.trends.trim()
-        : undefined;
+    const legacyReflection =
+      typeof parsed.reflection === "string" ? parsed.reflection.trim() : "";
+    const legacyTrends =
+      typeof parsed.trends === "string" ? parsed.trends.trim() : "";
+    if (legacyReflection || legacyTrends) {
+      overview = [overview, legacyReflection, legacyTrends]
+        .filter((part) => part.length > 0)
+        .join(" ");
+    }
 
     const picks: InsightsPickSlot[] = [];
     if (Array.isArray(parsed.picks)) {
@@ -71,7 +70,7 @@ export function parseInsightsReport(
 
     picks.sort((left, right) => left.slot - right.slot);
 
-    return { overview, reflection, trends, picks };
+    return { overview, picks };
   } catch {
     return null;
   }
@@ -84,36 +83,70 @@ export function buildFallbackReport(
   if (locale === "fr") {
     return {
       overview:
-        "Votre profil de lecture se précise jour après jour. Nous observons des affinités nettes dans vos ouvertures récentes.",
-      reflection:
-        "Depuis la dernière analyse, vous avez surtout exploré des formats longs et des sujets d'actualité.",
-      trends:
-        "La tendance du moment : plus de profondeur, moins de lecture superficielle.",
+        "Tu ouvres souvent des sujets d'actualité en ce moment, surtout en article. Quand un thème t'accroche, tu passes aux formats plus longs — on part de là pour affiner tes prochaines lectures.",
       picks: Array.from({ length: pickCount }, (_, index) => ({
         slot: index + 1,
         rationale:
-          "Ce contenu prolonge vos lectures récentes tout en élargissant légèrement le champ.",
+          "Ce format te correspond — il prolonge ce que tu as ouvert récemment sans tourner en rond.",
       })),
     };
   }
 
   return {
     overview:
-      "Your reading profile is sharpening day by day. We see clear affinities in your recent opens.",
-    reflection:
-      "Since your last analysis, you have mostly explored long-form pieces and current-affairs topics.",
-    trends: "The current trend: more depth, less skim-reading.",
+      "You've been opening a lot of current-affairs pieces lately — mostly articles. When a topic hooks you, you reach for longer formats; we'll build on that rhythm for what comes next.",
     picks: Array.from({ length: pickCount }, (_, index) => ({
       slot: index + 1,
       rationale:
-        "This pick extends what you have been reading while nudging your tastes slightly wider.",
+        "This format fits you — it builds on what you've opened recently without repeating the same angle.",
     })),
   };
 }
 
 export function composePreviewText(report: ParsedInsightsReport): string {
-  return [report.overview, report.reflection, report.trends]
-    .filter((part): part is string => Boolean(part && part.length > 0))
-    .join(" ")
-    .trim();
+  return report.overview.trim();
+}
+
+const SENTENCE_END_RE = /[.!?…](?:\s|$)/;
+
+/** Hard cap for briefing prose — trims at sentence boundary when possible. */
+export function truncateBriefingProse(text: string, maxChars: number): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= maxChars) {
+    return trimmed;
+  }
+
+  const slice = trimmed.slice(0, maxChars);
+  const lastSentence = slice.search(SENTENCE_END_RE);
+  if (lastSentence > maxChars * 0.4) {
+    return slice.slice(0, lastSentence + 1).trim();
+  }
+
+  const lastSpace = slice.lastIndexOf(" ");
+  return (lastSpace > 0 ? slice.slice(0, lastSpace) : slice).trim() + "…";
+}
+
+/** Prompt-facing targets — the model self-limits; never hard-truncate overview after generation. */
+export const BRIEFING_PROMPT_TARGETS = {
+  overviewChars: 480,
+  pickRationaleChars: 180,
+} as const;
+
+/** JSON-schema safety caps (~20% above prompt targets, Editia pattern). */
+export const BRIEFING_SCHEMA_MAX = {
+  overview: 720,
+  pickRationale: 220,
+} as const;
+
+export function clampInsightsReport(report: ParsedInsightsReport): ParsedInsightsReport {
+  return {
+    overview: report.overview.trim(),
+    picks: report.picks.map((pick) => ({
+      slot: pick.slot,
+      rationale: truncateBriefingProse(
+        pick.rationale,
+        BRIEFING_SCHEMA_MAX.pickRationale,
+      ),
+    })),
+  };
 }

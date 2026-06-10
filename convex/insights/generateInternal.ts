@@ -28,6 +28,25 @@ export const getExistingAnalysisForDay = internalQuery({
   },
 });
 
+/** True when the member still has a briefing they have not opened (seenAt unset). */
+export const memberHasUnseenBriefing = internalQuery({
+  args: {
+    tokenIdentifier: v.string(),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const latest = await ctx.db
+      .query("tasteAnalysis")
+      .withIndex("by_tokenIdentifier_and_createdAt", (q) =>
+        q.eq("tokenIdentifier", args.tokenIdentifier),
+      )
+      .order("desc")
+      .first();
+
+    return latest !== null && latest.seenAt === undefined;
+  },
+});
+
 export const getTasteThreadId = internalQuery({
   args: {
     tokenIdentifier: v.string(),

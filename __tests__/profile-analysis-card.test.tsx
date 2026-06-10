@@ -5,7 +5,6 @@ import { initI18n } from "../src/i18n";
 
 const mockOpenPaywall = jest.fn();
 const mockOnOpen = jest.fn();
-const mockOnHistory = jest.fn();
 
 jest.mock("../src/features/paywall/paywall-sheet-provider", () => ({
   usePaywallSheet: () => ({ openPaywall: mockOpenPaywall }),
@@ -53,22 +52,21 @@ describe("ProfileAnalysisCard", () => {
   beforeEach(() => {
     mockOpenPaywall.mockReset();
     mockOnOpen.mockReset();
-    mockOnHistory.mockReset();
     mockUseAppTheme.mockReturnValue(makeTheme());
   });
 
-  it("renders ready state with CTA", () => {
+  it("renders ready state with CTA on surface card", () => {
     render(
       <ProfileAnalysisCard
         state="ready"
-        previewText="Votre profil aime la politique."
+        previewText="Vous avez lu plus de formats longs cette semaine."
         onOpen={mockOnOpen}
-        onOpenHistory={mockOnHistory}
       />,
     );
 
     fireEvent.press(screen.getByTestId("profile-analysis-open"));
     expect(mockOnOpen).toHaveBeenCalled();
+    expect(screen.queryByTestId("profile-analysis-history")).toBeNull();
   });
 
   it("opens paywall when locked", () => {

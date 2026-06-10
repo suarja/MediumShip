@@ -19,8 +19,10 @@ type ProfileLibraryRowsProps = {
   savedCount: number;
   downloadCount: number;
   listsCount: number;
+  briefingCount?: number;
   onSignOut: () => void;
   onGoPremium?: () => void;
+  onOpenBriefingHistory?: () => void;
 };
 
 /**
@@ -33,8 +35,10 @@ export function ProfileLibraryRows({
   savedCount,
   downloadCount,
   listsCount,
+  briefingCount = 0,
   onSignOut,
   onGoPremium,
+  onOpenBriefingHistory,
 }: ProfileLibraryRowsProps) {
   const { t } = useTranslation("profile");
   const { theme, enabledModules } = useAppTheme();
@@ -46,6 +50,7 @@ export function ProfileLibraryRows({
   const canOffline = hasCapability(enabledModules, "offline");
   const canPersonalLists = hasCapability(enabledModules, "personalLists");
   const canProgressSync = hasCapability(enabledModules, "progressSync");
+  const canBriefing = hasCapability(enabledModules, "premiumInsights");
 
   const openLists = () => {
     void HapticsService.light();
@@ -125,6 +130,29 @@ export function ProfileLibraryRows({
       onPress: () => {
         void HapticsService.light();
         pushWithReturn("/history");
+      },
+    });
+  }
+
+  if (canBriefing && onOpenBriefingHistory) {
+    libraryRowConfigs.push({
+      key: "briefing",
+      icon: "newspaper-outline",
+      title: t("rows.briefing.title"),
+      subtitle: isMember
+        ? briefingCount > 0
+          ? t("rows.briefing.subMember", { count: briefingCount })
+          : t("rows.briefing.subMemberEmpty")
+        : t("rows.briefing.sub"),
+      showPremiumBadge: true,
+      onPress: () => {
+        if (isMember) {
+          void HapticsService.light();
+          onOpenBriefingHistory();
+          return;
+        }
+        void HapticsService.medium();
+        openPaywall("content");
       },
     });
   }

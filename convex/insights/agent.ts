@@ -2,6 +2,7 @@ import { Agent } from "@convex-dev/agent";
 import { gateway } from "ai";
 
 import { components } from "../_generated/api";
+import { buildBriefingInstructions } from "./instructions";
 
 export type AgentComponent = ConstructorParameters<typeof Agent>[0];
 
@@ -23,9 +24,8 @@ export const tasteInsightsAgent = new Agent(
   {
     name: TASTE_INSIGHTS_AGENT_NAME,
     languageModel: gateway(TASTE_INSIGHTS_MODEL),
-    instructions:
-      "You write premium editorial taste reports as structured JSON. " +
-      "Each daily report reflects on changes since the prior analysis and explains " +
-      "why each pre-selected content slot fits the reader now.",
+    // Baseline only — `buildInsightsPrompt` overrides per call with locale +
+    // cold-start context (same pattern as Editia `buildReportPrompt`).
+    instructions: buildBriefingInstructions("fr"),
   },
 );

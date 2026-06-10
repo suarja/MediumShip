@@ -1,5 +1,5 @@
 import { useConvexAuth, useQuery } from "convex/react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../../../convex/_generated/api";
@@ -13,10 +13,11 @@ export function useUnseenAnalysis() {
   const { canAccess, isLoading: isFeatureLoading } = useFeatureAccess("premiumInsights");
   const canQuery = isAuthenticated && isMember && canAccess;
   const { t } = useTranslation("insights");
+  const nowRef = useRef(Date.now());
 
   const analysis = useQuery(
     api.insights.queries.getUnseenAnalysis,
-    canQuery ? {} : "skip",
+    canQuery ? { now: nowRef.current } : "skip",
   );
 
   useEffect(() => {

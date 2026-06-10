@@ -18,20 +18,18 @@ import {
 import type { ContentCardModel } from "../../features/content/types";
 import { useClerkAuth } from "../../features/auth/use-clerk-auth";
 import { useResponsive } from "../../features/responsive/use-responsive";
-import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 type AnalysisPickCardProps = {
-  index: number;
   item: ContentCardModel;
   rationale?: string;
   isLiked: boolean;
   tenantSlug: string;
 };
 
+/** Discovery-style pick: rationale first, then feature row with generous spacing. */
 export function AnalysisPickCard({
-  index,
   item,
   rationale,
   isLiked: initialIsLiked,
@@ -57,45 +55,26 @@ export function AnalysisPickCard({
     });
   }, [isSignedIn, item.id, recordInteraction, tenantSlug]);
 
-  const slotLabel = String(index + 1).padStart(2, "0");
+  const rationaleGap = theme.spacing.md * scaleSpace;
 
   return (
     <View
       testID={`analysis-pick-${item.id}`}
-      style={[
-        styles.shell,
-        {
-          gap: theme.spacing.md * scaleSpace,
-          padding: theme.spacing.lg * scaleSpace,
-          borderRadius: theme.radii.lg,
-          borderColor: theme.colors.border,
-          backgroundColor: withAlpha(theme.colors.surface, theme.isDark ? 0.55 : 1),
-        },
-      ]}
+      style={{ gap: rationaleGap }}
     >
       {rationale?.trim() ? (
-        <View style={{ gap: theme.spacing.xs * scaleSpace }}>
-          <Text
-            style={[
-              styles.slot,
-              { color: theme.colors.accent, fontSize: 11 * scaleFont },
-            ]}
-          >
-            {slotLabel}
-          </Text>
-          <Text
-            style={[
-              styles.rationale,
-              {
-                color: theme.colors.text,
-                fontSize: 15 * scaleFont,
-                lineHeight: 23 * scaleFont,
-              },
-            ]}
-          >
-            {rationale}
-          </Text>
-        </View>
+        <Text
+          style={[
+            styles.rationale,
+            {
+              color: theme.colors.text,
+              fontSize: 15 * scaleFont,
+              lineHeight: 23 * scaleFont,
+            },
+          ]}
+        >
+          {rationale}
+        </Text>
       ) : null}
 
       <ContentCard
@@ -131,13 +110,6 @@ export function AnalysisPickCard({
 }
 
 const styles = StyleSheet.create({
-  shell: {
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  slot: {
-    fontFamily: fontFamilies.mono,
-    letterSpacing: 1.2,
-  },
   rationale: {
     fontFamily: fontFamilies.body,
   },

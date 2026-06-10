@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildFallbackReport,
+  clampInsightsReport,
   composePreviewText,
   parseInsightsReport,
 } from "./reportFormat";
@@ -25,6 +26,19 @@ describe("parseInsightsReport", () => {
 
   it("returns null for empty overview", () => {
     expect(parseInsightsReport('{"overview":""}', 1)).toBeNull();
+  });
+});
+
+describe("clampInsightsReport", () => {
+  it("does not truncate overview — length is enforced upstream in the prompt", () => {
+    const longOverview = "Tu lis beaucoup. ".repeat(40).trim();
+    const clamped = clampInsightsReport({
+      overview: longOverview,
+      picks: [{ slot: 1, rationale: "Court." }],
+    });
+
+    expect(clamped.overview).toBe(longOverview);
+    expect(clamped.overview.endsWith("…")).toBe(false);
   });
 });
 

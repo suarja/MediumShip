@@ -1,7 +1,7 @@
 import { useQuery } from "convex/react";
 
 import { api } from "../../../convex/_generated/api";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { tryParseConvexId } from "../convex/parse-id";
 import { useAppTheme } from "../theme/theme-provider";
 import type { AppEvent, EventFilter } from "./types";
 
@@ -16,13 +16,14 @@ export function useEvents(filter: EventFilter): { events: AppEvent[]; isLoading:
 }
 
 export function useEvent(id: string): { event?: AppEvent; isLoading: boolean } {
+  const convexId = tryParseConvexId<"events">(id);
   const data = useQuery(
     api.events.queries.getPublishedEventById,
-    id ? { id: id as Id<"events"> } : "skip",
+    convexId ? { id: convexId } : "skip",
   );
 
   return {
-    event: data ?? undefined,
-    isLoading: data === undefined,
+    event: convexId ? (data ?? undefined) : undefined,
+    isLoading: convexId ? data === undefined : false,
   };
 }

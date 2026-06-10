@@ -80,23 +80,23 @@
 
 ### Task 1 : Installer + configurer expo-notifications
 
-- [ ] **Step 1 :** installer `expo-notifications`, ajouter le plugin + permissions (`app.json`), `setNotificationHandler` (foreground banner, pas de son/badge) — copier la garde `try/require` d'Editia pour le web (no-op).
-- [ ] **Step 2 :** `npx tsc --noEmit` clean ; l'app boot toujours sur web (module absent → no-op). **Commit** — `chore(notifications): add expo-notifications (plugin, permissions, foreground handler)`.
+- [x] **Step 1 :** installer `expo-notifications`, ajouter le plugin + permissions (`app.json`), `setNotificationHandler` (foreground banner, pas de son/badge) — copier la garde `try/require` d'Editia pour le web (no-op).
+- [x] **Step 2 :** `npx tsc --noEmit` clean ; l'app boot toujours sur web (module absent → no-op). **Commit** — `chore(notifications): add expo-notifications (plugin, permissions, foreground handler)`.
 
 ### Task 2 : Module notifications — permission passive + planification (Jest-first)
 
-- [ ] **Step 1 :** `permission.ts` — `usePermissionStatus()` (lecture passive, **jamais** de prompt auto) + `requestPermissionExplicit()` (appelé uniquement par UI). Copie l'esprit `permissionManager.tsx`.
-- [ ] **Step 2 (Jest) :** `schedule-daily-digest.ts` — fonction **pure** `computeReminderTriggers(now, hour, days, locale)` → liste de triggers (dates locales) + sélection de message i18n ; + `scheduleDailyDigest()` qui planifie via `expo-notifications` (effets isolés). Tester la **pure** : fenêtre correcte, N jours, message par locale, idempotence, no-op si module absent.
-- [ ] **Step 3 :** `use-notification-setup.ts` — hook monté une fois : si `granted`, (re)planifie la fenêtre ; replanifie sur flip permission / changement langue / fenêtre courte (auto-refresh). Pattern `useNotificationSetup`.
-- [ ] **Step 4 :** `use-notification-listeners.ts` — au tap d'une notif `kind: "daily_digest"` → navigue vers Home (via `app-navigation`).
-- [ ] **Step 5 :** monter setup + listeners dans `app/(app)/_layout.tsx` (après résolution thème). `npm test` PASS. **Commit** — `feat(notifications): local daily-digest scheduling + tap-to-home (passive permission)`.
+- [x] **Step 1 :** `permission.ts` — `usePermissionStatus()` (lecture passive, **jamais** de prompt auto) + `requestPermissionExplicit()` (appelé uniquement par UI). Copie l'esprit `permissionManager.tsx`.
+- [x] **Step 2 (Jest) :** `schedule-daily-digest.ts` — fonction **pure** `computeReminderTriggers(now, hour, days, locale)` → liste de triggers (dates locales) + sélection de message i18n ; + `scheduleDailyDigest()` qui planifie via `expo-notifications` (effets isolés). Tester la **pure** : fenêtre correcte, N jours, message par locale, idempotence, no-op si module absent.
+- [x] **Step 3 :** `use-notification-setup.ts` — hook monté une fois : si `granted`, (re)planifie la fenêtre ; replanifie sur flip permission / changement langue / fenêtre courte (auto-refresh). Pattern `useNotificationSetup`.
+- [x] **Step 4 :** `use-notification-listeners.ts` — au tap d'une notif `kind: "daily_digest"` → navigue vers Home (via `app-navigation`).
+- [x] **Step 5 :** monter setup + listeners dans `app/(app)/_layout.tsx` (après résolution thème). `npm test` PASS. **Commit** — `feat(notifications): local daily-digest scheduling + tap-to-home (passive permission)`.
 
 ### Task 3 : Réglage utilisateur + prompt explicite (Jest-first)
 
-- [ ] **Step 1 :** `use-digest-reminder-settings.ts` — état on/off (+ heure optionnelle) persisté (AsyncStorage ou pref existante). Off → annule les rappels planifiés.
-- [ ] **Step 2 (Jest) :** `daily-digest-toggle.tsx` — toggle dans Settings ; à l'activation → `requestPermissionExplicit()` (avec `RationaleModal` si pertinent) puis planifie ; à la désactivation → annule. Tokens + `useResponsive` + `midnight`. Tester : on→demande permission+planifie, off→annule, état refusé (message).
-- [ ] **Step 3 :** monter le toggle dans l'écran Settings ; i18n `notifications` (`fr`/`en`) : titre, sous-titre, rationale, message notif. Enregistrer dans `resources.ts`.
-- [ ] **Step 4 :** `npm test` + `npx tsc --noEmit` clean. **Commit** — `feat(settings): daily-digest reminder toggle with explicit permission prompt`.
+- [x] **Step 1 :** `use-digest-reminder-settings.ts` — état on/off (+ heure optionnelle) persisté (AsyncStorage ou pref existante). Off → annule les rappels planifiés.
+- [x] **Step 2 (Jest) :** `daily-digest-toggle.tsx` — toggle dans Settings ; à l'activation → `requestPermissionExplicit()` (avec `RationaleModal` si pertinent) puis planifie ; à la désactivation → annule. Tokens + `useResponsive` + `midnight`. Tester : on→demande permission+planifie, off→annule, état refusé (message).
+- [x] **Step 3 :** monter le toggle dans l'écran Settings ; i18n `notifications` (`fr`/`en`) : titre, sous-titre, rationale, message notif. Enregistrer dans `resources.ts`.
+- [x] **Step 4 :** `npm test` + `npx tsc --noEmit` clean. **Commit** — `feat(settings): daily-digest reminder toggle with explicit permission prompt`.
 
 ### Task 4 : Vérification du slice (standard — toujours)
 

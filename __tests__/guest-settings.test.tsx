@@ -47,6 +47,10 @@ jest.mock("../src/features/media/persistent-media-player", () => ({
   usePersistentMediaPlayerSpace: () => 0,
 }));
 
+jest.mock("../src/components/settings/daily-digest-toggle", () => ({
+  DailyDigestToggle: () => null,
+}));
+
 describe("guest settings", () => {
   beforeAll(async () => {
     await initI18n();

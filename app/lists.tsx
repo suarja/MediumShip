@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useGoBack, usePushWithReturn } from "../src/features/navigation/app-navigation";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -25,7 +25,8 @@ export default function ListsScreen() {
   const { t } = useTranslation(["lists", "library"]);
   const { theme } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
-  const router = useRouter();
+  const goBack = useGoBack("/library");
+  const pushWithReturn = usePushWithReturn();
   const insets = useSafeAreaInsets();
   const { openPaywall } = usePaywallSheet();
   const {
@@ -59,7 +60,7 @@ export default function ListsScreen() {
       const result = await createList({ title });
       setShowCreateForm(false);
       setDraftTitle("");
-      router.push(`/list/${result.listId}`);
+      pushWithReturn(`/list/${result.listId}`);
     } catch (error) {
       if (
         error instanceof Error &&
@@ -86,7 +87,7 @@ export default function ListsScreen() {
         ]}
       >
         <Pressable
-          onPress={() => router.back()}
+          onPress={goBack}
           style={styles.topBarAction}
           accessibilityRole="button"
           accessibilityLabel={t("lists:screen.back")}
@@ -261,7 +262,7 @@ export default function ListsScreen() {
                 accessibilityLabel={list.title}
                 previewCoverUrls={list.previewCoverUrls}
                 itemCount={list.itemCount}
-                onPress={() => router.push(`/list/${list._id}`)}
+                onPress={() => pushWithReturn(`/list/${list._id}`)}
               />
             ))
           )}

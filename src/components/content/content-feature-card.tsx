@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Link } from "expo-router";
+import { AppLink } from "../navigation/app-link";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
@@ -76,7 +76,7 @@ export function ContentFeatureCard({
         </View>
 
         <View style={[styles.copy, { gap: 2 * scaleSpace }]}>
-          <Link href={item.href as never} asChild>
+          <AppLink href={item.href as never} asChild>
             <Pressable
               accessibilityRole="link"
               onPress={() => void HapticsService.light()}
@@ -145,7 +145,7 @@ export function ContentFeatureCard({
                 ) : null}
               </View>
             </Pressable>
-          </Link>
+          </AppLink>
 
           {showFooter ? (
             <View

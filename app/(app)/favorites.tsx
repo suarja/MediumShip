@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useGoBack } from "../../src/features/navigation/app-navigation";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -13,7 +13,7 @@ export default function FavoritesScreen() {
   const { t } = useTranslation("library");
   const { theme } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
-  const router = useRouter();
+  const goBack = useGoBack("/library");
   const insets = useSafeAreaInsets();
 
   return (
@@ -28,7 +28,7 @@ export default function FavoritesScreen() {
         ]}
       >
         <Pressable
-          onPress={() => router.back()}
+          onPress={goBack}
           style={styles.topBarAction}
           accessibilityRole="button"
           accessibilityLabel={t("library:favoritesScreen.back")}

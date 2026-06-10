@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useGoBack, usePushWithReturn } from "../../src/features/navigation/app-navigation";
 import { useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -46,7 +46,8 @@ export default function AgendaScreen() {
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
-  const router = useRouter();
+  const goBack = useGoBack("/explore");
+  const pushWithReturn = usePushWithReturn();
   const insets = useSafeAreaInsets();
 
   const [filter, setFilter] = useState<EventFilter>("upcoming");
@@ -70,7 +71,7 @@ export default function AgendaScreen() {
         <Pressable
           onPress={() => {
             void HapticsService.selection();
-            router.back();
+            goBack();
           }}
           style={styles.backBtn}
           accessibilityRole="button"
@@ -144,7 +145,7 @@ export default function AgendaScreen() {
             divider={index !== 0}
             onPress={() => {
               void HapticsService.light();
-              router.push(`/event/${item._id}` as never);
+              pushWithReturn(`/event/${item._id}`);
             }}
           />
         )}

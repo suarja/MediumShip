@@ -1,5 +1,5 @@
 import type { ComponentProps, ReactNode } from "react";
-import { useRouter } from "expo-router";
+import { usePushWithReturn } from "../../features/navigation/app-navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -38,18 +38,18 @@ export function ProfileLibraryRows({
   const { t } = useTranslation("profile");
   const { theme } = useAppTheme();
   const { scaleSpace } = useResponsive();
-  const router = useRouter();
+  const pushWithReturn = usePushWithReturn();
   const { openPaywall } = usePaywallSheet();
 
   const openLists = () => {
     void HapticsService.light();
-    router.push("/lists");
+    pushWithReturn("/lists");
   };
 
   const openDownloads = () => {
     if (isMember) {
       void HapticsService.light();
-      router.push("/library");
+      pushWithReturn("/downloads");
       return;
     }
     void HapticsService.medium();
@@ -68,7 +68,7 @@ export function ProfileLibraryRows({
           subtitle={t("rows.saved.sub", { count: savedCount })}
           onPress={() => {
             void HapticsService.light();
-            router.push("/library");
+            pushWithReturn("/favorites");
           }}
         />
         <ProfileRow
@@ -105,7 +105,7 @@ export function ProfileLibraryRows({
           subtitle={t("rows.history.sub")}
           onPress={() => {
             void HapticsService.light();
-            router.push("/library");
+            pushWithReturn("/history");
           }}
         />
       </Section>
@@ -128,7 +128,7 @@ export function ProfileLibraryRows({
               onGoPremium ??
               (() => {
                 void HapticsService.medium();
-                router.push("/premium");
+                pushWithReturn("/premium");
               })
             }
           />

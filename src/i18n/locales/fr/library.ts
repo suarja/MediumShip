@@ -47,6 +47,10 @@ export default {
     back: "Retour",
     title: "Tous mes telechargements",
   },
+  historyScreen: {
+    back: "Retour",
+    title: "Historique & progression",
+  },
   listsScreen: {
     back: "Retour",
     createTitle: "Creer une liste",

@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useRouter } from "expo-router";
+import { useGoBack } from "../../features/navigation/app-navigation";
 
 import { StatusBannerStack } from "./status-banner-stack";
 import { OVER_MEDIA } from "../../features/content/card-presentation";
@@ -64,19 +64,14 @@ export function ContentDetailShell({
   onScroll,
   children,
 }: ContentDetailShellProps) {
-  const router = useRouter();
+  const goBack = useGoBack("/home");
   const { theme } = useAppTheme();
   const { scaleSpace, scaleFont, contentMaxWidth } = useResponsive();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
 
   const handleBack = () => {
     void HapticsService.selection();
-    if (router.canGoBack()) {
-      router.back();
-      return;
-    }
-
-    router.replace("/home");
+    goBack();
   };
   // Measure the sticky action bar so the scroll body reserves exactly its
   // height (it is an absolute overlay). A hardcoded inset used to clip the

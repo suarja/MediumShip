@@ -20,7 +20,13 @@ const ALL_TAB_ROUTE_NAMES = [
   "profile",
 ] as const satisfies readonly FeatureKey[];
 
-const HIDDEN_ROUTE_NAMES = ["premium", "settings"] as const;
+const HIDDEN_ROUTE_NAMES = [
+  "premium",
+  "settings",
+  "favorites",
+  "downloads",
+  "history",
+] as const;
 
 function tabHref(
   routeName: string,

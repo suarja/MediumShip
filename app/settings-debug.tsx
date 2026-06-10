@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useGoBack } from "../src/features/navigation/app-navigation";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { useConvexAuth, useQuery } from "convex/react";
@@ -21,7 +21,7 @@ import { useAppTheme } from "../src/features/theme/theme-provider";
 export default function SettingsDebugScreen() {
   const { t } = useTranslation("settings");
   const { theme } = useAppTheme();
-  const router = useRouter();
+  const goBack = useGoBack("/settings");
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
   const { isSignedIn, userId, email, fullName, user } = useClerkAuth();
@@ -42,7 +42,7 @@ export default function SettingsDebugScreen() {
         <View style={styles.header}>
           <Pressable
             accessibilityRole="button"
-            onPress={() => router.back()}
+            onPress={goBack}
             style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
           >
             <Text style={[styles.backLabel, { color: theme.colors.accent }]}>

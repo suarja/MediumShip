@@ -50,6 +50,7 @@ jest.mock("../src/features/haptics/haptics", () => ({
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: React.ReactNode }) => children,
   useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
+  usePathname: () => "/explore",
 }));
 
 describe("explore screen", () => {

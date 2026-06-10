@@ -1,4 +1,6 @@
 import { useRouter } from "expo-router";
+
+import { usePushWithReturn } from "../../src/features/navigation/app-navigation";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
@@ -216,6 +218,7 @@ function SignedInLibraryContent({
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
   const router = useRouter();
+  const pushWithReturn = usePushWithReturn();
   const { openPaywall } = usePaywallSheet();
   const { isMember } = useIsMember();
   const { primaryList } = usePersonalLists();
@@ -223,7 +226,7 @@ function SignedInLibraryContent({
 
   const handleListsPress = () => {
     void HapticsService.light();
-    router.push("/lists");
+    pushWithReturn("/lists");
   };
 
   return (
@@ -298,7 +301,7 @@ function SignedInLibraryContent({
             <LibrarySectionHeader
               onSeeAllPress={() => {
                 void HapticsService.light();
-                router.push("/favorites");
+                pushWithReturn("/favorites");
               }}
               seeAllLabel={t("library:screen.seeAll")}
               title={t("library:screen.sections.saved")}
@@ -336,7 +339,7 @@ function SignedInLibraryContent({
               gate="premium"
               onSeeAllPress={() => {
                 void HapticsService.light();
-                router.push("/downloads");
+                pushWithReturn("/downloads");
               }}
               seeAllLabel={t("library:screen.seeAll")}
               title={t("library:screen.sections.offline")}

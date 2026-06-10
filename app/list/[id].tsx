@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useQuery } from "convex/react";
 import { useState } from "react";
 import {
@@ -23,11 +23,12 @@ import { usePersonalLists } from "../../src/features/personal-lists/use-personal
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
+import { useGoBack } from "../../src/features/navigation/app-navigation";
 
 export default function ListDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const listId = id as Id<"personalLists">;
-  const router = useRouter();
+  const goBack = useGoBack("/lists");
   const { t } = useTranslation("lists");
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace, isTablet } = useResponsive();
@@ -49,7 +50,7 @@ export default function ListDetailScreen() {
           style: "destructive",
           onPress: async () => {
             await removeList({ listId });
-            router.back();
+            goBack();
           },
         },
       ],
@@ -92,7 +93,7 @@ export default function ListDetailScreen() {
         ]}
       >
         <Pressable
-          onPress={() => router.back()}
+          onPress={goBack}
           style={styles.topBarAction}
           accessibilityRole="button"
           accessibilityLabel={t("detail.back")}

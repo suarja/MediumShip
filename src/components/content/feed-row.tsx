@@ -1,4 +1,4 @@
-import { Link } from "expo-router";
+import { AppLink } from "../navigation/app-link";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { KIND_GLYPH, PREMIUM_ON_FILL, kindAccent } from "../../features/content/card-presentation";
@@ -52,7 +52,7 @@ export function FeedRow({
         },
       ]}
     >
-      <Link href={item.href as never} asChild style={styles.link}>
+      <AppLink href={item.href as never} asChild style={styles.link}>
         <Pressable
           accessibilityRole="link"
           onPress={() => void HapticsService.light()}
@@ -115,7 +115,7 @@ export function FeedRow({
         </View>
           </View>
         </Pressable>
-      </Link>
+      </AppLink>
 
       {canShowOverflow ? (
         <ContentOverflowButton

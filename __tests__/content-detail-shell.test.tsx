@@ -27,6 +27,7 @@ jest.mock("expo-router", () => ({
     back: mockBack,
     replace: mockReplace,
   }),
+  useLocalSearchParams: () => ({}),
   useSegments: () => ["(app)"],
 }));
 

@@ -1,5 +1,6 @@
 import { useQuery } from "convex/react";
-import { Link, useRouter } from "expo-router";
+import { usePushWithReturn } from "../../src/features/navigation/app-navigation";
+import { AppLink } from "../../src/components/navigation/app-link";
 import { useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
@@ -58,7 +59,7 @@ export default function ExploreScreen() {
   }));
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
-  const router = useRouter();
+  const pushWithReturn = usePushWithReturn();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFilter, setSearchFilter] = useState<SearchFilter>("all");
@@ -210,7 +211,7 @@ export default function ExploreScreen() {
                       ]}
                         onPress={() => {
                           void HapticsService.light();
-                          router.push(`/category/${encodeURIComponent(cat.category)}` as never);
+                          pushWithReturn(`/category/${encodeURIComponent(cat.category)}`);
                         }}
                         accessibilityRole="button"
                       >
@@ -231,8 +232,8 @@ export default function ExploreScreen() {
                       ]}
                         onPress={() => {
                           void HapticsService.light();
-                          router.push(
-                            `/category/${encodeURIComponent(t(`categories.${item.key}.title`))}` as never,
+                          pushWithReturn(
+                            `/category/${encodeURIComponent(t(`categories.${item.key}.title`))}`,
                           );
                         }}
                         accessibilityRole="button"
@@ -252,7 +253,7 @@ export default function ExploreScreen() {
                 <SectionHeader label={t("modulesTitle")} />
                 <View style={styles.grid}>
                   {moduleItems.map((item) => (
-                    <Link key={item.key} href={item.href as never} asChild>
+                    <AppLink key={item.key} href={item.href as never} asChild>
                       <Pressable
                         style={({ pressed }) => [
                         styles.gridCell,
@@ -268,7 +269,7 @@ export default function ExploreScreen() {
                           title={t(`modules.${item.key}.title`)}
                         />
                       </Pressable>
-                    </Link>
+                    </AppLink>
                   ))}
                 </View>
               </ExploreSection>

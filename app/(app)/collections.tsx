@@ -1,4 +1,4 @@
-import { Link, useRouter } from "expo-router";
+import { useGoBack, usePushWithReturn } from "../../src/features/navigation/app-navigation";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -21,7 +21,8 @@ export default function CollectionsScreen() {
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
-  const router = useRouter();
+  const goBack = useGoBack("/explore");
+  const pushWithReturn = usePushWithReturn();
   const insets = useSafeAreaInsets();
   const { collections } = useCollections();
 
@@ -37,7 +38,7 @@ export default function CollectionsScreen() {
         <Pressable
           onPress={() => {
             void HapticsService.selection();
-            router.back();
+            goBack();
           }}
           style={styles.backBtn}
           accessibilityRole="button"
@@ -78,7 +79,7 @@ export default function CollectionsScreen() {
         renderItem={({ item }) => (
           <CollectionCard
             collection={item}
-            onPress={() => router.push(`/collection/${item._id}` as never)}
+            onPress={() => pushWithReturn(`/collection/${item._id}`)}
           />
         )}
         showsVerticalScrollIndicator={false}

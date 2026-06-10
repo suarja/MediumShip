@@ -1,4 +1,4 @@
-import { Link } from "expo-router";
+import { AppLink } from "../navigation/app-link";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { KIND_GLYPH, PREMIUM_ON_FILL, kindAccent } from "../../features/content/card-presentation";
@@ -37,7 +37,7 @@ export function FeedHeroCard({
   const mediaHeight = 150 * scaleSpace;
 
   return (
-    <Link href={item.href as never} asChild>
+    <AppLink href={item.href as never} asChild>
       <Pressable
         accessibilityRole="link"
         onPress={() => void HapticsService.light()}
@@ -123,7 +123,7 @@ export function FeedHeroCard({
         </View>
        </View>
       </Pressable>
-    </Link>
+    </AppLink>
   );
 }
 

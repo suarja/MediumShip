@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -12,6 +12,7 @@ import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
+import { useGoBack, usePushWithReturn } from "../../src/features/navigation/app-navigation";
 
 const KIND_GLYPH: Record<string, string> = {
   article: "✎",
@@ -21,7 +22,8 @@ const KIND_GLYPH: Record<string, string> = {
 
 export default function CollectionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
+  const goBack = useGoBack("/collections");
+  const pushWithReturn = usePushWithReturn();
   const { theme } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
   const insets = useSafeAreaInsets();
@@ -52,7 +54,7 @@ export default function CollectionDetailScreen() {
         <Pressable
           onPress={() => {
             void HapticsService.selection();
-            router.back();
+            goBack();
           }}
           style={styles.backBtn}
           accessibilityRole="button"
@@ -118,7 +120,7 @@ export default function CollectionDetailScreen() {
                 openPaywall("content");
               } else {
                 void HapticsService.light();
-                router.push(`/${item.kind}/${item.contentId}` as never);
+                pushWithReturn(`/${item.kind}/${item.contentId}`);
               }
             }}
           />

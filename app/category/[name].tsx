@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useQuery } from "convex/react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -12,10 +12,11 @@ import { useAppTheme } from "../../src/features/theme/theme-provider";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { FeedRow } from "../../src/components/content/feed-row";
 import { Screen } from "../../src/components/layout/screen";
+import { useGoBack } from "../../src/features/navigation/app-navigation";
 
 export default function CategoryScreen() {
   const { name } = useLocalSearchParams<{ name: string }>();
-  const router = useRouter();
+  const goBack = useGoBack("/explore");
   const { t } = useTranslation("explore");
   const { theme, tenantSlug } = useAppTheme();
   const { scaleFont, scaleSpace, isTablet } = useResponsive();
@@ -47,7 +48,7 @@ export default function CategoryScreen() {
         <Pressable
           onPress={() => {
             void HapticsService.selection();
-            router.back();
+            goBack();
           }}
           style={styles.topBarAction}
           accessibilityRole="button"

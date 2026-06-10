@@ -1,27 +1,20 @@
-import { useGoBack } from "../../src/features/navigation/app-navigation";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
 import { Screen } from "../../src/components/layout/screen";
-import { DownloadedLibrarySection } from "../../src/components/library/downloaded-library-section";
-import { LibraryOfflineLockedCard } from "../../src/components/library/library-offline-locked-card";
-import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
-import { useIsMember } from "../../src/features/membership/use-is-member";
-import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
+import { ResumeCard } from "../../src/components/library/resume-card";
+import { useGoBack } from "../../src/features/navigation/app-navigation";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
-export default function DownloadsScreen() {
+export default function HistoryScreen() {
   const { t } = useTranslation("library");
   const { theme } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
-  const goBack = useGoBack("/library");
+  const goBack = useGoBack("/profile");
   const insets = useSafeAreaInsets();
-  const { isSignedIn } = useClerkAuth();
-  const { isMember } = useIsMember();
-  const { openPaywall } = usePaywallSheet();
 
   return (
     <Screen>
@@ -38,7 +31,7 @@ export default function DownloadsScreen() {
           onPress={goBack}
           style={styles.topBarAction}
           accessibilityRole="button"
-          accessibilityLabel={t("library:downloadsScreen.back")}
+          accessibilityLabel={t("library:historyScreen.back")}
         >
           <Text
             style={[
@@ -56,7 +49,7 @@ export default function DownloadsScreen() {
           ]}
           numberOfLines={1}
         >
-          {t("library:downloadsScreen.title")}
+          {t("library:historyScreen.title")}
         </Text>
         <View style={styles.topBarSide} />
       </View>
@@ -73,13 +66,7 @@ export default function DownloadsScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {isSignedIn && isMember ? (
-          <DownloadedLibrarySection mode="full" />
-        ) : isSignedIn ? (
-          <LibraryOfflineLockedCard onPress={() => openPaywall("offline")} />
-        ) : (
-          <DownloadedLibrarySection mode="full" />
-        )}
+        <ResumeCard />
       </ScrollView>
     </Screen>
   );
@@ -114,5 +101,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingTop: 4,
+    gap: 16,
   },
 });

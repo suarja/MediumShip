@@ -30,6 +30,7 @@ jest.mock("convex/react", () => ({
 jest.mock("expo-router", () => ({
   Link: ({ children }: { children: ReactNode }) => children,
   useRouter: () => ({ push: mockPush, replace: jest.fn() }),
+  usePathname: () => "/profile",
 }));
 
 jest.mock("../src/features/auth/use-clerk-auth", () => ({
@@ -130,7 +131,7 @@ describe("signed-in profile", () => {
     fireEvent.press(screen.getByText("My lists"));
 
     expect(HapticsService.light).toHaveBeenCalledTimes(1);
-    expect(mockPush).toHaveBeenCalledWith("/lists");
+    expect(mockPush).toHaveBeenCalledWith(expect.stringContaining("/lists"));
     expect(mockOpenPaywall).not.toHaveBeenCalled();
   });
 
@@ -144,7 +145,7 @@ describe("signed-in profile", () => {
     expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it("navigates to /library when a premium member taps Downloads", () => {
+  it("navigates to /downloads when a premium member taps Downloads", () => {
     mockUseBookmarks.mockReturnValue({
       bookmarks: [{ content: {}, createdAt: 1 }, { content: {}, createdAt: 2 }],
       isMember: true,
@@ -155,8 +156,16 @@ describe("signed-in profile", () => {
 
     fireEvent.press(screen.getByText("Downloads"));
 
-    expect(mockPush).toHaveBeenCalledWith("/library");
+    expect(mockPush).toHaveBeenCalledWith(expect.stringContaining("/downloads"));
     expect(mockOpenPaywall).not.toHaveBeenCalled();
+  });
+
+  it("navigates to /favorites when saved items row is pressed", () => {
+    render(<ProfileScreen />);
+
+    fireEvent.press(screen.getAllByText("Favorites")[1]!);
+
+    expect(mockPush).toHaveBeenCalledWith(expect.stringContaining("/favorites"));
   });
 
   it("shows stub feedback when the resume card is pressed", () => {

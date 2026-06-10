@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,6 +14,7 @@ import { useResponsive } from "../../src/features/responsive/use-responsive";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
+import { useGoBack } from "../../src/features/navigation/app-navigation";
 
 const ACCESS_LABEL: Record<string, string> = {
   free: "Gratuit",
@@ -44,7 +45,7 @@ function formatFullDate(iso: string): string {
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
+  const goBack = useGoBack("/agenda");
   const { theme } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
   const tabBarSpace = useTabBarSpace();
@@ -93,7 +94,7 @@ export default function EventDetailScreen() {
         <Pressable
           onPress={() => {
             void HapticsService.selection();
-            router.back();
+            goBack();
           }}
           style={styles.backBtn}
           accessibilityRole="button"

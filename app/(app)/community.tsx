@@ -1,5 +1,5 @@
 import * as WebBrowser from "expo-web-browser";
-import { useRouter } from "expo-router";
+import { useGoBack } from "../../src/features/navigation/app-navigation";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -30,7 +30,7 @@ export default function CommunityScreen() {
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
-  const router = useRouter();
+  const goBack = useGoBack("/explore");
   const insets = useSafeAreaInsets();
   const { openPaywall } = usePaywallSheet();
   const { isMember } = useIsMember();
@@ -59,7 +59,7 @@ export default function CommunityScreen() {
         <Pressable
           onPress={() => {
             void HapticsService.selection();
-            router.back();
+            goBack();
           }}
           style={styles.backBtn}
           accessibilityRole="button"

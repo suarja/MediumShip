@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { usePushWithReturn } from "../../src/features/navigation/app-navigation";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
@@ -23,7 +23,7 @@ export default function SettingsScreen() {
   const { appIconUrl, theme, tenantName } = useAppTheme();
   const { scaleSpace } = useResponsive();
   const { state: networkState } = useNetworkStatus();
-  const router = useRouter();
+  const pushWithReturn = usePushWithReturn();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
 
@@ -110,7 +110,7 @@ export default function SettingsScreen() {
               isLast
               label={t("settings:debug.panelLabel")}
               onPress={() => {
-                router.push("/settings-debug");
+                pushWithReturn("/settings-debug");
               }}
             />
           </SettingsSection>

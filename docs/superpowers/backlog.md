@@ -106,7 +106,7 @@ Retours terrain après usage réel (favoris enregistrés, navigation Bibliothèq
 
 ### 💰 Démo & monétisation white-label (stratégie — à trancher)
 
-> Cette app est à la fois **notre démo** (vitrine, candidate à publication store) **et** la **référence de politique** du produit white-label. Décisions de modèle à prendre avant publication.
+> **Réflexion dédiée : `docs/monetization-reflection.md`** (axes B2C/B2B, forks, questions ouvertes — à reprendre). Cette app est à la fois **notre démo** (vitrine, candidate à publication store) **et** la **référence de politique** du produit white-label.
 
 - **Monétisation démo vs feature `premium` white-label.** Comment l'app démo se monétise (le cas échéant) et comment ça se conjugue avec le `premium` par-tenant du white-label (entitlements). Aujourd'hui `premium` passe par défaut (« premium gratuit », paiement non câblé — cf. couche Operator). Trancher : démo gratuite/vitrine, ou premium en conditions réelles ?
 - **Publication store (App Store / Play) de la démo** : prévu (EAS déjà configuré). La **gestion de la publication depuis le CMS** n'est sans doute pas faisable pour la 1ʳᵉ soumission — à revoir plus tard.

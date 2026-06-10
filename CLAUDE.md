@@ -1,5 +1,9 @@
 ## Agent skills
 
+### Working workflow (slices & agents)
+
+The **orchestrator (planning) agent NEVER implements** — it brainstorms (activating the relevant skills itself), plans a slice, hands a concise prompt to an **implementing agent** (Claude sub-agent → Sonnet 4.6, or Cursor Composer → Composer 2.5), then verifies + merges to `dev`. Full method: see `docs/agents/slice-workflow.md`.
+
 ### Issue tracker
 
 Issues are tracked in GitHub Issues for this repo. Use `gh` CLI workflows as the default interface. See `docs/agents/issue-tracker.md`.

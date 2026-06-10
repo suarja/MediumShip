@@ -5,6 +5,7 @@ const TOP_CATEGORIES_CAP = 5;
 const TOP_TAGS_CAP = 5;
 const TOP_TYPES_CAP = 3;
 const RECENT_INTERACTION_DAYS = 30;
+const RECENT_TITLES_CAP = 5;
 
 export type TasteSignalSummary = {
   topCategories: Array<{ key: string; score: number }>;
@@ -15,6 +16,8 @@ export type TasteSignalSummary = {
   recentFinishes: number;
   bookmarkCount: number;
   isColdStart: boolean;
+  /** Titles of recently opened/finished/bookmarked published content (deduplicated, newest first). */
+  recentTitles: string[];
 };
 
 function topByScore(
@@ -115,6 +118,50 @@ export async function summarizeSignals(
     recentFinishes === 0 &&
     bookmarkCount === 0;
 
+  // Collect titles from recent open/finish interactions (newest first, deduplicated).
+  const recentEngaged = recentTenantInteractions
+    .filter((row) => row.type === "open" || row.type === "finish")
+    .sort((a, b) => b.createdAt - a.createdAt);
+
+  const seenContentIds = new Set<string>();
+  const recentTitles: string[] = [];
+
+  for (const row of recentEngaged) {
+    if (recentTitles.length >= RECENT_TITLES_CAP) {
+      break;
+    }
+    const id = row.contentId.toString();
+    if (seenContentIds.has(id)) {
+      continue;
+    }
+    seenContentIds.add(id);
+    const content = await ctx.db.get(row.contentId);
+    if (content && content.status === "published") {
+      recentTitles.push(content.title);
+    }
+  }
+
+  // Fill remaining slots from bookmarks if interactions don't cover RECENT_TITLES_CAP.
+  if (recentTitles.length < RECENT_TITLES_CAP) {
+    const sortedBookmarks = [...bookmarks].sort(
+      (a, b) => b.createdAt - a.createdAt,
+    );
+    for (const bk of sortedBookmarks) {
+      if (recentTitles.length >= RECENT_TITLES_CAP) {
+        break;
+      }
+      const id = bk.contentId.toString();
+      if (seenContentIds.has(id)) {
+        continue;
+      }
+      seenContentIds.add(id);
+      const content = await ctx.db.get(bk.contentId);
+      if (content && content.status === "published") {
+        recentTitles.push(content.title);
+      }
+    }
+  }
+
   return {
     topCategories: categories,
     topTags: tags,
@@ -124,5 +171,6 @@ export async function summarizeSignals(
     recentFinishes,
     bookmarkCount,
     isColdStart,
+    recentTitles,
   };
 }

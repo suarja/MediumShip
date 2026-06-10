@@ -8,6 +8,7 @@ import {
   MIN_RESUMABLE_SECONDS,
   resolvePreferredProgress,
   resolveProgressAction,
+  mergeStoredPlaybackDuration,
   resolveProgressDuration,
   resolveResumeTarget,
   savePlaybackProgress,
@@ -47,6 +48,26 @@ describe("resolveProgressDuration", () => {
 
   it("extends catalog duration when playback goes past it", () => {
     expect(resolveProgressDuration(500, undefined, 120)).toBe(500);
+  });
+
+  it("falls back to catalog when stored observed duration is inflated CMS", () => {
+    const duration = resolveProgressDuration(300, 1500, 1200);
+    expect(duration).toBe(1200);
+    expect((duration ?? 0) - 300).toBe(900);
+  });
+
+  it("keeps the longer player duration when the file exceeds catalog metadata", () => {
+    expect(resolveProgressDuration(500, 600, 120)).toBe(600);
+  });
+});
+
+describe("mergeStoredPlaybackDuration", () => {
+  it("replaces stored duration when the player reports a new total length", () => {
+    expect(mergeStoredPlaybackDuration(1500, 1200, true)).toBe(1200);
+  });
+
+  it("does not let playback position inflate stored duration", () => {
+    expect(mergeStoredPlaybackDuration(1200, 300, true)).toBe(300);
   });
 });
 

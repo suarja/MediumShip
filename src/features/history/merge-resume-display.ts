@@ -26,7 +26,7 @@ export function mergeResumeWithLocalSnapshot(
     resume.catalogDurationSeconds,
   );
   if (durationSeconds === undefined && resume.durationSeconds !== undefined) {
-    durationSeconds = Math.max(resume.durationSeconds, seconds);
+    durationSeconds = resume.durationSeconds;
   }
   const progressRatio =
     durationSeconds !== undefined && durationSeconds > 0

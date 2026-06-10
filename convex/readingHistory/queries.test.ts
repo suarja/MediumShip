@@ -287,6 +287,32 @@ describe("getResume", () => {
     await expect(asMember.query(api.readingHistory.queries.getResume, {})).resolves.toBeNull();
   });
 
+  it("uses catalog duration when stored observed duration is inflated CMS", async () => {
+    const t = convexTest(schema, modules);
+    await seedMember(t);
+    const contentId = await insertContent(t, {
+      kind: "video",
+      title: "Hosted video",
+      durationSeconds: 1200,
+    });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("playbackProgress", {
+        tokenIdentifier: MEMBER.tokenIdentifier,
+        contentId,
+        seconds: 300,
+        durationSeconds: 1500,
+        updatedAt: Date.now(),
+      });
+    });
+
+    const asMember = t.withIdentity(MEMBER);
+    const resume = await asMember.query(api.readingHistory.queries.getResume, {});
+
+    expect(resume?.durationSeconds).toBe(1200);
+    expect(resume?.progressRatio).toBeCloseTo(0.25);
+  });
+
   it("uses player-measured duration when catalog metadata is too long", async () => {
     const t = convexTest(schema, modules);
     await seedMember(t);

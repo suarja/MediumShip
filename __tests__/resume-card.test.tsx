@@ -39,6 +39,7 @@ describe("ResumeCard", () => {
         kind: "episode",
         title: "The care economy",
         seconds: 672,
+        catalogDurationSeconds: 1800,
         durationSeconds: 1800,
         progressRatio: 0.37,
       },

@@ -13,6 +13,27 @@ export const END_THRESHOLD_SECONDS = 15;
 // Only persist once the position has moved at least this much since the last
 // write — throttles AsyncStorage churn during continuous playback.
 export const SAVE_INTERVAL_SECONDS = 5;
+/** Observed duration above catalog by more than this factor is treated as stale CMS. */
+export const OBSERVED_INFLATION_THRESHOLD = 1.1;
+
+export function mergeStoredPlaybackDuration(
+  existing: number | undefined,
+  incoming: number | undefined,
+  fromPlayer: boolean,
+): number | undefined {
+  if (incoming === undefined || incoming <= 0) {
+    return existing;
+  }
+
+  const next = Math.floor(incoming);
+  if (fromPlayer) {
+    return next;
+  }
+
+  return existing !== undefined && existing > 0
+    ? Math.max(existing, next)
+    : next;
+}
 
 export type PlaybackProgressSnapshot = {
   seconds: number;
@@ -79,18 +100,16 @@ export async function savePlaybackProgress(
   contentId: string,
   seconds: number,
   durationSeconds?: number,
+  durationFromPlayer = false,
 ): Promise<void> {
   try {
     const existing = await loadPlaybackProgressSnapshot(contentId);
     const flooredSeconds = Math.floor(seconds);
-    let nextDuration = existing?.durationSeconds;
-    if (durationSeconds !== undefined && durationSeconds > 0) {
-      nextDuration = Math.max(
-        Math.floor(durationSeconds),
-        nextDuration ?? 0,
-        flooredSeconds,
-      );
-    }
+    const nextDuration = mergeStoredPlaybackDuration(
+      existing?.durationSeconds,
+      durationSeconds,
+      durationFromPlayer,
+    );
 
     const payload: PlaybackProgressSnapshot = {
       seconds: flooredSeconds,
@@ -121,15 +140,22 @@ export function resolveProgressDuration(
       ? catalogDurationSeconds
       : undefined;
 
+  if (observed !== undefined && catalog !== undefined) {
+    if (seconds > catalog) {
+      return Math.max(observed, seconds);
+    }
+    if (observed > catalog * OBSERVED_INFLATION_THRESHOLD) {
+      return Math.max(catalog, seconds);
+    }
+    return Math.max(Math.min(observed, catalog), seconds);
+  }
+
   if (observed !== undefined) {
     return Math.max(observed, seconds);
   }
 
   if (catalog !== undefined) {
-    if (seconds > catalog) {
-      return seconds;
-    }
-    return catalog;
+    return Math.max(catalog, seconds);
   }
 
   return undefined;

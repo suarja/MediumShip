@@ -154,6 +154,8 @@ export function PersistentMediaPlayerProvider({
     isPlaying: false,
     playbackError: null,
   });
+  const [isVideoDurationFromPlayer, setIsVideoDurationFromPlayer] =
+    useState(false);
   const activeSessionRef = useRef<ActiveMediaSession | null>(null);
   const pendingResumeRef = useRef<{ contentId: string; seconds: number } | null>(
     null,
@@ -199,6 +201,7 @@ export function PersistentMediaPlayerProvider({
   }, [activeSession]);
 
   useEffect(() => {
+    setIsVideoDurationFromPlayer(false);
     if (activeSession?.kind !== "hostedVideo") {
       setVideoState({
         currentTimeSeconds: 0,
@@ -239,10 +242,17 @@ export function PersistentMediaPlayerProvider({
       return;
     }
 
+    const loadedDuration = payload.duration ?? 0;
+    if (loadedDuration > 0) {
+      setIsVideoDurationFromPlayer(true);
+    }
+
     setVideoState((current) => ({
       ...current,
       durationSeconds:
-        payload.duration ?? activeSessionRef.current?.durationSeconds ?? 0,
+        loadedDuration > 0
+          ? loadedDuration
+          : activeSessionRef.current?.durationSeconds ?? 0,
     }));
 
     // The source is now loaded — resume to the saved position if any.
@@ -353,9 +363,21 @@ export function PersistentMediaPlayerProvider({
   // PlaybackProgress: reconciles local + remote into a resume target and
   // persists progress. We only *apply* the target (below); the hook owns the
   // data, never the players.
+  const persistableDurationSeconds =
+    activeSession?.kind === "hostedVideo"
+      ? isVideoDurationFromPlayer && videoState.durationSeconds > 0
+        ? videoState.durationSeconds
+        : undefined
+      : activeSession?.kind === "episode" &&
+          audioStatus.isLoaded &&
+          audioStatus.duration > 0
+        ? audioStatus.duration
+        : undefined;
+
   const { preferredResumeSeconds, saveFinal } = usePlaybackProgress({
     contentId: activeSession?.contentId ?? null,
     durationSeconds,
+    persistableDurationSeconds,
     currentSeconds: currentTimeSeconds,
     canSyncRemote: canSyncRemoteProgress,
   });

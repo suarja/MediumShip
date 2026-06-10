@@ -18,6 +18,11 @@ type UsePlaybackProgressInput = {
   contentId: string | null;
   /** Best-known duration, for clamping the resume target away from the end. */
   durationSeconds: number;
+  /**
+   * Player-measured total length, persisted only once the media metadata is
+   * loaded. Omit CMS fallbacks so stale catalog values are not stored.
+   */
+  persistableDurationSeconds?: number;
   /** Current playback position, drives the throttled save. */
   currentSeconds: number;
   /** Whether this member syncs progress to Convex (remote). */
@@ -45,6 +50,7 @@ type UsePlaybackProgressResult = {
 export function usePlaybackProgress({
   contentId,
   durationSeconds,
+  persistableDurationSeconds,
   currentSeconds,
   canSyncRemote,
 }: UsePlaybackProgressInput): UsePlaybackProgressResult {
@@ -127,19 +133,26 @@ export function usePlaybackProgress({
 
       const floored = Math.floor(seconds);
       const flooredDuration =
-        durationSeconds > 0 ? Math.floor(durationSeconds) : undefined;
-      void savePlaybackProgress(trackedContentId, floored, flooredDuration);
+        persistableDurationSeconds !== undefined && persistableDurationSeconds > 0
+          ? Math.floor(persistableDurationSeconds)
+          : undefined;
+      void savePlaybackProgress(
+        trackedContentId,
+        floored,
+        flooredDuration,
+        flooredDuration !== undefined,
+      );
       if (canSyncRemote) {
         void saveRemote({
           contentId: trackedContentId as never,
           seconds: floored,
           ...(flooredDuration !== undefined
-            ? { durationSeconds: flooredDuration }
+            ? { durationSeconds: flooredDuration, durationFromPlayer: true }
             : {}),
         });
       }
     };
-  }, [canSyncRemote, contentId, durationSeconds, saveRemote]);
+  }, [canSyncRemote, contentId, persistableDurationSeconds, saveRemote]);
 
   // Persist progress (throttled), and clear near the end so a finished item
   // starts over next time.
@@ -155,7 +168,9 @@ export function usePlaybackProgress({
     });
 
     const flooredDuration =
-      durationSeconds > 0 ? Math.floor(durationSeconds) : undefined;
+      persistableDurationSeconds !== undefined && persistableDurationSeconds > 0
+        ? Math.floor(persistableDurationSeconds)
+        : undefined;
 
     if (action.type === "clear") {
       void clearPlaybackProgress(contentId);
@@ -164,32 +179,52 @@ export function usePlaybackProgress({
       }
     } else if (action.type === "save") {
       lastSavedRef.current = action.seconds;
-      void savePlaybackProgress(contentId, action.seconds, flooredDuration);
+      void savePlaybackProgress(
+        contentId,
+        action.seconds,
+        flooredDuration,
+        flooredDuration !== undefined,
+      );
       if (canSyncRemote) {
         void saveRemote({
           contentId: contentId as never,
           seconds: action.seconds,
           ...(flooredDuration !== undefined
-            ? { durationSeconds: flooredDuration }
+            ? { durationSeconds: flooredDuration, durationFromPlayer: true }
             : {}),
         });
       }
     }
-  }, [contentId, currentSeconds, durationSeconds, canSyncRemote, clearRemote, saveRemote]);
+  }, [
+    contentId,
+    currentSeconds,
+    durationSeconds,
+    persistableDurationSeconds,
+    canSyncRemote,
+    clearRemote,
+    saveRemote,
+  ]);
 
   const saveFinal = (seconds: number) => {
     if (!contentId) {
       return;
     }
     const flooredDuration =
-      durationSeconds > 0 ? Math.floor(durationSeconds) : undefined;
-    void savePlaybackProgress(contentId, seconds, flooredDuration);
+      persistableDurationSeconds !== undefined && persistableDurationSeconds > 0
+        ? Math.floor(persistableDurationSeconds)
+        : undefined;
+    void savePlaybackProgress(
+      contentId,
+      seconds,
+      flooredDuration,
+      flooredDuration !== undefined,
+    );
     if (canSyncRemote) {
       void saveRemote({
         contentId: contentId as never,
         seconds,
         ...(flooredDuration !== undefined
-          ? { durationSeconds: flooredDuration }
+          ? { durationSeconds: flooredDuration, durationFromPlayer: true }
           : {}),
       });
     }

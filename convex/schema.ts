@@ -296,7 +296,15 @@ export default defineSchema({
   })
     .index("by_tokenIdentifier_and_contentId", ["tokenIdentifier", "contentId"])
     .index("by_tokenIdentifier_and_type", ["tokenIdentifier", "type"])
+    .index("by_tokenIdentifier_and_createdAt", [
+      "tokenIdentifier",
+      "createdAt",
+    ])
     .index("by_contentId", ["contentId"]),
+  readingHistoryState: defineTable({
+    tokenIdentifier: v.string(),
+    clearedAt: v.number(),
+  }).index("by_tokenIdentifier", ["tokenIdentifier"]),
   userPreferences: defineTable({
     tokenIdentifier: v.string(),
     tenantSlug: v.string(),

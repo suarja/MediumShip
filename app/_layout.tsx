@@ -1,4 +1,5 @@
 import "../src/lib/polyfills";
+import "../src/features/notifications/bootstrap";
 import { ClerkProvider } from "@clerk/clerk-expo";
 import { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";

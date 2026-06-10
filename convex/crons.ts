@@ -11,4 +11,11 @@ crons.cron(
   {},
 );
 
+crons.cron(
+  "premium taste analysis",
+  "0 7 * * *",
+  internal.insights.cron.generateDailyAnalyses,
+  {},
+);
+
 export default crons;

@@ -321,6 +321,17 @@ export function PersistentMediaPlayerProvider({
   const hasFinished =
     engine.justFinished ||
     (durationSeconds > 0 && currentTimeSeconds >= durationSeconds);
+  const latestPlaybackRef = useRef({
+    contentId: null as string | null,
+    seconds: 0,
+    finished: false,
+  });
+
+  latestPlaybackRef.current = {
+    contentId: activeSession?.contentId ?? null,
+    seconds: currentTimeSeconds,
+    finished: hasFinished,
+  };
 
   const mediaKind =
     activeSession?.kind === "episode"
@@ -428,6 +439,17 @@ export function PersistentMediaPlayerProvider({
     videoPlayer,
   ]);
 
+  const flushActiveProgress = () => {
+    const snapshot = latestPlaybackRef.current;
+    if (
+      snapshot.contentId &&
+      snapshot.seconds >= MIN_RESUMABLE_SECONDS &&
+      !snapshot.finished
+    ) {
+      saveFinal(snapshot.seconds);
+    }
+  };
+
   const playEpisode = async (track: EpisodeTrack) => {
     const isSameTrack =
       activeSessionRef.current?.kind === "episode" &&
@@ -435,6 +457,7 @@ export function PersistentMediaPlayerProvider({
       activeSessionRef.current.audioUrl === track.audioUrl;
 
     if (!isSameTrack) {
+      flushActiveProgress();
       safelyReleasePlayer(
         () => videoPlayer.pause(),
         "Failed to pause hosted video player",
@@ -494,6 +517,7 @@ export function PersistentMediaPlayerProvider({
     playIntentRef.current = true;
 
     if (!isSameTrack) {
+      flushActiveProgress();
       safelyReleasePlayer(() => audioPlayer.pause(), "Failed to pause audio player");
       disableAudioLockScreen();
 
@@ -562,7 +586,11 @@ export function PersistentMediaPlayerProvider({
       return;
     }
 
-    await engine.seekTo(clampTime(seconds, durationSeconds));
+    const target = clampTime(seconds, durationSeconds);
+    await engine.seekTo(target);
+    if (target >= MIN_RESUMABLE_SECONDS && !hasFinished) {
+      saveFinal(target);
+    }
   };
 
   const closePlayer = () => {

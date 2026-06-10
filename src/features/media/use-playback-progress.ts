@@ -6,6 +6,7 @@ import { api } from "../../../convex/_generated/api";
 import {
   clearPlaybackProgress,
   loadPlaybackProgress,
+  MIN_RESUMABLE_SECONDS,
   resolvePreferredProgress,
   resolveProgressAction,
   resolveResumeTarget,
@@ -51,6 +52,7 @@ export function usePlaybackProgress({
   // Throttle baseline: the last position we persisted, so we neither re-save the
   // resume point immediately nor write on every tick.
   const lastSavedRef = useRef(0);
+  const latestPositionByContentRef = useRef(new Map<string, number>());
 
   const remote = useQuery(
     api.playbackProgress.queries.getMyPlaybackProgress,
@@ -103,6 +105,42 @@ export function usePlaybackProgress({
     lastSavedRef.current = preferredResumeSeconds ?? 0;
   }, [contentId, preferredResumeSeconds]);
 
+  useEffect(() => {
+    if (!contentId) {
+      return;
+    }
+
+    latestPositionByContentRef.current.set(contentId, currentSeconds);
+  }, [contentId, currentSeconds]);
+
+  useEffect(() => {
+    const trackedContentId = contentId;
+    return () => {
+      if (!trackedContentId) {
+        return;
+      }
+
+      const seconds = latestPositionByContentRef.current.get(trackedContentId) ?? 0;
+      if (seconds < MIN_RESUMABLE_SECONDS) {
+        return;
+      }
+
+      const floored = Math.floor(seconds);
+      const flooredDuration =
+        durationSeconds > 0 ? Math.floor(durationSeconds) : undefined;
+      void savePlaybackProgress(trackedContentId, floored, flooredDuration);
+      if (canSyncRemote) {
+        void saveRemote({
+          contentId: trackedContentId as never,
+          seconds: floored,
+          ...(flooredDuration !== undefined
+            ? { durationSeconds: flooredDuration }
+            : {}),
+        });
+      }
+    };
+  }, [canSyncRemote, contentId, durationSeconds, saveRemote]);
+
   // Persist progress (throttled), and clear near the end so a finished item
   // starts over next time.
   useEffect(() => {
@@ -116,6 +154,9 @@ export function usePlaybackProgress({
       lastSavedSeconds: lastSavedRef.current,
     });
 
+    const flooredDuration =
+      durationSeconds > 0 ? Math.floor(durationSeconds) : undefined;
+
     if (action.type === "clear") {
       void clearPlaybackProgress(contentId);
       if (canSyncRemote) {
@@ -123,9 +164,15 @@ export function usePlaybackProgress({
       }
     } else if (action.type === "save") {
       lastSavedRef.current = action.seconds;
-      void savePlaybackProgress(contentId, action.seconds);
+      void savePlaybackProgress(contentId, action.seconds, flooredDuration);
       if (canSyncRemote) {
-        void saveRemote({ contentId: contentId as never, seconds: action.seconds });
+        void saveRemote({
+          contentId: contentId as never,
+          seconds: action.seconds,
+          ...(flooredDuration !== undefined
+            ? { durationSeconds: flooredDuration }
+            : {}),
+        });
       }
     }
   }, [contentId, currentSeconds, durationSeconds, canSyncRemote, clearRemote, saveRemote]);
@@ -134,9 +181,17 @@ export function usePlaybackProgress({
     if (!contentId) {
       return;
     }
-    void savePlaybackProgress(contentId, seconds);
+    const flooredDuration =
+      durationSeconds > 0 ? Math.floor(durationSeconds) : undefined;
+    void savePlaybackProgress(contentId, seconds, flooredDuration);
     if (canSyncRemote) {
-      void saveRemote({ contentId: contentId as never, seconds });
+      void saveRemote({
+        contentId: contentId as never,
+        seconds,
+        ...(flooredDuration !== undefined
+          ? { durationSeconds: flooredDuration }
+          : {}),
+      });
     }
   };
 

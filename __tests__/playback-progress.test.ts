@@ -4,9 +4,11 @@ import {
   clearPlaybackProgress,
   END_THRESHOLD_SECONDS,
   loadPlaybackProgress,
+  loadPlaybackProgressSnapshot,
   MIN_RESUMABLE_SECONDS,
   resolvePreferredProgress,
   resolveProgressAction,
+  resolveProgressDuration,
   resolveResumeTarget,
   savePlaybackProgress,
   SAVE_INTERVAL_SECONDS,
@@ -31,6 +33,20 @@ describe("resolveResumeTarget", () => {
 
   it("resumes when the duration is unknown", () => {
     expect(resolveResumeTarget(420, undefined)).toBe(420);
+  });
+
+  it("resumes when saved progress exceeds the catalog duration", () => {
+    expect(resolveResumeTarget(500, 120)).toBe(500);
+  });
+});
+
+describe("resolveProgressDuration", () => {
+  it("prefers the player-measured duration over stale catalog metadata", () => {
+    expect(resolveProgressDuration(90, 180, 3240)).toBe(180);
+  });
+
+  it("extends catalog duration when playback goes past it", () => {
+    expect(resolveProgressDuration(500, undefined, 120)).toBe(500);
   });
 });
 
@@ -59,6 +75,16 @@ describe("resolveProgressAction", () => {
         lastSavedSeconds: 0,
       }),
     ).toEqual({ type: "clear" });
+  });
+
+  it("does not clear when playback exceeds the catalog duration", () => {
+    expect(
+      resolveProgressAction({
+        currentSeconds: 500,
+        durationSeconds: 120,
+        lastSavedSeconds: 0,
+      }),
+    ).toEqual({ type: "save", seconds: 500 });
   });
 
   it("saves once moved far enough past the last write", () => {
@@ -108,8 +134,12 @@ describe("playback progress persistence", () => {
   });
 
   it("saves and loads a position round-trip", async () => {
-    await savePlaybackProgress("episode_1", 423.7);
+    await savePlaybackProgress("episode_1", 423.7, 1800);
     expect(await loadPlaybackProgress("episode_1")).toBe(423);
+    expect(await loadPlaybackProgressSnapshot("episode_1")).toEqual({
+      seconds: 423,
+      durationSeconds: 1800,
+    });
   });
 
   it("ignores positions below the resumable threshold", async () => {

@@ -14,36 +14,125 @@ export const END_THRESHOLD_SECONDS = 15;
 // write — throttles AsyncStorage churn during continuous playback.
 export const SAVE_INTERVAL_SECONDS = 5;
 
+export type PlaybackProgressSnapshot = {
+  seconds: number;
+  durationSeconds?: number;
+};
+
 function keyFor(contentId: string): string {
   return `${STORAGE_PREFIX}${contentId}`;
 }
 
-export async function loadPlaybackProgress(
+function parseStoredProgress(raw: string): PlaybackProgressSnapshot | null {
+  try {
+    const parsed = JSON.parse(raw) as PlaybackProgressSnapshot;
+    if (
+      parsed &&
+      typeof parsed.seconds === "number" &&
+      Number.isFinite(parsed.seconds)
+    ) {
+      return parsed;
+    }
+  } catch {
+    // Legacy plain-number payloads fall through below.
+  }
+
+  const seconds = Number(raw);
+  if (!Number.isFinite(seconds)) {
+    return null;
+  }
+
+  return { seconds };
+}
+
+export async function loadPlaybackProgressSnapshot(
   contentId: string,
-): Promise<number | null> {
+): Promise<PlaybackProgressSnapshot | null> {
   try {
     const raw = await AsyncStorage.getItem(keyFor(contentId));
     if (raw === null) {
       return null;
     }
-    const seconds = Number(raw);
-    return Number.isFinite(seconds) && seconds >= MIN_RESUMABLE_SECONDS
-      ? seconds
-      : null;
+
+    const snapshot = parseStoredProgress(raw);
+    if (
+      snapshot === null ||
+      snapshot.seconds < MIN_RESUMABLE_SECONDS
+    ) {
+      return null;
+    }
+
+    return snapshot;
   } catch {
     return null;
   }
 }
 
+export async function loadPlaybackProgress(
+  contentId: string,
+): Promise<number | null> {
+  const snapshot = await loadPlaybackProgressSnapshot(contentId);
+  return snapshot?.seconds ?? null;
+}
+
 export async function savePlaybackProgress(
   contentId: string,
   seconds: number,
+  durationSeconds?: number,
 ): Promise<void> {
   try {
-    await AsyncStorage.setItem(keyFor(contentId), String(Math.floor(seconds)));
+    const existing = await loadPlaybackProgressSnapshot(contentId);
+    const flooredSeconds = Math.floor(seconds);
+    let nextDuration = existing?.durationSeconds;
+    if (durationSeconds !== undefined && durationSeconds > 0) {
+      nextDuration = Math.max(
+        Math.floor(durationSeconds),
+        nextDuration ?? 0,
+        flooredSeconds,
+      );
+    }
+
+    const payload: PlaybackProgressSnapshot = {
+      seconds: flooredSeconds,
+      ...(nextDuration !== undefined && nextDuration > 0
+        ? { durationSeconds: nextDuration }
+        : {}),
+    };
+    await AsyncStorage.setItem(keyFor(contentId), JSON.stringify(payload));
   } catch {
     // Progress saving is best-effort; never block playback on storage errors.
   }
+}
+
+/**
+ * Mirrors `convex/playbackProgress/resume.ts` — prefers player-measured duration.
+ */
+export function resolveProgressDuration(
+  seconds: number,
+  observedDurationSeconds: number | undefined,
+  catalogDurationSeconds: number | undefined,
+): number | undefined {
+  const observed =
+    observedDurationSeconds !== undefined && observedDurationSeconds > 0
+      ? observedDurationSeconds
+      : undefined;
+  const catalog =
+    catalogDurationSeconds !== undefined && catalogDurationSeconds > 0
+      ? catalogDurationSeconds
+      : undefined;
+
+  if (observed !== undefined) {
+    return Math.max(observed, seconds);
+  }
+
+  if (catalog !== undefined) {
+    if (seconds > catalog) {
+      return seconds;
+    }
+    return catalog;
+  }
+
+  return undefined;
 }
 
 export async function clearPlaybackProgress(contentId: string): Promise<void> {
@@ -81,12 +170,13 @@ export function resolveResumeTarget(
   if (savedSeconds === null || savedSeconds < MIN_RESUMABLE_SECONDS) {
     return null;
   }
-  if (
-    durationSeconds !== undefined &&
-    durationSeconds > 0 &&
-    savedSeconds >= durationSeconds - END_THRESHOLD_SECONDS
-  ) {
-    return null;
+  if (durationSeconds !== undefined && durationSeconds > 0) {
+    if (savedSeconds > durationSeconds) {
+      return savedSeconds;
+    }
+    if (savedSeconds >= durationSeconds - END_THRESHOLD_SECONDS) {
+      return null;
+    }
   }
   return savedSeconds;
 }
@@ -114,6 +204,7 @@ export function resolveProgressAction(args: {
 
   if (
     durationSeconds > 0 &&
+    currentSeconds <= durationSeconds &&
     currentSeconds >= durationSeconds - END_THRESHOLD_SECONDS
   ) {
     return { type: "clear" };

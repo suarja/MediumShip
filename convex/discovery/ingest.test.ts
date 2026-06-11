@@ -1,10 +1,17 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
+import aggregateTest from "@convex-dev/aggregate/test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { internal } from "../_generated/api";
 import schema from "../schema";
 import { modules } from "../../convexTestModules";
+
+function makeTest() {
+  const t = convexTest(schema, modules);
+  aggregateTest.register(t, "contentCategoryCounts");
+  return t;
+}
 import { aggregateCategoryAffinities } from "./fetchDemand";
 import { SERENDIPITY_PER_RUN } from "./ingest";
 import { rssProvider } from "./providers/rss";
@@ -31,7 +38,7 @@ describe("aggregateCategoryAffinities", () => {
 
 describe("getTenantIngestionInputs", () => {
   it("aggregates tenant preferences and returns taxonomy seed categories", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     await t.run(async (ctx) => {
       await ctx.db.insert("tenants", {
@@ -92,7 +99,7 @@ describe("getTenantIngestionInputs", () => {
   });
 
   it("includes picked interest categories in aggregated affinities", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     await t.run(async (ctx) => {
       await ctx.db.insert("tenants", {
@@ -132,7 +139,7 @@ describe("getTenantIngestionInputs", () => {
   });
 
   it("cold-starts from taxonomy seeds when there are no affinities or interests", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     await t.run(async (ctx) => {
       await ctx.db.insert("tenants", {
@@ -159,7 +166,7 @@ describe("getTenantIngestionInputs", () => {
   });
 
   it("returns only aggregatedAffinities and seedCategories (no provider locale)", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     await t.run(async (ctx) => {
       await ctx.db.insert("tenants", {
@@ -191,7 +198,7 @@ describe("provider-agnostic orchestration", () => {
   });
 
   it("runRefillIngestion calls provider.ingest without wikipediaLocale", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
     const ingestSpy = vi
       .spyOn(wikipediaProvider, "ingest")
       .mockResolvedValue({ upserted: 0 });
@@ -238,7 +245,7 @@ describe("runDiscoveryIngestion multi-provider seam", () => {
   });
 
   it("drives wikipedia, rss, and youtube with the same demand; rss/youtube no-op when unconfigured paths apply", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
     const wikipediaSpy = vi
       .spyOn(wikipediaProvider, "ingest")
       .mockResolvedValue({ upserted: 1 });
@@ -288,7 +295,7 @@ describe("runDiscoveryIngestion serendipity", () => {
   });
 
   it("ingests a bounded random batch in addition to demand categories", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     await t.run(async (ctx) => {
       await ctx.db.insert("tenants", {

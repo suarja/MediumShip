@@ -1,10 +1,17 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
+import aggregateTest from "@convex-dev/aggregate/test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { api, internal } from "../../_generated/api";
 import schema from "../../schema";
 import { modules } from "../../../convexTestModules";
+
+function makeTest() {
+  const t = convexTest(schema, modules);
+  aggregateTest.register(t, "contentCategoryCounts");
+  return t;
+}
 import { PROVIDERS } from "../provider";
 import { YOUTUBE_WHITELIST_FR } from "./youtubeWhitelist";
 import {
@@ -54,7 +61,7 @@ const HISTORY_CHANNEL_VIDEO: YouTubeVideoRaw = {
   },
 };
 
-function makeIngestCtx(t: ReturnType<typeof convexTest>) {
+function makeIngestCtx(t: ReturnType<typeof makeTest>) {
   return {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     runQuery: (ref: any, args: any) => t.query(ref, args),
@@ -207,7 +214,7 @@ describe("resolveChannelIds", () => {
 
 describe("resolveChannelIds with table-backed whitelist", () => {
   it("ingestion reads enabled channels from youtubeWhitelistChannels", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
     await t.mutation(internal.discovery.youtubeWhitelistChannels.seedYoutubeWhitelist, {});
 
     await t.run(async (ctx) => {
@@ -253,7 +260,7 @@ describe("resolveChannelIds with table-backed whitelist", () => {
   });
 
   it("excludes disabled whitelist channels from ingestion", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
     await t.mutation(internal.discovery.youtubeWhitelistChannels.seedYoutubeWhitelist, {});
 
     await t.run(async (ctx) => {
@@ -536,7 +543,7 @@ describe("batchFetchVideoMetadata", () => {
 
 describe("filterNewExternalIds", () => {
   it("returns only external ids absent from contents", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     await t.run(async (ctx) => {
       await ctx.db.insert("contents", {
@@ -571,7 +578,7 @@ describe("youtubeProvider.ingest", () => {
   });
 
   it("returns upserted 0 without fetch when whitelist disabled and no tenant channel", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     await t.run(async (ctx) => {
       await ctx.db.insert("tenants", {
@@ -597,7 +604,7 @@ describe("youtubeProvider.ingest", () => {
   });
 
   it("ingests via playlist + videos.list without tenant youtube config", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     await t.run(async (ctx) => {
       await ctx.db.insert("tenants", {
@@ -667,7 +674,7 @@ describe("youtubeProvider.ingest", () => {
   });
 
   it("deduplicates on re-run via filterNewExternalIds and upsertIngested", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     await t.run(async (ctx) => {
       await ctx.db.insert("tenants", {
@@ -723,7 +730,7 @@ describe("youtubeProvider.ingest", () => {
   });
 
   it("returns upserted 0 when api key is missing", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
     const fetchMock = vi.fn();
     const ctx = makeIngestCtx(t);
 
@@ -740,7 +747,7 @@ describe("youtubeProvider.ingest", () => {
 
 describe("source isolation", () => {
   it("excludes youtube from listPublishedFeed and includes it in getDiscoveryFeed", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     await t.run(async (ctx) => {
       await ctx.db.insert("tenants", {
@@ -809,7 +816,7 @@ describe("PROVIDERS registration", () => {
 
 describe("upsertIngested youtube source", () => {
   it("accepts youtube video items with videoSource and durationSeconds", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
     const item = normalizeYouTubeVideo(SAMPLE_VIDEO, {
       tenantSlug: TENANT,
       channel: { channelId: CHANNEL_ID, defaultCategory: "science" },

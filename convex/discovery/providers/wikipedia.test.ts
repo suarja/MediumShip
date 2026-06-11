@@ -1,10 +1,17 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
+import aggregateTest from "@convex-dev/aggregate/test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { internal } from "../../_generated/api";
 import schema from "../../schema";
 import { modules } from "../../../convexTestModules";
+
+function makeTest() {
+  const t = convexTest(schema, modules);
+  aggregateTest.register(t, "contentCategoryCounts");
+  return t;
+}
 import { SERENDIPITY_PER_RUN } from "../ingest";
 import {
   extractWikipediaTags,
@@ -163,7 +170,7 @@ describe("toWikipediaCategoryTitle", () => {
 
 describe("upsertIngested", () => {
   it("deduplicates by tenantSlug + source + externalId", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
     const item = normalizeWikipediaPage(makeWikiPage(), {
       tenantSlug: TENANT,
       category: "science",
@@ -202,7 +209,7 @@ describe("wikipediaProvider.ingest", () => {
     vi.unstubAllGlobals();
   });
 
-  function makeIngestCtx(t: ReturnType<typeof convexTest>) {
+  function makeIngestCtx(t: ReturnType<typeof makeTest>) {
     return {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       runQuery: (ref: any, args: any) => t.query(ref, args),
@@ -212,7 +219,7 @@ describe("wikipediaProvider.ingest", () => {
   }
 
   it("uses fr.wikipedia.org when providerConfigs.wikipedia.locale is fr", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     await t.run(async (ctx) => {
       await ctx.db.insert("tenants", {
@@ -256,7 +263,7 @@ describe("wikipediaProvider.ingest", () => {
   });
 
   it("defaults to en.wikipedia.org when wikipedia locale is not configured", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       const params = new URL(url).searchParams;
@@ -289,7 +296,7 @@ describe("wikipediaProvider.ingest", () => {
   });
 
   it("fetches, normalizes, and upserts without duplicating on re-run", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
     const searchResponse = {
       query: {
         pages: {
@@ -344,7 +351,7 @@ describe("wikipediaProvider.ingest", () => {
   });
 
   it("ingests a bounded serendipity batch with real categories, not a serendipity label", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       const params = new URL(url).searchParams;
@@ -424,7 +431,7 @@ describe("wikipediaProvider.ingest", () => {
   });
 
   it("deduplicates serendipity pages that overlap demand categories by externalId", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     const fetchMock = vi.fn().mockImplementation((url: string) => {
       const params = new URL(url).searchParams;
@@ -482,7 +489,7 @@ describe("wikipediaProvider.ingest", () => {
   });
 
   it("advances the search offset so a refill returns genuinely new pages", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     // The mock returns a different page depending on the gsroffset, modelling
     // real Wikipedia pagination: offset 0 → page 1, offset 1 → page 2, etc.

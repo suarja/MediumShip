@@ -6,6 +6,7 @@ import {
   internalMutation,
   internalQuery,
 } from "../_generated/server";
+import { syncContentInsert } from "../categories/aggregate";
 import {
   aggregateCategoryAffinities,
   aggregateInterestCategories,
@@ -84,7 +85,11 @@ export const upsertIngested = internalMutation({
         .unique();
 
       if (!existing) {
-        await ctx.db.insert("contents", item);
+        const newId = await ctx.db.insert("contents", item);
+        const newDoc = await ctx.db.get(newId);
+        if (newDoc) {
+          await syncContentInsert(ctx, newDoc);
+        }
         upserted += 1;
       }
     }

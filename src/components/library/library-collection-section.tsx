@@ -120,7 +120,7 @@ function LibraryCollectionRow({
                     item.tone === "premium"
                       ? theme.colors.premium
                       : theme.colors.accent,
-                  fontSize: 10 * scaleFont,
+                  fontSize: 12 * scaleFont,
                 },
               ]}
             >
@@ -327,7 +327,7 @@ export function LibraryCollectionSection({
                     <Text
                       style={[
                         styles.featuredBadgeLabel,
-                        { color: theme.colors.heading, fontSize: 11 * scaleFont },
+                        { color: theme.colors.heading, fontSize: 12 * scaleFont },
                       ]}
                     >
                       {featured.badgeLabel}
@@ -354,7 +354,7 @@ export function LibraryCollectionSection({
                           featured.tone === "premium"
                             ? theme.colors.premium
                             : theme.colors.accent,
-                        fontSize: 10 * scaleFont,
+                        fontSize: 12 * scaleFont,
                       },
                     ]}
                   >

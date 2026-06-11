@@ -95,7 +95,7 @@ export function ResumeCard({ enabled = true, onPress }: ResumeCardProps = {}) {
           styles.resumeKicker,
           {
             color: theme.colors.premium,
-            fontSize: 8 * scaleFont,
+            fontSize: 12 * scaleFont,
           },
         ]}
       >
@@ -141,7 +141,7 @@ export function ResumeCard({ enabled = true, onPress }: ResumeCardProps = {}) {
               styles.resumeMeta,
               {
                 color: withAlpha(theme.colors.canvas, 0.64),
-                fontSize: 10 * scaleFont,
+                fontSize: 12 * scaleFont,
               },
             ]}
             numberOfLines={1}

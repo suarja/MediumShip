@@ -444,7 +444,7 @@ function AddToListSection({
       <Text
         style={[
           styles.sectionLabel,
-          { color: theme.colors.textMuted, fontSize: 10 * scaleFont },
+          { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
         ]}
       >
         {t("actionsSheet.addToList")}
@@ -492,7 +492,7 @@ function AddToListSection({
               <Text
                 style={[
                   styles.listMeta,
-                  { color: theme.colors.textMuted, fontSize: 10 * scaleFont },
+                  { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
                 ]}
               >
                 {t("screen.itemCount", { count: list.itemCount })}
@@ -646,7 +646,7 @@ function SheetActionRow({
           <Text
             style={[
               styles.actionHint,
-              { color: theme.colors.textMuted, fontSize: 11 * scaleFont },
+              { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
             ]}
           >
             {hint}

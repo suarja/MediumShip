@@ -103,7 +103,7 @@ export function HistoryRow({ item, divider = true }: HistoryRowProps) {
             numberOfLines={1}
             style={[
               styles.kicker,
-              { color: kAccent.accent, fontSize: 10 * scaleFont },
+              { color: kAccent.accent, fontSize: 12 * scaleFont },
             ]}
           >
             {kicker}
@@ -125,7 +125,7 @@ export function HistoryRow({ item, divider = true }: HistoryRowProps) {
             numberOfLines={1}
             style={[
               styles.meta,
-              { color: theme.colors.textMuted, fontSize: 11 * scaleFont },
+              { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
             ]}
           >
             {meta}

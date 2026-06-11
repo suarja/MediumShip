@@ -55,7 +55,7 @@ export function ContentSourceAttribution({
       <Text
         style={[
           styles.badge,
-          { color: theme.colors.accent, fontSize: 10 * scaleFont },
+          { color: theme.colors.accent, fontSize: 12 * scaleFont },
         ]}
       >
         {sourceLabel}

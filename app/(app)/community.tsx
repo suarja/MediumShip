@@ -101,7 +101,7 @@ export default function CommunityScreen() {
           <Text
             style={[
               styles.heroEyebrow,
-              { color: theme.colors.accent, fontSize: 10 * scaleFont },
+              { color: theme.colors.accent, fontSize: 12 * scaleFont },
             ]}
           >
             ◉ REJOINDRE
@@ -230,7 +230,7 @@ function CommunityCard({
         {description}
       </Text>
       <View style={[styles.cardStat, { gap: 8 * scaleSpace }]}>
-        <Text style={[styles.cardStatLabel, { color: theme.colors.textMuted, fontSize: 11 * scaleFont }]}>
+        <Text style={[styles.cardStatLabel, { color: theme.colors.textMuted, fontSize: 12 * scaleFont }]}>
           {stat}
         </Text>
         <View
@@ -245,7 +245,7 @@ function CommunityCard({
             },
           ]}
         >
-          <Text style={[styles.accessLabel, { color: accentColor, fontSize: 9 * scaleFont }]}>
+          <Text style={[styles.accessLabel, { color: accentColor, fontSize: 12 * scaleFont }]}>
             {accessLabel.toUpperCase()}
           </Text>
         </View>

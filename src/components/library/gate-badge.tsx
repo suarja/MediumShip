@@ -27,7 +27,7 @@ export function GateBadge({ tone, label }: GateBadgeProps) {
       <Text
         style={[
           styles.badgeLabel,
-          { color, fontSize: 8 * scaleFont },
+          { color, fontSize: 12 * scaleFont },
         ]}
       >
         {label}

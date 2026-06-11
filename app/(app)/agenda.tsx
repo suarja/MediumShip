@@ -213,7 +213,7 @@ function EventRow({
         <Text style={[styles.dateDay, { color: theme.colors.accent, fontSize: 18 * scaleFont }]}>
           {day}
         </Text>
-        <Text style={[styles.dateMonth, { color: theme.colors.accent, fontSize: 9 * scaleFont }]}>
+        <Text style={[styles.dateMonth, { color: theme.colors.accent, fontSize: 12 * scaleFont }]}>
           {month}
         </Text>
       </View>
@@ -238,7 +238,7 @@ function EventRow({
               {
                 color: theme.colors.textMuted,
                 borderColor: withAlpha(theme.colors.textMuted, 0.3),
-                fontSize: 9 * scaleFont,
+                fontSize: 12 * scaleFont,
                 paddingHorizontal: 6 * scaleSpace,
                 paddingVertical: 2 * scaleSpace,
                 borderRadius: theme.radii.pill,
@@ -255,7 +255,7 @@ function EventRow({
                 {
                   color: accessColor,
                   borderColor: withAlpha(accessColor, 0.3),
-                  fontSize: 9 * scaleFont,
+                  fontSize: 12 * scaleFont,
                   paddingHorizontal: 6 * scaleSpace,
                   paddingVertical: 2 * scaleSpace,
                   borderRadius: theme.radii.pill,

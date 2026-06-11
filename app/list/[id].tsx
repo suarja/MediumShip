@@ -164,7 +164,7 @@ export default function ListDetailScreen() {
               <Text
                 style={[
                   styles.actionChipLabel,
-                  { color: theme.colors.canvas, fontSize: 11 * scaleFont },
+                  { color: theme.colors.canvas, fontSize: 12 * scaleFont },
                 ]}
               >
                 {t("detail.renameSubmit")}
@@ -192,7 +192,7 @@ export default function ListDetailScreen() {
               <Text
                 style={[
                   styles.actionChipLabel,
-                  { color: theme.colors.heading, fontSize: 11 * scaleFont },
+                  { color: theme.colors.heading, fontSize: 12 * scaleFont },
                 ]}
               >
                 {t("detail.rename")}
@@ -214,7 +214,7 @@ export default function ListDetailScreen() {
               <Text
                 style={[
                   styles.actionChipLabel,
-                  { color: theme.colors.heading, fontSize: 11 * scaleFont },
+                  { color: theme.colors.heading, fontSize: 12 * scaleFont },
                 ]}
               >
                 {t("detail.delete")}

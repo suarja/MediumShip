@@ -59,7 +59,7 @@ export function AnalysisHistoryRow({
       <Text
         style={[
           styles.day,
-          { color: theme.colors.textMuted, fontSize: 11 * scaleFont },
+          { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
         ]}
       >
         {t("history.rowLabel", { day: dayLabel })}
@@ -86,7 +86,7 @@ export function AnalysisHistoryRow({
           <Text
             style={[
               styles.badgeLabel,
-              { color: theme.colors.accent, fontSize: 10 * scaleFont },
+              { color: theme.colors.accent, fontSize: 12 * scaleFont },
             ]}
           >
             NEW

@@ -49,7 +49,7 @@ export function ProfileAnalysisCard({
       <Text
         style={[
           styles.sectionKicker,
-          { color: theme.colors.accent, fontSize: 11 * scaleFont },
+          { color: theme.colors.accent, fontSize: 12 * scaleFont },
         ]}
       >
         {t("profileCard.sectionKicker")}

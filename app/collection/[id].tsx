@@ -99,7 +99,7 @@ export default function CollectionDetailScreen() {
               </Text>
             </View>
             <View style={[styles.heroBody, { gap: 6 * scaleSpace, marginBottom: 16 * scaleSpace }]}>
-              <Text style={[styles.heroBadge, { color: theme.colors.accent, fontSize: 10 * scaleFont }]}>
+              <Text style={[styles.heroBadge, { color: theme.colors.accent, fontSize: 12 * scaleFont }]}>
                 ◆ COLLECTION
               </Text>
               <Text style={[styles.heroTitle, { color: theme.colors.heading, fontSize: 22 * scaleFont }]}>
@@ -108,7 +108,7 @@ export default function CollectionDetailScreen() {
               <Text style={[styles.heroSummary, { color: theme.colors.textMuted, fontSize: 14 * scaleFont }]}>
                 {collection.summary}
               </Text>
-              <Text style={[styles.heroCount, { color: theme.colors.textMuted, fontSize: 10 * scaleFont }]}>
+              <Text style={[styles.heroCount, { color: theme.colors.textMuted, fontSize: 12 * scaleFont }]}>
                 {`${collection.itemCount} CONTENUS`}
               </Text>
             </View>
@@ -187,7 +187,7 @@ function CollectionItemRow({
       </View>
       <View style={styles.itemCopy}>
         <Text
-          style={[styles.itemKicker, { color: accentColor, fontSize: 10 * scaleFont }]}
+          style={[styles.itemKicker, { color: accentColor, fontSize: 12 * scaleFont }]}
         >
           {item.category.toUpperCase()}{accessBadge.show ? " · ★" : ""}
         </Text>

@@ -70,7 +70,7 @@ export function FeedFilterChips({
                 styles.label,
                 {
                   color: selected ? theme.colors.canvas : theme.colors.text,
-                  fontSize: 10 * scaleFont,
+                  fontSize: 12 * scaleFont,
                 },
               ]}
             >

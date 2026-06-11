@@ -50,7 +50,7 @@ export function BriefingInviteModal({
           <Text
             style={[
               styles.kicker,
-              { color: theme.colors.accent, fontSize: 11 * scaleFont },
+              { color: theme.colors.accent, fontSize: 12 * scaleFont },
             ]}
           >
             {t("invite.kicker")}

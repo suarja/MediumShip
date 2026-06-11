@@ -95,7 +95,7 @@ export function PersistentMediaMiniPlayer() {
             numberOfLines={1}
             style={[
               styles.kicker,
-              { color: theme.colors.accent, fontSize: 10 * scaleFont },
+              { color: theme.colors.accent, fontSize: 12 * scaleFont },
             ]}
           >
             {kicker}
@@ -128,7 +128,7 @@ export function PersistentMediaMiniPlayer() {
           <Text
             style={[
               styles.time,
-              { color: theme.colors.textMuted, fontSize: 10 * scaleFont },
+              { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
             ]}
           >
             {formatMediaClock(currentTimeSeconds)} · {formatMediaClock(durationSeconds)}

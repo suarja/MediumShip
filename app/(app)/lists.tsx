@@ -262,7 +262,7 @@ export default function ListsScreen() {
               <Text
                 style={[
                   styles.lockedBody,
-                  { color: theme.colors.textMuted, fontSize: 11 * scaleFont },
+                  { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
                 ]}
               >
                 {t("lists:screen.lockedBody")}

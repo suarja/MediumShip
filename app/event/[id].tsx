@@ -153,7 +153,7 @@ export default function EventDetailScreen() {
                 },
               ]}
             >
-              <Text style={[styles.badgeLabel, { color: accessColor, fontSize: 10 * scaleFont }]}>
+              <Text style={[styles.badgeLabel, { color: accessColor, fontSize: 12 * scaleFont }]}>
                 {ACCESS_LABEL[accessBadge.level].toUpperCase()}
               </Text>
             </View>
@@ -170,7 +170,7 @@ export default function EventDetailScreen() {
               },
             ]}
           >
-            <Text style={[styles.badgeLabel, { color: theme.colors.textMuted, fontSize: 10 * scaleFont }]}>
+            <Text style={[styles.badgeLabel, { color: theme.colors.textMuted, fontSize: 12 * scaleFont }]}>
               {MODE_LABEL[event.mode]?.toUpperCase() ?? event.mode.toUpperCase()}
             </Text>
           </View>

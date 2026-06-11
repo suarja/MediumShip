@@ -166,7 +166,7 @@ export const YoutubeInlinePlayer = forwardRef<
         <Text
           style={[
             styles.subtitle,
-            { fontSize: 10 * scaleFont, color: withAlpha(fg, 0.56) },
+            { fontSize: 12 * scaleFont, color: withAlpha(fg, 0.56) },
           ]}
         >
           {subtitle}

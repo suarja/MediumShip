@@ -131,7 +131,7 @@ export function EpisodeAudioPlayer({
           </View>
         )}
         <View style={styles.headerContent}>
-          <Text style={[styles.label, { color: theme.colors.accent, fontSize: 11 * scaleFont }]}>
+          <Text style={[styles.label, { color: theme.colors.accent, fontSize: 12 * scaleFont }]}>
             {t("playerLabel")}
           </Text>
           <Text

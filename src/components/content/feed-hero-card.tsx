@@ -96,7 +96,7 @@ export function FeedHeroCard({
         >
           <Text
             numberOfLines={1}
-            style={[styles.kicker, { color: chipColor, fontSize: 11 * scaleFont }]}
+            style={[styles.kicker, { color: chipColor, fontSize: 12 * scaleFont }]}
           >
             {kicker}
           </Text>
@@ -119,7 +119,7 @@ export function FeedHeroCard({
               </View>
               <Text
                 numberOfLines={1}
-                style={[styles.meta, { color: onHero, fontSize: 10 * scaleFont }]}
+                style={[styles.meta, { color: onHero, fontSize: 12 * scaleFont }]}
               >
                 {meta}
               </Text>

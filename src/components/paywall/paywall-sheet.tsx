@@ -218,7 +218,7 @@ export function PaywallSheet({
                     <Text
                       style={[
                         styles.checkmark,
-                        { color: theme.colors.premium, fontSize: 10 * scaleFont },
+                        { color: theme.colors.premium, fontSize: 12 * scaleFont },
                       ]}
                     >
                       ✓
@@ -413,7 +413,7 @@ export function PaywallSheet({
                       }}
                       style={({ pressed }) => [pressed && styles.pressed]}
                     >
-                      <Text style={[styles.restoreLabel, { color: theme.colors.textMuted, fontSize: 11 * scaleFont }]}>
+                      <Text style={[styles.restoreLabel, { color: theme.colors.textMuted, fontSize: 12 * scaleFont }]}>
                         {t("restoreCta")}
                       </Text>
                     </Pressable>
@@ -479,7 +479,7 @@ export function PaywallSheet({
               accessibilityRole="button"
               testID="paywall-dismiss-cta"
             >
-              <Text style={[styles.dismissLabel, { color: theme.colors.textMuted, fontSize: 10 * scaleFont }]}>
+              <Text style={[styles.dismissLabel, { color: theme.colors.textMuted, fontSize: 12 * scaleFont }]}>
                 {paymentsEnabled ? t(keys.dismissCta) : t("freeTrialDismiss")}
               </Text>
             </Pressable>

@@ -96,7 +96,7 @@ export function FeedRow({
         <View style={styles.meta}>
           <Text
             numberOfLines={1}
-            style={[styles.kicker, { color: kAccent.accent, fontSize: 10 * scaleFont }]}
+            style={[styles.kicker, { color: kAccent.accent, fontSize: 12 * scaleFont }]}
           >
             {kicker}
           </Text>
@@ -112,7 +112,7 @@ export function FeedRow({
           {meta ? (
             <Text
               numberOfLines={1}
-              style={[styles.metaLabel, { color: theme.colors.textMuted, fontSize: 11 * scaleFont }]}
+              style={[styles.metaLabel, { color: theme.colors.textMuted, fontSize: 12 * scaleFont }]}
             >
               {meta}
             </Text>

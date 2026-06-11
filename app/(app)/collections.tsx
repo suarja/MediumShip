@@ -129,7 +129,7 @@ function CollectionCard({
       </View>
       <View style={[styles.collectionMeta, { padding: 14 * scaleSpace, gap: 4 * scaleSpace }]}>
         <Text
-          style={[styles.collectionByline, { color: theme.colors.accent, fontSize: 10 * scaleFont }]}
+          style={[styles.collectionByline, { color: theme.colors.accent, fontSize: 12 * scaleFont }]}
         >
           ◆ PAR LA RÉDACTION
         </Text>
@@ -146,7 +146,7 @@ function CollectionCard({
           {collection.summary}
         </Text>
         <Text
-          style={[styles.collectionCount, { color: theme.colors.textMuted, fontSize: 10 * scaleFont }]}
+          style={[styles.collectionCount, { color: theme.colors.textMuted, fontSize: 12 * scaleFont }]}
         >
           {`${collection.itemCount} CONTENUS`.toUpperCase()}
         </Text>

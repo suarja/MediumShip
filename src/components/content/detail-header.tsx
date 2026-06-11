@@ -28,7 +28,7 @@ export function DetailHeader({
 
   return (
     <>
-      <Text style={[styles.kicker, { color: accentTone, fontSize: 11 * scaleFont }]}>{kicker}</Text>
+      <Text style={[styles.kicker, { color: accentTone, fontSize: 12 * scaleFont }]}>{kicker}</Text>
       <Text
         style={[
           styles.title,
@@ -38,7 +38,7 @@ export function DetailHeader({
         {title}
       </Text>
       {meta ? (
-        <Text style={[styles.meta, { color: theme.colors.textMuted, fontSize: 11 * scaleFont }]}>
+        <Text style={[styles.meta, { color: theme.colors.textMuted, fontSize: 12 * scaleFont }]}>
           {meta}
         </Text>
       ) : null}

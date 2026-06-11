@@ -111,7 +111,7 @@ export function ContentFeatureCard({
                       testID="content-card-title-category"
                       style={[
                         styles.titleLabel,
-                        { color: kAccent.accent, fontSize: 10 * scaleFont },
+                        { color: kAccent.accent, fontSize: 12 * scaleFont },
                       ]}
                     >
                       {kicker}
@@ -171,7 +171,7 @@ export function ContentFeatureCard({
                     numberOfLines={1}
                     style={[
                       styles.meta,
-                      { color: theme.colors.textMuted, fontSize: 11 * scaleFont },
+                      { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
                     ]}
                   >
                     {meta}
@@ -193,7 +193,7 @@ export function ContentFeatureCard({
                     <Text
                       style={[
                         styles.premiumLabel,
-                        { color: PREMIUM_ON_FILL, fontSize: 9 * scaleFont },
+                        { color: PREMIUM_ON_FILL, fontSize: 12 * scaleFont },
                       ]}
                     >
                       {`★ ${t("premiumTag")}`}

@@ -4,6 +4,18 @@ Idées soulevées mais non encore planifiées en slice. Rangées par **priorité
 
 ---
 
+## ⚡ Vague Perf / coût Convex — scans de corpus (URGENT)
+
+> **Audit 2026-06-11.** Deux queries scannent le **corpus publié entier** (10 868 lignes ≈ **14 MB**) à chaque appel + chaque invalidation réactive (le cron d'ingestion écrit en continu) → **6 Go de bandwidth en quelques jours** et, surtout, **~13 % de la limite dure 16 MB** → échec imminent de la query. Cause racine : ingestion non bornée (8 647 Wikipedia + 2 189 YouTube) + `.collect()` total. Découpage en 2 slices verticaux **indépendants**. Implémentation par **sous-agent Sonnet 4.6** ; orchestrateur (Opus) vérifie la conformité (Slice B = couverture write-paths sensible, revue par l'orchestrateur).
+
+- **Perf Slice A — Feed : pool de candidats borné et ciblé.** `getDiscoveryFeed` ne lit plus tout le corpus ; pool borné (~600 lignes, ~0,8 MB) par index ciblés (récence + catégories d'affinité/intérêt + tranche archive + échantillon aléatoire profond). **Perso préservée** (fonctions pures inchangées, fetch ciblé par catégorie = dimension dominante) ; sérendipité all-time conservée. Plan : `docs/superpowers/plans/2026-06-11-perf-slice-a-feed-bounded-candidates.md`.
+- **Perf Slice B — Counts catégories via `@convex-dev/aggregate`.** `listPublishedCategories` lit les counts en O(log n) (temps réel) au lieu de scanner le corpus. Câblage des write-paths `contents` (sensible) + backfill + cron de réconciliation. Plan : `docs/superpowers/plans/2026-06-11-perf-slice-b-category-counts-aggregate.md`.
+- **Parqué (option C)** — ranking de feed matérialisé par cron : seulement si plusieurs clients simultanés en prod rendent l'invalidation réactive coûteuse. Pas pré-prod.
+- **Parqué (corpus)** — borner/retenir l'ingestion (10k+ items, surtout Wikipedia) : question produit. Moins de lignes = tout moins cher.
+- **Parqué (queries résiduelles)** — `searchPublished` `.take(2000)`, `getTrendingTopics` `.take(1000)`, `content/queries:listPublishedFeed` `.collect()`, `insights/relatedSelection` `.collect()` : borner si elles pèsent au monitoring.
+
+---
+
 ## 💰 Vague monétisation — 1ʳᵉ soumission store
 
 > **Décisions 2026-06-10** (voir `docs/monetization-reflection.md`) : feature signature = **analyse de goûts** (cron + pages), sync retirée des leviers premium, narrative **« Ta lecture du jour »**.

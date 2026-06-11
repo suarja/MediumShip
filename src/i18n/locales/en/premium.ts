@@ -10,4 +10,6 @@ export default {
   paywallGuestHint: "Sign in to subscribe.",
   paywallSubscribeCta: "Go Premium",
   paywallTrialNote: "2-week free trial, then €2/month.",
+  freeTrialCta: "Try Premium for free",
+  freeTrialNote: "No commitment",
 } as const;

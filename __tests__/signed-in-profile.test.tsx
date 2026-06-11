@@ -8,6 +8,27 @@ import { changeAppLanguage, initI18n } from "../src/i18n";
 const mockOpenPaywall = jest.fn();
 const mockPush = jest.fn();
 
+jest.mock("react-native-safe-area-context", () => {
+  const { View } = require("react-native");
+  return {
+    SafeAreaView: View,
+    useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 34, left: 0 }),
+  };
+});
+
+jest.mock("../src/features/billing/purchases", () => ({
+  openManageSubscriptions: jest.fn(),
+}));
+
+jest.mock("../src/features/tenant/feature-access", () => ({
+  PAYMENTS_ENABLED: true,
+  PREMIUM_PAYMENT_DEFERRED: false,
+  canAccessFeatureLevel: jest.requireActual("../src/features/tenant/feature-access")
+    .canAccessFeatureLevel,
+  isFeatureNavVisible: jest.requireActual("../src/features/tenant/feature-access")
+    .isFeatureNavVisible,
+}));
+
 jest.mock("../src/features/haptics/haptics", () => ({
   HapticsService: {
     selection: jest.fn(),
@@ -117,7 +138,11 @@ jest.mock("../src/features/media/persistent-media-player", () => ({
 }));
 
 jest.mock("../src/features/paywall/paywall-sheet-provider", () => ({
-  usePaywallSheet: () => ({ openPaywall: mockOpenPaywall, closePaywall: jest.fn() }),
+  usePaywallSheet: () => ({
+    openPaywall: mockOpenPaywall,
+    closePaywall: jest.fn(),
+    showPurchaseCelebration: jest.fn(),
+  }),
 }));
 
 describe("signed-in profile", () => {

@@ -10,6 +10,7 @@ import type { PaywallOpenOptions, PaywallReason } from "./paywall-copy";
 type PaywallSheetContextValue = {
   openPaywall: (reason: PaywallReason, options?: PaywallOpenOptions) => void;
   closePaywall: () => void;
+  showPurchaseCelebration: () => void;
 };
 
 type PaywallSheetState = {
@@ -48,12 +49,19 @@ export function PaywallSheetProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, visible: false }));
   }, []);
 
+  const showPurchaseCelebration = useCallback(() => {
+    setCelebrationVisible(true);
+  }, []);
+
   const handlePurchaseSuccess = useCallback(() => {
     closePaywall();
-    setCelebrationVisible(true);
-  }, [closePaywall]);
+    showPurchaseCelebration();
+  }, [closePaywall, showPurchaseCelebration]);
 
-  const value = useMemo(() => ({ openPaywall, closePaywall }), [openPaywall, closePaywall]);
+  const value = useMemo(
+    () => ({ openPaywall, closePaywall, showPurchaseCelebration }),
+    [openPaywall, closePaywall, showPurchaseCelebration],
+  );
 
   return (
     <PaywallSheetContext.Provider value={value}>

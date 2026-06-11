@@ -79,4 +79,17 @@ export default {
   pendingBody:
     "Your account is connected but membership hasn't been activated yet. It is enabled by the team.",
   crestFallback: "M",
+  freeTrialCta: "Try Premium for free",
+  freeTrialNote: "No commitment",
+  thanks: {
+    title: "Thanks for your support",
+    body: "You enjoy every Premium benefit:",
+    benefits: [
+      "Your daily read, every morning",
+      "Unlimited offline downloads",
+      "Unlimited personal lists",
+      "Members room",
+    ],
+    cta: "Continue",
+  },
 } as const;

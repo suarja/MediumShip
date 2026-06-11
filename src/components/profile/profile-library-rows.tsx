@@ -1,11 +1,14 @@
 import type { ComponentProps, ReactNode } from "react";
+import { useState } from "react";
 import { usePushWithReturn } from "../../features/navigation/app-navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { GateBadge, type GateTone } from "../library/gate-badge";
+import { MembershipThanksSheet } from "./membership-thanks-sheet";
 import { openManageSubscriptions } from "../../features/billing/purchases";
+import { PAYMENTS_ENABLED } from "../../features/tenant/feature-access";
 import { HapticsService } from "../../features/haptics/haptics";
 import { usePaywallSheet } from "../../features/paywall/paywall-sheet-provider";
 import { useResponsive } from "../../features/responsive/use-responsive";
@@ -46,6 +49,8 @@ export function ProfileLibraryRows({
   const { scaleSpace } = useResponsive();
   const pushWithReturn = usePushWithReturn();
   const { openPaywall } = usePaywallSheet();
+  const [thanksVisible, setThanksVisible] = useState(false);
+  const paymentsEnabled = PAYMENTS_ENABLED;
 
   const canBookmark = hasCapability(enabledModules, "bookmarks");
   const canOffline = hasCapability(enabledModules, "offline");
@@ -184,11 +189,23 @@ export function ProfileLibraryRows({
           <ProfileRow
             first
             icon="star"
-            title={t("rows.subscription.title")}
-            subtitle={t("rows.subscription.sub")}
+            title={
+              paymentsEnabled
+                ? t("rows.subscription.title")
+                : t("rows.subscriptionAccess.title")
+            }
+            subtitle={
+              paymentsEnabled
+                ? t("rows.subscription.sub")
+                : t("rows.subscriptionAccess.sub")
+            }
             onPress={() => {
               void HapticsService.medium();
-              void openManageSubscriptions();
+              if (paymentsEnabled) {
+                void openManageSubscriptions();
+                return;
+              }
+              setThanksVisible(true);
             }}
           />
         ) : (
@@ -216,6 +233,11 @@ export function ProfileLibraryRows({
           }}
         />
       </Section>
+
+      <MembershipThanksSheet
+        visible={thanksVisible}
+        onDismiss={() => setThanksVisible(false)}
+      />
     </View>
   );
 }

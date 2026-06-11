@@ -7,6 +7,8 @@ import { useTranslation } from "react-i18next";
 import { logBilling } from "../../features/billing/billing-debug";
 import { getPurchasesDiagnostics } from "../../features/billing/purchases";
 import { usePurchasePremium } from "../../features/billing/use-purchase-premium";
+import { useStartFreePremium } from "../../features/billing/use-start-free-premium";
+import { PAYMENTS_ENABLED } from "../../features/tenant/feature-access";
 import {
   formatPaywallPurchaseLabel,
   isRecommendedPaywallPackage,
@@ -68,6 +70,7 @@ export function PaywallSheet({
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
   const insets = useSafeAreaInsets();
   const { isMember: isPremium } = useIsMember();
+  const paymentsEnabled = PAYMENTS_ENABLED;
   const {
     packages,
     package: premiumPackage,
@@ -81,19 +84,26 @@ export function PaywallSheet({
     errorMessage,
     purchasesSupported,
   } = usePurchasePremium({
-    enabled: visible && isSignedIn,
+    enabled: visible && isSignedIn && paymentsEnabled,
     onPurchaseSuccess,
   });
+  const {
+    activate: activateFreePremium,
+    isPending: isFreePremiumPending,
+    status: freePremiumStatus,
+  } = useStartFreePremium({ onSuccess: onPurchaseSuccess });
 
   const keys = resolvePaywallCopyKeys(reason);
   const benefits = t("benefits", { returnObjects: true }) as string[];
   const sortedPackages = useMemo(() => sortPaywallPackages(packages), [packages]);
   const maxWidth = isTablet ? 520 : undefined;
   const statusMessage = resolveStatusMessage(status, errorMessage, t);
-  const isPending = status === "pending";
+  const isPending = paymentsEnabled ? status === "pending" : isFreePremiumPending;
   const purchaseLabel = purchasesSupported
     ? formatPaywallPurchaseLabel(t, premiumPackage)
     : t("purchaseCtaFallback");
+  const freePremiumStatusMessage =
+    freePremiumStatus === "error" ? t("purchaseError") : null;
   const crestInitial = (tenantName.trim().charAt(0) || "M").toUpperCase();
   const headlineSize = (isTablet ? 26 : 22) * scaleFont;
 
@@ -258,6 +268,54 @@ export function PaywallSheet({
                         {t("alreadyPremiumCta")}
                       </Text>
                     </Pressable>
+                  </View>
+                ) : !paymentsEnabled ? (
+                  <View style={[styles.offeringErrorBlock, { gap: 10 * scaleSpace }]}>
+                    <Pressable
+                      accessibilityRole="button"
+                      testID="paywall-free-premium-cta"
+                      disabled={isPending}
+                      onPress={() => {
+                        void HapticsService.medium();
+                        void activateFreePremium();
+                      }}
+                      style={({ pressed }) => [
+                        styles.primaryCta,
+                        {
+                          borderRadius: theme.radii.pill,
+                          backgroundColor: theme.colors.heading,
+                          paddingVertical: 14 * scaleSpace,
+                          opacity: isPending ? 0.7 : 1,
+                        },
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      {isPending ? (
+                        <ActivityIndicator color={theme.colors.canvas} />
+                      ) : (
+                        <Text
+                          style={[
+                            styles.primaryCtaLabel,
+                            { color: theme.colors.canvas, fontSize: (isTablet ? 14 : 13) * scaleFont },
+                          ]}
+                        >
+                          {t("freeTrialCta")}
+                        </Text>
+                      )}
+                    </Pressable>
+                    <Text style={[styles.trialNote, { color: theme.colors.textMuted, fontSize: 12 * scaleFont }]}>
+                      {t("freeTrialNote")}
+                    </Text>
+                    {freePremiumStatusMessage ? (
+                      <Text
+                        style={[
+                          styles.statusBody,
+                          { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
+                        ]}
+                      >
+                        {freePremiumStatusMessage}
+                      </Text>
+                    ) : null}
                   </View>
                 ) : purchasesSupported ? (
                   <>

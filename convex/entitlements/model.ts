@@ -3,7 +3,7 @@
 // Keep all "is this user a member?" logic flowing through here so the rule has
 // exactly one definition regardless of which provider wrote the row.
 
-export type EntitlementSource = "manual" | "revenuecat" | "stripe";
+export type EntitlementSource = "manual" | "revenuecat" | "stripe" | "trial";
 
 export type EntitlementRecord = {
   isPro: boolean;

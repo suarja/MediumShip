@@ -86,6 +86,10 @@ export default {
       title: "Abonnement Premium",
       sub: "Gérer ou résilier ton abonnement",
     },
+    subscriptionAccess: {
+      title: "Ton accès Premium",
+      sub: "Découvre tes avantages",
+    },
     goPremium: {
       title: "Passer Premium",
       sub: "Offline, listes illimitees, salon membres",

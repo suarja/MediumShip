@@ -3,8 +3,32 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction, internalQuery } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
+import { resolveEffectiveFeatureConfigs } from "../featureCatalog";
 import { isProFromEntitlement } from "../entitlements/model";
 import { mockReportValidator } from "./mockReport";
+
+export const isPremiumInsightsEnabledForTenant = internalQuery({
+  args: { tenantSlug: v.string() },
+  returns: v.boolean(),
+  handler: async (ctx, { tenantSlug }) => {
+    const tenant = await ctx.db
+      .query("tenants")
+      .withIndex("by_slug", (q) => q.eq("slug", tenantSlug))
+      .unique();
+
+    if (!tenant) {
+      return false;
+    }
+
+    const featureConfigs = resolveEffectiveFeatureConfigs({
+      featureConfigs: tenant.featureConfigs,
+      enabledModules: tenant.enabledModules,
+      navOrder: tenant.navOrder,
+    });
+
+    return featureConfigs.premiumInsights?.enabled === true;
+  },
+});
 
 export const listPremiumMembersQuery = internalQuery({
   args: {},
@@ -69,6 +93,17 @@ export const generateDailyAnalyses = internalAction({
     let skipped = 0;
 
     for (const member of premiumMembers) {
+      const tenantSlug = member.tenantSlug ?? fallbackTenantSlug;
+      const insightsEnabled: boolean = await ctx.runQuery(
+        internal.insights.cron.isPremiumInsightsEnabledForTenant,
+        { tenantSlug },
+      );
+
+      if (!insightsEnabled) {
+        skipped += 1;
+        continue;
+      }
+
       const unseen: { id: Id<"tasteAnalysis">; createdAt: number } | null =
         await ctx.runQuery(
           internal.insights.generateInternal.getUnseenBriefing,

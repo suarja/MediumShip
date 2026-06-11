@@ -1,21 +1,10 @@
 export default {
   skip: "Skip",
   manifesto: {
-    kicker: "Why this feed",
     title: "Most feeds make you react.",
     titleAccent: "This one makes you think.",
     body: "Social platforms optimise for outrage: their algorithms push whatever goes viral — anger, clashes — and lock you into your bubble. That's the reflex: fast, emotional. Here, we slow down.",
     readsLabel: "Start with these reads",
-    readKicker: "Read",
-    // Placeholder reads — replaced at implementation by the curated
-    // "Why this feed" collection.
-    placeholderReads: [
-      "Moral outrage, the fuel of algorithms",
-      "Homophily: how your bubble closes in",
-      "System 1 / System 2: thinking fast and slow",
-      "The attention economy",
-      "Virality against nuance",
-    ],
     cta: "Get started",
   },
   categories: {
@@ -25,9 +14,8 @@ export default {
   },
   premium: {
     kicker: "◉ Premium — free for now",
-    title: "Go further,",
-    titleAccent: "without paying.",
-    subtitle: "Everything the free account opens, made fuller.",
+    title: "Go deeper on every read.",
+    subtitle: "A daily read that interprets what you read and points you to what's next — plus offline, lists, and the members lounge.",
     benefits: [
       "Your daily read, every morning",
       "Offline reading",

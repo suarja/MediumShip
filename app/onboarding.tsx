@@ -6,12 +6,19 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useQuery } from "convex/react";
 import { useTranslation } from "react-i18next";
 
+import { api } from "../convex/_generated/api";
 import { CategoryInterestsPicker } from "../src/components/settings/category-interests-picker";
+import { FeedHeroCard } from "../src/components/content/feed-hero-card";
+import { cardKicker, cardMeta } from "../src/features/content/card-presentation";
+import { toContentCardModel } from "../src/features/content/selectors";
+import type { ContentDoc } from "../src/features/content/types";
 import {
   useCategoryInterests,
   useCategoryInterestTreeNodes,
@@ -26,6 +33,7 @@ import { typeScale } from "../src/features/theme/type-scale";
 import { useAppTheme } from "../src/features/theme/theme-provider";
 
 const STEP_COUNT = 3;
+const ONBOARDING_VIEWER = { isAuthenticated: false, isPro: false };
 
 export default function OnboardingScreen() {
   const { t } = useTranslation("onboarding");
@@ -34,9 +42,8 @@ export default function OnboardingScreen() {
   const router = useRouter();
 
   const [step, setStep] = useState(0);
-  // Selection is held by the parent so it survives back/forward within the flow.
-  // Tranche 1: in-session only — guest-local persistence + sync land later.
-  const [selectedReads, setSelectedReads] = useState<Set<number>>(new Set());
+  // Category selection survives back/forward within the flow. Tranche 1:
+  // in-session only — guest-local persistence + sync land later.
   const [categoryKeys, setCategoryKeys] = useState<Set<string>>(new Set());
 
   const finish = useCallback(
@@ -57,15 +64,6 @@ export default function OnboardingScreen() {
   const goBack = () => {
     void HapticsService.light();
     setStep((s) => Math.max(s - 1, 0));
-  };
-
-  const toggleRead = (index: number) => {
-    void HapticsService.selection();
-    setSelectedReads((prev) => {
-      const next = new Set(prev);
-      next.has(index) ? next.delete(index) : next.add(index);
-      return next;
-    });
   };
 
   const applyCategoryKeys = useCallback(async (keys: ReadonlySet<string>) => {
@@ -149,7 +147,7 @@ export default function OnboardingScreen() {
           showsVerticalScrollIndicator={false}
         >
           {step === 0 ? (
-            <ManifestoStep selectedReads={selectedReads} onToggleRead={toggleRead} />
+            <ManifestoStep />
           ) : step === 1 ? (
             <CategoryStep selectedKeys={categoryKeys} applyCategoryKeys={applyCategoryKeys} />
           ) : (
@@ -200,26 +198,32 @@ export default function OnboardingScreen() {
 
 /* ----------------------------- Steps ----------------------------- */
 
-function ManifestoStep({
-  selectedReads,
-  onToggleRead,
-}: {
-  selectedReads: Set<number>;
-  onToggleRead: (index: number) => void;
-}) {
+function ManifestoStep() {
   const { t } = useTranslation("onboarding");
-  const { theme } = useAppTheme();
+  const { t: tHome } = useTranslation("home");
+  const { theme, tenantSlug } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
-  const reads = t("manifesto.placeholderReads", { returnObjects: true }) as string[];
+  const { width } = useWindowDimensions();
+
+  const contents = useQuery(api.content.queries.listPublishedFeed, { tenantSlug }) as
+    | ContentDoc[]
+    | undefined;
+  const reads = (contents ?? []).slice(0, 6).map(toContentCardModel);
+
+  const cardWidth = Math.min(width * 0.82, isTablet ? 380 : 320);
+  const gap = 12 * scaleSpace;
 
   return (
-    <View style={{ gap: 18 }}>
+    <View style={{ gap: 22 }}>
       <View style={{ gap: 14 }}>
-        <Kicker label={t("manifesto.kicker")} />
         <Text
           style={[
             styles.title,
-            { color: theme.colors.heading, fontSize: (isTablet ? 34 : 29) * scaleFont },
+            {
+              color: theme.colors.heading,
+              fontSize: (isTablet ? 42 : 36) * scaleFont,
+              lineHeight: (isTablet ? 46 : 40) * scaleFont,
+            },
           ]}
         >
           {t("manifesto.title")}{" "}
@@ -237,58 +241,36 @@ function ManifestoStep({
         </Text>
       </View>
 
-      {/* Reads — thesis articles below the manifesto */}
-      <View style={{ gap: 10 }}>
-        <Text
-          style={[styles.blockLabel, { color: theme.colors.textMuted, fontSize: typeScale.meta * scaleFont }]}
-        >
-          {t("manifesto.readsLabel")}
-        </Text>
-        <View style={{ gap: 8 * scaleSpace }}>
-          {reads.map((readTitle, i) => {
-            const active = selectedReads.has(i);
-            return (
-              <Pressable
-                key={readTitle}
-                onPress={() => onToggleRead(i)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                style={({ pressed }) => [
-                  styles.readCard,
-                  {
-                    borderRadius: theme.radii.md,
-                    borderColor: active ? theme.colors.heading : theme.colors.border,
-                    backgroundColor: active
-                      ? withAlpha(theme.colors.heading, theme.isDark ? 0.16 : 0.05)
-                      : theme.colors.surface,
-                    padding: 14 * scaleSpace,
-                    gap: 4 * scaleSpace,
-                  },
-                  pressed && styles.pressed,
-                ]}
-              >
-                <View style={styles.readHead}>
-                  <Text
-                    style={[styles.readKicker, { color: theme.colors.accent, fontSize: typeScale.meta * scaleFont }]}
-                  >
-                    {t("manifesto.readKicker")}
-                  </Text>
-                  <Ionicons
-                    color={active ? theme.colors.heading : withAlpha(theme.colors.heading, 0.3)}
-                    name={active ? "checkmark-circle" : "ellipse-outline"}
-                    size={20 * scaleFont}
-                  />
-                </View>
-                <Text
-                  style={[styles.readTitle, { color: theme.colors.heading, fontSize: typeScale.title * scaleFont }]}
-                >
-                  {readTitle}
-                </Text>
-              </Pressable>
-            );
-          })}
+      {reads.length > 0 ? (
+        <View style={{ gap: 12 }}>
+          <Text
+            style={[styles.blockLabel, { color: theme.colors.textMuted, fontSize: typeScale.meta * scaleFont }]}
+          >
+            {t("manifesto.readsLabel")}
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginHorizontal: -(theme.spacing.lg * scaleSpace) }}
+            contentContainerStyle={{
+              paddingHorizontal: theme.spacing.lg * scaleSpace,
+              gap,
+            }}
+            snapToInterval={cardWidth + gap}
+            decelerationRate="fast"
+          >
+            {reads.map((item) => (
+              <View key={item.id} style={{ width: cardWidth }}>
+                <FeedHeroCard
+                  item={item}
+                  kicker={cardKicker(item, tHome)}
+                  meta={cardMeta(item, tHome, ONBOARDING_VIEWER)}
+                />
+              </View>
+            ))}
+          </ScrollView>
         </View>
-      </View>
+      ) : null}
     </View>
   );
 }
@@ -313,7 +295,7 @@ function CategoryStep({
         <Text
           style={[
             styles.title,
-            { color: theme.colors.heading, fontSize: (isTablet ? 30 : 26) * scaleFont },
+            { color: theme.colors.heading, fontSize: (isTablet ? 32 : 28) * scaleFont },
           ]}
         >
           {t("categories.title")}
@@ -338,19 +320,20 @@ function PremiumStep() {
   const badgeSize = 40 * scaleSpace;
 
   return (
-    <View style={{ gap: 18 }}>
+    <View style={{ gap: 20 }}>
       <View style={{ gap: 12 }}>
         <Kicker label={t("premium.kicker")} tone={theme.colors.premium} />
         <Text
           style={[
             styles.title,
-            { color: theme.colors.heading, fontSize: (isTablet ? 34 : 30) * scaleFont },
+            {
+              color: theme.colors.heading,
+              fontSize: (isTablet ? 40 : 34) * scaleFont,
+              lineHeight: (isTablet ? 44 : 38) * scaleFont,
+            },
           ]}
         >
-          {t("premium.title")}{" "}
-          <Text style={[styles.titleAccent, { color: theme.colors.premium }]}>
-            {t("premium.titleAccent")}
-          </Text>
+          {t("premium.title")}
         </Text>
         <Text
           style={[styles.body, { color: theme.colors.textMuted, fontSize: typeScale.body * scaleFont }]}
@@ -474,14 +457,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
-  readCard: { borderWidth: StyleSheet.hairlineWidth },
-  readHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  readKicker: {
-    fontFamily: fontFamilies.mono,
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-  },
-  readTitle: { fontFamily: fontFamilies.display, lineHeight: 23 },
   benefitRow: { flexDirection: "row", alignItems: "center" },
   benefitBadge: { alignItems: "center", justifyContent: "center", flexShrink: 0 },
   benefit: { fontFamily: fontFamilies.bodyMedium, flex: 1, lineHeight: 24 },

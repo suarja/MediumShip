@@ -1,21 +1,10 @@
 export default {
   skip: "Passer",
   manifesto: {
-    kicker: "Pourquoi ce fil",
     title: "La plupart des fils te font réagir.",
     titleAccent: "Celui-ci te fait réfléchir.",
     body: "Les réseaux optimisent l'indignation : leurs algorithmes poussent ce qui rend viral — la colère, le clash — et t'enferment dans ta bulle. C'est le réflexe : rapide, émotionnel. Ici, on ralentit.",
     readsLabel: "Commence par ces lectures",
-    readKicker: "À lire",
-    // Placeholder reads — replaced at implementation by the curated
-    // "Pourquoi ce fil" collection.
-    placeholderReads: [
-      "L'indignation morale, carburant des algorithmes",
-      "Homophilie : comment ta bulle se referme",
-      "Système 1 / Système 2 : penser vite, penser lentement",
-      "L'économie de l'attention",
-      "La viralité contre la nuance",
-    ],
     cta: "Commencer",
   },
   categories: {
@@ -25,9 +14,8 @@ export default {
   },
   premium: {
     kicker: "◉ Premium — gratuit pour l'instant",
-    title: "Va plus loin,",
-    titleAccent: "sans payer.",
-    subtitle: "Tout ce que le compte gratuit ouvre, en plus complet.",
+    title: "Approfondis chaque lecture.",
+    subtitle: "Une lecture du jour qui interprète ce que tu lis et t'indique quoi explorer ensuite — plus le hors-ligne, les listes et le salon membres.",
     benefits: [
       "Ta lecture du jour, chaque matin",
       "Lecture hors-ligne",

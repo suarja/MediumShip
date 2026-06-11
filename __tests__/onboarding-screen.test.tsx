@@ -77,9 +77,9 @@ describe("onboarding screen", () => {
   it("walks through the three steps", () => {
     render(<OnboardingScreen />);
 
-    // Step 1 — manifesto + thesis reads (accent half is its own Text node)
+    // Step 1 — manifesto (accent half is its own Text node; reads carousel is
+    // empty when the feed query returns nothing)
     expect(screen.getByText("Celui-ci te fait réfléchir.")).toBeTruthy();
-    expect(screen.getByText("L'économie de l'attention")).toBeTruthy();
 
     fireEvent.press(screen.getByText("Commencer"));
 
@@ -88,8 +88,8 @@ describe("onboarding screen", () => {
 
     fireEvent.press(screen.getByText("Continuer"));
 
-    // Step 3 — premium
-    expect(screen.getByText("sans payer.")).toBeTruthy();
+    // Step 3 — premium (benefit-led title, "free" moved to text)
+    expect(screen.getByText("Approfondis chaque lecture.")).toBeTruthy();
     expect(screen.getByText("Essayer Premium")).toBeTruthy();
   });
 

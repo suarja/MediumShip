@@ -96,6 +96,7 @@ jest.mock("react-native-purchases", () => ({
     purchasePackage: jest.fn(),
     restorePurchases: jest.fn().mockResolvedValue({ entitlements: { active: {} } }),
     getCustomerInfo: jest.fn().mockResolvedValue({ entitlements: { active: {} } }),
+    showManageSubscriptions: jest.fn().mockResolvedValue(undefined),
   },
   PURCHASES_ERROR_CODE: {
     PURCHASE_CANCELLED_ERROR: "PURCHASE_CANCELLED_ERROR",

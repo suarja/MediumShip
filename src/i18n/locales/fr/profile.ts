@@ -83,8 +83,8 @@ export default {
       subMemberEmpty: "Tes lectures du jour",
     },
     subscription: {
-      title: "Abonnement · Annuel",
-      sub: "Details de facturation a venir",
+      title: "Abonnement Premium",
+      sub: "Gérer ou résilier ton abonnement",
     },
     goPremium: {
       title: "Passer Premium",

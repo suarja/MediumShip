@@ -315,6 +315,23 @@ export async function restorePurchases(): Promise<RestoreResult> {
   }
 }
 
+/**
+ * Opens the native store subscription-management screen (App Store / Play).
+ * No-op on web / unsupported platforms. Mirrors Editia's `manageSubscriptions`.
+ */
+export async function openManageSubscriptions(): Promise<void> {
+  if (!isNativePurchasesAvailable) {
+    return;
+  }
+  try {
+    await Purchases.showManageSubscriptions();
+  } catch (error) {
+    logBilling("manage_subscriptions.error", {
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
 /** Test-only reset for module configure state. */
 export function resetPurchasesForTests(): void {
   configuredForClerkId = null;

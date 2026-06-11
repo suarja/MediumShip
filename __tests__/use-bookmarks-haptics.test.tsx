@@ -23,6 +23,10 @@ jest.mock("convex/react", () => ({
   useQuery: () => [],
 }));
 
+jest.mock("../src/features/review/review-service", () => ({
+  requestReview: jest.fn(),
+}));
+
 jest.mock("../src/features/membership/use-is-member", () => ({
   useIsMember: () => ({ isMember: false, isLoading: false }),
 }));

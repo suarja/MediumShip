@@ -6,6 +6,7 @@ import { HapticsService } from "../../features/haptics/haptics";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
+import { typeScale } from "../../features/theme/type-scale";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 type Props = {
@@ -57,7 +58,11 @@ export function MembershipThanksSheet({ visible, onDismiss }: Props) {
             <Text
               style={[
                 styles.title,
-                { color: theme.colors.heading, fontSize: (isTablet ? 24 : 22) * scaleFont },
+                {
+                  color: theme.colors.heading,
+                  fontSize:
+                    (isTablet ? typeScale.sheetTitleTablet : typeScale.sheetTitle) * scaleFont,
+                },
               ]}
             >
               {t("thanks.title")}
@@ -66,7 +71,7 @@ export function MembershipThanksSheet({ visible, onDismiss }: Props) {
             <Text
               style={[
                 styles.bodyText,
-                { color: theme.colors.textMuted, fontSize: (isTablet ? 14 : 13) * scaleFont },
+                { color: theme.colors.textMuted, fontSize: typeScale.body * scaleFont },
               ]}
             >
               {t("thanks.body")}
@@ -79,7 +84,7 @@ export function MembershipThanksSheet({ visible, onDismiss }: Props) {
                     <Text
                       style={[
                         styles.checkmark,
-                        { color: theme.colors.premium, fontSize: 10 * scaleFont },
+                        { color: theme.colors.premium, fontSize: 12 * scaleFont },
                       ]}
                     >
                       ✓
@@ -87,7 +92,7 @@ export function MembershipThanksSheet({ visible, onDismiss }: Props) {
                     <Text
                       style={[
                         styles.benefitLabel,
-                        { color: theme.colors.text, fontSize: (isTablet ? 14 : 12) * scaleFont },
+                        { color: theme.colors.text, fontSize: typeScale.body * scaleFont },
                       ]}
                     >
                       {benefit}
@@ -116,7 +121,10 @@ export function MembershipThanksSheet({ visible, onDismiss }: Props) {
               <Text
                 style={[
                   styles.primaryCtaLabel,
-                  { color: theme.colors.canvas, fontSize: (isTablet ? 14 : 13) * scaleFont },
+                  {
+                    color: theme.colors.canvas,
+                    fontSize: (isTablet ? typeScale.ctaTablet : typeScale.cta) * scaleFont,
+                  },
                 ]}
               >
                 {t("thanks.cta")}
@@ -165,7 +173,7 @@ const styles = StyleSheet.create({
   },
   bodyText: {
     fontFamily: fontFamilies.body,
-    lineHeight: 20,
+    lineHeight: 24,
   },
   benefits: {
     width: "100%",
@@ -177,12 +185,12 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     fontFamily: fontFamilies.mono,
-    width: 14,
+    width: 16,
   },
   benefitLabel: {
     fontFamily: fontFamilies.body,
     flex: 1,
-    lineHeight: 18,
+    lineHeight: 22,
   },
   primaryCta: {
     alignItems: "center",

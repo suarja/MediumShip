@@ -51,6 +51,10 @@ The mockup uses CSS custom properties; the app uses theme tokens from
   re-check contrast against it. `isDark` is on the theme.
 - Fonts are weight-specific families (`displayBold`, `bodySemiBold`, …); set the
   weight by picking the family, not `fontWeight`. See `src/features/theme/fonts.ts`.
+- **Type sizes:** use `typeScale` (`src/features/theme/type-scale.ts`) ×
+  `scaleFont` from `useResponsive`. Do **not** copy mockup px literally when
+  they are ≤11 — bump for legibility. Floors and roles:
+  `docs/agents/typography.md`.
 
 ## 3. Reusable layout patterns already in the code
 

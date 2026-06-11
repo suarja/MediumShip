@@ -1,9 +1,5 @@
 ## Agent skills
 
-### Working workflow (slices & agents)
-
-The **orchestrator (planning) agent NEVER implements** — it brainstorms (activating the relevant skills itself), plans a slice, hands a concise prompt to an **implementing agent** (Claude sub-agent → Sonnet 4.6, or Cursor Composer → Composer 2.5), then verifies + merges to `dev`. Full method: see `docs/agents/slice-workflow.md`.
-
 ### Issue tracker
 
 Issues are tracked in GitHub Issues for this repo. Use `gh` CLI workflows as the default interface. See `docs/agents/issue-tracker.md`.
@@ -33,6 +29,7 @@ Priority order:
 ### Mobile foundation rules
 
 - **Never hardcode colors. Ever.** Every color must come from the active theme tokens (`theme.colors.*` via `useAppTheme()`), never a literal hex/rgba in a component. The palette is user-selectable in Settings and includes a dark `midnight` palette, so do not assume a token is light or dark — pair backgrounds and foregrounds from tokens that move together (e.g. `heading` background ↔ `canvas` foreground, `accent` ↔ `accentContrast`). For translucent variants use the `withAlpha(theme.colors.x, a)` helper, not a literal `rgba(...)`. If a needed color is missing, add a token to every palette in `src/features/theme/palette-catalog.ts`. Verify against all palettes (especially `midnight`) before declaring done. Fonts likewise come from the centralized theme `fontFamilies`.
+- **Do not ship tiny type.** Use `typeScale` from `src/features/theme/type-scale.ts` × `scaleFont` from `useResponsive()` — never ad-hoc `fontSize` below **12pt** for readable UI (list rows ≥17 title / ≥14 caption, body ≥16, sheets ≥26 title). Agents consistently go too small (10–13pt); when in doubt, go **one step larger**, not smaller. Full rules: `docs/agents/typography.md`.
 - For Clerk + Convex in Expo, prefer the proven `ConvexProviderWithClerk` pattern over a plain `ConvexProvider` when authenticated queries are involved.
 - **Clerk session ≠ Convex auth.** `useClerkAuth().isSignedIn` is for guest/member UI only. Hooks that read or write protected `convex/**` functions must use **`useConvexAuth()`** from `convex/react` (`isAuthenticated`, `isLoading`). See `docs/bugs/2026-06-07-clerk-vs-convex-auth-member-writes.md`.
 - **Clerk session ≠ Convex auth.** `useClerkAuth().isSignedIn` is for guest/member UI only. Hooks that read or write protected `convex/**` functions must use **`useConvexAuth()`** from `convex/react` (`isAuthenticated`, `isLoading`). See `docs/bugs/2026-06-07-clerk-vs-convex-auth-member-writes.md`.

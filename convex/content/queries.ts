@@ -3,17 +3,37 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import { isEditorialContent } from "./source";
 
+/** Bounded sample for tag-frequency trending (heuristic, not exhaustive). */
+const TRENDING_SAMPLE_SIZE = 400;
+/** Bounded field-wide scan for search beyond the title search index. */
+const SEARCH_FIELD_SCAN_LIMIT = 600;
+
 export const listPublishedFeed = query({
   args: { tenantSlug: v.string() },
   handler: async (ctx, args) => {
-    const published = await ctx.db
-      .query("contents")
-      .withIndex("by_tenant_and_status", (q) =>
-        q.eq("tenantSlug", args.tenantSlug).eq("status", "published"),
-      )
-      .collect();
+    // Editorial = CMS (or legacy rows with no `source`). Read those directly via
+    // the source index instead of scanning the full published corpus: Wikipedia/
+    // YouTube/RSS ingestion makes that corpus unbounded (~14MB), while editorial
+    // content is bounded by human curation (a handful of rows).
+    const [cms, legacy] = await Promise.all([
+      ctx.db
+        .query("contents")
+        .withIndex("by_tenant_source_external", (q) =>
+          q.eq("tenantSlug", args.tenantSlug).eq("source", "cms"),
+        )
+        .collect(),
+      ctx.db
+        .query("contents")
+        .withIndex("by_tenant_source_external", (q) =>
+          q.eq("tenantSlug", args.tenantSlug).eq("source", undefined),
+        )
+        .collect(),
+    ]);
 
-    return published.filter(isEditorialContent);
+    return [...cms, ...legacy].filter(
+      (content) =>
+        content.status === "published" && isEditorialContent(content),
+    );
   },
 });
 
@@ -66,7 +86,7 @@ export const searchPublished = query({
       .withIndex("by_tenant_and_status", (q) =>
         q.eq("tenantSlug", args.tenantSlug).eq("status", "published"),
       )
-      .take(2000);
+      .take(SEARCH_FIELD_SCAN_LIMIT);
 
     const seen = new Set<string>();
     const results: typeof titleHits = [];
@@ -94,7 +114,7 @@ export const getTrendingTopics = query({
       .withIndex("by_tenant_and_status", (q) =>
         q.eq("tenantSlug", args.tenantSlug).eq("status", "published"),
       )
-      .take(1000);
+      .take(TRENDING_SAMPLE_SIZE);
 
     const counts = new Map<string, number>();
     for (const content of sample) {

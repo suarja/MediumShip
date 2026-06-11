@@ -158,6 +158,63 @@ describe("editorial source isolation", () => {
     );
   });
 
+  it("reads editorial directly by source index, not by scanning the full corpus", async () => {
+    const t = convexTest(schema, modules);
+
+    await t.run(async (ctx) => {
+      // A large discovery corpus (the thing that made the old full-scan ~14MB).
+      for (let i = 0; i < 60; i += 1) {
+        await ctx.db.insert("contents", {
+          tenantSlug: "demo-media",
+          kind: "article",
+          status: "published",
+          slug: `wiki-${i}`,
+          title: `Wiki ${i}`,
+          summary: "Discovery only",
+          category: "science",
+          tags: [],
+          isPremium: false,
+          source: "wikipedia",
+          externalId: `w-${i}`,
+          canonicalUrl: `https://en.wikipedia.org/wiki/Example_${i}`,
+        });
+      }
+      // Two editorial rows (cms + legacy/no-source).
+      await ctx.db.insert("contents", {
+        tenantSlug: "demo-media",
+        kind: "article",
+        status: "published",
+        slug: "editorial-cms",
+        title: "Editorial CMS",
+        summary: "",
+        category: "Analyses",
+        tags: [],
+        isPremium: false,
+        source: "cms",
+      });
+      await ctx.db.insert("contents", {
+        tenantSlug: "demo-media",
+        kind: "article",
+        status: "published",
+        slug: "editorial-legacy",
+        title: "Editorial legacy",
+        summary: "",
+        category: "Analyses",
+        tags: [],
+        isPremium: false,
+      });
+    });
+
+    const feed = await t.query(api.content.queries.listPublishedFeed, {
+      tenantSlug: "demo-media",
+    });
+
+    // Only the 2 editorial rows surface, regardless of the 60-row discovery corpus.
+    expect(feed.map((item) => item.title).sort()).toEqual(
+      ["Editorial CMS", "Editorial legacy"].sort(),
+    );
+  });
+
   it("ranks the most frequent tags as trending topics", async () => {
     const t = convexTest(schema, modules);
 

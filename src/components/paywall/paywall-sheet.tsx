@@ -228,9 +228,37 @@ export function PaywallSheet({
             {isSignedIn ? (
               <>
                 {isPremium ? (
-                  <Text style={[styles.statusBody, { color: theme.colors.accent, fontSize: 13 * scaleFont }]}>
-                    {t("alreadySubscribed")}
-                  </Text>
+                  <View style={[styles.alreadyPremiumBlock, { gap: 12 * scaleSpace }]}>
+                    <Text style={[styles.statusBody, { color: theme.colors.accent, fontSize: 13 * scaleFont }]}>
+                      {t("alreadySubscribed")}
+                    </Text>
+                    <Pressable
+                      accessibilityRole="button"
+                      testID="paywall-already-premium-cta"
+                      onPress={() => {
+                        void HapticsService.medium();
+                        onDismiss();
+                      }}
+                      style={({ pressed }) => [
+                        styles.primaryCta,
+                        {
+                          borderRadius: theme.radii.pill,
+                          backgroundColor: theme.colors.heading,
+                          paddingVertical: 14 * scaleSpace,
+                        },
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.primaryCtaLabel,
+                          { color: theme.colors.canvas, fontSize: (isTablet ? 14 : 13) * scaleFont },
+                        ]}
+                      >
+                        {t("alreadyPremiumCta")}
+                      </Text>
+                    </Pressable>
+                  </View>
                 ) : purchasesSupported ? (
                   <>
                     {sortedPackages.length > 0 ? (
@@ -341,7 +369,7 @@ export function PaywallSheet({
                   </View>
                 )}
 
-                {statusMessage ? (
+                {!isPremium && statusMessage ? (
                   <Text
                     style={[
                       styles.statusBody,
@@ -504,6 +532,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   offeringErrorBlock: {
+    alignItems: "center",
+  },
+  alreadyPremiumBlock: {
     alignItems: "center",
   },
   dismissLabel: {

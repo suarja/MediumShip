@@ -43,8 +43,9 @@ jest.mock("../src/features/theme/theme-provider", () => ({
   }),
 }));
 
+const mockUseIsMember = jest.fn(() => ({ isMember: false, isLoading: false }));
 jest.mock("../src/features/membership/use-is-member", () => ({
-  useIsMember: () => ({ isMember: false, isLoading: false }),
+  useIsMember: () => mockUseIsMember(),
 }));
 
 const mockPackage = {
@@ -101,7 +102,9 @@ describe("PaywallSheet", () => {
     );
     expect(screen.getAllByText(/Offline download/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Unlimited offline downloads/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Playback progress synced/i).length).toBeGreaterThan(0);
+    // Sync benefit replaced — "daily read" perk now shown instead
+    expect(screen.getAllByText(/Your daily read/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Playback progress synced/i)).toBeNull();
   });
 
   it("shows sign-in CTA for guest (not signed in)", () => {
@@ -185,5 +188,70 @@ describe("PaywallSheet", () => {
       />,
     );
     expect(screen.getByText(/The care economy/i)).toBeTruthy();
+  });
+
+});
+
+// Separate describe block with isPremium: true override
+describe("PaywallSheet — already-premium state", () => {
+  const dismissMock = jest.fn();
+
+  beforeAll(async () => {
+    await initI18n();
+  });
+
+  beforeEach(async () => {
+    dismissMock.mockClear();
+    await changeAppLanguage("en");
+  });
+
+  // Override the useIsMember mock for this suite only
+  beforeEach(() => {
+    mockUseIsMember.mockReturnValue({ isMember: true, isLoading: false });
+  });
+
+  afterEach(() => {
+    mockUseIsMember.mockReturnValue({ isMember: false, isLoading: false });
+  });
+
+  it("shows already-subscribed message and Access content CTA when isPremium", () => {
+    render(
+      <PaywallSheet
+        visible
+        reason="support"
+        isSignedIn
+        onDismiss={dismissMock}
+      />,
+    );
+    expect(screen.getAllByText(/already have an active Premium/i).length).toBeGreaterThan(0);
+    expect(screen.getByTestId("paywall-already-premium-cta")).toBeTruthy();
+    expect(screen.queryByTestId("paywall-purchase-cta")).toBeNull();
+  });
+
+  it("calls onDismiss when already-premium CTA is pressed", () => {
+    render(
+      <PaywallSheet
+        visible
+        reason="support"
+        isSignedIn
+        onDismiss={dismissMock}
+      />,
+    );
+    fireEvent.press(screen.getByTestId("paywall-already-premium-cta"));
+    expect(dismissMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not show statusMessage when isPremium (no duplicate alreadySubscribed)", () => {
+    render(
+      <PaywallSheet
+        visible
+        reason="support"
+        isSignedIn
+        onDismiss={dismissMock}
+      />,
+    );
+    // "alreadySubscribed" text appears exactly once (in the already-premium block), not twice
+    const instances = screen.queryAllByText(/already have an active Premium/i);
+    expect(instances.length).toBe(1);
   });
 });

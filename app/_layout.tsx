@@ -17,6 +17,7 @@ import {
   PersistentMediaPlayerProvider,
 } from "../src/features/media/persistent-media-player";
 import { ContentActionsSheetProvider } from "../src/features/content/content-actions-sheet-provider";
+import { GuestInterestsSync } from "../src/features/categories/use-guest-interests-sync";
 import { PurchasesBootstrap } from "../src/features/billing/purchases-bootstrap";
 import { PaywallSheetProvider } from "../src/features/paywall/paywall-sheet-provider";
 import { NetworkStatusDebugProvider } from "../src/features/network/use-network-status";
@@ -101,6 +102,7 @@ export default function RootLayout() {
           <PurchasesBootstrap />
           <NetworkStatusDebugProvider>
             <AppThemeProvider>
+              <GuestInterestsSync />
               <PersistentMediaPlayerProvider>
                 <PaywallSheetProvider>
                   <ContentActionsSheetProvider>

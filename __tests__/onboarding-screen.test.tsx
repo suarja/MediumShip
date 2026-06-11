@@ -41,6 +41,12 @@ jest.mock("../src/features/auth/use-clerk-auth", () => ({
   useClerkAuth: () => ({ isSignedIn: false }),
 }));
 
+jest.mock("../src/features/categories/guest-category-interests", () => ({
+  getGuestCategoryInterests: jest.fn().mockResolvedValue([]),
+  setGuestCategoryInterests: jest.fn().mockResolvedValue(undefined),
+  clearGuestCategoryInterests: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock("react-native-safe-area-context", () => {
   const React = require("react");
   const { View } = require("react-native");

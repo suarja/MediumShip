@@ -19,10 +19,8 @@ import { FeedHeroCard } from "../src/components/content/feed-hero-card";
 import { cardKicker, cardMeta } from "../src/features/content/card-presentation";
 import { toContentCardModel } from "../src/features/content/selectors";
 import type { ContentDoc } from "../src/features/content/types";
-import {
-  useCategoryInterests,
-  useCategoryInterestTreeNodes,
-} from "../src/features/categories/use-category-interests";
+import { useCategoryInterestSelection } from "../src/features/categories/use-category-interest-selection";
+import { useCategoryInterestTreeNodes } from "../src/features/categories/use-category-interests";
 import { getDefaultAppRoute } from "../src/features/navigation/default-app-route";
 import { setOnboardingSeen } from "../src/features/onboarding/onboarding-storage";
 import { HapticsService } from "../src/features/haptics/haptics";
@@ -42,9 +40,6 @@ export default function OnboardingScreen() {
   const router = useRouter();
 
   const [step, setStep] = useState(0);
-  // Category selection survives back/forward within the flow. Tranche 1:
-  // in-session only — guest-local persistence + sync land later.
-  const [categoryKeys, setCategoryKeys] = useState<Set<string>>(new Set());
 
   const finish = useCallback(
     async (target: "feed" | "sign-in") => {
@@ -65,10 +60,6 @@ export default function OnboardingScreen() {
     void HapticsService.light();
     setStep((s) => Math.max(s - 1, 0));
   };
-
-  const applyCategoryKeys = useCallback(async (keys: ReadonlySet<string>) => {
-    setCategoryKeys(new Set(keys));
-  }, []);
 
   const maxWidth = contentMaxWidth ?? (isTablet ? 640 : undefined);
 
@@ -149,7 +140,7 @@ export default function OnboardingScreen() {
           {step === 0 ? (
             <ManifestoStep />
           ) : step === 1 ? (
-            <CategoryStep selectedKeys={categoryKeys} applyCategoryKeys={applyCategoryKeys} />
+            <CategoryStep />
           ) : (
             <PremiumStep />
           )}
@@ -276,17 +267,11 @@ function ManifestoStep() {
   );
 }
 
-function CategoryStep({
-  selectedKeys,
-  applyCategoryKeys,
-}: {
-  selectedKeys: Set<string>;
-  applyCategoryKeys: (keys: ReadonlySet<string>) => Promise<void>;
-}) {
+function CategoryStep() {
   const { t } = useTranslation("onboarding");
   const { theme } = useAppTheme();
   const { isTablet, scaleFont } = useResponsive();
-  const { options } = useCategoryInterests();
+  const { options, selectedKeys, applyCategoryInterests } = useCategoryInterestSelection();
   const treeNodes = useCategoryInterestTreeNodes();
 
   return (
@@ -307,7 +292,7 @@ function CategoryStep({
         options={options}
         treeNodes={treeNodes}
         selectedKeys={selectedKeys}
-        applyCategoryInterests={applyCategoryKeys}
+        applyCategoryInterests={applyCategoryInterests}
         size="large"
       />
     </View>

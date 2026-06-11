@@ -222,8 +222,8 @@ const FEATURE_DEFINITIONS: FeatureDefinition[] = [
   },
   {
     key: "premiumInsights",
-    label: "Analyse de goûts",
-    desc: "Analyse premium quotidienne et sélection connexe.",
+    label: "Ta lecture du jour",
+    desc: "Analyse de goûts premium quotidienne + sélection connexe.",
     nature: "capability",
     group: "Capacités membres",
     lockAccess: true,

@@ -23,7 +23,9 @@ jest.mock("../src/features/media/persistent-media-player", () => ({
 }));
 
 jest.mock("convex/react", () => ({
-  useQuery: () => undefined,
+  // Explore's only useQuery is getTrendingTopics; return one real topic so the
+  // (now real-data-only) "Cette semaine" section renders.
+  useQuery: () => ({ topics: [{ tag: "care-economy" }] }),
   useMutation: () => jest.fn(),
 }));
 
@@ -98,11 +100,11 @@ describe("explore screen", () => {
   it("prefills search when a trend chip is pressed", async () => {
     render(<ExploreScreen />);
 
-    fireEvent.press(screen.getByText("Care economy"));
+    fireEvent.press(screen.getByText("care economy"));
 
     expect(HapticsService.selection).toHaveBeenCalledTimes(1);
     await waitFor(() =>
-      expect(mockUseSearch).toHaveBeenLastCalledWith("Care economy"),
+      expect(mockUseSearch).toHaveBeenLastCalledWith("care economy"),
     );
   });
 

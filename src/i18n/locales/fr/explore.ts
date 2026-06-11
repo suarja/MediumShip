@@ -37,13 +37,6 @@ export default {
       meta: "Discord et cercles",
     },
   },
-  trends: {
-    programme2027: "Programme 2027",
-    localDemocracy: "Démocratie locale",
-    careEconomy: "Économie du soin",
-    purchasingPower: "Pouvoir d'achat",
-    leaBardin: "Léa Bardin",
-  },
   category: {
     backToExplore: "Retour vers Explorer",
     loading: "Chargement de la catégorie…",

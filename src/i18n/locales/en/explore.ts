@@ -37,13 +37,6 @@ export default {
       meta: "Discord and circles",
     },
   },
-  trends: {
-    programme2027: "Programme 2027",
-    localDemocracy: "Local democracy",
-    careEconomy: "Care economy",
-    purchasingPower: "Purchasing power",
-    leaBardin: "Lea Bardin",
-  },
   category: {
     backToExplore: "Back to Explore",
     loading: "Loading category…",

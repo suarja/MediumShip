@@ -38,14 +38,6 @@ const ALL_MODULE_ITEMS: Array<{ key: FeatureKey; href: string }> = [
   { key: "community", href: "/community" },
 ];
 
-const TREND_KEYS = [
-  "programme2027",
-  "localDemocracy",
-  "careEconomy",
-  "purchasingPower",
-  "leaBardin",
-] as const;
-
 export default function ExploreScreen() {
   const { t } = useTranslation("explore");
   const { theme, featureConfigs, tenantSlug } = useAppTheme();
@@ -69,13 +61,15 @@ export default function ExploreScreen() {
     tenantSlug,
   });
 
+  // Only real trending topics — no fabricated seed list. The section hides
+  // itself when the backend has nothing to surface.
   const trendItems =
     trending && trending.topics.length > 0
       ? trending.topics.map((topic) => ({
           id: topic.tag,
           label: topic.tag.replace(/-/g, " "),
         }))
-      : TREND_KEYS.map((key) => ({ id: key, label: t(`trends.${key}`) }));
+      : [];
 
   const isSearchActive = searchQuery.trim().length > 0;
 
@@ -281,6 +275,7 @@ export default function ExploreScreen() {
               </ExploreSection>
             ) : null}
 
+            {trendItems.length > 0 ? (
             <ExploreSection>
               <SectionHeader label={t("trendsTitle")} italic />
               <View style={[styles.trendRow, { gap: theme.spacing.sm * scaleSpace }]}>
@@ -321,6 +316,7 @@ export default function ExploreScreen() {
                 ))}
               </View>
             </ExploreSection>
+            ) : null}
           </>
         )}
       </ScrollView>

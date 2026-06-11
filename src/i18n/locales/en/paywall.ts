@@ -2,24 +2,27 @@ export default {
   reasons: {
     offline: {
       eyebrow: "◉ Offline download · Premium",
-      title: "Listen everywhere,",
+      title: "Listen everywhere, ",
       titleItalic: "even without signal.",
       description:
         "Offline downloads are reserved for Premium members. Online playback stays free.",
+      dismissCta: "KEEP LISTENING ONLINE — FREE",
     },
     lists: {
       eyebrow: "◉ Unlimited lists · Premium",
-      title: "Organise",
+      title: "Organise ",
       titleItalic: "without limits.",
       description:
-        "Unlimited personal lists and multi-device sync are Premium-only.",
+        "Unlimited personal lists are Premium-only.",
+      dismissCta: "CONTINUE WITHOUT LISTS — FREE",
     },
     members: {
       eyebrow: "◉ Members room · Premium",
-      title: "Go behind",
+      title: "Go behind ",
       titleItalic: "the scenes.",
       description:
         "The members room (AMAs, votes, backstage) is reserved for Premium subscribers.",
+      dismissCta: "EXPLORE FOR FREE",
     },
     content: {
       eyebrow: "◉ Premium content",
@@ -27,6 +30,7 @@ export default {
       titleItalic: "Access everything.",
       description:
         "This content is reserved for Premium members. Your subscription funds editorial work.",
+      dismissCta: "CONTINUE WITHOUT THIS CONTENT — FREE",
     },
     support: {
       eyebrow: "◉ Premium access",
@@ -34,18 +38,45 @@ export default {
       titleItalic: "Receive more.",
       description:
         "All content, offline mode, personal lists and the members room.",
+      dismissCta: "LATER — CONTINUE FREE",
     },
   },
   benefits: [
     "Unlimited offline downloads",
-    "Playback progress synced across devices",
+    "Your daily read, every morning",
     "Unlimited personal lists + members room",
   ],
   signInCta: "Sign in to continue",
   becomeMemberCta: "Become a member",
-  dismissCta: "LATER — CONTINUE FREE",
+  purchaseCtaWithPrice: "Become a member · {{price}}",
+  purchaseCta: "Start Premium — {{price}}/month",
+  purchaseCtaFallback: "Become a member",
+  packageBestValue: "Best value",
+  trialNote: "2-week free trial, then billed monthly. Cancel anytime.",
+  restoreCta: "Restore purchases",
+  purchasing: "Processing…",
+  purchaseSuccess: "Welcome to Premium! Your access will unlock in a moment.",
+  purchaseCancelled: "Purchase cancelled.",
+  purchaseError: "Purchase failed. Please try again.",
+  alreadySubscribed: "You already have an active Premium subscription.",
+  alreadyPremiumCta: "Access content",
+  restoreSuccess: "Purchases restored. Your access will unlock in a moment.",
+  restoreError: "No active subscription found.",
+  webPurchaseHint:
+    "In-app purchase isn't available on web. Open the iOS or Android app (dev build) to subscribe.",
+  offeringUnavailable: "Premium offer is unavailable right now.",
+  offeringRetryCta: "Try again",
+  loadingOffering: "Loading offer…",
+  packageMonthly: "Monthly",
+  packageAnnual: "Annual",
+  packageLifetime: "Lifetime",
+  packageTrialFree: "Free trial included",
+  packageTrialIntro: "Trial at {{price}}",
+  celebrationTitle: "Yeah!",
+  celebrationBody: "Welcome to Premium. Your access unlocks right away.",
+  celebrationCta: "Let's go",
   pendingTitle: "Membership not yet active",
   pendingBody:
-    "Your account is connected but membership hasn’t been activated yet. It is enabled by the team.",
+    "Your account is connected but membership hasn't been activated yet. It is enabled by the team.",
   crestFallback: "M",
 } as const;

@@ -49,40 +49,12 @@ describe("resolveAccessBadge", () => {
     });
   });
 
-  describe("premium access with PREMIUM_PAYMENT_DEFERRED", () => {
-    it("hides the badge for everyone while payment is deferred", () => {
-      expect(featureAccess.PREMIUM_PAYMENT_DEFERRED).toBe(true);
-
-      expect(
-        resolveAccessBadge({
-          access: "premium",
-          isAuthenticated: false,
-          isPro: false,
-        }),
-      ).toEqual({ show: false });
-
-      expect(
-        resolveAccessBadge({
-          access: "premium",
-          isAuthenticated: true,
-          isPro: false,
-        }),
-      ).toEqual({ show: false });
-    });
-  });
-
-  describe("premium access when payment is enforced", () => {
-    afterEach(() => {
-      jest.restoreAllMocks();
+  describe("premium access with real entitlement gating (PREMIUM_PAYMENT_DEFERRED=false)", () => {
+    it("confirms real gating is active", () => {
+      expect(featureAccess.PREMIUM_PAYMENT_DEFERRED).toBe(false);
     });
 
-    it("shows a premium badge for guests and non-pro members", () => {
-      jest.spyOn(featureAccess, "canAccessFeatureLevel").mockImplementation((access, ctx) => {
-        if (access === "free") return true;
-        if (access === "member") return ctx.isAuthenticated;
-        return ctx.isPro;
-      });
-
+    it("shows a premium badge for guests (not pro)", () => {
       expect(
         resolveAccessBadge({
           access: "premium",
@@ -90,7 +62,9 @@ describe("resolveAccessBadge", () => {
           isPro: false,
         }),
       ).toEqual({ show: true, level: "premium" });
+    });
 
+    it("shows a premium badge for signed-in members without pro entitlement", () => {
       expect(
         resolveAccessBadge({
           access: "premium",
@@ -100,13 +74,7 @@ describe("resolveAccessBadge", () => {
       ).toEqual({ show: true, level: "premium" });
     });
 
-    it("hides the badge for pro members", () => {
-      jest.spyOn(featureAccess, "canAccessFeatureLevel").mockImplementation((access, ctx) => {
-        if (access === "free") return true;
-        if (access === "member") return ctx.isAuthenticated;
-        return ctx.isPro;
-      });
-
+    it("hides the badge for pro subscribers", () => {
       expect(
         resolveAccessBadge({
           access: "premium",

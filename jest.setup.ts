@@ -86,6 +86,27 @@ jest.mock("expo-audio", () => ({
   }),
 }));
 
+jest.mock("react-native-purchases", () => ({
+  __esModule: true,
+  default: {
+    configure: jest.fn().mockResolvedValue(undefined),
+    setLogLevel: jest.fn(),
+    logIn: jest.fn().mockResolvedValue({ customerInfo: { entitlements: { active: {} } } }),
+    getOfferings: jest.fn().mockResolvedValue({ current: null, all: {} }),
+    purchasePackage: jest.fn(),
+    restorePurchases: jest.fn().mockResolvedValue({ entitlements: { active: {} } }),
+    getCustomerInfo: jest.fn().mockResolvedValue({ entitlements: { active: {} } }),
+    showManageSubscriptions: jest.fn().mockResolvedValue(undefined),
+  },
+  PURCHASES_ERROR_CODE: {
+    PURCHASE_CANCELLED_ERROR: "PURCHASE_CANCELLED_ERROR",
+  },
+  LOG_LEVEL: {
+    DEBUG: "DEBUG",
+    ERROR: "ERROR",
+  },
+}));
+
 jest.mock("@react-native-async-storage/async-storage", () =>
   require("@react-native-async-storage/async-storage/jest/async-storage-mock"),
 );

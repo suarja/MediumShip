@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { GateBadge, type GateTone } from "../library/gate-badge";
+import { openManageSubscriptions } from "../../features/billing/purchases";
 import { HapticsService } from "../../features/haptics/haptics";
 import { usePaywallSheet } from "../../features/paywall/paywall-sheet-provider";
 import { useResponsive } from "../../features/responsive/use-responsive";
@@ -185,6 +186,10 @@ export function ProfileLibraryRows({
             icon="star"
             title={t("rows.subscription.title")}
             subtitle={t("rows.subscription.sub")}
+            onPress={() => {
+              void HapticsService.medium();
+              void openManageSubscriptions();
+            }}
           />
         ) : (
           <ProfileRow

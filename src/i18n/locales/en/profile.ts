@@ -83,8 +83,8 @@ export default {
       subMemberEmpty: "Your readings of the day",
     },
     subscription: {
-      title: "Subscription · Annual",
-      sub: "Billing details coming soon",
+      title: "Premium subscription",
+      sub: "Manage or cancel your subscription",
     },
     goPremium: {
       title: "Go Premium",

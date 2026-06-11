@@ -1,39 +1,51 @@
 import { v } from "convex/values";
 
 import type { Id } from "../_generated/dataModel";
-import { mutation, type MutationCtx } from "../_generated/server";
+import { internal } from "../_generated/api";
+import { internalMutation, mutation, type MutationCtx } from "../_generated/server";
 import { requireCmsAdmin } from "../cms/authz";
 
 // WRITE ADAPTERS for the `entitlements` table.
 //
-// Today the only writer is the manual admin grant below (source: "manual"),
-// driven from the CMS Users tab — the compromise that unlocks the monetization
-// loop without wiring a payment provider yet.
-//
-// later: a `convex-revenuecat` (and optionally Stripe) webhook will upsert the
-// SAME row with source: "revenuecat" / "stripe". It should reuse `upsertEntitlement`
-// below (matching on tokenIdentifier/clerkId) so the read path never changes.
-// No mobile or gate change is required when that adapter lands.
+// Today the manual admin grant below (source: "manual") is driven from the CMS
+// Users tab. RevenueCat webhooks upsert the SAME row with source: "revenuecat"
+// via `revenuecatSync` → `upsertEntitlementInternal`, matching on
+// tokenIdentifier/clerkId so the read path never changes.
 
-async function upsertEntitlement(
+type UpsertEntitlementArgs = {
+  tokenIdentifier?: string;
+  clerkId: string;
+  isPro: boolean;
+  source: "manual" | "revenuecat" | "stripe";
+  grantedBy?: Id<"users">;
+};
+
+async function upsertEntitlementRow(
   ctx: MutationCtx,
-  args: {
-    tokenIdentifier: string;
-    clerkId: string;
-    isPro: boolean;
-    source: "manual" | "revenuecat" | "stripe";
-    grantedBy?: Id<"users">;
-  },
-) {
+  args: UpsertEntitlementArgs,
+): Promise<Id<"entitlements"> | null> {
+  let tokenIdentifier = args.tokenIdentifier;
+
+  if (!tokenIdentifier) {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", args.clerkId))
+      .unique();
+    if (!user) {
+      return null;
+    }
+    tokenIdentifier = user.tokenIdentifier;
+  }
+
   const existing = await ctx.db
     .query("entitlements")
     .withIndex("by_tokenIdentifier", (q) =>
-      q.eq("tokenIdentifier", args.tokenIdentifier),
+      q.eq("tokenIdentifier", tokenIdentifier),
     )
     .unique();
 
   const patch = {
-    tokenIdentifier: args.tokenIdentifier,
+    tokenIdentifier,
     clerkId: args.clerkId,
     isPro: args.isPro,
     source: args.source,
@@ -49,10 +61,27 @@ async function upsertEntitlement(
   return await ctx.db.insert("entitlements", patch);
 }
 
+export const upsertEntitlementInternal = internalMutation({
+  args: {
+    tokenIdentifier: v.optional(v.string()),
+    clerkId: v.string(),
+    isPro: v.boolean(),
+    source: v.union(
+      v.literal("manual"),
+      v.literal("revenuecat"),
+      v.literal("stripe"),
+    ),
+    grantedBy: v.optional(v.id("users")),
+  },
+  returns: v.union(v.id("entitlements"), v.null()),
+  handler: async (ctx, args) => upsertEntitlementRow(ctx, args),
+});
+
 // Admin-only. Grants the member entitlement to a target user (by their
 // `users._id`), writing an entitlement keyed by that user's identifiers.
 export const grantMembership = mutation({
   args: { userId: v.id("users") },
+  returns: v.object({ isPro: v.boolean() }),
   handler: async (ctx, { userId }) => {
     const admin = await requireCmsAdmin(ctx);
     const target = await ctx.db.get(userId);
@@ -60,7 +89,7 @@ export const grantMembership = mutation({
       throw new Error("User not found");
     }
 
-    await upsertEntitlement(ctx, {
+    await ctx.runMutation(internal.entitlements.mutations.upsertEntitlementInternal, {
       tokenIdentifier: target.tokenIdentifier,
       clerkId: target.clerkId,
       isPro: true,
@@ -76,6 +105,7 @@ export const grantMembership = mutation({
 // `isPro` to false).
 export const revokeMembership = mutation({
   args: { userId: v.id("users") },
+  returns: v.object({ isPro: v.boolean() }),
   handler: async (ctx, { userId }) => {
     const admin = await requireCmsAdmin(ctx);
     const target = await ctx.db.get(userId);
@@ -83,7 +113,7 @@ export const revokeMembership = mutation({
       throw new Error("User not found");
     }
 
-    await upsertEntitlement(ctx, {
+    await ctx.runMutation(internal.entitlements.mutations.upsertEntitlementInternal, {
       tokenIdentifier: target.tokenIdentifier,
       clerkId: target.clerkId,
       isPro: false,

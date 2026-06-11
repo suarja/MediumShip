@@ -8,12 +8,6 @@ export default {
     signedInTitle: "Bibliotheque",
     signedInBody:
       "Les favoris, la reprise, le hors ligne et les listes personnelles vivent ici une fois connecte.",
-    filters: {
-      all: "Tout",
-      articles: "Articles",
-      podcasts: "Podcasts",
-      offline: "Hors ligne",
-    },
     sections: {
       resume: "Reprendre",
       saved: "Favoris",

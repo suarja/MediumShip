@@ -8,12 +8,6 @@ export default {
     signedInTitle: "Library",
     signedInBody:
       "Favorites, resume state, offline copies, and personal lists live here once you are signed in.",
-    filters: {
-      all: "All",
-      articles: "Articles",
-      podcasts: "Podcasts",
-      offline: "Offline",
-    },
     sections: {
       resume: "Resume",
       saved: "Favorites",

@@ -281,35 +281,6 @@ function SignedInLibraryContent({
           <View style={styles.topBarSide} />
         </View>
 
-        <View style={[styles.filters, { marginBottom: theme.spacing.xl * scaleSpace }]}>
-          {(["all", "articles", "podcasts", "offline"] as const).map((key, index) => (
-            <View
-              key={key}
-              style={[
-                styles.filterChip,
-                {
-                  borderRadius: theme.radii.pill,
-                  borderColor:
-                    index === 0 ? theme.colors.heading : withAlpha(theme.colors.heading, 0.12),
-                  backgroundColor: index === 0 ? theme.colors.heading : "transparent",
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.filterChipLabel,
-                  {
-                    color: index === 0 ? theme.colors.canvas : theme.colors.textMuted,
-                    fontSize: 10 * scaleFont,
-                  },
-                ]}
-              >
-                {t(`library:screen.filters.${key}`)}
-              </Text>
-            </View>
-          ))}
-        </View>
-
         <ResumeSection canProgressSync={canProgressSync} />
 
         {canBookmark ? (
@@ -498,21 +469,6 @@ const styles = StyleSheet.create({
   },
   buttonPressed: {
     opacity: 0.88,
-  },
-  filters: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-  },
-  filterChip: {
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  filterChipLabel: {
-    fontFamily: fontFamilies.mono,
-    letterSpacing: 1,
-    textTransform: "uppercase",
   },
   sectionBlockFirst: {
     marginTop: 8,

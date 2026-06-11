@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
 import { Screen } from "../../src/components/layout/screen";
+import { ScreenHeader } from "../../src/components/navigation/screen-header";
 import { LibraryPersonalListRow } from "../../src/components/library/library-personal-list-row";
 import { useGoBack, usePushWithReturn } from "../../src/features/navigation/app-navigation";
 import { usePersonalLists } from "../../src/features/personal-lists/use-personal-lists";
@@ -77,41 +78,11 @@ export default function ListsScreen() {
 
   return (
     <Screen>
-      <View
-        style={[
-          styles.topBar,
-          {
-            marginHorizontal: -(theme.spacing.lg * scaleSpace),
-            paddingHorizontal: theme.spacing.lg * scaleSpace,
-          },
-        ]}
-      >
-        <Pressable
-          onPress={goBack}
-          style={styles.topBarAction}
-          accessibilityRole="button"
-          accessibilityLabel={t("lists:screen.back")}
-        >
-          <Text
-            style={[
-              styles.topBarActionGlyph,
-              { color: theme.colors.heading, fontSize: 24 * scaleFont },
-            ]}
-          >
-            ‹
-          </Text>
-        </Pressable>
-        <Text
-          style={[
-            styles.topBarTitle,
-            { color: theme.colors.heading, fontSize: 18 * scaleFont },
-          ]}
-          numberOfLines={1}
-        >
-          {t("lists:screen.title")}
-        </Text>
-        <View style={styles.topBarSide} />
-      </View>
+      <ScreenHeader
+        title={t("lists:screen.title")}
+        backLabel={t("lists:screen.back")}
+        onBack={goBack}
+      />
 
       <ScrollView
         contentContainerStyle={[
@@ -329,32 +300,6 @@ export default function ListsScreen() {
 }
 
 const styles = StyleSheet.create({
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingTop: 8,
-    paddingBottom: 12,
-  },
-  topBarAction: {
-    width: 34,
-    height: 34,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  topBarActionGlyph: {
-    fontFamily: fontFamilies.body,
-    lineHeight: 28,
-  },
-  topBarTitle: {
-    flex: 1,
-    fontFamily: fontFamilies.display,
-    letterSpacing: -0.2,
-    textAlign: "center",
-  },
-  topBarSide: {
-    width: 34,
-  },
   content: {
     paddingTop: 4,
   },

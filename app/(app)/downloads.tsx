@@ -1,22 +1,22 @@
 import { useGoBack } from "../../src/features/navigation/app-navigation";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
 import { Screen } from "../../src/components/layout/screen";
+import { ScreenHeader } from "../../src/components/navigation/screen-header";
 import { DownloadedLibrarySection } from "../../src/components/library/downloaded-library-section";
 import { LibraryOfflineLockedCard } from "../../src/components/library/library-offline-locked-card";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
 import { useIsMember } from "../../src/features/membership/use-is-member";
 import { usePaywallSheet } from "../../src/features/paywall/paywall-sheet-provider";
 import { useResponsive } from "../../src/features/responsive/use-responsive";
-import { fontFamilies } from "../../src/features/theme/fonts";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 export default function DownloadsScreen() {
   const { t } = useTranslation("library");
   const { theme } = useAppTheme();
-  const { isTablet, scaleFont, scaleSpace } = useResponsive();
+  const { isTablet, scaleSpace } = useResponsive();
   const goBack = useGoBack("/library");
   const insets = useSafeAreaInsets();
   const { isSignedIn } = useClerkAuth();
@@ -25,41 +25,11 @@ export default function DownloadsScreen() {
 
   return (
     <Screen>
-      <View
-        style={[
-          styles.topBar,
-          {
-            marginHorizontal: -(theme.spacing.lg * scaleSpace),
-            paddingHorizontal: theme.spacing.lg * scaleSpace,
-          },
-        ]}
-      >
-        <Pressable
-          onPress={goBack}
-          style={styles.topBarAction}
-          accessibilityRole="button"
-          accessibilityLabel={t("library:downloadsScreen.back")}
-        >
-          <Text
-            style={[
-              styles.topBarActionGlyph,
-              { color: theme.colors.heading, fontSize: 24 * scaleFont },
-            ]}
-          >
-            ‹
-          </Text>
-        </Pressable>
-        <Text
-          style={[
-            styles.topBarTitle,
-            { color: theme.colors.heading, fontSize: 18 * scaleFont },
-          ]}
-          numberOfLines={1}
-        >
-          {t("library:downloadsScreen.title")}
-        </Text>
-        <View style={styles.topBarSide} />
-      </View>
+      <ScreenHeader
+        title={t("library:downloadsScreen.title")}
+        backLabel={t("library:downloadsScreen.back")}
+        onBack={goBack}
+      />
 
       <ScrollView
         contentContainerStyle={[
@@ -86,32 +56,6 @@ export default function DownloadsScreen() {
 }
 
 const styles = StyleSheet.create({
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingTop: 8,
-    paddingBottom: 12,
-  },
-  topBarAction: {
-    width: 34,
-    height: 34,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  topBarActionGlyph: {
-    fontFamily: fontFamilies.body,
-    lineHeight: 28,
-  },
-  topBarTitle: {
-    flex: 1,
-    fontFamily: fontFamilies.display,
-    letterSpacing: -0.2,
-    textAlign: "center",
-  },
-  topBarSide: {
-    width: 34,
-  },
   content: {
     paddingTop: 4,
   },

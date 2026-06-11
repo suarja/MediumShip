@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
 import { Screen } from "../../src/components/layout/screen";
+import { ScreenHeader } from "../../src/components/navigation/screen-header";
 import { HistoryRow } from "../../src/components/history/history-row";
 import { ResumeCard } from "../../src/components/library/resume-card";
 import { useClerkAuth } from "../../src/features/auth/use-clerk-auth";
@@ -54,41 +55,12 @@ export default function HistoryScreen() {
 
   return (
     <Screen>
-      <View
-        style={[
-          styles.topBar,
-          {
-            marginHorizontal: -(theme.spacing.lg * scaleSpace),
-            paddingHorizontal: theme.spacing.lg * scaleSpace,
-          },
-        ]}
-      >
-        <Pressable
-          onPress={goBack}
-          style={styles.topBarAction}
-          accessibilityRole="button"
-          accessibilityLabel={t("library:historyScreen.back")}
-        >
-          <Text
-            style={[
-              styles.topBarActionGlyph,
-              { color: theme.colors.heading, fontSize: 24 * scaleFont },
-            ]}
-          >
-            ‹
-          </Text>
-        </Pressable>
-        <Text
-          style={[
-            styles.topBarTitle,
-            { color: theme.colors.heading, fontSize: 18 * scaleFont },
-          ]}
-          numberOfLines={1}
-        >
-          {t("library:historyScreen.title")}
-        </Text>
-        <View style={styles.topBarSide}>
-          {enabled && history.length > 0 ? (
+      <ScreenHeader
+        title={t("library:historyScreen.title")}
+        backLabel={t("library:historyScreen.back")}
+        onBack={goBack}
+        right={
+          enabled && history.length > 0 ? (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t("library:historyScreen.clear")}
@@ -107,9 +79,9 @@ export default function HistoryScreen() {
                 {t("library:historyScreen.clear")}
               </Text>
             </Pressable>
-          ) : null}
-        </View>
-      </View>
+          ) : null
+        }
+      />
 
       <ScrollView
         contentContainerStyle={[
@@ -194,34 +166,6 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingTop: 8,
-    paddingBottom: 12,
-  },
-  topBarAction: {
-    width: 34,
-    height: 34,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  topBarActionGlyph: {
-    fontFamily: fontFamilies.body,
-    lineHeight: 28,
-  },
-  topBarTitle: {
-    flex: 1,
-    fontFamily: fontFamilies.display,
-    letterSpacing: -0.2,
-    textAlign: "center",
-  },
-  topBarSide: {
-    minWidth: 34,
-    alignItems: "flex-end",
-    justifyContent: "center",
-  },
   clearAction: {
     paddingHorizontal: 4,
     paddingVertical: 6,

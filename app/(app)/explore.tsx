@@ -1,6 +1,5 @@
 import { useQuery } from "convex/react";
 import { usePushWithReturn } from "../../src/features/navigation/app-navigation";
-import { AppLink } from "../../src/components/navigation/app-link";
 import { useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
@@ -254,23 +253,29 @@ export default function ExploreScreen() {
                 <SectionHeader label={t("modulesTitle")} />
                 <View style={styles.grid}>
                   {moduleItems.map((item) => (
-                    <AppLink key={item.key} href={item.href as never} asChild>
-                      <Pressable
-                        style={({ pressed }) => [
+                    // Direct Pressable (not AppLink asChild): under `Link asChild`
+                    // the percentage-width gridCell is not the row's flex item, so
+                    // module cards rendered at unequal widths. Match the Categories
+                    // grid pattern — Pressable + pushWithReturn — for even cards.
+                    <Pressable
+                      key={item.key}
+                      style={({ pressed }) => [
                         styles.gridCell,
                         { width: isTablet ? "31.5%" : "48.5%" },
                         pressed && styles.pressed,
                       ]}
-                        accessibilityRole="link"
-                        onPress={() => void HapticsService.light()}
-                      >
-                        <FeatureCard
-                          icon={item.icon}
-                          meta={t(`modules.${item.key}.meta`)}
-                          title={t(`modules.${item.key}.title`)}
-                        />
-                      </Pressable>
-                    </AppLink>
+                      accessibilityRole="link"
+                      onPress={() => {
+                        void HapticsService.light();
+                        pushWithReturn(item.href);
+                      }}
+                    >
+                      <FeatureCard
+                        icon={item.icon}
+                        meta={t(`modules.${item.key}.meta`)}
+                        title={t(`modules.${item.key}.title`)}
+                      />
+                    </Pressable>
                   ))}
                 </View>
               </ExploreSection>
@@ -439,12 +444,18 @@ function FeatureCard({
           {title}
         </Text>
         <Text
+          numberOfLines={2}
           style={[
             styles.cardMeta,
             {
               color: theme.colors.textMuted,
               fontSize: typeScale.meta * scaleFont,
               lineHeight: 16 * scaleFont,
+              // Reserve a constant 2-line meta block so every card is the same
+              // height regardless of whether its meta wraps (1 line like "PAR LA
+              // REDACTION" vs 2 lines like "EVENEMENTS ET CERCLES"). Keeps the
+              // grid even, including a lone card on its own row.
+              minHeight: 2 * 16 * scaleFont,
             },
           ]}
         >
@@ -508,6 +519,10 @@ const styles = StyleSheet.create({
   },
   card: {
     width: "100%",
+    // Fill the (stretched) grid cell height so cards in the same row are equal,
+    // and pair with the reserved 2-line meta block so every card across rows —
+    // including a lone card on its own row — renders at the same height.
+    flex: 1,
     borderWidth: StyleSheet.hairlineWidth,
     padding: 12,
     gap: 2,

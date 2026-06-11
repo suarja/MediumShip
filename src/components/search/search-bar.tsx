@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { HapticsService } from "../../features/haptics/haptics";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
+import { typeScale } from "../../features/theme/type-scale";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 /** Mockup-aligned loupe scale shared by every search surface. */
@@ -81,7 +82,7 @@ export function SearchBar({
           style={[
             styles.input,
             styles.readonlyLabel,
-            { color: theme.colors.textMuted, fontSize: 15 * scaleFont },
+            { color: theme.colors.textMuted, fontSize: typeScale.body * scaleFont },
           ]}
         >
           {placeholder}
@@ -99,7 +100,7 @@ export function SearchBar({
           styles.input,
           {
             color: theme.colors.text,
-            fontSize: 15 * scaleFont,
+            fontSize: typeScale.body * scaleFont,
             fontFamily: fontFamilies.body,
           },
         ]}

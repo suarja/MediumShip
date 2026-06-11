@@ -28,6 +28,7 @@ import { getCategoryIconGlyph } from "../../src/features/categories/category-ico
 import type { FeatureKey } from "../../convex/featureCatalog";
 import { withAlpha } from "../../src/features/theme/contrast";
 import { fontFamilies } from "../../src/features/theme/fonts";
+import { typeScale } from "../../src/features/theme/type-scale";
 import { useAppTheme } from "../../src/features/theme/theme-provider";
 
 type SearchFilter = "all" | ContentKind;
@@ -112,7 +113,7 @@ export default function ExploreScreen() {
           <Text
             style={[
               styles.topBarTitle,
-              { color: theme.colors.heading, fontSize: 18 * scaleFont },
+              { color: theme.colors.heading, fontSize: typeScale.section * scaleFont },
             ]}
           >
             {t("title")}
@@ -157,7 +158,7 @@ export default function ExploreScreen() {
                         styles.filterLabel,
                         {
                           color: active ? theme.colors.accent : theme.colors.textMuted,
-                          fontSize: 12 * scaleFont,
+                          fontSize: typeScale.caption * scaleFont,
                         },
                       ]}
                     >
@@ -177,7 +178,7 @@ export default function ExploreScreen() {
                 <Text
                   style={[
                     styles.emptyLabel,
-                    { color: theme.colors.textMuted, fontSize: 14 * scaleFont },
+                    { color: theme.colors.textMuted, fontSize: typeScale.body * scaleFont },
                   ]}
                 >
                   {t("searchEmpty")}
@@ -305,7 +306,7 @@ export default function ExploreScreen() {
                         styles.trendLabel,
                         {
                           color: theme.colors.heading,
-                          fontSize: 12 * scaleFont,
+                          fontSize: typeScale.caption * scaleFont,
                         },
                       ]}
                     >
@@ -356,7 +357,7 @@ function SectionHeader({
           styles.sectionTitle,
           {
             color: theme.colors.heading,
-            fontSize: 17 * scaleFont,
+            fontSize: typeScale.title * scaleFont,
           },
         ]}
       >
@@ -416,7 +417,7 @@ function FeatureCard({
             styles.iconBadgeLabel,
             {
               color: theme.colors.accent,
-              fontSize: 16 * scaleFont,
+              fontSize: typeScale.body * scaleFont,
             },
           ]}
         >
@@ -431,7 +432,7 @@ function FeatureCard({
             styles.cardTitle,
             {
               color: theme.colors.heading,
-              fontSize: 13 * scaleFont,
+              fontSize: typeScale.title * scaleFont,
             },
           ]}
         >
@@ -442,8 +443,8 @@ function FeatureCard({
             styles.cardMeta,
             {
               color: theme.colors.textMuted,
-              fontSize: 9 * scaleFont,
-              lineHeight: 12 * scaleFont,
+              fontSize: typeScale.meta * scaleFont,
+              lineHeight: 16 * scaleFont,
             },
           ]}
         >

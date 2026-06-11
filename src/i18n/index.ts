@@ -55,6 +55,7 @@ export function initI18n(): Promise<typeof i18n> {
         "premium",
         "settings",
         "navigation",
+        "onboarding",
         "article",
         "episode",
         "video",

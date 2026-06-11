@@ -13,6 +13,7 @@ import libraryEn from "./locales/en/library";
 import listsEn from "./locales/en/lists";
 import navigationEn from "./locales/en/navigation";
 import networkEn from "./locales/en/network";
+import onboardingEn from "./locales/en/onboarding";
 import notificationsEn from "./locales/en/notifications";
 import paywallEn from "./locales/en/paywall";
 import premiumEn from "./locales/en/premium";
@@ -34,6 +35,7 @@ import libraryFr from "./locales/fr/library";
 import listsFr from "./locales/fr/lists";
 import navigationFr from "./locales/fr/navigation";
 import networkFr from "./locales/fr/network";
+import onboardingFr from "./locales/fr/onboarding";
 import notificationsFr from "./locales/fr/notifications";
 import paywallFr from "./locales/fr/paywall";
 import premiumFr from "./locales/fr/premium";
@@ -55,6 +57,7 @@ export const resources = {
     library: libraryEn,
     lists: listsEn,
     navigation: navigationEn,
+    onboarding: onboardingEn,
     profile: profileEn,
     premium: premiumEn,
     paywall: paywallEn,
@@ -78,6 +81,7 @@ export const resources = {
     library: libraryFr,
     lists: listsFr,
     navigation: navigationFr,
+    onboarding: onboardingFr,
     profile: profileFr,
     premium: premiumFr,
     paywall: paywallFr,

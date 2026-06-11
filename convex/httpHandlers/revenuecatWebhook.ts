@@ -51,17 +51,24 @@ function transformPayload(obj: unknown): unknown {
 
 export const revenuecatWebhookPost = httpAction(async (ctx, request) => {
   const expectedAuth = revenuecat.options.REVENUECAT_WEBHOOK_AUTH;
-  if (expectedAuth) {
-    const authHeader = request.headers.get("Authorization") ?? "";
-    const providedToken = extractAuthToken(authHeader);
-    const expectedToken = extractAuthToken(expectedAuth);
+  // Fail closed: if the shared secret is not configured, refuse every event
+  // rather than accept unauthenticated webhooks (which could grant premium).
+  if (!expectedAuth) {
+    return new Response(
+      JSON.stringify({ error: "Webhook secret not configured" }),
+      { status: 503, headers: { "Content-Type": "application/json" } },
+    );
+  }
 
-    if (!secureCompare(providedToken, expectedToken)) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
+  const authHeader = request.headers.get("Authorization") ?? "";
+  const providedToken = extractAuthToken(authHeader);
+  const expectedToken = extractAuthToken(expectedAuth);
+
+  if (!secureCompare(providedToken, expectedToken)) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   let body: unknown;

@@ -2,18 +2,11 @@ import { v } from "convex/values";
 
 import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
-import { internalMutation } from "../_generated/server";
+import { action, internalMutation } from "../_generated/server";
 import { revenuecat } from "../revenuecat";
+import { getPremiumEntitlementId } from "./premiumEntitlementId";
 
-// `process.env` is provided by the Convex runtime; declared for the Convex
-// tsconfig (no @types/node).
 declare const process: { env: Record<string, string | undefined> };
-
-// The RevenueCat entitlement IDENTIFIER (not its display name — e.g. display
-// "Knowly Pro" can map to identifier "premium"). White-label: configurable per
-// deployment via Convex env (`npx convex env set REVENUECAT_ENTITLEMENT_ID <id>`),
-// defaults to "premium". Must match the entitlement identifier in the RC project.
-const PREMIUM_ENTITLEMENT_ID = process.env.REVENUECAT_ENTITLEMENT_ID ?? "premium";
 
 /**
  * After the `convex-revenuecat` component processes a webhook event, mirror the
@@ -37,7 +30,7 @@ export const syncForClerkId = internalMutation({
 
     const isPro = await revenuecat.hasEntitlement(ctx, {
       appUserId: clerkId,
-      entitlementId: PREMIUM_ENTITLEMENT_ID,
+      entitlementId: getPremiumEntitlementId(),
     });
 
     return await ctx.runMutation(
@@ -49,5 +42,61 @@ export const syncForClerkId = internalMutation({
         source: "revenuecat",
       },
     );
+  },
+});
+
+/**
+ * Called by the mobile client right after a successful purchase/restore so the
+ * `entitlements` row updates without waiting for the RC webhook (especially in
+ * dev / Test Store). When `REVENUECAT_API_KEY` is set, pulls the subscriber
+ * from the RC REST API into the component first.
+ */
+export const syncAfterPurchase = action({
+  args: {},
+  returns: v.object({
+    synced: v.boolean(),
+    isPro: v.boolean(),
+  }),
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    const clerkId = identity.subject;
+    const apiKey = process.env.REVENUECAT_API_KEY;
+
+    if (apiKey) {
+      const response = await fetch(
+        `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(clerkId)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      if (response.ok) {
+        const data = (await response.json()) as {
+          subscriber: Parameters<typeof revenuecat.syncSubscriber>[1]["subscriber"];
+        };
+        await revenuecat.syncSubscriber(ctx, {
+          appUserId: clerkId,
+          subscriber: data.subscriber,
+        });
+      }
+    }
+
+    await ctx.runMutation(internal.entitlements.revenuecatSync.syncForClerkId, {
+      clerkId,
+    });
+
+    const isPro = await revenuecat.hasEntitlement(ctx, {
+      appUserId: clerkId,
+      entitlementId: getPremiumEntitlementId(),
+    });
+
+    return { synced: true, isPro };
   },
 });

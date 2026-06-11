@@ -27,6 +27,26 @@ jest.mock("expo-router", () => ({
   useGlobalSearchParams: () => ({}),
 }));
 
+// PaywallSheet pulls RevenueCat state via this hook (useAction); stub it so the
+// sheet mounts without a ConvexProvider in this unit test.
+jest.mock("../src/features/billing/use-purchase-premium", () => ({
+  usePurchasePremium: () => ({
+    offering: null,
+    packages: [],
+    package: null,
+    selectPackage: jest.fn(),
+    isLoadingOffering: false,
+    offeringError: null,
+    purchase: jest.fn(),
+    restore: jest.fn(),
+    reloadOffering: jest.fn(),
+    status: "idle",
+    errorMessage: null,
+    resetStatus: jest.fn(),
+    purchasesSupported: true,
+  }),
+}));
+
 jest.mock("../src/features/auth/use-clerk-auth", () => ({
   useClerkAuth: () => ({ isSignedIn: true }),
 }));
@@ -34,6 +54,7 @@ jest.mock("../src/features/auth/use-clerk-auth", () => ({
 jest.mock("../src/features/theme/theme-provider", () => ({
   useAppTheme: () => ({
     enabledModules: ["articles", "bookmarks"],
+    tenantName: "Knowly",
     theme: {
       colors: {
         heading: "#111",

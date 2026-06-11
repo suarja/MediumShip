@@ -90,8 +90,9 @@ jest.mock("react-native-purchases", () => ({
   __esModule: true,
   default: {
     configure: jest.fn().mockResolvedValue(undefined),
+    setLogLevel: jest.fn(),
     logIn: jest.fn().mockResolvedValue({ customerInfo: { entitlements: { active: {} } } }),
-    getOfferings: jest.fn().mockResolvedValue({ current: null }),
+    getOfferings: jest.fn().mockResolvedValue({ current: null, all: {} }),
     purchasePackage: jest.fn(),
     restorePurchases: jest.fn().mockResolvedValue({ entitlements: { active: {} } }),
     getCustomerInfo: jest.fn().mockResolvedValue({ entitlements: { active: {} } }),

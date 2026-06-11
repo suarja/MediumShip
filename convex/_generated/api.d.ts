@@ -56,6 +56,7 @@ import type * as discovery_youtubeWhitelistChannels from "../discovery/youtubeWh
 import type * as entitlements_authz from "../entitlements/authz.js";
 import type * as entitlements_model from "../entitlements/model.js";
 import type * as entitlements_mutations from "../entitlements/mutations.js";
+import type * as entitlements_premiumEntitlementId from "../entitlements/premiumEntitlementId.js";
 import type * as entitlements_queries from "../entitlements/queries.js";
 import type * as entitlements_revenuecatSync from "../entitlements/revenuecatSync.js";
 import type * as events_model from "../events/model.js";
@@ -157,6 +158,7 @@ declare const fullApi: ApiFromModules<{
   "entitlements/authz": typeof entitlements_authz;
   "entitlements/model": typeof entitlements_model;
   "entitlements/mutations": typeof entitlements_mutations;
+  "entitlements/premiumEntitlementId": typeof entitlements_premiumEntitlementId;
   "entitlements/queries": typeof entitlements_queries;
   "entitlements/revenuecatSync": typeof entitlements_revenuecatSync;
   "events/model": typeof events_model;

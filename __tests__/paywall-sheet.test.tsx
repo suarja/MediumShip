@@ -21,6 +21,7 @@ jest.mock("../src/features/responsive/use-responsive", () => ({
 
 jest.mock("../src/features/theme/theme-provider", () => ({
   useAppTheme: () => ({
+    tenantName: "Mediumship",
     theme: {
       isDark: false,
       colors: {
@@ -46,17 +47,23 @@ jest.mock("../src/features/membership/use-is-member", () => ({
   useIsMember: () => ({ isMember: false, isLoading: false }),
 }));
 
+const mockPackage = {
+  identifier: "$rc_monthly",
+  packageType: "MONTHLY",
+  product: { priceString: "€2.00", identifier: "monthly" },
+};
+
 jest.mock("../src/features/billing/use-purchase-premium", () => ({
   usePurchasePremium: () => ({
     offering: { identifier: "default" },
-    package: {
-      identifier: "monthly",
-      packageType: "MONTHLY",
-      product: { priceString: "€2.00" },
-    },
+    packages: [mockPackage],
+    package: mockPackage,
+    selectPackage: jest.fn(),
     isLoadingOffering: false,
+    offeringError: null,
     purchase: mockPurchase,
     restore: mockRestore,
+    reloadOffering: jest.fn(),
     status: "idle",
     errorMessage: null,
     resetStatus: jest.fn(),
@@ -119,8 +126,9 @@ describe("PaywallSheet", () => {
         onDismiss={dismissMock}
       />,
     );
-    expect(screen.getAllByText(/Start Premium/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/2-week free trial/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Become a member/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Monthly/i)).toBeTruthy();
+    expect(screen.getAllByText(/€2\.00/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Restore purchases/i).length).toBeGreaterThan(0);
   });
 
@@ -134,7 +142,7 @@ describe("PaywallSheet", () => {
       />,
     );
 
-    fireEvent.press(screen.getAllByText(/Start Premium/i)[0]);
+    fireEvent.press(screen.getByTestId("paywall-purchase-cta"));
     await waitFor(() => expect(mockPurchase).toHaveBeenCalledTimes(1));
   });
 
@@ -148,7 +156,7 @@ describe("PaywallSheet", () => {
       />,
     );
 
-    fireEvent.press(screen.getAllByText(/Restore purchases/i)[0]);
+    fireEvent.press(screen.getByTestId("paywall-restore-cta"));
     await waitFor(() => expect(mockRestore).toHaveBeenCalledTimes(1));
   });
 
@@ -161,7 +169,21 @@ describe("PaywallSheet", () => {
         onDismiss={dismissMock}
       />,
     );
-    fireEvent.press(screen.getAllByText(/LATER/i)[0]);
+    expect(screen.getByText(/CONTINUE WITHOUT LISTS/i)).toBeTruthy();
+    fireEvent.press(screen.getByTestId("paywall-dismiss-cta"));
     expect(dismissMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows content preview title when provided", () => {
+    render(
+      <PaywallSheet
+        visible
+        reason="content"
+        previewTitle="The care economy."
+        isSignedIn={false}
+        onDismiss={dismissMock}
+      />,
+    );
+    expect(screen.getByText(/The care economy/i)).toBeTruthy();
   });
 });

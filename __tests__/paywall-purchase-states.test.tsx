@@ -18,6 +18,7 @@ jest.mock("../src/features/responsive/use-responsive", () => ({
 
 jest.mock("../src/features/theme/theme-provider", () => ({
   useAppTheme: () => ({
+    tenantName: "Mediumship",
     theme: {
       isDark: false,
       colors: {
@@ -31,7 +32,8 @@ jest.mock("../src/features/theme/theme-provider", () => ({
         accentContrast: "#FAFAF8",
         premium: "#8B6914",
       },
-      radii: { pill: 999, xl: 18 },
+      spacing: { xs: 4, sm: 8, md: 12, lg: 16 },
+      radii: { sm: 4, md: 8, lg: 12, pill: 999, xl: 18 },
     },
   }),
 }));
@@ -46,15 +48,22 @@ jest.mock("../src/features/billing/use-purchase-premium", () => ({
   usePurchasePremium: () => mockUsePurchasePremium(),
 }));
 
+const mockPackage = {
+  identifier: "$rc_monthly",
+  packageType: "MONTHLY",
+  product: { priceString: "€2.00", identifier: "monthly" },
+};
+
 const basePurchaseState = {
   offering: null,
-  package: {
-    identifier: "monthly",
-    product: { priceString: "€2.00" },
-  },
+  packages: [mockPackage],
+  package: mockPackage,
+  selectPackage: jest.fn(),
   isLoadingOffering: false,
+  offeringError: null,
   purchase: jest.fn(),
   restore: jest.fn(),
+  reloadOffering: jest.fn(),
   resetStatus: jest.fn(),
   purchasesSupported: true,
   status: "idle" as const,

@@ -3,26 +3,20 @@ import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useClerkAuth } from "../../features/auth/use-clerk-auth";
+import { logBilling } from "../../features/billing/billing-debug";
 import { HapticsService } from "../../features/haptics/haptics";
 import { usePaywallSheet } from "../../features/paywall/paywall-sheet-provider";
-import { withAlpha } from "../../features/theme/contrast";
 import { fontFamilies } from "../../features/theme/fonts";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 type PremiumPaywallProps = {
-  // Screen-specific copy (from the article/episode/video namespace).
   title: string;
   description: string;
   ctaLabel: string;
 };
 
-// Themed paywall shown on premium content for non-members. Recreates the visual
-// intent of the mockup Paywall screen (eyebrow → headline → benefits → CTA)
-// entirely from theme tokens so it tracks every palette, including `midnight`.
-//
-// Guest-first: a guest gets a sign-in CTA; a signed-in non-member gets an
-// informational note (membership is granted by the team — no self-serve
-// purchase flow yet).
+// Inline premium gate on article/episode/video detail. Tapping the CTA opens the
+// RevenueCat paywall bottom sheet (IAP on native, guidance on web).
 export function PremiumPaywall({
   title,
   description,
@@ -34,6 +28,7 @@ export function PremiumPaywall({
   const { t } = useTranslation("premium");
 
   const benefits = t("paywallBenefits", { returnObjects: true }) as string[];
+  const subscribeLabel = isSignedIn ? t("paywallSubscribeCta") : ctaLabel;
 
   return (
     <View
@@ -49,66 +44,49 @@ export function PremiumPaywall({
       <Text style={[styles.eyebrow, { color: theme.colors.premium }]}>
         ◉ {t("paywallEyebrow")}
       </Text>
-      <Text style={[styles.title, { color: theme.colors.heading }]}>
-        {title}
-      </Text>
-      <Text style={[styles.body, { color: theme.colors.text }]}>
-        {description}
-      </Text>
+      <Text style={[styles.title, { color: theme.colors.heading }]}>{title}</Text>
+      <Text style={[styles.body, { color: theme.colors.text }]}>{description}</Text>
 
       <View style={styles.benefits}>
         {benefits.map((benefit) => (
-          <Text
-            key={benefit}
-            style={[styles.benefit, { color: theme.colors.textMuted }]}
-          >
+          <Text key={benefit} style={[styles.benefit, { color: theme.colors.textMuted }]}>
             ✓ {benefit}
           </Text>
         ))}
       </View>
 
+      <Text style={[styles.trialNote, { color: theme.colors.textMuted }]}>
+        {t("paywallTrialNote")}
+      </Text>
+
       {isSignedIn ? (
-        <>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => {
-              void HapticsService.medium();
-              openPaywall("content");
-            }}
-            style={({ pressed }) => [
-              styles.cta,
-              {
-                backgroundColor: theme.colors.premium,
-                borderRadius: theme.radii.pill,
-              },
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={[styles.ctaLabel, { color: theme.colors.accentContrast }]}>
-              {ctaLabel}
-            </Text>
-          </Pressable>
-          <View
-            style={[
-              styles.pending,
-              {
-                borderTopColor: withAlpha(theme.colors.premium, 0.32),
-              },
-            ]}
-          >
-            <Text style={[styles.pendingTitle, { color: theme.colors.heading }]}>
-              {t("paywallMemberPendingTitle")}
-            </Text>
-            <Text style={[styles.pendingBody, { color: theme.colors.textMuted }]}>
-              {t("paywallMemberPendingBody")}
-            </Text>
-          </View>
-        </>
+        <Pressable
+          accessibilityRole="button"
+          testID="premium-paywall-subscribe-cta"
+          onPress={() => {
+            void HapticsService.medium();
+            logBilling("premium_paywall.cta.tap", { surface: "inline", isSignedIn: true });
+            openPaywall("content", { previewTitle: title });
+          }}
+          style={({ pressed }) => [
+            styles.cta,
+            {
+              backgroundColor: theme.colors.premium,
+              borderRadius: theme.radii.pill,
+            },
+            pressed && styles.pressed,
+          ]}
+        >
+          <Text style={[styles.ctaLabel, { color: theme.colors.accentContrast }]}>
+            {subscribeLabel}
+          </Text>
+        </Pressable>
       ) : (
         <>
           <Link href="/sign-in" asChild>
             <Pressable
               accessibilityRole="link"
+              testID="premium-paywall-sign-in-cta"
               onPress={() => void HapticsService.medium()}
               style={({ pressed }) => [
                 styles.cta,
@@ -119,9 +97,7 @@ export function PremiumPaywall({
                 pressed && styles.pressed,
               ]}
             >
-              <Text
-                style={[styles.ctaLabel, { color: theme.colors.accentContrast }]}
-              >
+              <Text style={[styles.ctaLabel, { color: theme.colors.accentContrast }]}>
                 {ctaLabel}
               </Text>
             </Pressable>
@@ -167,6 +143,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  trialNote: {
+    fontFamily: fontFamilies.body,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: "center",
+    marginTop: 4,
+  },
   cta: {
     alignItems: "center",
     justifyContent: "center",
@@ -186,20 +169,5 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.84,
-  },
-  pending: {
-    gap: 4,
-    marginTop: 8,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  pendingTitle: {
-    fontFamily: fontFamilies.bodySemiBold,
-    fontSize: 15,
-  },
-  pendingBody: {
-    fontFamily: fontFamilies.body,
-    fontSize: 13,
-    lineHeight: 19,
   },
 });

@@ -7,7 +7,9 @@ describe("resolvePaywallCopyKeys", () => {
       const keys = resolvePaywallCopyKeys(reason);
       expect(keys.eyebrow).toBe(`reasons.${reason}.eyebrow`);
       expect(keys.title).toBe(`reasons.${reason}.title`);
+      expect(keys.titleItalic).toBe(`reasons.${reason}.titleItalic`);
       expect(keys.description).toBe(`reasons.${reason}.description`);
+      expect(keys.dismissCta).toBe(`reasons.${reason}.dismissCta`);
     }
   });
 

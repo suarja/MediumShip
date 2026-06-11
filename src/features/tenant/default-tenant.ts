@@ -17,6 +17,7 @@ export const defaultTenant = {
   name: "Demo Media",
   brandLogoUrl: undefined,
   appIconUrl: undefined,
+  communityUrl: undefined as string | undefined,
   enabledModules: [
     ...PUBLIC_CONTENT_MODULES,
     ...OPTIONAL_PUBLIC_MODULES,

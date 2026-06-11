@@ -28,6 +28,8 @@ export default defineSchema({
     name: v.string(),
     brandLogoUrl: v.optional(v.string()),
     appIconUrl: v.optional(v.string()),
+    /** Tenant-wide community invite (e.g. Discord). Drives the Community screen CTA. */
+    communityUrl: v.optional(v.string()),
     themeConfig: v.optional(
       v.object({
         paletteName: v.string(),

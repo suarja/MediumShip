@@ -78,6 +78,7 @@ describe("community screen", () => {
     await changeAppLanguage("fr");
     mockUseAppTheme.mockReturnValue({
       enabledModules: ["community", "membersRoom"],
+      communityUrl: "https://discord.gg/abc123",
       featureConfigs: {
         ...resolveEffectiveFeatureConfigs({ enabledModules: ["community", "membersRoom"] }),
         community: { enabled: true, access: "free", iconKey: "community" },
@@ -125,5 +126,15 @@ describe("community screen", () => {
 
     fireEvent.press(screen.getByText("Discord communautaire"));
     expect(HapticsService.light).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides the Discord CTA and card when no community link is configured", () => {
+    mockUseAppTheme.mockReturnValue({ ...mockUseAppTheme(), communityUrl: undefined });
+    render(<CommunityScreen />);
+
+    expect(screen.queryByText("Rejoindre la communauté")).toBeNull();
+    expect(screen.queryByText("Discord communautaire")).toBeNull();
+    // The members lounge does not depend on the community link.
+    expect(screen.getByText("Salon membres")).toBeTruthy();
   });
 });

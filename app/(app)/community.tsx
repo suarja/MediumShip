@@ -25,8 +25,9 @@ const COMMUNITY_LINK_ICON: Record<string, string> = {
 };
 
 export default function CommunityScreen() {
-  const { t } = useTranslation("explore");
-  const { theme, enabledModules } = useAppTheme();
+  const { t } = useTranslation("community");
+  const { theme, enabledModules, communityUrl } = useAppTheme();
+  const hasCommunityLink = Boolean(communityUrl);
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
@@ -44,7 +45,10 @@ export default function CommunityScreen() {
   };
 
   const handleDiscord = () => {
-    void WebBrowser.openBrowserAsync("https://discord.gg");
+    if (!communityUrl) {
+      return;
+    }
+    void WebBrowser.openBrowserAsync(communityUrl);
   };
 
   return (
@@ -71,7 +75,7 @@ export default function CommunityScreen() {
         <Text
           style={[styles.topBarTitle, { color: theme.colors.heading, fontSize: 18 * scaleFont }]}
         >
-          {t("modules.community.title")}
+          {t("title")}
         </Text>
         <View style={styles.topBarSide} />
       </View>
@@ -104,7 +108,7 @@ export default function CommunityScreen() {
               { color: theme.colors.accent, fontSize: 12 * scaleFont },
             ]}
           >
-            ◉ REJOINDRE
+            {t("hero.eyebrow")}
           </Text>
           <Text
             style={[
@@ -112,8 +116,8 @@ export default function CommunityScreen() {
               { color: theme.colors.heading, fontSize: 22 * scaleFont },
             ]}
           >
-            Prolongez la conversation{" "}
-            <Text style={styles.heroTitleItalic}>hors de l'app.</Text>
+            {t("hero.title")}{" "}
+            <Text style={styles.heroTitleItalic}>{t("hero.titleItalic")}</Text>
           </Text>
           <Text
             style={[
@@ -121,50 +125,54 @@ export default function CommunityScreen() {
               { color: theme.colors.textMuted, fontSize: 13 * scaleFont },
             ]}
           >
-            12 400 membres · 84 cercles locaux · accès libre ou réservé selon le module.
+            {t("hero.sub")}
           </Text>
-          <Pressable
-            onPress={() => {
-              void HapticsService.medium();
-              handleDiscord();
-            }}
-            style={({ pressed }) => [
-              styles.heroCta,
-              {
-                borderRadius: theme.radii.pill,
-                backgroundColor: theme.colors.accent,
-                paddingVertical: 12 * scaleSpace,
-              },
-              pressed && styles.pressed,
-            ]}
-            accessibilityRole="button"
-          >
-            <Text
-              style={[
-                styles.heroCtaLabel,
-                { color: theme.colors.accentContrast, fontSize: 14 * scaleFont },
+          {hasCommunityLink ? (
+            <Pressable
+              onPress={() => {
+                void HapticsService.medium();
+                handleDiscord();
+              }}
+              style={({ pressed }) => [
+                styles.heroCta,
+                {
+                  borderRadius: theme.radii.pill,
+                  backgroundColor: theme.colors.accent,
+                  paddingVertical: 12 * scaleSpace,
+                },
+                pressed && styles.pressed,
               ]}
+              accessibilityRole="button"
             >
-              Rejoindre la communauté
-            </Text>
-          </Pressable>
+              <Text
+                style={[
+                  styles.heroCtaLabel,
+                  { color: theme.colors.accentContrast, fontSize: 14 * scaleFont },
+                ]}
+              >
+                {t("hero.cta")}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
 
-        <CommunityCard
-          title="Discord communautaire"
-          description="Échangez avec les rédactions et les membres. Lien ouvert à tous."
-          icon="#"
-          accessLabel="Gratuit"
-          isPremium={false}
-          onPress={handleDiscord}
-        />
+        {hasCommunityLink ? (
+          <CommunityCard
+            title={t("discord.title")}
+            description={t("discord.description")}
+            icon="#"
+            accessLabel={t("discord.access")}
+            isPremium={false}
+            onPress={handleDiscord}
+          />
+        ) : null}
 
         {canMembersRoom ? (
           <CommunityCard
-            title="Salon membres"
-            description="Espace réservé : AMA, coulisses, votes éditoriaux."
+            title={t("members.title")}
+            description={t("members.description")}
             icon="✦"
-            accessLabel="Premium"
+            accessLabel={t("members.access")}
             isPremium
             onPress={handleMembersRoom}
           />

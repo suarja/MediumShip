@@ -140,6 +140,7 @@ function makeTheme(enabledModules: string[]) {
   return {
     tenantSlug: "demo-media",
     enabledModules,
+    communityUrl: "https://discord.gg/abc123",
     featureConfigs,
     feedSections: [],
     theme: {
@@ -244,8 +245,8 @@ describe("capability gates", () => {
 
     render(<CommunityScreen />);
 
-    expect(screen.queryByText("Salon membres")).toBeNull();
-    expect(screen.getByText("Discord communautaire")).toBeTruthy();
+    expect(screen.queryByText("Members lounge")).toBeNull();
+    expect(screen.getByText("Community Discord")).toBeTruthy();
   });
 
   it("shows the members room card when membersRoom is enabled", () => {
@@ -253,8 +254,8 @@ describe("capability gates", () => {
 
     render(<CommunityScreen />);
 
-    expect(screen.getByText("Salon membres")).toBeTruthy();
-    fireEvent.press(screen.getByText("Salon membres"));
+    expect(screen.getByText("Members lounge")).toBeTruthy();
+    fireEvent.press(screen.getByText("Members lounge"));
     expect(mockOpenPaywall).toHaveBeenCalledWith("members");
   });
 });

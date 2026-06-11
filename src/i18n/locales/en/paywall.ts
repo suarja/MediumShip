@@ -72,11 +72,25 @@ export default {
   packageLifetime: "Lifetime",
   packageTrialFree: "Free trial included",
   packageTrialIntro: "Trial at {{price}}",
-  celebrationTitle: "Yeah!",
+  celebrationTitle: "",
   celebrationBody: "Welcome to Premium. Your access unlocks right away.",
   celebrationCta: "Let's go",
   pendingTitle: "Membership not yet active",
   pendingBody:
     "Your account is connected but membership hasn't been activated yet. It is enabled by the team.",
   crestFallback: "M",
+  freeTrialCta: "Try Premium for free",
+  freeTrialNote: "No commitment",
+  freeTrialDismiss: "Maybe later",
+  thanks: {
+    title: "Thanks for your support",
+    body: "You enjoy every Premium benefit:",
+    benefits: [
+      "Your daily read, every morning",
+      "Unlimited offline downloads",
+      "Unlimited personal lists",
+      "Members room",
+    ],
+    cta: "Continue",
+  },
 } as const;

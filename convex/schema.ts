@@ -156,6 +156,7 @@ export default defineSchema({
       v.literal("manual"),
       v.literal("revenuecat"),
       v.literal("stripe"),
+      v.literal("trial"),
     ),
     // For manual grants: the `users._id` of the admin who toggled it.
     grantedBy: v.optional(v.id("users")),

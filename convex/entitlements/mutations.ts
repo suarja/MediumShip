@@ -4,6 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { internalMutation, mutation, type MutationCtx } from "../_generated/server";
 import { requireCmsAdmin } from "../cms/authz";
+import { getMyEntitlementDoc, requireAuth } from "./authz";
 
 // WRITE ADAPTERS for the `entitlements` table.
 //
@@ -16,7 +17,7 @@ type UpsertEntitlementArgs = {
   tokenIdentifier?: string;
   clerkId: string;
   isPro: boolean;
-  source: "manual" | "revenuecat" | "stripe";
+  source: "manual" | "revenuecat" | "stripe" | "trial";
   grantedBy?: Id<"users">;
 };
 
@@ -70,6 +71,7 @@ export const upsertEntitlementInternal = internalMutation({
       v.literal("manual"),
       v.literal("revenuecat"),
       v.literal("stripe"),
+      v.literal("trial"),
     ),
     grantedBy: v.optional(v.id("users")),
   },
@@ -95,6 +97,44 @@ export const grantMembership = mutation({
       isPro: true,
       source: "manual",
       grantedBy: admin.user?._id,
+    });
+
+    return { isPro: true };
+  },
+});
+
+// Member-only. Grants permanent Premium without payment (v1 store submission).
+// Idempotent: replays return the existing row; never overwrites a `revenuecat` source.
+export const startFreePremium = mutation({
+  args: {},
+  returns: v.object({ isPro: v.boolean() }),
+  handler: async (ctx) => {
+    const identity = await requireAuth(ctx);
+    const existing = await getMyEntitlementDoc(ctx);
+
+    if (existing?.source === "revenuecat") {
+      if (existing.isPro) {
+        return { isPro: true };
+      }
+
+      await ctx.runMutation(internal.entitlements.mutations.upsertEntitlementInternal, {
+        tokenIdentifier: identity.tokenIdentifier,
+        clerkId: identity.subject,
+        isPro: true,
+        source: "revenuecat",
+      });
+      return { isPro: true };
+    }
+
+    if (existing?.isPro) {
+      return { isPro: true };
+    }
+
+    await ctx.runMutation(internal.entitlements.mutations.upsertEntitlementInternal, {
+      tokenIdentifier: identity.tokenIdentifier,
+      clerkId: identity.subject,
+      isPro: true,
+      source: "trial",
     });
 
     return { isPro: true };

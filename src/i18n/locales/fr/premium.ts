@@ -10,4 +10,6 @@ export default {
   paywallGuestHint: "Connecte-toi pour t'abonner.",
   paywallSubscribeCta: "Passer Premium",
   paywallTrialNote: "2 semaines d'essai gratuites, puis 2 €/mois.",
+  freeTrialCta: "Essayer Premium gratuitement",
+  freeTrialNote: "Sans engagement",
 } as const;

@@ -56,8 +56,13 @@ export function useNetworkStatusDebug() {
 export function useNetworkStatus(): { state: NetworkState } {
   const { override } = useNetworkStatusDebug();
   const netInfo = useNetInfo();
-  const isOffline =
-    netInfo.isConnected === false || netInfo.isInternetReachable === false;
+  // Offline = the device reports no connection (`isConnected === false`). We do
+  // NOT key off `isInternetReachable === false`: at boot it is transiently false
+  // while NetInfo probes reachability, which flashed the offline "loading" card
+  // before the feed skeleton. `isConnected` is null until resolved → treated as
+  // online, so the skeleton paints immediately. (No-internet-while-connected is a
+  // degraded state, reserved — see below.)
+  const isOffline = netInfo.isConnected === false;
 
   if (override !== "auto") {
     return { state: override };

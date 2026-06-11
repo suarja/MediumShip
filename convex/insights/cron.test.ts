@@ -157,6 +157,47 @@ describe("generateDailyAnalyses", () => {
     expect(rows[0]?.dayKey).toBe(formatDayKey(NOW));
   });
 
+  it("skips generation when premiumInsights is disabled for the tenant", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t);
+    await seedPremiumMember(t);
+    await insertPublishedContent(t, { title: "Cron insights off" });
+
+    await t.run(async (ctx) => {
+      const tenant = await ctx.db
+        .query("tenants")
+        .withIndex("by_slug", (q) => q.eq("slug", TENANT))
+        .unique();
+      if (!tenant) {
+        throw new Error("tenant missing");
+      }
+
+      await ctx.db.patch(tenant._id, {
+        featureConfigs: {
+          premiumInsights: {
+            enabled: false,
+            inBar: false,
+            access: "premium",
+            iconKey: "analyses",
+          },
+        },
+      });
+    });
+
+    const result = await t.action(internal.insights.cron.generateDailyAnalyses, {
+      now: NOW,
+      fallbackTenantSlug: TENANT,
+      mockProse: "Should not run",
+    });
+
+    expect(result.processed).toBe(1);
+    expect(result.created).toBe(0);
+    expect(result.skipped).toBe(1);
+
+    const rows = await t.run(async (ctx) => ctx.db.query("tasteAnalysis").collect());
+    expect(rows).toHaveLength(0);
+  });
+
   it("forwards mockReport to generateForMember", async () => {
     const t = convexTest(schema, modules);
     await seedTenant(t);

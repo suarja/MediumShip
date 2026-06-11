@@ -10,12 +10,14 @@ jest.mock("../src/features/paywall/paywall-sheet-provider", () => ({
   usePaywallSheet: () => ({ openPaywall: mockOpenPaywall }),
 }));
 
+const mockUseFeatureAccess = jest.fn(() => ({
+  requiresPremium: false,
+  enabled: true,
+  isLoading: false,
+}));
+
 jest.mock("../src/features/tenant/use-feature-access", () => ({
-  useFeatureAccess: () => ({
-    requiresPremium: false,
-    enabled: true,
-    isLoading: false,
-  }),
+  useFeatureAccess: () => mockUseFeatureAccess(),
 }));
 
 const mockUseAppTheme = jest.fn();
@@ -53,6 +55,11 @@ describe("ProfileAnalysisCard", () => {
     mockOpenPaywall.mockReset();
     mockOnOpen.mockReset();
     mockUseAppTheme.mockReturnValue(makeTheme());
+    mockUseFeatureAccess.mockReturnValue({
+      requiresPremium: false,
+      enabled: true,
+      isLoading: false,
+    });
   });
 
   it("renders ready state with CTA on surface card", () => {
@@ -73,6 +80,17 @@ describe("ProfileAnalysisCard", () => {
     render(<ProfileAnalysisCard state="locked" />);
     fireEvent.press(screen.getByTestId("profile-analysis-paywall"));
     expect(mockOpenPaywall).toHaveBeenCalledWith("content");
+  });
+
+  it("renders nothing when premiumInsights is disabled", () => {
+    mockUseFeatureAccess.mockReturnValue({
+      requiresPremium: false,
+      enabled: false,
+      isLoading: false,
+    });
+
+    render(<ProfileAnalysisCard state="ready" previewText="Hidden" onOpen={mockOnOpen} />);
+    expect(screen.queryByTestId("profile-analysis-card")).toBeNull();
   });
 
   it("renders midnight palette without crash", () => {

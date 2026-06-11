@@ -8,6 +8,14 @@ import { changeAppLanguage, initI18n } from "../src/i18n";
 const mockOpenPaywall = jest.fn();
 const mockPush = jest.fn();
 
+jest.mock("react-native-safe-area-context", () => {
+  const { View } = require("react-native");
+  return {
+    SafeAreaView: View,
+    useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 34, left: 0 }),
+  };
+});
+
 jest.mock("../src/features/haptics/haptics", () => ({
   HapticsService: {
     selection: jest.fn(),
@@ -28,7 +36,22 @@ jest.mock("expo-router", () => ({
 }));
 
 jest.mock("../src/features/paywall/paywall-sheet-provider", () => ({
-  usePaywallSheet: () => ({ openPaywall: mockOpenPaywall, closePaywall: jest.fn() }),
+  usePaywallSheet: () => ({
+    openPaywall: mockOpenPaywall,
+    closePaywall: jest.fn(),
+    showPurchaseCelebration: jest.fn(),
+  }),
+}));
+
+jest.mock("../src/features/billing/purchases", () => ({
+  openManageSubscriptions: jest.fn(),
+}));
+
+jest.mock("../src/features/tenant/feature-access", () => ({
+  PAYMENTS_ENABLED: false,
+  PREMIUM_PAYMENT_DEFERRED: false,
+  canAccessFeatureLevel: jest.fn(),
+  isFeatureNavVisible: jest.fn(),
 }));
 
 const mockUseAppTheme = jest.fn(() => ({
@@ -144,5 +167,13 @@ describe("ProfileLibraryRows capability gating", () => {
     expect(screen.getAllByText("Premium").length).toBe(2);
     expect(screen.queryByText("Free")).toBeNull();
     expect(screen.queryByText("Member")).toBeNull();
+  });
+
+  it("opens the thanks sheet instead of manage subscriptions when payments are disabled", () => {
+    renderRows(true);
+
+    fireEvent.press(screen.getByText("Your Premium access"));
+    expect(screen.getByText("Thanks for your support")).toBeTruthy();
+    expect(screen.getByText("Your daily read, every morning")).toBeTruthy();
   });
 });

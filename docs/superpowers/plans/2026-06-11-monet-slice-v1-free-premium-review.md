@@ -75,7 +75,7 @@
 
 ### Task 1 : Premium gratuit + `PAYMENTS_ENABLED` (Vitest + Jest)
 
-- [ ] **Step 1 :** `PAYMENTS_ENABLED = false` dans `feature-access.ts` (commenté comme kill-switch paiement v1). Garder `PREMIUM_PAYMENT_DEFERRED = false`.
+- [x] **Step 1 :** `PAYMENTS_ENABLED = false` dans `feature-access.ts` (commenté comme kill-switch paiement v1). Garder `PREMIUM_PAYMENT_DEFERRED = false`.
 - [ ] **Step 2 (schema) :** `entitlements.source` += `v.literal("trial")` ; `npx convex codegen` ; ajuster `model.ts` (type `EntitlementSource`).
 - [ ] **Step 3 (Vitest) :** `startFreePremium` (mutation, `requireMember`) → upsert l'entitlement de l'appelant `isPro=true`, `source:"trial"`, idempotent. Tester : invité → throw, membre → isPro true, rejouer → pas de doublon, ne dégrade pas une source `revenuecat` existante.
 - [ ] **Step 4 (Jest) :** hook `use-start-free-premium` ; CTA premium : si `!PAYMENTS_ENABLED` → bouton **« Essayer Premium gratuitement »** (sans prix) → mutation → succès → réutilise `handlePurchaseSuccess` (ferme + `PurchaseCelebrationModal`). Si `PAYMENTS_ENABLED` → tunnel RevenueCat existant. Masquer restore/prix/offering quand gratuit. Tester les deux états du flag.

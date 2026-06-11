@@ -12,6 +12,10 @@ jest.mock("../src/features/membership/use-is-member", () => ({
   useIsMember: () => ({ isMember: false, isLoading: false }),
 }));
 
+jest.mock("../src/features/review/review-service", () => ({
+  requestReview: jest.fn(),
+}));
+
 describe("useBookmarks", () => {
   it("allows a signed-in standard account to access bookmarks", () => {
     const { result } = renderHook(() => useBookmarks());

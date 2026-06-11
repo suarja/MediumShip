@@ -12,7 +12,14 @@ export async function seedTenant(t: ReturnType<typeof convexTest>) {
     await ctx.db.insert("tenants", {
       slug: TENANT,
       name: "Demo Media",
-      enabledModules: ["articles", "episodes", "videos", "premium", "discover"],
+      enabledModules: [
+        "articles",
+        "episodes",
+        "videos",
+        "premium",
+        "discover",
+        "premiumInsights",
+      ],
     });
   });
 }

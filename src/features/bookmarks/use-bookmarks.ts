@@ -6,6 +6,7 @@ import type { Id } from "../../../convex/_generated/dataModel";
 import type { ContentDoc } from "../content/types";
 import { HapticsService } from "../haptics/haptics";
 import { useIsMember } from "../membership/use-is-member";
+import { requestReview } from "../review/review-service";
 
 export type BookmarkListItem = {
   content: ContentDoc;
@@ -16,6 +17,12 @@ export function useBookmarks() {
   const { isAuthenticated } = useConvexAuth();
   const { isMember, isLoading: isMembershipLoading } = useIsMember();
   const toggleBookmarkMutation = useMutation(api.bookmarks.mutations.toggleBookmark);
+  const canAccessBookmarks = isAuthenticated;
+  const rawBookmarks = useQuery(
+    api.bookmarks.queries.listBookmarks,
+    canAccessBookmarks ? {} : "skip",
+  ) as BookmarkListItem[] | undefined;
+  const bookmarks = canAccessBookmarks && Array.isArray(rawBookmarks) ? rawBookmarks : [];
   const toggleBookmark = useCallback(
     async ({
       contentId,
@@ -25,21 +32,20 @@ export function useBookmarks() {
       isSaved: boolean;
     }) => {
       void (isSaved ? HapticsService.selection() : HapticsService.success());
+      const isFirstBookmark = !isSaved && bookmarks.length === 0;
       try {
-        return await toggleBookmarkMutation({ contentId });
+        const result = await toggleBookmarkMutation({ contentId });
+        if (isFirstBookmark && result?.bookmarked === true) {
+          void requestReview("first_bookmark");
+        }
+        return result;
       } catch (error) {
         void HapticsService.error();
         throw error;
       }
     },
-    [toggleBookmarkMutation],
+    [bookmarks.length, toggleBookmarkMutation],
   );
-  const canAccessBookmarks = isAuthenticated;
-  const rawBookmarks = useQuery(
-    api.bookmarks.queries.listBookmarks,
-    canAccessBookmarks ? {} : "skip",
-  ) as BookmarkListItem[] | undefined;
-  const bookmarks = canAccessBookmarks && Array.isArray(rawBookmarks) ? rawBookmarks : [];
 
   return {
     bookmarks,

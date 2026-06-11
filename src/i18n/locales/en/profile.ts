@@ -86,6 +86,10 @@ export default {
       title: "Premium subscription",
       sub: "Manage or cancel your subscription",
     },
+    subscriptionAccess: {
+      title: "Your Premium access",
+      sub: "See your benefits",
+    },
     goPremium: {
       title: "Go Premium",
       sub: "Offline, unlimited lists, members lounge",

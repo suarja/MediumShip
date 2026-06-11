@@ -1,16 +1,20 @@
 import type { ComponentProps, ReactNode } from "react";
+import { useState } from "react";
 import { usePushWithReturn } from "../../features/navigation/app-navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { GateBadge, type GateTone } from "../library/gate-badge";
+import { MembershipThanksSheet } from "./membership-thanks-sheet";
 import { openManageSubscriptions } from "../../features/billing/purchases";
+import { PAYMENTS_ENABLED } from "../../features/tenant/feature-access";
 import { HapticsService } from "../../features/haptics/haptics";
 import { usePaywallSheet } from "../../features/paywall/paywall-sheet-provider";
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { hasCapability } from "../../features/tenant/public-config";
 import { fontFamilies } from "../../features/theme/fonts";
+import { typeScale } from "../../features/theme/type-scale";
 import { useAppTheme } from "../../features/theme/theme-provider";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
@@ -46,6 +50,8 @@ export function ProfileLibraryRows({
   const { scaleSpace } = useResponsive();
   const pushWithReturn = usePushWithReturn();
   const { openPaywall } = usePaywallSheet();
+  const [thanksVisible, setThanksVisible] = useState(false);
+  const paymentsEnabled = PAYMENTS_ENABLED;
 
   const canBookmark = hasCapability(enabledModules, "bookmarks");
   const canOffline = hasCapability(enabledModules, "offline");
@@ -184,11 +190,23 @@ export function ProfileLibraryRows({
           <ProfileRow
             first
             icon="star"
-            title={t("rows.subscription.title")}
-            subtitle={t("rows.subscription.sub")}
+            title={
+              paymentsEnabled
+                ? t("rows.subscription.title")
+                : t("rows.subscriptionAccess.title")
+            }
+            subtitle={
+              paymentsEnabled
+                ? t("rows.subscription.sub")
+                : t("rows.subscriptionAccess.sub")
+            }
             onPress={() => {
               void HapticsService.medium();
-              void openManageSubscriptions();
+              if (paymentsEnabled) {
+                void openManageSubscriptions();
+                return;
+              }
+              setThanksVisible(true);
             }}
           />
         ) : (
@@ -216,6 +234,11 @@ export function ProfileLibraryRows({
           }}
         />
       </Section>
+
+      <MembershipThanksSheet
+        visible={thanksVisible}
+        onDismiss={() => setThanksVisible(false)}
+      />
     </View>
   );
 }
@@ -231,7 +254,7 @@ function Section({ kicker, children }: { kicker: string; children: ReactNode }) 
           styles.kicker,
           {
             color: theme.colors.textMuted,
-            fontSize: 11 * scaleFont,
+            fontSize: typeScale.meta * scaleFont,
             marginBottom: theme.spacing.xs * scaleSpace,
           },
         ]}
@@ -262,7 +285,7 @@ function ProfileRow({
 }) {
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
-  const iconSize = 28 * scaleSpace;
+  const iconSize = 32 * scaleSpace;
 
   const content = (pressed: boolean) => (
     <View
@@ -270,7 +293,7 @@ function ProfileRow({
         styles.row,
         {
           gap: theme.spacing.sm * scaleSpace,
-          paddingVertical: 10 * scaleSpace,
+          paddingVertical: 12 * scaleSpace,
           borderTopWidth: first ? 0 : StyleSheet.hairlineWidth,
           borderTopColor: theme.colors.border,
         },
@@ -288,7 +311,7 @@ function ProfileRow({
           },
         ]}
       >
-        <Ionicons color={theme.colors.accent} name={icon} size={16 * scaleFont} />
+        <Ionicons color={theme.colors.accent} name={icon} size={18 * scaleFont} />
       </View>
 
       <View style={styles.rowMeta}>
@@ -296,7 +319,7 @@ function ProfileRow({
           <Text
             style={[
               styles.rowTitle,
-              { color: theme.colors.heading, fontSize: 15 * scaleFont },
+              { color: theme.colors.heading, fontSize: typeScale.title * scaleFont },
             ]}
           >
             {title}
@@ -306,7 +329,7 @@ function ProfileRow({
         <Text
           style={[
             styles.rowSub,
-            { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
+            { color: theme.colors.textMuted, fontSize: typeScale.caption * scaleFont },
           ]}
         >
           {subtitle}
@@ -316,7 +339,7 @@ function ProfileRow({
       <Text
         style={[
           styles.chevron,
-          { color: theme.colors.textMuted, fontSize: 16 * scaleFont },
+          { color: theme.colors.textMuted, fontSize: 18 * scaleFont },
         ]}
       >
         ›
@@ -364,11 +387,11 @@ const styles = StyleSheet.create({
   },
   rowTitle: {
     fontFamily: fontFamilies.display,
-    lineHeight: 20,
+    lineHeight: 22,
   },
   rowSub: {
     fontFamily: fontFamilies.body,
-    lineHeight: 16,
+    lineHeight: 19,
     marginTop: 2,
   },
   chevron: {

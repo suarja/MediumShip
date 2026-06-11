@@ -27,7 +27,9 @@ export function PurchaseCelebrationModal({ visible, onDismiss }: Props) {
           ]}
         >
           <Text style={styles.emoji}>🎉</Text>
-          <Text style={[styles.title, { color: theme.colors.heading }]}>{t("celebrationTitle")}</Text>
+          {t("celebrationTitle").trim().length > 0 ? (
+            <Text style={[styles.title, { color: theme.colors.heading }]}>{t("celebrationTitle")}</Text>
+          ) : null}
           <Text style={[styles.body, { color: theme.colors.textMuted }]}>{t("celebrationBody")}</Text>
           <Pressable
             accessibilityRole="button"

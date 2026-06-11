@@ -11,6 +11,12 @@ export type FeatureAccessContext = {
  */
 export const PREMIUM_PAYMENT_DEFERRED = false;
 
+/**
+ * Kill-switch for in-app payments (v1 store submission): false = RevenueCat tunnel hidden,
+ * free-trial CTA grants permanent Premium via `startFreePremium`; true = real IAP flow.
+ */
+export const PAYMENTS_ENABLED = false;
+
 export function canAccessFeatureLevel(
   access: AccessLevel,
   context: FeatureAccessContext,

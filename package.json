@@ -52,6 +52,7 @@
     "expo-screen-orientation": "~56.0.5",
     "expo-secure-store": "~56.0.4",
     "expo-status-bar": "~56.0.4",
+    "expo-store-review": "^56.0.3",
     "expo-video": "~56.1.2",
     "expo-web-browser": "~56.0.5",
     "i18next": "^26.3.0",

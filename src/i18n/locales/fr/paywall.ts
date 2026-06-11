@@ -72,11 +72,25 @@ export default {
   packageLifetime: "À vie",
   packageTrialFree: "Essai gratuit inclus",
   packageTrialIntro: "Essai à {{price}}",
-  celebrationTitle: "Ouais !",
+  celebrationTitle: "",
   celebrationBody: "Bienvenue en Premium. Ton accès se débloque tout de suite.",
   celebrationCta: "C'est parti",
+  freeTrialDismiss: "Plus tard",
   pendingTitle: "Accès membre pas encore actif",
   pendingBody:
     "Ton compte est connecté mais n'a pas encore l'accès membre. Il est activé par l'équipe.",
   crestFallback: "M",
+  freeTrialCta: "Essayer Premium gratuitement",
+  freeTrialNote: "Sans engagement",
+  thanks: {
+    title: "Merci pour le soutien",
+    body: "Tu bénéficies de tous les avantages Premium :",
+    benefits: [
+      "Ta lecture du jour, chaque matin",
+      "Téléchargements illimités hors-ligne",
+      "Listes personnelles illimitées",
+      "Salon membres",
+    ],
+    cta: "Continuer",
+  },
 } as const;

@@ -7,6 +7,28 @@ import { HapticsService } from "../src/features/haptics/haptics";
 import { changeAppLanguage, initI18n } from "../src/i18n";
 import type { ContentCardModel } from "../src/features/content/types";
 
+jest.mock("react-native-safe-area-context", () => ({
+  useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 34, left: 0 }),
+}));
+
+jest.mock("../src/features/tenant/feature-access", () => ({
+  PAYMENTS_ENABLED: true,
+  PREMIUM_PAYMENT_DEFERRED: false,
+  canAccessFeatureLevel: jest.requireActual("../src/features/tenant/feature-access")
+    .canAccessFeatureLevel,
+  isFeatureNavVisible: jest.requireActual("../src/features/tenant/feature-access")
+    .isFeatureNavVisible,
+}));
+
+jest.mock("../src/features/billing/use-start-free-premium", () => ({
+  useStartFreePremium: () => ({
+    activate: jest.fn(),
+    isPending: false,
+    status: "idle",
+    resetStatus: jest.fn(),
+  }),
+}));
+
 jest.mock("../src/features/haptics/haptics", () => ({
   HapticsService: {
     selection: jest.fn(),

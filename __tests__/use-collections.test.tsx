@@ -58,16 +58,21 @@ describe("useCollection", () => {
     useQuery.mockReset();
   });
 
+  // A realistic Convex-id-shaped value: the hook guards real ids via
+  // tryParseConvexId (≥20 chars, base64url), so a short "coll_123" slug would
+  // short-circuit to "skip" and never exercise the query path.
+  const VALID_ID = "jd70123456789abcdefghijk";
+
   it("isLoading is true while loading", () => {
     useQuery.mockReturnValue(undefined);
-    const { result } = renderHook(() => useCollection("coll_123"));
+    const { result } = renderHook(() => useCollection(VALID_ID));
     expect(result.current.isLoading).toBe(true);
     expect(result.current.collection).toBeUndefined();
   });
 
   it("returns collection detail when resolved", () => {
     const mockDetail = {
-      _id: "coll_123",
+      _id: VALID_ID,
       slug: "test",
       title: "Test",
       summary: "S",
@@ -75,7 +80,7 @@ describe("useCollection", () => {
       items: [{ contentId: "c1", title: "Article", kind: "article", category: "X", isPremium: false }],
     };
     useQuery.mockReturnValue(mockDetail);
-    const { result } = renderHook(() => useCollection("coll_123"));
+    const { result } = renderHook(() => useCollection(VALID_ID));
     expect(result.current.collection).toEqual(mockDetail);
     expect(result.current.isLoading).toBe(false);
   });

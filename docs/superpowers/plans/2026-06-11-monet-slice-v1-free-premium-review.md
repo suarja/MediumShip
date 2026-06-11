@@ -1,6 +1,6 @@
 # Slice — v1 sans paiement : Premium gratuit + review prompts + flag CMS insights
 
-> **Vertical slice mobile + backend** (`convex/**` + `app/` + `src/`). **Brancher depuis `feat/monet-slice-4-revenuecat-iap`** (PAS depuis `dev`) — ce slice s'appuie directement sur le gating réel + l'infra paywall de Slice 4, et **les deux se mergent ensemble dans `dev`** (sinon `dev` aurait un état intermédiaire cassé : premium gaté + achat RevenueCat seul, sans chemin gratuit). Vague monétisation (`docs/superpowers/backlog.md`).
+> **Vertical slice mobile + backend** (`convex/**` + `app/` + `src/`). **Brancher depuis `dev`** (à jour — Slice 4 RevenueCat **mergée** `3d2aaad`, gating réel + infra paywall présents ; `PREMIUM_PAYMENT_DEFERRED=false`). Vague monétisation (`docs/superpowers/backlog.md`).
 >
 > **But produit** : la 1ʳᵉ soumission store se fait **sans paiement réel**. On garde le **gating premium réel** mais on devient pro via un bouton **« Essayer Premium gratuitement »** (zéro prix, zéro RevenueCat → review Apple simple, pas d'IAP). Le code RevenueCat (Slice 4) reste en place **désactivé par `PAYMENTS_ENABLED`** : ré-activer le paiement plus tard = flipper 1 flag.
 

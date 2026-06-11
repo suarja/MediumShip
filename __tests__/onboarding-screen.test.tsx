@@ -31,6 +31,16 @@ jest.mock("../src/features/theme/theme-provider", () => ({
   }),
 }));
 
+jest.mock("convex/react", () => ({
+  useQuery: () => [],
+  useMutation: () => jest.fn(),
+  useConvexAuth: () => ({ isAuthenticated: false, isLoading: false }),
+}));
+
+jest.mock("../src/features/auth/use-clerk-auth", () => ({
+  useClerkAuth: () => ({ isSignedIn: false }),
+}));
+
 jest.mock("react-native-safe-area-context", () => {
   const React = require("react");
   const { View } = require("react-native");
@@ -67,15 +77,14 @@ describe("onboarding screen", () => {
   it("walks through the three steps", () => {
     render(<OnboardingScreen />);
 
-    // Step 1 — manifesto (the accent half renders as its own Text node)
+    // Step 1 — manifesto + thesis reads (accent half is its own Text node)
     expect(screen.getByText("Celui-ci te fait réfléchir.")).toBeTruthy();
+    expect(screen.getByText("L'économie de l'attention")).toBeTruthy();
 
     fireEvent.press(screen.getByText("Commencer"));
 
-    // Step 2 — selection (themes + reads)
+    // Step 2 — categories (real interests picker)
     expect(screen.getByText("Choisis ce qui t'interpelle.")).toBeTruthy();
-    expect(screen.getByText("Société")).toBeTruthy();
-    expect(screen.getByText("L'économie de l'attention")).toBeTruthy();
 
     fireEvent.press(screen.getByText("Continuer"));
 

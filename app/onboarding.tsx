@@ -11,6 +11,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
+import { CategoryInterestsPicker } from "../src/components/settings/category-interests-picker";
+import {
+  useCategoryInterests,
+  useCategoryInterestTreeNodes,
+} from "../src/features/categories/use-category-interests";
 import { getDefaultAppRoute } from "../src/features/navigation/default-app-route";
 import { setOnboardingSeen } from "../src/features/onboarding/onboarding-storage";
 import { HapticsService } from "../src/features/haptics/haptics";
@@ -29,8 +34,10 @@ export default function OnboardingScreen() {
   const router = useRouter();
 
   const [step, setStep] = useState(0);
-  const [selectedThemes, setSelectedThemes] = useState<Set<number>>(new Set());
+  // Selection is held by the parent so it survives back/forward within the flow.
+  // Tranche 1: in-session only — guest-local persistence + sync land later.
   const [selectedReads, setSelectedReads] = useState<Set<number>>(new Set());
+  const [categoryKeys, setCategoryKeys] = useState<Set<string>>(new Set());
 
   const finish = useCallback(
     async (target: "feed" | "sign-in") => {
@@ -52,16 +59,18 @@ export default function OnboardingScreen() {
     setStep((s) => Math.max(s - 1, 0));
   };
 
-  const toggle = (set: Set<number>, apply: (next: Set<number>) => void, index: number) => {
+  const toggleRead = (index: number) => {
     void HapticsService.selection();
-    const next = new Set(set);
-    if (next.has(index)) {
-      next.delete(index);
-    } else {
-      next.add(index);
-    }
-    apply(next);
+    setSelectedReads((prev) => {
+      const next = new Set(prev);
+      next.has(index) ? next.delete(index) : next.add(index);
+      return next;
+    });
   };
+
+  const applyCategoryKeys = useCallback(async (keys: ReadonlySet<string>) => {
+    setCategoryKeys(new Set(keys));
+  }, []);
 
   const maxWidth = contentMaxWidth ?? (isTablet ? 640 : undefined);
 
@@ -133,18 +142,16 @@ export default function OnboardingScreen() {
 
         <ScrollView
           style={styles.flex}
-          contentContainerStyle={{ paddingVertical: theme.spacing.lg * scaleSpace, gap: theme.spacing.lg * scaleSpace }}
+          contentContainerStyle={{
+            paddingVertical: theme.spacing.lg * scaleSpace,
+            gap: theme.spacing.lg * scaleSpace,
+          }}
           showsVerticalScrollIndicator={false}
         >
           {step === 0 ? (
-            <ManifestoStep />
+            <ManifestoStep selectedReads={selectedReads} onToggleRead={toggleRead} />
           ) : step === 1 ? (
-            <SelectionStep
-              selectedThemes={selectedThemes}
-              selectedReads={selectedReads}
-              onToggleTheme={(i) => toggle(selectedThemes, setSelectedThemes, i)}
-              onToggleRead={(i) => toggle(selectedReads, setSelectedReads, i)}
-            />
+            <CategoryStep selectedKeys={categoryKeys} applyCategoryKeys={applyCategoryKeys} />
           ) : (
             <PremiumStep />
           )}
@@ -181,7 +188,7 @@ export default function OnboardingScreen() {
             </>
           ) : (
             <PrimaryButton
-              label={step === 0 ? t("manifesto.cta") : t("selection.cta")}
+              label={step === 0 ? t("manifesto.cta") : t("categories.cta")}
               onPress={goNext}
             />
           )}
@@ -193,119 +200,49 @@ export default function OnboardingScreen() {
 
 /* ----------------------------- Steps ----------------------------- */
 
-function ManifestoStep() {
-  const { t } = useTranslation("onboarding");
-  const { theme } = useAppTheme();
-  const { isTablet, scaleFont } = useResponsive();
-
-  return (
-    <View style={{ gap: 14 }}>
-      <Kicker label={t("manifesto.kicker")} />
-      <Text
-        style={[
-          styles.title,
-          { color: theme.colors.heading, fontSize: (isTablet ? 36 : 30) * scaleFont },
-        ]}
-      >
-        {t("manifesto.title")}{" "}
-        <Text style={[styles.titleAccent, { color: theme.colors.premium }]}>
-          {t("manifesto.titleAccent")}
-        </Text>
-      </Text>
-      <Text
-        style={[
-          styles.body,
-          { color: theme.colors.textMuted, fontSize: typeScale.body * scaleFont },
-        ]}
-      >
-        {t("manifesto.body")}
-      </Text>
-    </View>
-  );
-}
-
-function SelectionStep({
-  selectedThemes,
+function ManifestoStep({
   selectedReads,
-  onToggleTheme,
   onToggleRead,
 }: {
-  selectedThemes: Set<number>;
   selectedReads: Set<number>;
-  onToggleTheme: (index: number) => void;
   onToggleRead: (index: number) => void;
 }) {
   const { t } = useTranslation("onboarding");
   const { theme } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
-  const themes = t("selection.placeholderThemes", { returnObjects: true }) as string[];
-  const reads = t("selection.placeholderReads", { returnObjects: true }) as string[];
+  const reads = t("manifesto.placeholderReads", { returnObjects: true }) as string[];
 
   return (
     <View style={{ gap: 18 }}>
-      <View style={{ gap: 8 }}>
-        <Kicker label={t("selection.kicker")} />
+      <View style={{ gap: 14 }}>
+        <Kicker label={t("manifesto.kicker")} />
         <Text
           style={[
             styles.title,
-            { color: theme.colors.heading, fontSize: (isTablet ? 30 : 26) * scaleFont },
+            { color: theme.colors.heading, fontSize: (isTablet ? 34 : 29) * scaleFont },
           ]}
         >
-          {t("selection.title")}
+          {t("manifesto.title")}{" "}
+          <Text style={[styles.titleAccent, { color: theme.colors.premium }]}>
+            {t("manifesto.titleAccent")}
+          </Text>
+        </Text>
+        <Text
+          style={[
+            styles.body,
+            { color: theme.colors.textMuted, fontSize: typeScale.body * scaleFont },
+          ]}
+        >
+          {t("manifesto.body")}
         </Text>
       </View>
 
-      {/* Block A — themes */}
+      {/* Reads — thesis articles below the manifesto */}
       <View style={{ gap: 10 }}>
         <Text
           style={[styles.blockLabel, { color: theme.colors.textMuted, fontSize: typeScale.meta * scaleFont }]}
         >
-          {t("selection.themesLabel")}
-        </Text>
-        <View style={[styles.chips, { gap: 8 * scaleSpace }]}>
-          {themes.map((label, i) => {
-            const active = selectedThemes.has(i);
-            return (
-              <Pressable
-                key={label}
-                onPress={() => onToggleTheme(i)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                style={({ pressed }) => [
-                  styles.chip,
-                  {
-                    borderRadius: theme.radii.pill,
-                    borderColor: active ? theme.colors.heading : withAlpha(theme.colors.heading, 0.14),
-                    backgroundColor: active ? theme.colors.heading : "transparent",
-                    paddingHorizontal: 14 * scaleSpace,
-                    paddingVertical: 9 * scaleSpace,
-                  },
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.chipLabel,
-                    {
-                      color: active ? theme.colors.canvas : theme.colors.textMuted,
-                      fontSize: typeScale.meta * scaleFont,
-                    },
-                  ]}
-                >
-                  {label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
-
-      {/* Block B — reads */}
-      <View style={{ gap: 10 }}>
-        <Text
-          style={[styles.blockLabel, { color: theme.colors.textMuted, fontSize: typeScale.meta * scaleFont }]}
-        >
-          {t("selection.readsLabel")}
+          {t("manifesto.readsLabel")}
         </Text>
         <View style={{ gap: 8 * scaleSpace }}>
           {reads.map((readTitle, i) => {
@@ -334,7 +271,7 @@ function SelectionStep({
                   <Text
                     style={[styles.readKicker, { color: theme.colors.accent, fontSize: typeScale.meta * scaleFont }]}
                   >
-                    {t("selection.readKicker")}
+                    {t("manifesto.readKicker")}
                   </Text>
                   <Ionicons
                     color={active ? theme.colors.heading : withAlpha(theme.colors.heading, 0.3)}
@@ -356,33 +293,93 @@ function SelectionStep({
   );
 }
 
+function CategoryStep({
+  selectedKeys,
+  applyCategoryKeys,
+}: {
+  selectedKeys: Set<string>;
+  applyCategoryKeys: (keys: ReadonlySet<string>) => Promise<void>;
+}) {
+  const { t } = useTranslation("onboarding");
+  const { theme } = useAppTheme();
+  const { isTablet, scaleFont } = useResponsive();
+  const { options } = useCategoryInterests();
+  const treeNodes = useCategoryInterestTreeNodes();
+
+  return (
+    <View style={{ gap: 16 }}>
+      <View style={{ gap: 8 }}>
+        <Kicker label={t("categories.kicker")} />
+        <Text
+          style={[
+            styles.title,
+            { color: theme.colors.heading, fontSize: (isTablet ? 30 : 26) * scaleFont },
+          ]}
+        >
+          {t("categories.title")}
+        </Text>
+      </View>
+
+      <CategoryInterestsPicker
+        options={options}
+        treeNodes={treeNodes}
+        selectedKeys={selectedKeys}
+        applyCategoryInterests={applyCategoryKeys}
+      />
+    </View>
+  );
+}
+
 function PremiumStep() {
   const { t } = useTranslation("onboarding");
   const { theme } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
   const benefits = t("premium.benefits", { returnObjects: true }) as string[];
+  const badgeSize = 40 * scaleSpace;
 
   return (
-    <View style={{ gap: 16 }}>
-      <Kicker label={t("premium.kicker")} tone={theme.colors.premium} />
-      <Text
-        style={[
-          styles.title,
-          { color: theme.colors.heading, fontSize: (isTablet ? 32 : 28) * scaleFont },
-        ]}
-      >
-        {t("premium.title")}{" "}
-        <Text style={[styles.titleAccent, { color: theme.colors.premium }]}>
-          {t("premium.titleAccent")}
+    <View style={{ gap: 18 }}>
+      <View style={{ gap: 12 }}>
+        <Kicker label={t("premium.kicker")} tone={theme.colors.premium} />
+        <Text
+          style={[
+            styles.title,
+            { color: theme.colors.heading, fontSize: (isTablet ? 34 : 30) * scaleFont },
+          ]}
+        >
+          {t("premium.title")}{" "}
+          <Text style={[styles.titleAccent, { color: theme.colors.premium }]}>
+            {t("premium.titleAccent")}
+          </Text>
         </Text>
-      </Text>
+        <Text
+          style={[styles.body, { color: theme.colors.textMuted, fontSize: typeScale.body * scaleFont }]}
+        >
+          {t("premium.subtitle")}
+        </Text>
+      </View>
 
-      <View style={{ gap: 12 * scaleSpace, marginTop: 4 }}>
+      <View style={{ gap: 16 * scaleSpace, marginTop: 4 }}>
         {benefits.map((benefit) => (
-          <View key={benefit} style={[styles.benefitRow, { gap: 10 * scaleSpace }]}>
-            <Ionicons color={theme.colors.premium} name="checkmark" size={18 * scaleFont} />
+          <View key={benefit} style={[styles.benefitRow, { gap: 14 * scaleSpace }]}>
+            <View
+              style={[
+                styles.benefitBadge,
+                {
+                  width: badgeSize,
+                  height: badgeSize,
+                  borderRadius: badgeSize / 2,
+                  backgroundColor: withAlpha(theme.colors.premium, theme.isDark ? 0.24 : 0.12),
+                },
+              ]}
+            >
+              <Ionicons color={theme.colors.premium} name="checkmark" size={20 * scaleFont} />
+            </View>
             <Text
-              style={[styles.benefit, { color: theme.colors.text, fontSize: typeScale.body * scaleFont }]}
+              style={[
+                styles.benefit,
+                { color: theme.colors.heading, fontSize: (isTablet ? 18 : 17) * scaleFont },
+              ]}
             >
               {benefit}
             </Text>
@@ -477,9 +474,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     textTransform: "uppercase",
   },
-  chips: { flexDirection: "row", flexWrap: "wrap" },
-  chip: { borderWidth: StyleSheet.hairlineWidth },
-  chipLabel: { fontFamily: fontFamilies.bodyMedium },
   readCard: { borderWidth: StyleSheet.hairlineWidth },
   readHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   readKicker: {
@@ -489,7 +483,8 @@ const styles = StyleSheet.create({
   },
   readTitle: { fontFamily: fontFamilies.display, lineHeight: 23 },
   benefitRow: { flexDirection: "row", alignItems: "center" },
-  benefit: { fontFamily: fontFamilies.body, flex: 1 },
+  benefitBadge: { alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  benefit: { fontFamily: fontFamilies.bodyMedium, flex: 1, lineHeight: 24 },
   note: { fontFamily: fontFamilies.body, lineHeight: 19, marginTop: 4 },
   footer: { gap: 10, paddingTop: 8 },
   primary: { alignItems: "center", justifyContent: "center", minHeight: 50 },

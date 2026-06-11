@@ -11,3 +11,8 @@ export async function getOnboardingSeen(): Promise<boolean> {
 export async function setOnboardingSeen(): Promise<void> {
   await AsyncStorage.setItem(ONBOARDING_SEEN_KEY, "true");
 }
+
+/** Clears the flag so the first-run flow shows again (debug / replay). */
+export async function resetOnboardingSeen(): Promise<void> {
+  await AsyncStorage.removeItem(ONBOARDING_SEEN_KEY);
+}

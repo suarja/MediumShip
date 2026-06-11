@@ -1,10 +1,13 @@
 import { useGoBack } from "../src/features/navigation/app-navigation";
+import { useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { useConvexAuth, useQuery } from "convex/react";
 import { useTranslation } from "react-i18next";
 
 import { api } from "../convex/_generated/api";
+import { HapticsService } from "../src/features/haptics/haptics";
+import { resetOnboardingSeen } from "../src/features/onboarding/onboarding-storage";
 import { StatusBannerStack } from "../src/components/content/status-banner-stack";
 import { Screen } from "../src/components/layout/screen";
 import { useTabBarSpace } from "../src/components/navigation/app-tab-bar";
@@ -22,6 +25,7 @@ export default function SettingsDebugScreen() {
   const { t } = useTranslation("settings");
   const { theme } = useAppTheme();
   const goBack = useGoBack("/settings");
+  const router = useRouter();
   const tabBarSpace = useTabBarSpace();
   const persistentPlayerSpace = usePersistentMediaPlayerSpace();
   const { isSignedIn, userId, email, fullName, user } = useClerkAuth();
@@ -78,6 +82,26 @@ export default function SettingsDebugScreen() {
           <NetworkStateDebugItem />
           <SettingsRow isLast label={t("debug.rows.networkRuntime")} value={networkState} />
         </SettingsSection>
+
+        <SettingsSection title={t("debug.sections.onboarding")}>
+          <Pressable
+            accessibilityRole="button"
+            testID="debug-replay-onboarding"
+            onPress={async () => {
+              void HapticsService.medium();
+              await resetOnboardingSeen();
+              router.replace("/onboarding");
+            }}
+            style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}
+          >
+            <Text style={[styles.actionLabel, { color: theme.colors.accent }]}>
+              {t("debug.onboarding.replay")}
+            </Text>
+            <Text style={[styles.actionHint, { color: theme.colors.textMuted }]}>
+              {t("debug.onboarding.replayHint")}
+            </Text>
+          </Pressable>
+        </SettingsSection>
       </ScrollView>
     </Screen>
   );
@@ -109,6 +133,19 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     maxWidth: 560,
+  },
+  actionRow: {
+    paddingVertical: 10,
+    gap: 2,
+  },
+  actionLabel: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: 16,
+  },
+  actionHint: {
+    fontFamily: fontFamilies.body,
+    fontSize: 13,
+    lineHeight: 18,
   },
   pressed: {
     opacity: 0.84,

@@ -80,6 +80,11 @@ export default {
       session: "Session",
       identity: "Identity",
       network: "Network",
+      onboarding: "Onboarding",
+    },
+    onboarding: {
+      replay: "Replay onboarding",
+      replayHint: "Resets the first-run flag and reopens the flow.",
     },
     rows: {
       auth: "Auth state",

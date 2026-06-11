@@ -221,8 +221,8 @@ function ManifestoStep() {
             styles.title,
             {
               color: theme.colors.heading,
-              fontSize: (isTablet ? 42 : 36) * scaleFont,
-              lineHeight: (isTablet ? 46 : 40) * scaleFont,
+              fontSize: (isTablet ? 48 : 40) * scaleFont,
+              lineHeight: (isTablet ? 52 : 44) * scaleFont,
             },
           ]}
         >

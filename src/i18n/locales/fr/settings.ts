@@ -81,6 +81,11 @@ export default {
       session: "Session",
       identity: "Identité",
       network: "Réseau",
+      onboarding: "Onboarding",
+    },
+    onboarding: {
+      replay: "Refaire l'onboarding",
+      replayHint: "Réinitialise le premier lancement et relance le flow.",
     },
     rows: {
       auth: "État auth",

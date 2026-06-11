@@ -317,6 +317,23 @@ function ProfileDashboard() {
               offline: t("stats.offlineLabel"),
               history: t("stats.historyLabel"),
             }}
+            onPressSaved={() => {
+              void HapticsService.light();
+              router.push("/favorites");
+            }}
+            onPressOffline={() => {
+              if (isMember) {
+                void HapticsService.light();
+                router.push("/downloads");
+                return;
+              }
+              void HapticsService.medium();
+              openPaywall("offline");
+            }}
+            onPressHistory={() => {
+              void HapticsService.light();
+              router.push("/history");
+            }}
           />
         ) : null}
 

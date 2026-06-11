@@ -1,56 +1,27 @@
 export default {
   title: "Profil",
-  eyebrow: "Votre profil",
-  guestTitle: "Creez votre profil.",
+  guestTitle: "Crée ton profil.",
   guestName: "Lecteur invité",
   guestBio:
-    "La lecture reste ouverte. Creez un compte pour enregistrer vos formats favoris et synchroniser votre progression. Premium ajoute le hors ligne et les listes personnelles.",
-  signedInBio:
-    "Votre compte synchronise vos formats enregistres et votre progression. Premium ajoute le hors ligne et les listes personnelles.",
-  memberBio:
-    "Un profil pense pour garder vos lectures, reprendre vos ecoutes et retrouver vos formats favoris sans friction.",
-  memberBioActive:
-    "Votre collection est en mouvement: contenus gardes, copies hors ligne et progression synchronisee restent a portee de main.",
-  heroMetaGuest: "Lecture ouverte · compte optionnel",
-  heroMetaSignedIn: "Compte connecte · options membres disponibles",
-  heroMetaMember: "Membre actif · synchro prete",
-  heroChipSaved_one: "{{count}} favori",
-  heroChipSaved_other: "{{count}} favoris",
-  heroChipDownloaded_one: "{{count}} hors ligne",
-  heroChipDownloaded_other: "{{count}} hors ligne",
-  createAccount: "Creer un compte",
-  discoverPremium: "Decouvrir Premium",
-  guestNote:
-    "Votre profil se concentre maintenant sur l'identite, le statut du compte et les reglages. Les contenus enregistres et hors ligne vivent dans Bibliotheque.",
+    "La lecture reste ouverte. Crée un compte pour enregistrer tes formats favoris et synchroniser ta progression. Premium ajoute le hors-ligne et les listes personnelles.",
+  createAccount: "Créer un compte",
+  discoverPremium: "Découvrir Premium",
   status: {
     memberFree: "Membre · Gratuit",
-    memberPremium: "Membre · Bienfaiteur",
+    memberPremium: "Membre · Premium",
   },
   since: {
-    member: "Synchro prete · compte membre",
-    upgrade: "Compte gratuit · passez Premium",
+    member: "Ton abonnement est actif",
+    upgrade: "Compte gratuit · passe à Premium",
   },
   stats: {
     savedLabel: "Favoris",
-    savedHint: "Voir Bibliotheque",
     offlineLabel: "Hors-ligne",
     historyLabel: "Historique",
-    downloadedLabel: "Telecharges",
-    downloadedHint: "Voir Bibliotheque",
-    accessLabel: "Acces",
-    memberHint: "Premium actif",
-    guestHint: "Invite ou compte standard",
-    syncLabel: "Sync",
-    syncReady: "Convex et Clerk alignes",
-    syncPending: "Actions locales ou session invitee",
   },
   sections: {
-    myLibrary: "Ma bibliotheque",
+    myLibrary: "Ma bibliothèque",
     account: "Compte",
-    libraryTitle: "Bibliotheque gardee",
-    librarySubtitle: "Retrouvez rapidement les contenus que vous voulez garder sous la main.",
-    downloadsTitle: "Etagere hors ligne",
-    downloadsSubtitle: "Vos copies locales avec couverture, format et acces immediat sans reseau.",
   },
   rows: {
     saved: {
@@ -59,21 +30,21 @@ export default {
       sub_other: "{{count}} favoris",
     },
     downloads: {
-      title: "Telechargements",
-      subMember_one: "{{count}} episode hors ligne",
-      subMember_other: "{{count}} episodes hors ligne",
-      sub: "Reserve aux membres Premium",
+      title: "Téléchargements",
+      subMember_one: "{{count}} épisode hors-ligne",
+      subMember_other: "{{count}} épisodes hors-ligne",
+      sub: "Réservé aux membres Premium",
     },
     lists: {
       title: "Mes listes",
-      sub: "1 liste · illimite avec Premium",
-      subMember_one: "{{count}} liste · privee",
-      subMember_other: "{{count}} listes · privees",
-      subMemberEmpty: "Creez votre premiere liste",
+      sub: "1 liste · illimité avec Premium",
+      subMember_one: "{{count}} liste · privée",
+      subMember_other: "{{count}} listes · privées",
+      subMemberEmpty: "Crée ta première liste",
     },
     history: {
       title: "Historique & progression",
-      sub: "Reprise synchronisee sur vos appareils",
+      sub: "Reprise synchronisée sur tes appareils",
     },
     briefing: {
       title: "Lectures du jour",
@@ -92,16 +63,14 @@ export default {
     },
     goPremium: {
       title: "Passer Premium",
-      sub: "Offline, listes illimitees, salon membres",
+      sub: "Hors-ligne, listes illimitées, salon membres",
     },
     signOut: {
-      title: "Se deconnecter",
-      sub: "Repasser en mode invite",
+      title: "Se déconnecter",
+      sub: "Repasser en mode invité",
     },
   },
   badges: {
-    free: "Gratuit",
-    member: "Membre",
     premium: "Premium",
   },
 } as const;

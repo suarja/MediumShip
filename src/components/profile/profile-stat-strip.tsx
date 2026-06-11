@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { useResponsive } from "../../features/responsive/use-responsive";
 import { fontFamilies } from "../../features/theme/fonts";
@@ -20,6 +20,9 @@ type ProfileStatStripProps = {
     offline: string;
     history: string;
   };
+  onPressSaved?: () => void;
+  onPressOffline?: () => void;
+  onPressHistory?: () => void;
 };
 
 /**
@@ -34,12 +37,21 @@ export function ProfileStatStrip({
   showOffline = true,
   showHistory = true,
   labels,
+  onPressSaved,
+  onPressOffline,
+  onPressHistory,
 }: ProfileStatStripProps) {
   const { theme } = useAppTheme();
   const { scaleFont, scaleSpace } = useResponsive();
 
-  const stats: { key: string; icon: IconName; value: number; label: string; tone: string }[] =
-    [];
+  const stats: {
+    key: string;
+    icon: IconName;
+    value: number;
+    label: string;
+    tone: string;
+    onPress?: () => void;
+  }[] = [];
 
   if (showSaved) {
     stats.push({
@@ -48,6 +60,7 @@ export function ProfileStatStrip({
       value: savedCount,
       label: labels.saved,
       tone: theme.colors.accent,
+      onPress: onPressSaved,
     });
   }
 
@@ -58,6 +71,7 @@ export function ProfileStatStrip({
       value: offlineCount,
       label: labels.offline,
       tone: theme.colors.premium,
+      onPress: onPressOffline,
     });
   }
 
@@ -68,44 +82,66 @@ export function ProfileStatStrip({
       value: historyCount,
       label: labels.history,
       tone: theme.colors.textMuted,
+      onPress: onPressHistory,
     });
   }
 
   return (
     <View style={[styles.strip, { gap: theme.spacing.sm * scaleSpace }]}>
-      {stats.map((stat) => (
-        <View
-          key={stat.key}
-          style={[
-            styles.tile,
-            {
-              borderRadius: theme.radii.sm,
-              borderColor: theme.colors.border,
-              backgroundColor: theme.colors.surface,
-              padding: theme.spacing.sm * scaleSpace,
-              gap: 2 * scaleSpace,
-            },
-          ]}
-        >
-          <Ionicons color={stat.tone} name={stat.icon} size={13 * scaleFont} />
-          <Text
-            style={[
-              styles.value,
-              { color: theme.colors.heading, fontSize: 20 * scaleFont },
-            ]}
-          >
-            {stat.value}
-          </Text>
-          <Text
-            style={[
-              styles.label,
-              { color: theme.colors.textMuted, fontSize: 10 * scaleFont },
-            ]}
-          >
-            {stat.label}
-          </Text>
-        </View>
-      ))}
+      {stats.map((stat) => {
+        const tileStyle = {
+          borderRadius: theme.radii.sm,
+          borderColor: theme.colors.border,
+          backgroundColor: theme.colors.surface,
+          padding: theme.spacing.sm * scaleSpace,
+          gap: 2 * scaleSpace,
+        };
+        const inner = (
+          <>
+            <Ionicons color={stat.tone} name={stat.icon} size={13 * scaleFont} />
+            <Text
+              style={[
+                styles.value,
+                { color: theme.colors.heading, fontSize: 20 * scaleFont },
+              ]}
+            >
+              {stat.value}
+            </Text>
+            <Text
+              style={[
+                styles.label,
+                { color: theme.colors.textMuted, fontSize: 12 * scaleFont },
+              ]}
+            >
+              {stat.label}
+            </Text>
+          </>
+        );
+
+        if (stat.onPress) {
+          return (
+            <Pressable
+              key={stat.key}
+              accessibilityRole="button"
+              accessibilityLabel={stat.label}
+              onPress={stat.onPress}
+              style={({ pressed }) => [
+                styles.tile,
+                tileStyle,
+                pressed && styles.tilePressed,
+              ]}
+            >
+              {inner}
+            </Pressable>
+          );
+        }
+
+        return (
+          <View key={stat.key} style={[styles.tile, tileStyle]}>
+            {inner}
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -118,6 +154,9 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     borderWidth: StyleSheet.hairlineWidth,
+  },
+  tilePressed: {
+    opacity: 0.7,
   },
   value: {
     fontFamily: fontFamilies.displayBold,

@@ -84,7 +84,7 @@ describe("guest profile", () => {
     expect(screen.getByText("Create your profile.")).toBeTruthy();
     expect(
       screen.getByText(
-        "Reading stays open. Create an account to save favourite formats and sync progress. Premium adds offline access and personal lists.",
+        "Reading stays open. Create an account to save your favourite formats and sync your progress. Premium adds offline access and personal lists.",
       ),
     ).toBeTruthy();
     expect(

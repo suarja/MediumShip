@@ -41,7 +41,7 @@ export function ProfileIdentity({
   const { theme } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
   const { pickAndUploadAvatar, isUploading, canEditAvatar } = useAvatarEdit();
-  const avatarSize = (isTablet ? 60 : 52) * scaleSpace;
+  const avatarSize = (isTablet ? 72 : 64) * scaleSpace;
   const badgeSize = Math.max(20, avatarSize * 0.34);
   const initial = name.trim().charAt(0).toUpperCase() || title.trim().charAt(0).toUpperCase();
   const showAvatarEditor = editableAvatar && canEditAvatar;
@@ -193,7 +193,7 @@ export function ProfileIdentity({
               styles.status,
               {
                 color: theme.colors.premium,
-                fontSize: 10 * scaleFont,
+                fontSize: 12 * scaleFont,
               },
             ]}
           >

@@ -1,14 +1,22 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
+import aggregateTest from "@convex-dev/aggregate/test";
 import { describe, expect, it } from "vitest";
 
 import { api } from "../_generated/api";
 import schema from "../schema";
 import { modules } from "../../convexTestModules";
+import { syncContentInsert } from "./aggregate";
+
+function makeTest() {
+  const t = convexTest(schema, modules);
+  aggregateTest.register(t, "contentCategoryCounts");
+  return t;
+}
 
 describe("listPublishedCategories", () => {
   it("returns configured categories with icons and counts", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     await t.run(async (ctx) => {
       await ctx.db.insert("categories", {
@@ -19,7 +27,7 @@ describe("listPublishedCategories", () => {
         sortOrder: 0,
         updatedAt: Date.now(),
       });
-      await ctx.db.insert("contents", {
+      const id = await ctx.db.insert("contents", {
         tenantSlug: "demo-media",
         kind: "article",
         status: "published",
@@ -30,6 +38,8 @@ describe("listPublishedCategories", () => {
         tags: ["care"],
         isPremium: false,
       });
+      const doc = await ctx.db.get(id);
+      if (doc) await syncContentInsert(ctx, doc);
     });
 
     const result = await t.query(api.categories.queries.listPublishedCategories, {
@@ -47,7 +57,7 @@ describe("listPublishedCategories", () => {
   });
 
   it("falls back to derived categories when none are configured", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     await t.run(async (ctx) => {
       await ctx.db.insert("contents", {

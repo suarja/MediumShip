@@ -5,6 +5,7 @@ import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import type { FeedReason } from "../../../convex/discovery/scoring";
 import { useClerkAuth } from "../auth/use-clerk-auth";
+import { getGuestCategoryInterests } from "../categories/guest-category-interests";
 import type { ContentDoc } from "../content/types";
 import { subscribeDiscoveryFeedRefresh } from "./discovery-feed-refresh";
 import { useAppTheme } from "../theme/theme-provider";
@@ -94,6 +95,25 @@ export function useDiscoveryFeed(): {
   const { isAuthenticated } = useConvexAuth();
   const me = useQuery(api.users.queries.getMe, isClerkSignedIn ? {} : "skip");
   const [feedSeed, setFeedSeed] = useState(0);
+  // Guest-local interests seed the feed before sign-in (Tranche 2b). Reloaded on
+  // mount and on every refresh signal (e.g. after onboarding applies a pick).
+  const [guestCategoryKeys, setGuestCategoryKeys] = useState<string[]>([]);
+
+  const reloadGuestKeys = useCallback(() => {
+    if (isAuthenticated) {
+      setGuestCategoryKeys((prev) => (prev.length === 0 ? prev : []));
+      return;
+    }
+    void getGuestCategoryInterests().then((keys) =>
+      setGuestCategoryKeys((prev) =>
+        prev.length === keys.length && prev.every((key, i) => key === keys[i]) ? prev : keys,
+      ),
+    );
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    reloadGuestKeys();
+  }, [reloadGuestKeys]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [fetchCursor, setFetchCursor] = useState<string | null>(null);
   const [allItems, setAllItems] = useState<DiscoveryFeedItem[]>([]);
@@ -110,6 +130,8 @@ export function useDiscoveryFeed(): {
     feedSeed,
     cursor: fetchCursor,
     limit: DISCOVERY_PAGE_SIZE,
+    guestCategoryKeys:
+      !isAuthenticated && guestCategoryKeys.length > 0 ? guestCategoryKeys : undefined,
   });
 
   const page = normalizeDiscoveryFeedPage(
@@ -221,9 +243,10 @@ export function useDiscoveryFeed(): {
   );
 
   const refresh = useCallback(() => {
+    reloadGuestKeys();
     setIsRefreshing(true);
     setFeedSeed((current) => current + 1);
-  }, []);
+  }, [reloadGuestKeys]);
 
   useEffect(() => subscribeDiscoveryFeedRefresh(refresh), [refresh]);
 

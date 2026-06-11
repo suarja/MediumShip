@@ -221,6 +221,31 @@ describe("getDiscoveryFeed authenticated path", () => {
     expect(feed.items[0]?._id).toBe(scienceId);
   });
 
+  it("ranks guest-local category interests for unauthenticated visitors", async () => {
+    const t = convexTest(schema, modules);
+    await seedTenant(t, ["articles", "discover"]);
+
+    const scienceId = await insertPublishedContent(t, {
+      title: "Science story",
+      publishedAt: "2026-06-01T08:00:00.000Z",
+      category: "Science",
+    });
+    await insertPublishedContent(t, {
+      title: "Culture story",
+      publishedAt: "2026-06-01T08:00:00.000Z",
+      category: "Culture",
+    });
+
+    // No identity — a guest passes their locally-stored interests directly.
+    const feed = await t.query(api.discovery.feed.getDiscoveryFeed, {
+      tenantSlug: TENANT,
+      feedSeed: 3,
+      guestCategoryKeys: ["Science"],
+    });
+
+    expect(feed.items[0]?._id).toBe(scienceId);
+  });
+
   it("marks feed items the member has liked with isLiked", async () => {
     const t = convexTest(schema, modules);
     await seedTenant(t, ["articles", "discover"]);

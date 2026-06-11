@@ -402,6 +402,10 @@ export const getDiscoveryFeed = query({
     limit: v.optional(v.number()),
     feedSeed: v.optional(v.number()),
     cursor: v.optional(v.union(v.string(), v.null())),
+    // Guest-local category interests — used to rank the feed for visitors who
+    // have not signed in yet. Ignored for authenticated users (their stored
+    // member interests take precedence).
+    guestCategoryKeys: v.optional(v.array(v.string())),
   },
   returns: v.object({
     items: v.array(discoveryFeedItemValidator),
@@ -438,7 +442,7 @@ export const getDiscoveryFeed = query({
     const interestCategories =
       tokenIdentifier && identity
         ? await loadMemberCategoryInterests(ctx, tokenIdentifier, args.tenantSlug)
-        : [];
+        : (args.guestCategoryKeys ?? []);
 
     const visible = await loadFeedCandidates(ctx, {
       tenantSlug: args.tenantSlug,

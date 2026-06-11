@@ -20,7 +20,7 @@ export function Footer() {
           </div>
           <div className="footer__col">
             <h4>Studio</h4>
-            <a href="#">Approche</a>
+            <a href="/knowly">Démo Knowly</a>
             <a href="#">Réalisations</a>
             <a href="#">Journal</a>
           </div>

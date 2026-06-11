@@ -120,7 +120,13 @@ function buildFeed(contents: Doc<"contents">[] | undefined): {
   return { hero: toHero(heroSource), items };
 }
 
-export function HomeFeed({ large = false }: { large?: boolean }) {
+export function HomeFeed({
+  large = false,
+  brand = "Mediumship",
+}: {
+  large?: boolean;
+  brand?: string;
+}) {
   const contents = useQuery(api.content.queries.listPublishedFeed, {
     tenantSlug: env.demoTenantSlug,
   });
@@ -133,7 +139,8 @@ export function HomeFeed({ large = false }: { large?: boolean }) {
         <div className="feed">
           <div className="feed__hdr">
             <div className="logo">
-              Mediumship<span className="d">.</span>
+              {brand}
+              <span className="d">.</span>
             </div>
             <div className="av" />
           </div>

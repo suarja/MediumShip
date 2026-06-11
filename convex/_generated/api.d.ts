@@ -12,6 +12,7 @@ import type * as bookmarks_model from "../bookmarks/model.js";
 import type * as bookmarks_mutations from "../bookmarks/mutations.js";
 import type * as bookmarks_queries from "../bookmarks/queries.js";
 import type * as categories_aggregate from "../categories/aggregate.js";
+import type * as categories_backfillCounts from "../categories/backfillCounts.js";
 import type * as categories_catalog from "../categories/catalog.js";
 import type * as categories_catalogConstants from "../categories/catalogConstants.js";
 import type * as categories_catalogImport from "../categories/catalogImport.js";
@@ -115,6 +116,7 @@ declare const fullApi: ApiFromModules<{
   "bookmarks/mutations": typeof bookmarks_mutations;
   "bookmarks/queries": typeof bookmarks_queries;
   "categories/aggregate": typeof categories_aggregate;
+  "categories/backfillCounts": typeof categories_backfillCounts;
   "categories/catalog": typeof categories_catalog;
   "categories/catalogConstants": typeof categories_catalogConstants;
   "categories/catalogImport": typeof categories_catalogImport;

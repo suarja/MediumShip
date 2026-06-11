@@ -4,6 +4,15 @@ import { internal } from "./_generated/api";
 
 const crons = cronJobs();
 
+// Reconcile contentCategoryCounts aggregate once a day to catch any drift.
+// Runs at 03:00 UTC, before discovery ingestion (04:00 UTC).
+crons.cron(
+  "reconcile category counts",
+  "0 3 * * *",
+  internal.categories.backfillCounts.reconcileContentCategoryCounts,
+  {},
+);
+
 crons.cron(
   "discovery ingestion",
   "0 4 * * *",

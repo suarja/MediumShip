@@ -2,7 +2,7 @@ export default {
   home: "Accueil",
   discover: "Découvrir",
   explore: "Explorer",
-  library: "Bibliotheque",
+  library: "Bibliothèque",
   profile: "Profil",
   collections: "Collections",
   agenda: "Agenda",

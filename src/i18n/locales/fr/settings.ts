@@ -62,48 +62,48 @@ export default {
   },
   account: {
     status: "Statut",
-    guest: "Invite",
-    memberFeatures: "Reserve aux membres",
+    guest: "Invité",
+    memberFeatures: "Réservé aux membres",
     memberFeaturesDescription:
-      "Creez un compte pour synchroniser la progression, enregistrer des contenus, telecharger les formats pris en charge et acceder aux fonctions premium.",
+      "Créez un compte pour synchroniser la progression, enregistrer des contenus, télécharger les formats pris en charge et accéder aux fonctions premium.",
     signedInAs: "Connecté en tant que",
     signOut: "Se déconnecter",
   },
   debug: {
     panelLabel: "Panneau debug",
     panelDescription:
-      "Ouvrir les donnees techniques du compte, de l'identite Convex et les surcharges reseau.",
-    back: "Retour aux reglages",
+      "Ouvrir les données techniques du compte, de l'identité Convex et les surcharges réseau.",
+    back: "Retour aux réglages",
     title: "Debug",
     subtitle:
-      "Surface reservee au developpement pour inspecter l'etat de session, l'identite Convex et les etats reseau.",
+      "Surface réservée au développement pour inspecter l'état de session, l'identité Convex et les états réseau.",
     sections: {
       session: "Session",
-      identity: "Identite",
-      network: "Reseau",
+      identity: "Identité",
+      network: "Réseau",
     },
     rows: {
-      auth: "Etat auth",
-      convex: "Etat Convex",
+      auth: "État auth",
+      convex: "État Convex",
       member: "Membre",
       userId: "User ID",
       name: "Nom Clerk",
       email: "Email",
-      stored: "Stocke dans Convex",
+      stored: "Stocké dans Convex",
       clerkId: "Clerk ID",
       tokenIdentifier: "Token identifier",
       avatar: "Avatar",
-      displayName: "Nom resolu",
-      networkRuntime: "Etat reseau runtime",
+      displayName: "Nom résolu",
+      networkRuntime: "État réseau runtime",
     },
     network: {
-      label: "Surcharge d'etat reseau",
+      label: "Surcharge d'état réseau",
       description:
-        "Surcharge reservee au developpement pour tester les etats de degradation sur simulateur.",
+        "Surcharge réservée au développement pour tester les états de dégradation sur simulateur.",
       options: {
         auto: {
           label: "Auto",
-          description: "Utilise l'etat de connectivite reel de l'appareil.",
+          description: "Utilise l'état de connectivité réel de l'appareil.",
         },
         offline: {
           label: "Hors ligne",
@@ -111,12 +111,12 @@ export default {
             "Force les surfaces publiques dans leur fallback hors ligne.",
         },
         backendDegraded: {
-          label: "Backend degrade",
-          description: "Affiche l'etat de banniere backend degrade.",
+          label: "Backend dégradé",
+          description: "Affiche l'état de bannière backend dégradé.",
         },
         authDegraded: {
-          label: "Auth degradee",
-          description: "Affiche l'etat de banniere auth membre degradee.",
+          label: "Auth dégradée",
+          description: "Affiche l'état de bannière auth membre dégradée.",
         },
       },
     },

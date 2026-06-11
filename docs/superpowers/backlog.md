@@ -15,7 +15,8 @@ Idées soulevées mais non encore planifiées en slice. Rangées par **priorité
   - **⚙️ À déployer + backfill one-shot** : après `convex deploy`/`dev` (enregistre le composant), lancer **une fois** `internal.categories.backfillCounts.backfillContentCategoryCounts({})` pour peupler l'aggregate (avant ça, les counts sont incomplets ; le cron de réconciliation soigne ensuite).
 - **Parqué (option C)** — ranking de feed matérialisé par cron : seulement si plusieurs clients simultanés en prod rendent l'invalidation réactive coûteuse. Pas pré-prod.
 - **Parqué (corpus)** — borner/retenir l'ingestion (10k+ items, surtout Wikipedia) : question produit. Moins de lignes = tout moins cher.
-- **Parqué (queries résiduelles)** — `searchPublished` `.take(2000)`, `getTrendingTopics` `.take(1000)`, `content/queries:listPublishedFeed` `.collect()`, `insights/relatedSelection` `.collect()` : borner si elles pèsent au monitoring.
+- **Perf Slice C — Borner content/queries (Home + Explore + Search).** **✅ Livré (mergé `dev` 2026-06-11).** `listPublishedFeed` (Home) scannait tout le corpus (~14 MB) pour ne garder que ~7 items éditoriaux → lit maintenant l'éditorial directement via l'index `by_tenant_source_external` (cms + legacy sans source), ~15 KB. `searchPublished` fallback 2000→600 ; `getTrendingTopics` 1000→400 (heuristiques bornées). Formes de retour inchangées. 453 tests Convex, tsc clean. **À déployer** pour faire disparaître le warning `listPublishedFeed`.
+- **Parqué (queries résiduelles restantes)** — `insights/relatedSelection` `.collect()` du corpus (cron premium quotidien, pas un hot-path client) : borner si ça pèse au monitoring.
 
 ---
 

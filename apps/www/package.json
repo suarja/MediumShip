@@ -1,0 +1,21 @@
+{
+  "name": "mediumship-www",
+  "private": true,
+  "scripts": {
+    "dev": "sh -ac 'set -a; if [ -f .env.local ]; then . ./.env.local; elif [ -f ../../.env.local ]; then . ../../.env.local; fi; set +a; next dev'",
+    "build": "sh -ac 'set -a; if [ -f .env.local ]; then . ./.env.local; elif [ -f ../../.env.local ]; then . ../../.env.local; fi; set +a; next build'",
+    "start": "sh -ac 'set -a; if [ -f .env.local ]; then . ./.env.local; elif [ -f ../../.env.local ]; then . ../../.env.local; fi; set +a; next start'"
+  },
+  "dependencies": {
+    "convex": "^1.40.0",
+    "next": "16.2.3",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "typescript": "~6.0.3"
+  }
+}

@@ -5,12 +5,12 @@ import { KnowlyNav } from "../../components/knowly/knowly-nav";
 import { HomeFeed } from "../../components/demo/home-feed";
 
 export const metadata: Metadata = {
-  title: "Knowly — le Gleeph des idées",
+  title: "Knowly — la plupart des fils te font réagir, celui-ci te fait réfléchir",
   description:
-    "Explorer et retrouver des idées qui vous intéressent vraiment, avec un fil personnalisé, sans le vide du doom scroll. Wikipedia, YouTube et plus — un seul fil, trié pour vous.",
+    "Les réseaux optimisent l'indignation. Knowly ralentit : un fil d'idées qui t'apprend, sans le vide du doom scroll. Wikipedia, YouTube et plus, dans un seul fil trié pour toi.",
 };
 
-/* ---------- Hero ---------- */
+/* ---------- Hero (manifesto) ---------- */
 function KnowlyHero() {
   return (
     <section className="section hero">
@@ -21,16 +21,17 @@ function KnowlyHero() {
             Android
           </div>
           <h1 className="h-display serif">
-            Le <i>Gleeph</i> des idées.
+            La plupart des fils te font réagir.{" "}
+            <i>Celui-ci te fait réfléchir.</i>
           </h1>
           <p className="lede hero__lede">
-            Explorer et retrouver des idées qui vous intéressent vraiment, avec
-            un fil personnalisé — sans le vide du doom scroll. La fluidité d'un
-            feed, la densité de la lecture.
+            Les réseaux optimisent l'indignation : leurs algorithmes poussent ce
+            qui rend viral — la colère, le clash — et t'enferment dans ta bulle.
+            C'est le réflexe : rapide, émotionnel. Ici, on ralentit.
           </p>
           <div className="hero__cta">
             <a href="#download" className="btn btn--primary btn--big">
-              Télécharger Knowly<span className="arr">→</span>
+              Commencer<span className="arr">→</span>
             </a>
             <a href="#comment" className="btn btn--ghost btn--big">
               Comment ça marche
@@ -47,7 +48,7 @@ function KnowlyHero() {
             </div>
             <div>
               <div className="k serif">Un fil</div>
-              <div className="v">Trié pour vous, pas pour l'algo</div>
+              <div className="v">Trié pour toi, pas pour l'algo</div>
             </div>
           </div>
         </div>
@@ -69,12 +70,12 @@ const AUDIENCE = [
   {
     n: "02",
     t: "Utilisateurs de Gleeph",
-    d: "Vous suivez vos livres et vos goûts ; Knowly fait pareil pour les idées.",
+    d: "Tu suis tes livres et tes goûts ; Knowly fait pareil pour les idées.",
   },
   {
     n: "03",
     t: "Marathoniens Wikipédia / YouTube",
-    d: "Vous tombez dans des trous sans fin, sans mémoire de ce qui vous a accroché.",
+    d: "Tu tombes dans des trous sans fin, sans mémoire de ce qui t'a accroché.",
   },
   {
     n: "04",
@@ -126,10 +127,10 @@ function ProblemPromise() {
               <span className="dot">◉</span>Le problème
             </div>
             <h3 className="h-section serif">
-              Vous scrollez beaucoup. <i>Vous retenez peu.</i>
+              Tu scrolles beaucoup. <i>Tu retiens peu.</i>
             </h3>
             <p className="lede">
-              Du temps passé, peu de progression. Vous consommez passivement.
+              Du temps passé, peu de progression. Tu consommes passivement.
             </p>
             <ul className="bullets">
               <li>
@@ -139,7 +140,7 @@ function ProblemPromise() {
               <li>
                 <span className="x">02</span>
                 <span>
-                  Wikipédia, YouTube : riches, mais sans mémoire de vos goûts
+                  Wikipédia, YouTube : riches, mais sans mémoire de tes goûts
                 </span>
               </li>
               <li>
@@ -160,11 +161,11 @@ function ProblemPromise() {
               La promesse
             </div>
             <h3 className="h-section serif">
-              La fluidité d'un feed. <i>La densité de la lecture.</i>
+              On ralentit. <i>Et le fil t'apprend.</i>
             </h3>
             <p className="lede">
-              Vous gardez la découverte infinie et le plaisir du fil ; vous
-              gagnez de la profondeur et un fil qui apprend.
+              Tu gardes la découverte infinie et le plaisir du fil ; tu gagnes de
+              la profondeur et un fil qui apprend.
             </p>
             <ul className="bullets">
               <li>
@@ -173,7 +174,7 @@ function ProblemPromise() {
               </li>
               <li>
                 <span className="x">✓</span>
-                <span>Un fil qui apprend vos centres d'intérêt</span>
+                <span>Un fil qui apprend tes centres d'intérêt</span>
               </li>
               <li>
                 <span className="x">✓</span>
@@ -196,10 +197,7 @@ const ANALOGY: { k: string; v: string }[] = [
   { k: "Livre", v: "Idée — article, vidéo, épisode, extrait encyclopédique" },
   { k: "Ma bibliothèque", v: "Mes idées sauvegardées" },
   { k: "Profil de goût littéraire", v: "Profil de curiosité" },
-  {
-    k: "Recos livres",
-    v: "Fil qui s'adapte à ce que vous ouvrez et terminez",
-  },
+  { k: "Recos livres", v: "Fil qui s'adapte à ce que tu ouvres et termines" },
 ];
 
 function Analogy() {
@@ -212,12 +210,12 @@ function Analogy() {
               <span className="dot">◉</span>L'analogie
             </div>
             <h2 className="h-section serif">
-              Gleeph pour vos livres.
+              Gleeph pour tes livres.
               <br />
-              <i>Knowly pour vos idées.</i>
+              <i>Knowly pour tes idées.</i>
             </h2>
             <p className="lede">
-              Gleeph suit vos livres, construit votre profil de lecteur et vous
+              Gleeph suit tes livres, construit ton profil de lecteur et te
               recommande quoi lire ensuite. Knowly applique la même logique aux
               idées, tous formats confondus.
             </p>
@@ -241,13 +239,13 @@ const STEPS = [
   {
     n: "01",
     t: "Sans compte",
-    d: "Scrollez tout de suite dans un fil d'idées. Ouvrez ce qui vous intrigue, passez le reste.",
+    d: "Scrolle tout de suite dans un fil d'idées. Ouvre ce qui t'intrigue, passe le reste.",
     dur: "Dès l'ouverture",
   },
   {
     n: "02",
     t: "Avec un compte",
-    d: "Sauvegardez les idées qui comptent. Le fil s'adapte à ce que vous explorez en profondeur.",
+    d: "Sauvegarde les idées qui comptent. Le fil s'adapte à ce que tu explores en profondeur.",
     dur: "Bibliothèque + sync",
   },
   {
@@ -268,12 +266,12 @@ function HowItWorks() {
               <span className="dot">◉</span>Comment ça marche
             </div>
             <h2 className="h-section serif">
-              Scrollez. Apprenez. <i>Gardez ce qui compte.</i>
+              Scrolle. Apprends. <i>Garde ce qui compte.</i>
             </h2>
           </div>
           <p className="lede" style={{ maxWidth: 360 }}>
-            Pas de « vous êtes à jour » quand il reste des choses à découvrir.
-            Le fil continue, et il s'améliore avec vous.
+            Pas de « tu es à jour » quand il reste des choses à découvrir. Le fil
+            continue, et il s'améliore avec toi.
           </p>
         </div>
         <div className="process__grid">
@@ -314,7 +312,7 @@ function Sources() {
               <i>Texte, vidéo, bientôt audio.</i>
             </h2>
             <p className="lede">
-              Tout arrive dans un seul fil — trié pour vous, pas seulement « les
+              Tout arrive dans un seul fil — trié pour toi, pas seulement « les
               dernières publications ».
             </p>
           </div>
@@ -336,14 +334,8 @@ function Sources() {
 const NOT: { t: string; d: string }[] = [
   { t: "Pas TikTok", d: "Pas de clips vides pour tuer le temps." },
   { t: "Pas X / Threads", d: "Pas de réseau social ni de course aux likes (v1)." },
-  {
-    t: "Pas Wikipédia seule",
-    d: "Une encyclopédie qui vous connaît un peu.",
-  },
-  {
-    t: "Pas une encyclopédie figée",
-    d: "Votre fil évolue avec vous.",
-  },
+  { t: "Pas Wikipédia seule", d: "Une encyclopédie qui te connaît un peu." },
+  { t: "Pas une encyclopédie figée", d: "Ton fil évolue avec toi." },
 ];
 
 function NotThat() {
@@ -380,6 +372,61 @@ function NotThat() {
   );
 }
 
+/* ---------- Premium (wording repris de l'onboarding) ---------- */
+const PREMIUM_BENEFITS = [
+  "Ta lecture du jour, chaque matin",
+  "Lecture hors-ligne",
+  "Listes personnelles illimitées",
+  "Salon membres",
+];
+
+function Premium() {
+  return (
+    <section className="section wl" id="premium">
+      <div className="wrap">
+        <div className="wl__grid">
+          <div className="wl__copy">
+            <div
+              className="eyebrow"
+              style={{ marginBottom: 16, color: "var(--accent)" }}
+            >
+              <span className="dot">◉</span>Premium — gratuit pour l'instant
+            </div>
+            <h2 className="h-section serif">
+              Approfondis <i>chaque lecture.</i>
+            </h2>
+            <p className="lede">
+              Une lecture du jour qui interprète ce que tu lis et t'indique quoi
+              explorer ensuite — plus le hors-ligne, les listes et le salon
+              membres.
+            </p>
+            <p
+              className="mono"
+              style={{ marginTop: 18, color: "var(--ink-soft)" }}
+            >
+              Aucune carte requise. Premium est offert pendant le lancement.
+            </p>
+          </div>
+          <div
+            className="wl__matrix"
+            role="list"
+            aria-label="Bénéfices Premium"
+          >
+            {PREMIUM_BENEFITS.map((benefit) => (
+              <div className="wl__row" key={benefit} role="listitem">
+                <div className="k" aria-hidden="true">
+                  ✓
+                </div>
+                <div className="v">{benefit}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ---------- CTA ---------- */
 function Download() {
   return (
@@ -396,11 +443,10 @@ function Download() {
             <span className="dot">◉</span>Disponible sur iOS &amp; Android
           </div>
           <h2 className="h-section serif">
-            Gleeph pour vos livres. <em>Knowly pour vos idées.</em>
+            Arrête de réagir. <em>Commence à réfléchir.</em>
           </h2>
           <p className="lede cta__lede">
-            Scrollez. Apprenez. Gardez ce qui compte. Le fil s'améliore avec
-            vous.
+            Scrolle. Apprends. Garde ce qui compte. Le fil s'améliore avec toi.
           </p>
           <div className="cta__row">
             <a href="#" className="btn btn--accent btn--big">
@@ -442,7 +488,7 @@ function KnowlyFooter() {
           <div className="footer__col">
             <h4>Découvrir</h4>
             <a href="#analogie">Knowly vs…</a>
-            <a href="#download">Télécharger</a>
+            <a href="#premium">Premium</a>
             <a href="/">Studio Mediumship</a>
           </div>
           <div className="footer__col">
@@ -453,7 +499,7 @@ function KnowlyFooter() {
         </div>
         <div className="footer__bottom">
           <span>© 2026 Knowly · une démo Mediumship</span>
-          <span className="mono">v1 — le Gleeph des idées</span>
+          <span className="mono">v1 — la plupart des fils te font réagir</span>
         </div>
       </div>
     </footer>
@@ -472,6 +518,7 @@ export default function KnowlyPage() {
         <HowItWorks />
         <Sources />
         <NotThat />
+        <Premium />
         <Download />
       </main>
       <KnowlyFooter />

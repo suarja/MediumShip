@@ -2,6 +2,7 @@ import { mutation } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { buildDefaultFeatureConfigs, buildDefaultNavOrder } from "../featureCatalog";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
+import { syncContentInsert, syncContentUpdate } from "../categories/aggregate";
 
 const demoContents = [
   {
@@ -237,6 +238,10 @@ export const seedDemoContent = mutation({
         await ctx.db.patch(transitionalContent._id, {
           status: "archived",
         });
+        const updatedContent = await ctx.db.get(transitionalContent._id);
+        if (updatedContent) {
+          await syncContentUpdate(ctx, transitionalContent, updatedContent);
+        }
       }
     }
 
@@ -249,7 +254,11 @@ export const seedDemoContent = mutation({
         .unique();
 
       if (!existingContent) {
-        await ctx.db.insert("contents", content);
+        const newId = await ctx.db.insert("contents", content);
+        const newDoc = await ctx.db.get(newId);
+        if (newDoc) {
+          await syncContentInsert(ctx, newDoc);
+        }
       } else if (content.kind === "episode") {
         await ctx.db.patch(existingContent._id, {
           status: content.status,
@@ -262,6 +271,10 @@ export const seedDemoContent = mutation({
           durationSeconds: content.durationSeconds,
           audioUrl: content.audioUrl,
         });
+        const updatedContent = await ctx.db.get(existingContent._id);
+        if (updatedContent) {
+          await syncContentUpdate(ctx, existingContent, updatedContent);
+        }
       }
     }
 

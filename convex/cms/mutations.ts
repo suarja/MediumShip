@@ -3,6 +3,10 @@ import { v } from "convex/values";
 import { mutation, type MutationCtx } from "../_generated/server";
 import { defaultTenant } from "../../src/features/tenant/default-tenant";
 import {
+  syncContentInsert,
+  syncContentUpdate,
+} from "../categories/aggregate";
+import {
   assertNavTabCap,
   deriveEnabledModules,
   normalizeFeatureConfigs,
@@ -264,7 +268,7 @@ export const createContent = mutation({
     const slug = buildSlug(args.kind);
     await ensureUniqueSlug(ctx, defaultTenant.slug, slug);
 
-    return await ctx.db.insert(
+    const newId = await ctx.db.insert(
       "contents",
       buildContentRecord({
         tenantSlug: defaultTenant.slug,
@@ -303,6 +307,11 @@ export const createContent = mutation({
             : undefined,
       }),
     );
+    const newDoc = await ctx.db.get(newId);
+    if (newDoc) {
+      await syncContentInsert(ctx, newDoc);
+    }
+    return newId;
   },
 });
 
@@ -374,6 +383,10 @@ export const updateContent = mutation({
     });
 
     await ctx.db.replace(existing._id, nextRecord);
+    const updatedDoc = await ctx.db.get(existing._id);
+    if (updatedDoc) {
+      await syncContentUpdate(ctx, existing, updatedDoc);
+    }
     return existing._id;
   },
 });
@@ -419,6 +432,10 @@ export const setContentStatus = mutation({
         videoSource: existing.videoSource,
       }),
     );
+    const updatedDoc = await ctx.db.get(existing._id);
+    if (updatedDoc) {
+      await syncContentUpdate(ctx, existing, updatedDoc);
+    }
 
     return args.id;
   },

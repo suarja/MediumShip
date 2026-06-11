@@ -1,10 +1,17 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
+import aggregateTest from "@convex-dev/aggregate/test";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { internal } from "../../_generated/api";
 import schema from "../../schema";
 import { modules } from "../../../convexTestModules";
+
+function makeTest() {
+  const t = convexTest(schema, modules);
+  aggregateTest.register(t, "contentCategoryCounts");
+  return t;
+}
 import {
   ingestRssDemand,
   normalizeRssEntry,
@@ -35,7 +42,7 @@ const SAMPLE_RSS = `<?xml version="1.0" encoding="UTF-8"?>
   </channel>
 </rss>`;
 
-function makeIngestCtx(t: ReturnType<typeof convexTest>) {
+function makeIngestCtx(t: ReturnType<typeof makeTest>) {
   return {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     runQuery: (ref: any, args: any) => t.query(ref, args),
@@ -160,7 +167,7 @@ describe("rssProvider.ingest", () => {
   });
 
   it("returns upserted 0 and does not fetch when rss feeds are not configured", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
@@ -175,7 +182,7 @@ describe("rssProvider.ingest", () => {
   });
 
   it("fetches configured feeds, parses entries, and upserts them", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     await t.run(async (ctx) => {
       await ctx.db.insert("tenants", {
@@ -223,7 +230,7 @@ describe("rssProvider.ingest", () => {
   });
 
   it("deduplicates entries on re-run via by_tenant_source_external", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     await t.run(async (ctx) => {
       await ctx.db.insert("tenants", {
@@ -258,7 +265,7 @@ describe("rssProvider.ingest", () => {
   });
 
   it("does not require demand.categories — interprets demand loosely", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     await t.run(async (ctx) => {
       await ctx.db.insert("tenants", {
@@ -288,7 +295,7 @@ describe("rssProvider.ingest", () => {
   });
 
   it("skips one bad feed URL and still ingests the remaining configured feeds", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
 
     await t.run(async (ctx) => {
       await ctx.db.insert("tenants", {
@@ -336,7 +343,7 @@ describe("rssProvider.ingest", () => {
 
 describe("upsertIngested rss source", () => {
   it("accepts source rss in the ingested content validator", async () => {
-    const t = convexTest(schema, modules);
+    const t = makeTest();
     const item = normalizeRssEntry(
       {
         title: "RSS Item",

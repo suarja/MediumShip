@@ -6,11 +6,26 @@ import { loadMemberCategoryInterests } from "../categories/interests";
 import {
   bucketFeed,
   createSeededRng,
+  normalizeScoringKey,
   scoreContent,
   type Affinity,
   type FeedReason,
 } from "./scoring";
 import { isContentVisible } from "./visibility";
+
+// --- Bounded candidate pool constants ---
+/** N — most-recent published items (publishedAt desc) */
+const RECENCY_WINDOW = 250;
+/** Max affinity/interest categories targeted for per-category fetch */
+const AFFINITY_CATEGORIES_MAX = 6;
+/** K — recent items per targeted category */
+const PER_CATEGORY_RECENT = 40;
+/** Kₐ — oldest items per targeted category (archive bucket feed) */
+const PER_CATEGORY_ARCHIVE = 10;
+/** R — deep random sample for serendipity (all-time, seed-derived offset) */
+const DEEP_RANDOM_SAMPLE = 30;
+// Pool ceiling ≈ RECENCY_WINDOW + AFFINITY_CATEGORIES_MAX*(PER_CATEGORY_RECENT+PER_CATEGORY_ARCHIVE) + DEEP_RANDOM_SAMPLE
+// ≈ 250 + 6*(40+10) + 30 = 580 items, ~0.8 MB vs full 14 MB corpus.
 
 const DEFAULT_LIMIT = 20;
 const GUEST_FEED_MIX = { editorial: 0.5, random: 0.5 } as const;
@@ -196,6 +211,115 @@ async function loadAffinities(
   }));
 }
 
+/**
+ * Builds a bounded pool of candidate content documents for the discovery feed.
+ *
+ * Replaces the old full-corpus `.collect()` with targeted index reads:
+ *   1. Recency window  — RECENCY_WINDOW most-recent published items (publishedAt desc)
+ *   2. Category slices — top AFFINITY_CATEGORIES_MAX categories (by affinity score ∪ member interest settings),
+ *                        PER_CATEGORY_RECENT newest + PER_CATEGORY_ARCHIVE oldest per category
+ *   3. Deep random     — DEEP_RANDOM_SAMPLE items from a seed-derived offset (serendipity, all-time)
+ * Results are deduped by _id and filtered through isContentVisible.
+ *
+ * Guest path (no affinities / no interest categories): recency + random only.
+ */
+export async function loadFeedCandidates(
+  ctx: QueryCtx,
+  args: {
+    tenantSlug: string;
+    affinities: Affinity[];
+    interestCategories: readonly string[];
+    feedSeed: number;
+    enabledModules: readonly string[];
+  },
+): Promise<Doc<"contents">[]> {
+  const { tenantSlug, affinities, interestCategories, feedSeed, enabledModules } = args;
+  const seen = new Map<string, Doc<"contents">>();
+
+  // 1. Recency window — most-recent published items.
+  const recent = await ctx.db
+    .query("contents")
+    .withIndex("by_tenant_and_status_and_publishedAt", (q) =>
+      q.eq("tenantSlug", tenantSlug).eq("status", "published"),
+    )
+    .order("desc")
+    .take(RECENCY_WINDOW);
+  for (const doc of recent) {
+    seen.set(doc._id, doc);
+  }
+
+  // 2. Category slices — targeted per-category fetch for personalization.
+  // Determine the top affinity categories (by score desc, category-type only).
+  const affinityCategories = affinities
+    .filter((a) => a.targetType === "category")
+    .sort((a, b) => b.score - a.score)
+    .map((a) => a.targetId); // already normalized keys
+
+  // Union with member interest categories (normalize to match scoring keys).
+  const normalizedInterestCategories = interestCategories.map(normalizeScoringKey);
+  const targetedCategories = [
+    ...new Set([...affinityCategories, ...normalizedInterestCategories]),
+  ].slice(0, AFFINITY_CATEGORIES_MAX);
+
+  for (const categoryKey of targetedCategories) {
+    // Fetch recent items in this category (desc).
+    const catRecent = await ctx.db
+      .query("contents")
+      .withIndex("by_tenant_and_status_and_category", (q) =>
+        q.eq("tenantSlug", tenantSlug).eq("status", "published").eq("category", categoryKey),
+      )
+      .order("desc")
+      .take(PER_CATEGORY_RECENT);
+    for (const doc of catRecent) {
+      seen.set(doc._id, doc);
+    }
+
+    // Fetch oldest items in this category (asc) for the archive bucket.
+    const catArchive = await ctx.db
+      .query("contents")
+      .withIndex("by_tenant_and_status_and_category", (q) =>
+        q.eq("tenantSlug", tenantSlug).eq("status", "published").eq("category", categoryKey),
+      )
+      .order("asc")
+      .take(PER_CATEGORY_ARCHIVE);
+    for (const doc of catArchive) {
+      seen.set(doc._id, doc);
+    }
+  }
+
+  // 3. Deep random sample — serendipity from all-time corpus.
+  // Derive a pseudo-random publishedAt threshold from feedSeed using the same
+  // seeded RNG used in scoring, then range-scan from that offset.
+  //
+  // We approximate a random skip by computing a date offset from feedSeed.
+  // The seed is an integer; map it to a year range 2000–2030.
+  const seedNormalized = ((feedSeed >>> 0) % 10000) / 10000; // 0..1
+  // Span between 2000-01-01 and 2026-01-01 in ms
+  const epochStart = Date.parse("2000-01-01T00:00:00.000Z");
+  const epochEnd = Date.parse("2026-01-01T00:00:00.000Z");
+  const randomThresholdMs = epochStart + Math.floor(seedNormalized * (epochEnd - epochStart));
+  const randomThresholdISO = new Date(randomThresholdMs).toISOString();
+
+  const randomSample = await ctx.db
+    .query("contents")
+    .withIndex("by_tenant_and_status_and_publishedAt", (q) =>
+      q
+        .eq("tenantSlug", tenantSlug)
+        .eq("status", "published")
+        .gte("publishedAt", randomThresholdISO),
+    )
+    .order("asc")
+    .take(DEEP_RANDOM_SAMPLE);
+  for (const doc of randomSample) {
+    seen.set(doc._id, doc);
+  }
+
+  // Apply visibility filter (module gates, premium gating, etc.).
+  return [...seen.values()].filter((content) =>
+    isContentVisible(content, enabledModules),
+  );
+}
+
 /** Builds a fresh-scored feed from unseen eligible content (no repeat recycling). */
 export function buildOrderedDiscoveryFeed(args: {
   visible: readonly Doc<"contents">[];
@@ -295,17 +419,6 @@ export const getDiscoveryFeed = query({
 
     const enabledModules = tenant?.enabledModules ?? [];
 
-    const published = await ctx.db
-      .query("contents")
-      .withIndex("by_tenant_and_status", (q) =>
-        q.eq("tenantSlug", args.tenantSlug).eq("status", "published"),
-      )
-      .collect();
-
-    const visible = published.filter((content) =>
-      isContentVisible(content, enabledModules),
-    );
-
     const identity = await ctx.auth.getUserIdentity();
     const tokenIdentifier =
       identity?.tokenIdentifier ?? args.tokenIdentifier ?? null;
@@ -326,6 +439,14 @@ export const getDiscoveryFeed = query({
       tokenIdentifier && identity
         ? await loadMemberCategoryInterests(ctx, tokenIdentifier, args.tenantSlug)
         : [];
+
+    const visible = await loadFeedCandidates(ctx, {
+      tenantSlug: args.tenantSlug,
+      affinities,
+      interestCategories,
+      feedSeed,
+      enabledModules,
+    });
 
     const { ordered } = buildOrderedDiscoveryFeed({
       visible,

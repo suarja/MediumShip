@@ -154,7 +154,6 @@ export default function CommunityScreen() {
           title="Discord communautaire"
           description="Échangez avec les rédactions et les membres. Lien ouvert à tous."
           icon="#"
-          stat="42 salons"
           accessLabel="Gratuit"
           isPremium={false}
           onPress={handleDiscord}
@@ -165,7 +164,6 @@ export default function CommunityScreen() {
             title="Salon membres"
             description="Espace réservé : AMA, coulisses, votes éditoriaux."
             icon="✦"
-            stat="8 fils actifs"
             accessLabel="Premium"
             isPremium
             onPress={handleMembersRoom}
@@ -189,7 +187,7 @@ function CommunityCard({
   title: string;
   description: string;
   icon: string;
-  stat: string;
+  stat?: string;
   accessLabel: string;
   isPremium: boolean;
   onPress: () => void;
@@ -230,9 +228,11 @@ function CommunityCard({
         {description}
       </Text>
       <View style={[styles.cardStat, { gap: 8 * scaleSpace }]}>
-        <Text style={[styles.cardStatLabel, { color: theme.colors.textMuted, fontSize: 12 * scaleFont }]}>
-          {stat}
-        </Text>
+        {stat ? (
+          <Text style={[styles.cardStatLabel, { color: theme.colors.textMuted, fontSize: 12 * scaleFont }]}>
+            {stat}
+          </Text>
+        ) : null}
         <View
           style={[
             styles.accessBadge,

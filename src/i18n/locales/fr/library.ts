@@ -23,8 +23,8 @@ export default {
       "Tous les contenus que vous avez choisi de garder, quel que soit le format.",
     listsMeta: "Premium",
     listsTitle: "Listes",
-    listsPreviewTitle: "À écouter en voiture",
-    listsPreviewMeta: "9 épisodes · privée",
+    listsPreviewTitle: "Créez votre première liste",
+    listsPreviewMeta: "Articles, épisodes et vidéos à mettre de côté",
     listsBody:
       "Créez des listes privées pour mettre articles, épisodes et vidéos en file d'attente.",
     offlineSubtitle:
@@ -71,8 +71,6 @@ export default {
     lockedBody:
       "Les membres gratuits créent 1 liste. Passez Premium pour des listes illimitées et la synchro multi-appareils.",
     viewPremiumCta: "Voir Premium",
-    secondPreviewTitle: "Économie — à relire",
-    secondPreviewMeta: "6 contenus · privée",
   },
   kinds: {
     article: "Article",

@@ -148,7 +148,7 @@ describe("signed-in library screen", () => {
   it("pressing the lists row opens the lists screen for signed-in members", () => {
     render(<LibraryScreen />);
 
-    fireEvent.press(screen.getByLabelText("Listen in the car"));
+    fireEvent.press(screen.getByLabelText("Create your first list"));
 
     expect(mockPush).toHaveBeenCalledWith(
       expect.objectContaining({ pathname: "/lists" }),
@@ -161,7 +161,7 @@ describe("signed-in library screen", () => {
 
     render(<LibraryScreen />);
 
-    fireEvent.press(screen.getByLabelText("Listen in the car"));
+    fireEvent.press(screen.getByLabelText("Create your first list"));
 
     expect(mockPush).toHaveBeenCalledWith(
       expect.objectContaining({ pathname: "/lists" }),

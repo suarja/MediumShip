@@ -12,19 +12,15 @@ export default {
   categories: {
     analyses: {
       title: "Analyses",
-      meta: "128 articles",
+      meta: "Explore",
     },
     podcasts: {
       title: "Podcasts",
-      meta: "64 episodes",
+      meta: "Listen",
     },
     videos: {
       title: "Videos",
-      meta: "42 debates",
-    },
-    agenda: {
-      title: "Agenda",
-      meta: "12 upcoming",
+      meta: "Watch",
     },
   },
   modules: {

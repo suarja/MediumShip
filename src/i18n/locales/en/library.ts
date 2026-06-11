@@ -23,8 +23,8 @@ export default {
       "Everything you chose to keep, across articles, episodes, and videos.",
     listsMeta: "Premium",
     listsTitle: "Lists",
-    listsPreviewTitle: "Listen in the car",
-    listsPreviewMeta: "9 episodes · private",
+    listsPreviewTitle: "Create your first list",
+    listsPreviewMeta: "Queue up articles, episodes, and videos",
     listsBody:
       "Create private lists to queue articles, episodes, and videos for later.",
     offlineSubtitle:
@@ -71,8 +71,6 @@ export default {
     lockedBody:
       "Free members can create one list. Upgrade for unlimited lists and multi-device sync.",
     viewPremiumCta: "See Premium",
-    secondPreviewTitle: "Economy — to revisit",
-    secondPreviewMeta: "6 items · private",
   },
   kinds: {
     article: "Article",

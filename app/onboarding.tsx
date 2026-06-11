@@ -308,6 +308,7 @@ function CategoryStep({
         treeNodes={treeNodes}
         selectedKeys={selectedKeys}
         applyCategoryInterests={applyCategoryKeys}
+        size="large"
       />
     </View>
   );

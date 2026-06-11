@@ -43,6 +43,8 @@ type CategoryInterestsPickerProps = {
   selectedKeys: Set<string>;
   applyCategoryInterests: (keys: ReadonlySet<string>) => Promise<void>;
   treeNodes: PickerCategoryNode[];
+  /** "large" enlarges chips for prominent surfaces like onboarding. */
+  size?: "default" | "large";
 };
 
 function animateCloudTransition() {
@@ -99,6 +101,7 @@ function InterestChip({
   expanded,
   busy,
   satellite,
+  large,
   onPress,
 }: {
   node: PickerCategoryNode;
@@ -106,6 +109,7 @@ function InterestChip({
   expanded: boolean;
   busy: boolean;
   satellite?: boolean;
+  large?: boolean;
   onPress: () => void;
 }) {
   const { theme } = useAppTheme();
@@ -119,6 +123,7 @@ function InterestChip({
       style={({ pressed }) => [
         styles.chip,
         satellite && styles.chipSatellite,
+        large && (satellite ? styles.chipSatelliteLarge : styles.chipLarge),
         {
           borderRadius: theme.radii.pill,
           borderColor: active
@@ -140,6 +145,7 @@ function InterestChip({
         style={[
           styles.chipLabel,
           satellite && styles.chipLabelSatellite,
+          large && (satellite ? styles.chipLabelSatelliteLarge : styles.chipLabelLarge),
           { color: active ? theme.colors.accent : theme.colors.heading },
         ]}
       >
@@ -155,10 +161,13 @@ export function CategoryInterestsPicker({
   selectedKeys,
   applyCategoryInterests,
   treeNodes,
+  size = "default",
 }: CategoryInterestsPickerProps) {
   const { t } = useTranslation("settings");
   const { theme } = useAppTheme();
   const { scaleSpace } = useResponsive();
+  const large = size === "large";
+  const cloudGap = (large ? 8 : 6) * scaleSpace;
   const [searchQuery, setSearchQuery] = useState("");
   const [revealedAnchorIds, setRevealedAnchorIds] = useState<Set<string>>(() => new Set());
   const [optimisticKeys, setOptimisticKeys] = useState<Set<string> | null>(null);
@@ -305,7 +314,7 @@ export function CategoryInterestsPicker({
             {t("interests.searchEmpty", { query: searchQuery.trim() })}
           </Text>
         ) : (
-          <View style={[styles.chipCloud, { gap: 6 * scaleSpace, rowGap: 6 * scaleSpace }]}>
+          <View style={[styles.chipCloud, { gap: cloudGap, rowGap: cloudGap }]}>
             {searchResults.flatMap((row) => {
               if (!row) {
                 return [];
@@ -327,6 +336,7 @@ export function CategoryInterestsPicker({
                   busy={busy}
                   expanded={false}
                   key={node._id}
+                  large={large}
                   node={node}
                   onPress={() => void handleChipPress(node)}
                 />,
@@ -335,7 +345,7 @@ export function CategoryInterestsPicker({
           </View>
         )
       ) : (
-        <View style={[styles.chipCloud, { gap: 6 * scaleSpace, rowGap: 6 * scaleSpace }]}>
+        <View style={[styles.chipCloud, { gap: cloudGap, rowGap: cloudGap }]}>
           {cloudEntries.map(({ node, level, satellite }) => {
             const scoringKey = normalizeScoringKey(node.label);
             const active = effectiveSelectedKeys.has(scoringKey);
@@ -350,6 +360,7 @@ export function CategoryInterestsPicker({
                   active={active}
                   busy={busy}
                   expanded={expanded}
+                  large={large}
                   node={node}
                   onPress={() => void handleChipPress(node)}
                   satellite={satellite}
@@ -391,6 +402,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 5,
   },
+  chipLarge: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  chipSatelliteLarge: {
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+  },
   chipPressed: {
     opacity: 0.86,
   },
@@ -401,6 +420,12 @@ const styles = StyleSheet.create({
   chipLabelSatellite: {
     fontFamily: fontFamilies.body,
     fontSize: 12,
+  },
+  chipLabelLarge: {
+    fontSize: 16,
+  },
+  chipLabelSatelliteLarge: {
+    fontSize: 14,
   },
   emptyCopy: {
     fontFamily: fontFamilies.body,

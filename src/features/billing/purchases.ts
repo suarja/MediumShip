@@ -255,10 +255,10 @@ export async function purchasePremiumPackage(
       entitlementId: getPremiumEntitlementId(),
       hasPremium: premium,
     });
-    if (premium) {
-      return { kind: "success", customerInfo };
-    }
-    return { kind: "already", customerInfo };
+    // A resolved purchasePackage call is always a successful new purchase,
+    // regardless of whether the client-side entitlement identifier matches.
+    // The Convex webhook/sync is the source of truth for premium state.
+    return { kind: "success", customerInfo };
   } catch (error) {
     const code = (error as { code?: string }).code;
     logBilling("purchase.error", {
@@ -268,6 +268,11 @@ export async function purchasePremiumPackage(
     });
     if (code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
       return { kind: "cancelled" };
+    }
+    if (code === PURCHASES_ERROR_CODE.PRODUCT_ALREADY_PURCHASED_ERROR) {
+      const customerInfo = (error as { userInfo?: { customerInfo?: CustomerInfo } }).userInfo
+        ?.customerInfo;
+      return { kind: "already", customerInfo: customerInfo as CustomerInfo };
     }
     const message =
       error instanceof Error ? error.message : "Purchase failed. Please try again.";

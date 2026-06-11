@@ -222,7 +222,8 @@ function ManifestoStep() {
             {
               color: theme.colors.heading,
               fontSize: (isTablet ? 48 : 40) * scaleFont,
-              lineHeight: (isTablet ? 52 : 44) * scaleFont,
+              // Generous leading for an editorial, airy display title.
+              lineHeight: (isTablet ? 62 : 52) * scaleFont,
             },
           ]}
         >

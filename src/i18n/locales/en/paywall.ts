@@ -13,7 +13,7 @@ export default {
       title: "Organise ",
       titleItalic: "without limits.",
       description:
-        "Unlimited personal lists and multi-device sync are Premium-only.",
+        "Unlimited personal lists are Premium-only.",
       dismissCta: "CONTINUE WITHOUT LISTS — FREE",
     },
     members: {
@@ -43,7 +43,7 @@ export default {
   },
   benefits: [
     "Unlimited offline downloads",
-    "Playback progress synced across devices",
+    "Your daily read, every morning",
     "Unlimited personal lists + members room",
   ],
   signInCta: "Sign in to continue",
@@ -59,6 +59,7 @@ export default {
   purchaseCancelled: "Purchase cancelled.",
   purchaseError: "Purchase failed. Please try again.",
   alreadySubscribed: "You already have an active Premium subscription.",
+  alreadyPremiumCta: "Access content",
   restoreSuccess: "Purchases restored. Your access will unlock in a moment.",
   restoreError: "No active subscription found.",
   webPurchaseHint:
@@ -76,6 +77,6 @@ export default {
   celebrationCta: "Let's go",
   pendingTitle: "Membership not yet active",
   pendingBody:
-    "Your account is connected but membership hasn’t been activated yet. It is enabled by the team.",
+    "Your account is connected but membership hasn't been activated yet. It is enabled by the team.",
   crestFallback: "M",
 } as const;

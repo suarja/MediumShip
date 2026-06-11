@@ -72,9 +72,10 @@ export default {
   packageLifetime: "À vie",
   packageTrialFree: "Essai gratuit inclus",
   packageTrialIntro: "Essai à {{price}}",
-  celebrationTitle: "Ouais !",
+  celebrationTitle: "",
   celebrationBody: "Bienvenue en Premium. Ton accès se débloque tout de suite.",
   celebrationCta: "C'est parti",
+  freeTrialDismiss: "Plus tard",
   pendingTitle: "Accès membre pas encore actif",
   pendingBody:
     "Ton compte est connecté mais n'a pas encore l'accès membre. Il est activé par l'équipe.",

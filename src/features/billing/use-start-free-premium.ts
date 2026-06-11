@@ -27,7 +27,11 @@ export function useStartFreePremium(options: UseStartFreePremiumOptions = {}) {
       await startFreePremiumMutation({});
       setStatus("success");
       options.onSuccess?.();
-      void requestReview("premium_activated");
+      // Delay so the celebration modal lands first; the review prompt should
+      // feel like a calm follow-up, not interrupt the success moment.
+      setTimeout(() => {
+        void requestReview("premium_activated");
+      }, 2500);
       return true;
     } catch {
       setStatus("error");

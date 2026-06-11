@@ -282,9 +282,11 @@ export function PaywallSheet({
                       style={({ pressed }) => [
                         styles.primaryCta,
                         {
+                          alignSelf: "stretch",
                           borderRadius: theme.radii.pill,
                           backgroundColor: theme.colors.heading,
-                          paddingVertical: 14 * scaleSpace,
+                          paddingVertical: 16 * scaleSpace,
+                          paddingHorizontal: 28 * scaleSpace,
                           opacity: isPending ? 0.7 : 1,
                         },
                         pressed && styles.pressed,
@@ -478,7 +480,7 @@ export function PaywallSheet({
               testID="paywall-dismiss-cta"
             >
               <Text style={[styles.dismissLabel, { color: theme.colors.textMuted, fontSize: 10 * scaleFont }]}>
-                {t(keys.dismissCta)}
+                {paymentsEnabled ? t(keys.dismissCta) : t("freeTrialDismiss")}
               </Text>
             </Pressable>
           </ScrollView>

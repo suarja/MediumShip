@@ -74,6 +74,34 @@ export function ContentsTab({
     }
   };
 
+  const importArticle = useAction(api.articles.import.importArticleFromUrl);
+  const [articleUrl, setArticleUrl] = useState("");
+  const [articleBusy, setArticleBusy] = useState(false);
+  const [articleMessage, setArticleMessage] = useState<string | null>(null);
+
+  const onImportArticle = async () => {
+    const url = articleUrl.trim();
+    if (!url || articleBusy) {
+      return;
+    }
+    setArticleBusy(true);
+    setArticleMessage(null);
+    try {
+      const result = await importArticle({ url });
+      if (result.imported) {
+        setArticleUrl("");
+        setArticleMessage(`Imported draft: ${result.title}`);
+        onSelect(result.contentId);
+      } else {
+        setArticleMessage(`Import failed: ${result.reason}`);
+      }
+    } catch (error) {
+      setArticleMessage(error instanceof Error ? error.message : "Import failed");
+    } finally {
+      setArticleBusy(false);
+    }
+  };
+
   const fetchPodcastFeed = useAction(api.podcasts.import.fetchPodcastFeed);
   const importPodcastEpisode = useAction(api.podcasts.import.importPodcastEpisode);
   const [feedUrl, setFeedUrl] = useState("");
@@ -210,6 +238,40 @@ export function ContentsTab({
         </button>
         {wikiMessage ? (
           <span style={{ fontSize: 13, opacity: 0.8 }}>{wikiMessage}</span>
+        ) : null}
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          alignItems: "center",
+          flexWrap: "wrap",
+          marginBottom: 12,
+        }}
+      >
+        <input
+          type="url"
+          value={articleUrl}
+          onChange={(event) => setArticleUrl(event.target.value)}
+          placeholder="Import any web article by URL…"
+          style={{ flex: "1 1 320px", minWidth: 240, padding: "8px 10px" }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              void onImportArticle();
+            }
+          }}
+        />
+        <button
+          type="button"
+          disabled={articleBusy || !articleUrl.trim()}
+          onClick={() => void onImportArticle()}
+          style={{ padding: "8px 14px" }}
+        >
+          {articleBusy ? "Importing…" : "Import web article"}
+        </button>
+        {articleMessage ? (
+          <span style={{ fontSize: 13, opacity: 0.8 }}>{articleMessage}</span>
         ) : null}
       </div>
 

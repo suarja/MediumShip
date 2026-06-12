@@ -87,6 +87,7 @@ const discoveryFeedItemValidator = v.object({
       v.literal("wikipedia"),
       v.literal("rss"),
       v.literal("youtube"),
+      v.literal("web"),
     ),
   ),
   externalId: v.optional(v.string()),

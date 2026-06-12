@@ -3,6 +3,7 @@ import type { PropsWithChildren } from "react";
 
 import "./globals.css";
 import { Providers } from "./providers";
+import { RevealController } from "../components/reveal-controller";
 
 export const metadata: Metadata = {
   title: "Mediumship — votre app mobile éditoriale",
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
       </head>
       <body>
         <Providers>{children}</Providers>
+        <RevealController />
       </body>
     </html>
   );

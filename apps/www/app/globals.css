@@ -721,3 +721,53 @@ body[data-typo="grotesque"] .h-display { font-weight: 600; letter-spacing: -.035
   .vm-col + .vm-col { border-left: 0; border-top: 1px solid var(--rule-soft); }
   .vm-col li { grid-template-columns: 130px 1fr; gap: 12px; }
 }
+
+/* ============================================================
+   apps/www enhancements (not in the original maquette)
+   Keyboard focus + scroll-reveal choreography. Additive only —
+   the validated visual design above is untouched.
+   ============================================================ */
+
+/* ---------- Keyboard focus ---------- */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+.btn:focus-visible { outline-offset: 4px; }
+/* Don't show the ring for mouse users that also trigger :focus. */
+:focus:not(:focus-visible) { outline: none; }
+
+/* ---------- Scroll reveal ----------
+   Hidden initial state only applies once JS has added `.reveal-ready`
+   to <body> AND the user accepts motion — so no-JS and reduced-motion
+   visitors always see fully-rendered, un-transformed content. */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal-ready .section {
+    opacity: 0;
+    transform: translateY(22px);
+    transition: opacity .7s ease, transform .7s cubic-bezier(.2, .75, .25, 1);
+    will-change: opacity, transform;
+  }
+  .reveal-ready .section.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Staggered children inside a revealed section. */
+  .reveal-ready .section :is(.feat, .step, .variant, .gallery__col) {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity .55s ease, transform .55s cubic-bezier(.2, .75, .25, 1);
+  }
+  .reveal-ready .section.is-visible :is(.feat, .step, .variant, .gallery__col) {
+    opacity: 1;
+    transform: none;
+  }
+  .reveal-ready .section.is-visible :is(.feat, .step, .variant, .gallery__col):nth-child(1) { transition-delay: .04s; }
+  .reveal-ready .section.is-visible :is(.feat, .step, .variant, .gallery__col):nth-child(2) { transition-delay: .11s; }
+  .reveal-ready .section.is-visible :is(.feat, .step, .variant, .gallery__col):nth-child(3) { transition-delay: .18s; }
+  .reveal-ready .section.is-visible :is(.feat, .step, .variant, .gallery__col):nth-child(4) { transition-delay: .25s; }
+  .reveal-ready .section.is-visible :is(.feat, .step, .variant, .gallery__col):nth-child(5) { transition-delay: .32s; }
+  .reveal-ready .section.is-visible :is(.feat, .step, .variant, .gallery__col):nth-child(6) { transition-delay: .39s; }
+}

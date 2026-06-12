@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { api } from "../../../../convex/_generated/api";
 
+import { ContentImportPanel } from "./content-import-panel";
 import { YoutubeWhitelistPanel } from "./youtube-whitelist-panel";
 
 type ImportState = "idle" | "importing" | "success" | "error";
@@ -215,12 +216,13 @@ export function DeveloperTab({ ready }: { ready: boolean }) {
             <i>Développeur</i>
           </h1>
           <p className="page__sub">
-            Import IPTC · Langues discovery · Whitelist YouTube · Réservoir global
+            Import de contenu · IPTC · Langues discovery · Whitelist YouTube
           </p>
         </div>
       </div>
 
       <div className="dev-grid">
+        <ContentImportPanel ready={ready} />
         <IptcImportPanel ready={ready} />
         <DiscoveryLocalesPanel ready={ready} />
         <YoutubeWhitelistPanel ready={ready} />

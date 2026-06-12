@@ -172,15 +172,24 @@ export function CollectionForm({ selectedId }: CollectionFormProps) {
     const normalizedSlug =
       state.slug.trim() || slugify(state.title) || `collection-${Date.now()}`;
 
-    await updateCollection({
-      id: collection._id,
-      slug: normalizedSlug,
-      title: state.title.trim() || "Sans titre",
-      summary: state.summary.trim(),
-      coverImageUrl: state.coverImageUrl.trim() || null,
-    });
+    try {
+      await updateCollection({
+        id: collection._id,
+        slug: normalizedSlug,
+        title: state.title.trim() || "Sans titre",
+        summary: state.summary.trim(),
+        coverImageUrl: state.coverImageUrl.trim() || null,
+      });
 
-    setSaveLabel("Enregistré");
+      setSaveLabel("Enregistré");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      setSaveLabel(
+        message.includes("Slug already exists")
+          ? "Slug déjà utilisé — choisis-en un autre"
+          : "Erreur — non enregistré",
+      );
+    }
   };
 
   const changeStatus = async (status: Doc<"collections">["status"]) => {

@@ -153,13 +153,17 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
   );
 
   const save = async () => {
-    await updateTenantSettings({
-      name,
-      brandLogoUrl: logoUrl,
-      appIconUrl,
-      paletteName: safePalette,
-    });
-    setSaveLabel("Enregistré");
+    try {
+      await updateTenantSettings({
+        name,
+        brandLogoUrl: logoUrl,
+        appIconUrl,
+        paletteName: safePalette,
+      });
+      setSaveLabel("Enregistré");
+    } catch {
+      setSaveLabel("Erreur — non enregistré");
+    }
   };
 
   return (

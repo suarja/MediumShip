@@ -507,12 +507,16 @@ export function ModulesTab({ tenant }: ModulesTabProps) {
   };
 
   const save = async () => {
-    await updateModuleSettings({
-      featureConfigs,
-      feedSections,
-      navOrder,
-    });
-    setSaveLabel("Enregistré");
+    try {
+      await updateModuleSettings({
+        featureConfigs,
+        feedSections,
+        navOrder,
+      });
+      setSaveLabel("Enregistré");
+    } catch {
+      setSaveLabel("Erreur — non enregistré");
+    }
   };
 
   return (

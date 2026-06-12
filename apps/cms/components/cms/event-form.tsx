@@ -172,23 +172,32 @@ export function EventForm({ selectedId }: EventFormProps) {
     const normalizedSlug =
       state.slug.trim() || slugify(state.title) || `event-${Date.now()}`;
 
-    await updateEvent({
-      id: event._id,
-      slug: normalizedSlug,
-      title: state.title.trim() || "Sans titre",
-      summary: state.summary.trim(),
-      startsAt: state.startsAt.trim(),
-      locationLabel: state.locationLabel.trim(),
-      mode: state.mode,
-      access: state.access,
-      coverImageUrl: state.coverImageUrl.trim() || null,
-      ctaLabel: state.ctaLabel.trim() || null,
-      ctaUrl: state.ctaUrl.trim() || null,
-      communityUrl: state.communityUrl.trim() || null,
-      descriptionLong: state.descriptionLong.trim() || null,
-    });
+    try {
+      await updateEvent({
+        id: event._id,
+        slug: normalizedSlug,
+        title: state.title.trim() || "Sans titre",
+        summary: state.summary.trim(),
+        startsAt: state.startsAt.trim(),
+        locationLabel: state.locationLabel.trim(),
+        mode: state.mode,
+        access: state.access,
+        coverImageUrl: state.coverImageUrl.trim() || null,
+        ctaLabel: state.ctaLabel.trim() || null,
+        ctaUrl: state.ctaUrl.trim() || null,
+        communityUrl: state.communityUrl.trim() || null,
+        descriptionLong: state.descriptionLong.trim() || null,
+      });
 
-    setSaveLabel("Enregistré");
+      setSaveLabel("Enregistré");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      setSaveLabel(
+        message.includes("Slug already exists")
+          ? "Slug déjà utilisé — choisis-en un autre"
+          : "Erreur — non enregistré",
+      );
+    }
   };
 
   const changeStatus = async (status: Doc<"events">["status"]) => {

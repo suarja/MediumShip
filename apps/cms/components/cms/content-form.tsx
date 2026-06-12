@@ -273,49 +273,58 @@ export function ContentForm({ selectedId }: ContentFormProps) {
         ? extractYoutubeVideoId(state.youtubeUrl.trim()) ?? ""
         : "";
 
-    await updateContent({
-      id: content._id,
-      slug: normalizedSlug,
-      title: state.title.trim() || "Sans titre",
-      summary: state.summary.trim(),
-      category: state.category.trim() || CATEGORY_OPTIONS[1],
-      tags: state.tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-      isPremium: state.isPremium,
-      heroImageUrl: state.heroImageUrl.trim() || null,
-      readingTimeMinutes:
-        content.kind === "article"
-          ? state.readingTimeMinutes
-            ? Number(state.readingTimeMinutes)
-            : estimatedReadingTime
-          : null,
-      articleBody: content.kind === "article" ? state.articleBody || null : null,
-      audioUrl: content.kind === "episode" ? state.audioUrl.trim() || null : null,
-      durationSeconds:
-        content.kind === "episode" || content.kind === "video"
-          ? state.durationSeconds
-            ? Number(state.durationSeconds)
-            : null
-          : null,
-      videoSource:
-        content.kind !== "video" || !state.videoSourceKind
-          ? null
-          : state.videoSourceKind === "youtube"
-            ? {
-                kind: "youtube",
-                youtubeVideoId,
-                youtubeUrl: state.youtubeUrl.trim(),
-              }
-            : {
-                kind: "hosted",
-                uploadKey: state.uploadKey.trim(),
-                playbackUrl: state.playbackUrl.trim(),
-              },
-    });
+    try {
+      await updateContent({
+        id: content._id,
+        slug: normalizedSlug,
+        title: state.title.trim() || "Sans titre",
+        summary: state.summary.trim(),
+        category: state.category.trim() || CATEGORY_OPTIONS[1],
+        tags: state.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        isPremium: state.isPremium,
+        heroImageUrl: state.heroImageUrl.trim() || null,
+        readingTimeMinutes:
+          content.kind === "article"
+            ? state.readingTimeMinutes
+              ? Number(state.readingTimeMinutes)
+              : estimatedReadingTime
+            : null,
+        articleBody: content.kind === "article" ? state.articleBody || null : null,
+        audioUrl: content.kind === "episode" ? state.audioUrl.trim() || null : null,
+        durationSeconds:
+          content.kind === "episode" || content.kind === "video"
+            ? state.durationSeconds
+              ? Number(state.durationSeconds)
+              : null
+            : null,
+        videoSource:
+          content.kind !== "video" || !state.videoSourceKind
+            ? null
+            : state.videoSourceKind === "youtube"
+              ? {
+                  kind: "youtube",
+                  youtubeVideoId,
+                  youtubeUrl: state.youtubeUrl.trim(),
+                }
+              : {
+                  kind: "hosted",
+                  uploadKey: state.uploadKey.trim(),
+                  playbackUrl: state.playbackUrl.trim(),
+                },
+      });
 
-    setSaveLabel("Enregistré");
+      setSaveLabel("Enregistré");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      setSaveLabel(
+        message.includes("Slug already exists")
+          ? "Slug déjà utilisé — choisis-en un autre"
+          : "Erreur — non enregistré",
+      );
+    }
   };
 
   const changeStatus = async (status: "draft" | "published" | "archived") => {

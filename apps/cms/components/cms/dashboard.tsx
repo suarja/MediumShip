@@ -53,17 +53,11 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
   // Category selection is owned by CategoriesTab (filter-aware, alphabetical default).
   // Do NOT reintroduce a dashboard-level category auto-select here.
 
-  useEffect(() => {
-    if (!selectedCollectionId && collections && collections.length > 0) {
-      setSelectedCollectionId(collections[0]._id);
-    }
-  }, [collections, selectedCollectionId]);
-
-  useEffect(() => {
-    if (!selectedEventId && events && events.length > 0) {
-      setSelectedEventId(events[0]._id);
-    }
-  }, [events, selectedEventId]);
+  // Collection/Event selection is owned by their tabs (filter-aware), exactly
+  // like ContentsTab. A dashboard-level auto-select here used the *unfiltered*
+  // list, so filtering to an empty status (e.g. "archived") made the tab clear
+  // the selection and this effect re-select the global first — ping-ponging
+  // forever (infinite loop). Do NOT reintroduce a dashboard-level auto-select.
 
   useEffect(() => {
     setActiveTabState(initialTab);

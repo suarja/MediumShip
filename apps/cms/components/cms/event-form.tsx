@@ -161,9 +161,12 @@ export function EventForm({ selectedId }: EventFormProps) {
         HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
       >,
     ) => {
+      // Read synchronously: React nulls currentTarget before the deferred
+      // setState updater runs (reading it there crashes "reading 'value'").
+      const value = eventChange.currentTarget.value;
       setState((current) => ({
         ...current,
-        [key]: eventChange.currentTarget.value,
+        [key]: value,
       }));
       setSaveLabel("Enregistrer");
     };

@@ -164,7 +164,10 @@ export function CollectionForm({ selectedId }: CollectionFormProps) {
   const onTextChange =
     (key: keyof EditorState) =>
     (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setState((current) => ({ ...current, [key]: event.currentTarget.value }));
+      // Read synchronously: React nulls currentTarget before the deferred
+      // setState updater runs (reading it there crashes "reading 'value'").
+      const value = event.currentTarget.value;
+      setState((current) => ({ ...current, [key]: value }));
       setSaveLabel("Enregistrer");
     };
 

@@ -74,6 +74,68 @@ export function ContentsTab({
     }
   };
 
+  const fetchPodcastFeed = useAction(api.podcasts.import.fetchPodcastFeed);
+  const importPodcastEpisode = useAction(api.podcasts.import.importPodcastEpisode);
+  const [feedUrl, setFeedUrl] = useState("");
+  const [episodes, setEpisodes] = useState<
+    { guid: string; title: string }[]
+  >([]);
+  const [selectedGuid, setSelectedGuid] = useState("");
+  const [podcastBusy, setPodcastBusy] = useState(false);
+  const [podcastMessage, setPodcastMessage] = useState<string | null>(null);
+
+  const onFetchPodcast = async () => {
+    const url = feedUrl.trim();
+    if (!url || podcastBusy) {
+      return;
+    }
+    setPodcastBusy(true);
+    setPodcastMessage(null);
+    setEpisodes([]);
+    setSelectedGuid("");
+    try {
+      const result = await fetchPodcastFeed({ feedUrl: url });
+      if (result.ok && result.episodes.length > 0) {
+        const list = result.episodes.map((episode) => ({
+          guid: episode.guid,
+          title: episode.title,
+        }));
+        setEpisodes(list);
+        setSelectedGuid(list[0].guid);
+      } else {
+        setPodcastMessage(
+          result.ok ? "No audio episodes found." : `Fetch failed: ${result.reason}`,
+        );
+      }
+    } catch (error) {
+      setPodcastMessage(error instanceof Error ? error.message : "Fetch failed");
+    } finally {
+      setPodcastBusy(false);
+    }
+  };
+
+  const onImportPodcast = async () => {
+    const url = feedUrl.trim();
+    if (!url || !selectedGuid || podcastBusy) {
+      return;
+    }
+    setPodcastBusy(true);
+    setPodcastMessage(null);
+    try {
+      const result = await importPodcastEpisode({ feedUrl: url, guid: selectedGuid });
+      if (result.imported) {
+        setPodcastMessage(`Imported draft: ${result.title}`);
+        onSelect(result.contentId);
+      } else {
+        setPodcastMessage(`Import failed: ${result.reason}`);
+      }
+    } catch (error) {
+      setPodcastMessage(error instanceof Error ? error.message : "Import failed");
+    } finally {
+      setPodcastBusy(false);
+    }
+  };
+
   const counts = useMemo<Record<EditorialStatusFilter, number>>(
     () =>
       items.reduce(
@@ -148,6 +210,58 @@ export function ContentsTab({
         </button>
         {wikiMessage ? (
           <span style={{ fontSize: 13, opacity: 0.8 }}>{wikiMessage}</span>
+        ) : null}
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          alignItems: "center",
+          flexWrap: "wrap",
+          marginBottom: 12,
+        }}
+      >
+        <input
+          type="url"
+          value={feedUrl}
+          onChange={(event) => setFeedUrl(event.target.value)}
+          placeholder="Import a podcast RSS feed URL…"
+          style={{ flex: "1 1 320px", minWidth: 240, padding: "8px 10px" }}
+        />
+        <button
+          type="button"
+          disabled={podcastBusy || !feedUrl.trim()}
+          onClick={() => void onFetchPodcast()}
+          style={{ padding: "8px 14px" }}
+        >
+          {podcastBusy ? "Working…" : "Fetch episodes"}
+        </button>
+        {episodes.length > 0 ? (
+          <>
+            <select
+              value={selectedGuid}
+              onChange={(event) => setSelectedGuid(event.target.value)}
+              style={{ flex: "1 1 240px", minWidth: 200, padding: "8px 10px" }}
+            >
+              {episodes.map((episode) => (
+                <option key={episode.guid} value={episode.guid}>
+                  {episode.title}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              disabled={podcastBusy || !selectedGuid}
+              onClick={() => void onImportPodcast()}
+              style={{ padding: "8px 14px" }}
+            >
+              Import episode
+            </button>
+          </>
+        ) : null}
+        {podcastMessage ? (
+          <span style={{ fontSize: 13, opacity: 0.8 }}>{podcastMessage}</span>
         ) : null}
       </div>
 

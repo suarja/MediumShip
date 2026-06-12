@@ -28,7 +28,7 @@ export type NormalizedRssEntry = {
   canonicalUrl: string;
 };
 
-function decodeXmlEntities(value: string): string {
+export function decodeXmlEntities(value: string): string {
   return value
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
@@ -39,7 +39,7 @@ function decodeXmlEntities(value: string): string {
     .trim();
 }
 
-function firstTagContent(block: string, tagNames: string[]): string | undefined {
+export function firstTagContent(block: string, tagNames: string[]): string | undefined {
   for (const tag of tagNames) {
     const pattern = new RegExp(
       `<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${tag}>`,
@@ -63,7 +63,7 @@ function linkFromBlock(block: string): string | undefined {
   return firstTagContent(block, ["link"]);
 }
 
-function splitFeedBlocks(xml: string): string[] {
+export function splitFeedBlocks(xml: string): string[] {
   const isAtom = /<feed[\s>]/i.test(xml);
   const tag = isAtom ? "entry" : "item";
   const pattern = new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${tag}>`, "gi");

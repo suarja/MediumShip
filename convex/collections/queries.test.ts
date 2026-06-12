@@ -202,3 +202,89 @@ describe("getPublishedCollectionById", () => {
     expect(result!.title).toBe("Guest Collection");
   });
 });
+
+describe("getCollectionContentsBySlug", () => {
+  it("returns published contents in collection order", async () => {
+    const t = convexTest(schema, modules);
+
+    const collId = await seedPublishedCollection(t, "pourquoi-ce-fil", "Pourquoi ce fil");
+    const a = await seedPublishedContent(t, "read-a");
+    const b = await seedPublishedContent(t, "read-b", "episode");
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("collectionItems", { tenantSlug: TENANT, collectionId: collId, contentId: b, order: 2 });
+      await ctx.db.insert("collectionItems", { tenantSlug: TENANT, collectionId: collId, contentId: a, order: 1 });
+    });
+
+    const result = await t.query(api.collections.queries.getCollectionContentsBySlug, {
+      tenantSlug: TENANT,
+      slug: "pourquoi-ce-fil",
+    });
+
+    expect(result.map((c) => c._id)).toEqual([a, b]);
+  });
+
+  it("returns an empty array for a missing slug", async () => {
+    const t = convexTest(schema, modules);
+
+    const result = await t.query(api.collections.queries.getCollectionContentsBySlug, {
+      tenantSlug: TENANT,
+      slug: "does-not-exist",
+    });
+
+    expect(result).toEqual([]);
+  });
+
+  it("returns an empty array for a draft collection", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("collections", {
+        tenantSlug: TENANT,
+        status: "draft",
+        slug: "draft-onb",
+        title: "Draft",
+        summary: "Draft",
+        updatedAt: Date.now(),
+      });
+    });
+
+    const result = await t.query(api.collections.queries.getCollectionContentsBySlug, {
+      tenantSlug: TENANT,
+      slug: "draft-onb",
+    });
+
+    expect(result).toEqual([]);
+  });
+
+  it("excludes unpublished content from the result", async () => {
+    const t = convexTest(schema, modules);
+
+    const collId = await seedPublishedCollection(t, "mixed", "Mixed");
+    const published = await seedPublishedContent(t, "pub");
+    const draft = await t.run(async (ctx) =>
+      ctx.db.insert("contents", {
+        tenantSlug: TENANT,
+        kind: "article",
+        status: "draft",
+        slug: "draft-read",
+        title: "Draft Read",
+        summary: "Draft",
+        category: "Test",
+        tags: [],
+        isPremium: false,
+      }),
+    );
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("collectionItems", { tenantSlug: TENANT, collectionId: collId, contentId: published, order: 1 });
+      await ctx.db.insert("collectionItems", { tenantSlug: TENANT, collectionId: collId, contentId: draft, order: 2 });
+    });
+
+    const result = await t.query(api.collections.queries.getCollectionContentsBySlug, {
+      tenantSlug: TENANT,
+      slug: "mixed",
+    });
+
+    expect(result.map((c) => c._id)).toEqual([published]);
+  });
+});

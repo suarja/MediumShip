@@ -32,6 +32,8 @@ import { useAppTheme } from "../src/features/theme/theme-provider";
 
 const STEP_COUNT = 3;
 const ONBOARDING_VIEWER = { isAuthenticated: false, isPro: false };
+/** CMS-curated collection of thesis reads surfaced on the manifesto screen. */
+const ONBOARDING_COLLECTION_SLUG = "pourquoi-ce-fil";
 
 export default function OnboardingScreen() {
   const { t } = useTranslation("onboarding");
@@ -196,10 +198,19 @@ function ManifestoStep() {
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
   const { width } = useWindowDimensions();
 
-  const contents = useQuery(api.content.queries.listPublishedFeed, { tenantSlug }) as
-    | ContentDoc[]
-    | undefined;
-  const reads = (contents ?? []).slice(0, 6).map(toContentCardModel);
+  // Prefer the curated "Pourquoi ce fil" collection; fall back to the general
+  // feed only when it is missing/empty so the carousel is never blank.
+  const curated = useQuery(api.collections.queries.getCollectionContentsBySlug, {
+    tenantSlug,
+    slug: ONBOARDING_COLLECTION_SLUG,
+  }) as ContentDoc[] | undefined;
+  const needFeed = curated !== undefined && curated.length === 0;
+  const feed = useQuery(
+    api.content.queries.listPublishedFeed,
+    needFeed ? { tenantSlug } : "skip",
+  ) as ContentDoc[] | undefined;
+  const source = curated && curated.length > 0 ? curated : (feed ?? []);
+  const reads = source.slice(0, 6).map(toContentCardModel);
 
   const cardWidth = Math.min(width * 0.82, isTablet ? 380 : 320);
   const gap = 12 * scaleSpace;

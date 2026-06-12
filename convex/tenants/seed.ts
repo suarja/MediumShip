@@ -136,6 +136,21 @@ const demoCollections = [
     summary: "Une série de vidéos et articles qui déconstruisent les idées reçues sur l'économie.",
     itemSlugs: ["democratie-locale", "monde-dapres-episode-3"],
   },
+  {
+    // Surfaced on the onboarding manifesto screen. Placeholder curation pointing
+    // at existing demo content — swap these for the real thesis reads (moral
+    // outrage, homophily, System 1/2, attention economy…) via the CMS.
+    slug: "pourquoi-ce-fil",
+    title: "Pourquoi ce fil",
+    summary: "Les lectures qui expliquent ce qu'on cherche à dépasser.",
+    itemSlugs: [
+      "lea-bardin-entretien",
+      "economie-du-soin",
+      "democratie-locale",
+      "monde-dapres-episode-2",
+      "monde-dapres-episode-3",
+    ],
+  },
 ];
 
 const demoEvents = [

@@ -3377,3 +3377,87 @@ a {
     content: "Dans la barre";
   }
 }
+
+/* --- Toasts --- */
+.toast-stack {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+  max-width: 380px;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-family: "Hanken Grotesk", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+  animation: toast-in 0.18s ease-out;
+}
+
+.toast--success {
+  background: #1f7a4d;
+}
+
+.toast--error {
+  background: #b3261e;
+}
+
+.toast--info {
+  background: #2b2b2b;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* --- Developer tab sections & import rows --- */
+.dev-section-title {
+  font-family: "Newsreader", serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  margin: 28px 0 12px;
+  color: var(--ink, #1a1a1a);
+}
+
+.dev-section-title:first-of-type {
+  margin-top: 8px;
+}
+
+.dev-grid--single {
+  grid-template-columns: 1fr;
+}
+
+.dev-import-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 0;
+  border-top: 1px solid var(--hairline, rgba(0, 0, 0, 0.08));
+}
+
+.dev-import-row:first-of-type {
+  border-top: 0;
+  padding-top: 4px;
+}
+
+.dev-import-row .primary-button,
+.dev-import-row .ghost-button {
+  align-self: flex-start;
+}

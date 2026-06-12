@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 import { api } from "../../../../convex/_generated/api";
 import { AdminLoginShell } from "./admin-login-shell";
 import { AdminShell, isCmsTab, type CmsTab } from "./admin-shell";
+import { CmsErrorBoundary } from "./error-boundary";
+import { useToast } from "./toast";
 import { CategoriesTab } from "./categories-tab";
 import { CollectionsTab } from "./collections-tab";
 import { ContentsTab } from "./contents-tab";
@@ -17,6 +19,7 @@ import { TenantTab } from "./tenant-tab";
 import { UsersTab } from "./users-tab";
 
 export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
+  const { withToast } = useToast();
   const viewer = useQuery(api.cms.queries.getViewer, {});
   const bootstrapAdmin = useMutation(api.cms.mutations.bootstrapAdmin);
   const createContent = useMutation(api.cms.mutations.createContent);
@@ -126,6 +129,7 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
             name={viewer.name}
             onTabChange={setActiveTab}
           >
+            <CmsErrorBoundary key={activeTab}>
             {activeTab === "developer" ? (
               <DeveloperTab ready={isAdmin} />
             ) : contents && categories && collections && events && tenant ? (
@@ -133,8 +137,13 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
                 <ContentsTab
                   items={contents}
                   onCreate={async (kind) => {
-                    const id = await createContent({ kind });
-                    setSelectedId(id);
+                    const id = await withToast(() => createContent({ kind }), {
+                      success: "Brouillon créé",
+                      error: "Création impossible",
+                    });
+                    if (id) {
+                      setSelectedId(id);
+                    }
                   }}
                   onSelect={setSelectedId}
                   selectedId={selectedId}
@@ -155,12 +164,18 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
                 <CollectionsTab
                   items={collections}
                   onCreate={async () => {
-                    const id = await createCollection({
-                      title: "Nouvelle collection",
-                      slug: "",
-                      summary: "Décris la série et ses contenus.",
-                    });
-                    setSelectedCollectionId(id);
+                    const id = await withToast(
+                      () =>
+                        createCollection({
+                          title: "Nouvelle collection",
+                          slug: "",
+                          summary: "Décris la série et ses contenus.",
+                        }),
+                      { success: "Collection créée", error: "Création impossible" },
+                    );
+                    if (id) {
+                      setSelectedCollectionId(id);
+                    }
                   }}
                   onSelect={setSelectedCollectionId}
                   selectedId={selectedCollectionId}
@@ -169,16 +184,24 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
                 <EventsTab
                   items={events}
                   onCreate={async () => {
-                    const id = await createEvent({
-                      title: "Nouvel événement",
-                      slug: "",
-                      summary: "Décris l’événement pour l’agenda public.",
-                      startsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-                      locationLabel: "À définir",
-                      mode: "online",
-                      access: "free",
-                    });
-                    setSelectedEventId(id);
+                    const id = await withToast(
+                      () =>
+                        createEvent({
+                          title: "Nouvel événement",
+                          slug: "",
+                          summary: "Décris l’événement pour l’agenda public.",
+                          startsAt: new Date(
+                            Date.now() + 7 * 24 * 60 * 60 * 1000,
+                          ).toISOString(),
+                          locationLabel: "À définir",
+                          mode: "online",
+                          access: "free",
+                        }),
+                      { success: "Événement créé", error: "Création impossible" },
+                    );
+                    if (id) {
+                      setSelectedEventId(id);
+                    }
                   }}
                   onSelect={setSelectedEventId}
                   selectedId={selectedEventId}
@@ -197,6 +220,7 @@ export function Dashboard({ initialTab }: { initialTab: CmsTab }) {
                 </section>
               </main>
             )}
+            </CmsErrorBoundary>
           </AdminShell>
         ) : viewer.canBootstrapAdmin ? (
           <AdminLoginShell

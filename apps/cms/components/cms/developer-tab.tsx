@@ -216,16 +216,21 @@ export function DeveloperTab({ ready }: { ready: boolean }) {
             <i>Développeur</i>
           </h1>
           <p className="page__sub">
-            Import de contenu · IPTC · Langues discovery · Whitelist YouTube
+            Importer du contenu · Ingestion automatique · Catalogue & langues
           </p>
         </div>
       </div>
 
-      <div className="dev-grid">
+      <h2 className="dev-section-title">Import manuel de contenu</h2>
+      <div className="dev-grid dev-grid--single">
         <ContentImportPanel ready={ready} />
+      </div>
+
+      <h2 className="dev-section-title">Ingestion automatique & catalogue</h2>
+      <div className="dev-grid">
+        <YoutubeWhitelistPanel ready={ready} />
         <IptcImportPanel ready={ready} />
         <DiscoveryLocalesPanel ready={ready} />
-        <YoutubeWhitelistPanel ready={ready} />
       </div>
     </main>
   );

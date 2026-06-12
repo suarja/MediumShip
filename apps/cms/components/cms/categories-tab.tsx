@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { CatalogSearchPanel } from "./catalog-search-panel";
 import { CategoryForm } from "./category-form";
 import { CategoryList } from "./category-list";
+import { useToast } from "./toast";
 
 type CategoriesTabProps = {
   items: Doc<"categories">[];
@@ -23,6 +24,7 @@ function matchesQuery(item: Doc<"categories">, query: string) {
 }
 
 export function CategoriesTab({ items, ready, onCreate }: CategoriesTabProps) {
+  const { toast } = useToast();
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -42,9 +44,14 @@ export function CategoriesTab({ items, ready, onCreate }: CategoriesTabProps) {
   }, []);
 
   const handleCreate = useCallback(async () => {
-    const id = await onCreate();
-    setSelectedId(id);
-  }, [onCreate]);
+    try {
+      const id = await onCreate();
+      setSelectedId(id);
+      toast("Catégorie créée", "success");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Création impossible", "error");
+    }
+  }, [onCreate, toast]);
 
   return (
     <main className="page">

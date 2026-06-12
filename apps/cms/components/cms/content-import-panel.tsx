@@ -4,79 +4,96 @@ import { useAction } from "convex/react";
 import { useState } from "react";
 
 import { api } from "../../../../convex/_generated/api";
+import { useToast } from "./toast";
 
-/**
- * Developer-tab panel to import external content (Wikipedia, any web article,
- * podcast episodes) as drafts. Each import creates a draft you then review and
- * publish in the Contents tab, and add to a collection (e.g. "pourquoi-ce-fil").
- */
-export function ContentImportPanel({ ready }: { ready: boolean }) {
-  const importWikipedia = useAction(api.wikipedia.import.importWikipediaArticle);
-  const importArticle = useAction(api.articles.import.importArticleFromUrl);
-  const fetchPodcastFeed = useAction(api.podcasts.import.fetchPodcastFeed);
-  const importPodcastEpisode = useAction(api.podcasts.import.importPodcastEpisode);
+type ImportResult =
+  | { imported: false; reason: string }
+  | { imported: true; contentId: string; title: string };
 
-  const [wikiUrl, setWikiUrl] = useState("");
-  const [wikiBusy, setWikiBusy] = useState(false);
-  const [wikiMessage, setWikiMessage] = useState<string | null>(null);
-  const [wikiError, setWikiError] = useState(false);
+/** A single URL → import row (Wikipedia / web article). */
+function UrlImporter({
+  ready,
+  label,
+  placeholder,
+  cta,
+  action,
+}: {
+  ready: boolean;
+  label: string;
+  placeholder: string;
+  cta: string;
+  action: (url: string) => Promise<ImportResult>;
+}) {
+  const { toast } = useToast();
+  const [url, setUrl] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const [articleUrl, setArticleUrl] = useState("");
-  const [articleBusy, setArticleBusy] = useState(false);
-  const [articleMessage, setArticleMessage] = useState<string | null>(null);
-  const [articleError, setArticleError] = useState(false);
-
-  const [feedUrl, setFeedUrl] = useState("");
-  const [episodes, setEpisodes] = useState<{ guid: string; title: string }[]>([]);
-  const [selectedGuid, setSelectedGuid] = useState("");
-  const [podcastBusy, setPodcastBusy] = useState(false);
-  const [podcastMessage, setPodcastMessage] = useState<string | null>(null);
-  const [podcastError, setPodcastError] = useState(false);
-
-  const runImport = async (
-    url: string,
-    busy: boolean,
-    setBusy: (value: boolean) => void,
-    setMessage: (value: string | null) => void,
-    setError: (value: boolean) => void,
-    action: (url: string) => Promise<
-      | { imported: false; reason: string }
-      | { imported: true; contentId: string; title: string }
-    >,
-    clearUrl: () => void,
-  ) => {
+  const run = async () => {
     const trimmed = url.trim();
     if (!trimmed || busy) {
       return;
     }
     setBusy(true);
-    setMessage(null);
-    setError(false);
     try {
       const result = await action(trimmed);
       if (result.imported) {
-        clearUrl();
-        setMessage(`Brouillon créé : ${result.title}`);
+        setUrl("");
+        toast(`Brouillon créé : ${result.title}`, "success");
       } else {
-        setError(true);
-        setMessage(`Échec : ${result.reason}`);
+        toast(`Échec : ${result.reason}`, "error");
       }
-    } catch (err) {
-      setError(true);
-      setMessage(err instanceof Error ? err.message : "Échec de l'import");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Échec de l'import", "error");
     } finally {
       setBusy(false);
     }
   };
 
-  const onFetchPodcast = async () => {
+  return (
+    <div className="dev-import-row">
+      <label className="field">
+        <span className="field__lbl">{label}</span>
+        <input
+          className="dev-search-input"
+          disabled={!ready}
+          onChange={(event) => setUrl(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              void run();
+            }
+          }}
+          placeholder={placeholder}
+          type="url"
+          value={url}
+        />
+      </label>
+      <button
+        className="primary-button"
+        disabled={!ready || busy || !url.trim()}
+        onClick={() => void run()}
+        type="button"
+      >
+        {busy ? "Import…" : cta}
+      </button>
+    </div>
+  );
+}
+
+function PodcastImporter({ ready }: { ready: boolean }) {
+  const { toast } = useToast();
+  const fetchPodcastFeed = useAction(api.podcasts.import.fetchPodcastFeed);
+  const importPodcastEpisode = useAction(api.podcasts.import.importPodcastEpisode);
+  const [feedUrl, setFeedUrl] = useState("");
+  const [episodes, setEpisodes] = useState<{ guid: string; title: string }[]>([]);
+  const [selectedGuid, setSelectedGuid] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const onFetch = async () => {
     const url = feedUrl.trim();
-    if (!url || podcastBusy) {
+    if (!url || busy) {
       return;
     }
-    setPodcastBusy(true);
-    setPodcastMessage(null);
-    setPodcastError(false);
+    setBusy(true);
     setEpisodes([]);
     setSelectedGuid("");
     try {
@@ -88,44 +105,101 @@ export function ContentImportPanel({ ready }: { ready: boolean }) {
         }));
         setEpisodes(list);
         setSelectedGuid(list[0].guid);
-        setPodcastMessage(`${list.length} épisode(s) trouvé(s)`);
+        toast(`${list.length} épisode(s) trouvé(s)`, "info");
       } else {
-        setPodcastError(true);
-        setPodcastMessage(
+        toast(
           result.ok ? "Aucun épisode audio trouvé." : `Échec : ${result.reason}`,
+          "error",
         );
       }
-    } catch (err) {
-      setPodcastError(true);
-      setPodcastMessage(err instanceof Error ? err.message : "Échec du chargement");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Échec du chargement", "error");
     } finally {
-      setPodcastBusy(false);
+      setBusy(false);
     }
   };
 
-  const onImportPodcast = async () => {
+  const onImport = async () => {
     const url = feedUrl.trim();
-    if (!url || !selectedGuid || podcastBusy) {
+    if (!url || !selectedGuid || busy) {
       return;
     }
-    setPodcastBusy(true);
-    setPodcastMessage(null);
-    setPodcastError(false);
+    setBusy(true);
     try {
       const result = await importPodcastEpisode({ feedUrl: url, guid: selectedGuid });
       if (result.imported) {
-        setPodcastMessage(`Brouillon créé : ${result.title}`);
+        toast(`Brouillon créé : ${result.title}`, "success");
       } else {
-        setPodcastError(true);
-        setPodcastMessage(`Échec : ${result.reason}`);
+        toast(`Échec : ${result.reason}`, "error");
       }
-    } catch (err) {
-      setPodcastError(true);
-      setPodcastMessage(err instanceof Error ? err.message : "Échec de l'import");
+    } catch (error) {
+      toast(error instanceof Error ? error.message : "Échec de l'import", "error");
     } finally {
-      setPodcastBusy(false);
+      setBusy(false);
     }
   };
+
+  return (
+    <div className="dev-import-row">
+      <label className="field">
+        <span className="field__lbl">Flux RSS de podcast</span>
+        <input
+          className="dev-search-input"
+          disabled={!ready}
+          onChange={(event) => setFeedUrl(event.target.value)}
+          placeholder="https://exemple.com/podcast.rss"
+          type="url"
+          value={feedUrl}
+        />
+      </label>
+      {episodes.length > 0 && (
+        <label className="field">
+          <span className="field__lbl">Épisode</span>
+          <select
+            className="dev-search-input"
+            onChange={(event) => setSelectedGuid(event.target.value)}
+            value={selectedGuid}
+          >
+            {episodes.map((episode) => (
+              <option key={episode.guid} value={episode.guid}>
+                {episode.title}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      <div className="stack-actions">
+        <button
+          className="ghost-button"
+          disabled={!ready || busy || !feedUrl.trim()}
+          onClick={() => void onFetch()}
+          type="button"
+        >
+          {busy ? "Chargement…" : "Charger les épisodes"}
+        </button>
+        {episodes.length > 0 && (
+          <button
+            className="primary-button"
+            disabled={busy || !selectedGuid}
+            onClick={() => void onImport()}
+            type="button"
+          >
+            Importer l&apos;épisode
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Developer-tab panel to import external content (Wikipedia, any web article,
+ * podcast episodes) as drafts. Each import creates a draft you review/publish in
+ * the Contents tab, then add to a collection (e.g. "pourquoi-ce-fil").
+ */
+export function ContentImportPanel({ ready }: { ready: boolean }) {
+  const importWikipedia = useAction(api.wikipedia.import.importWikipediaArticle);
+  const importArticle = useAction(api.articles.import.importArticleFromUrl);
 
   return (
     <section className="panel dev-panel">
@@ -142,135 +216,21 @@ export function ContentImportPanel({ ready }: { ready: boolean }) {
         <code>pourquoi-ce-fil</code> pour l&apos;onboarding).
       </p>
 
-      {/* Wikipedia */}
-      <label className="field">
-        <span className="field__lbl">Article Wikipédia (URL, toute langue)</span>
-        <input
-          className="dev-search-input"
-          disabled={!ready}
-          onChange={(event) => setWikiUrl(event.target.value)}
-          placeholder="https://fr.wikipedia.org/wiki/Homophilie"
-          type="url"
-          value={wikiUrl}
-        />
-      </label>
-      <div className="stack-actions" style={{ marginTop: 8 }}>
-        <button
-          className="primary-button"
-          disabled={!ready || wikiBusy || !wikiUrl.trim()}
-          onClick={() =>
-            void runImport(
-              wikiUrl,
-              wikiBusy,
-              setWikiBusy,
-              setWikiMessage,
-              setWikiError,
-              (url) => importWikipedia({ url }),
-              () => setWikiUrl(""),
-            )
-          }
-          type="button"
-        >
-          {wikiBusy ? "Import…" : "Importer Wikipédia"}
-        </button>
-        {wikiMessage && (
-          <span className={wikiError ? "dev-error-copy" : "dev-success-copy"}>
-            {wikiMessage}
-          </span>
-        )}
-      </div>
-
-      {/* Generic web article */}
-      <label className="field" style={{ marginTop: 16 }}>
-        <span className="field__lbl">Article web (n&apos;importe quelle URL)</span>
-        <input
-          className="dev-search-input"
-          disabled={!ready}
-          onChange={(event) => setArticleUrl(event.target.value)}
-          placeholder="https://exemple.com/un-article"
-          type="url"
-          value={articleUrl}
-        />
-      </label>
-      <div className="stack-actions" style={{ marginTop: 8 }}>
-        <button
-          className="primary-button"
-          disabled={!ready || articleBusy || !articleUrl.trim()}
-          onClick={() =>
-            void runImport(
-              articleUrl,
-              articleBusy,
-              setArticleBusy,
-              setArticleMessage,
-              setArticleError,
-              (url) => importArticle({ url }),
-              () => setArticleUrl(""),
-            )
-          }
-          type="button"
-        >
-          {articleBusy ? "Import…" : "Importer l'article web"}
-        </button>
-        {articleMessage && (
-          <span className={articleError ? "dev-error-copy" : "dev-success-copy"}>
-            {articleMessage}
-          </span>
-        )}
-      </div>
-
-      {/* Podcast RSS */}
-      <label className="field" style={{ marginTop: 16 }}>
-        <span className="field__lbl">Flux RSS de podcast</span>
-        <input
-          className="dev-search-input"
-          disabled={!ready}
-          onChange={(event) => setFeedUrl(event.target.value)}
-          placeholder="https://exemple.com/podcast.rss"
-          type="url"
-          value={feedUrl}
-        />
-      </label>
-      {episodes.length > 0 && (
-        <label className="field" style={{ marginTop: 8 }}>
-          <span className="field__lbl">Épisode</span>
-          <select
-            className="dev-search-input"
-            onChange={(event) => setSelectedGuid(event.target.value)}
-            value={selectedGuid}
-          >
-            {episodes.map((episode) => (
-              <option key={episode.guid} value={episode.guid}>
-                {episode.title}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-      <div className="stack-actions" style={{ marginTop: 8 }}>
-        <button
-          className="ghost-button"
-          disabled={!ready || podcastBusy || !feedUrl.trim()}
-          onClick={() => void onFetchPodcast()}
-          type="button"
-        >
-          {podcastBusy ? "Chargement…" : "Charger les épisodes"}
-        </button>
-        {episodes.length > 0 && (
-          <button
-            className="primary-button"
-            disabled={podcastBusy || !selectedGuid}
-            onClick={() => void onImportPodcast()}
-            type="button"
-          >
-            Importer l&apos;épisode
-          </button>
-        )}
-        {podcastMessage && (
-          <span className={podcastError ? "dev-error-copy" : "dev-success-copy"}>
-            {podcastMessage}
-          </span>
-        )}
-      </div>
+      <UrlImporter
+        action={(url) => importWikipedia({ url })}
+        cta="Importer Wikipédia"
+        label="Article Wikipédia (URL, toute langue)"
+        placeholder="https://fr.wikipedia.org/wiki/Homophilie"
+        ready={ready}
+      />
+      <UrlImporter
+        action={(url) => importArticle({ url })}
+        cta="Importer l'article web"
+        label="Article web (n'importe quelle URL)"
+        placeholder="https://exemple.com/un-article"
+        ready={ready}
+      />
+      <PodcastImporter ready={ready} />
     </section>
   );
 }

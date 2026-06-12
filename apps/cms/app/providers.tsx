@@ -7,6 +7,7 @@ import type { PropsWithChildren } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { env } from "../lib/env";
+import { ToastProvider } from "../components/cms/toast";
 
 const convex = new ConvexReactClient(env.convexUrl);
 
@@ -98,7 +99,7 @@ function useStableAuth() {
 function ConvexAuthBridge({ children }: PropsWithChildren) {
   return (
     <ConvexProviderWithClerk client={convex} useAuth={useStableAuth}>
-      {children}
+      <ToastProvider>{children}</ToastProvider>
     </ConvexProviderWithClerk>
   );
 }

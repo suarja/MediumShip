@@ -1,8 +1,10 @@
 "use client";
 
 import type { Doc } from "../../../../convex/_generated/dataModel";
+import { useAction } from "convex/react";
 import { useEffect, useMemo, useState } from "react";
 
+import { api } from "../../../../convex/_generated/api";
 import {
   EditorialList,
   type EditorialStatusFilter,
@@ -43,6 +45,34 @@ export function ContentsTab({
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] =
     useState<EditorialStatusFilter>("all");
+
+  const importWikipedia = useAction(api.wikipedia.import.importWikipediaArticle);
+  const [wikiUrl, setWikiUrl] = useState("");
+  const [wikiBusy, setWikiBusy] = useState(false);
+  const [wikiMessage, setWikiMessage] = useState<string | null>(null);
+
+  const onImportWikipedia = async () => {
+    const url = wikiUrl.trim();
+    if (!url || wikiBusy) {
+      return;
+    }
+    setWikiBusy(true);
+    setWikiMessage(null);
+    try {
+      const result = await importWikipedia({ url });
+      if (result.imported) {
+        setWikiUrl("");
+        setWikiMessage(`Imported draft: ${result.title}`);
+        onSelect(result.contentId);
+      } else {
+        setWikiMessage(`Import failed: ${result.reason}`);
+      }
+    } catch (error) {
+      setWikiMessage(error instanceof Error ? error.message : "Import failed");
+    } finally {
+      setWikiBusy(false);
+    }
+  };
 
   const counts = useMemo<Record<EditorialStatusFilter, number>>(
     () =>
@@ -87,6 +117,40 @@ export function ContentsTab({
 
   return (
     <main className="page">
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          alignItems: "center",
+          flexWrap: "wrap",
+          marginBottom: 12,
+        }}
+      >
+        <input
+          type="url"
+          value={wikiUrl}
+          onChange={(event) => setWikiUrl(event.target.value)}
+          placeholder="Import a Wikipedia article URL (any language)…"
+          style={{ flex: "1 1 320px", minWidth: 240, padding: "8px 10px" }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              void onImportWikipedia();
+            }
+          }}
+        />
+        <button
+          type="button"
+          disabled={wikiBusy || !wikiUrl.trim()}
+          onClick={() => void onImportWikipedia()}
+          style={{ padding: "8px 14px" }}
+        >
+          {wikiBusy ? "Importing…" : "Import from Wikipedia"}
+        </button>
+        {wikiMessage ? (
+          <span style={{ fontSize: 13, opacity: 0.8 }}>{wikiMessage}</span>
+        ) : null}
+      </div>
+
       <div className="contents-grid">
         <EditorialList
           counts={counts}

@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as articles_import from "../articles/import.js";
 import type * as bookmarks_model from "../bookmarks/model.js";
 import type * as bookmarks_mutations from "../bookmarks/mutations.js";
 import type * as bookmarks_queries from "../bookmarks/queries.js";
@@ -94,6 +95,7 @@ import type * as personalLists_queries from "../personalLists/queries.js";
 import type * as playbackProgress_mutations from "../playbackProgress/mutations.js";
 import type * as playbackProgress_queries from "../playbackProgress/queries.js";
 import type * as playbackProgress_resume from "../playbackProgress/resume.js";
+import type * as podcasts_import from "../podcasts/import.js";
 import type * as readingHistory_mutations from "../readingHistory/mutations.js";
 import type * as readingHistory_queries from "../readingHistory/queries.js";
 import type * as revenuecat from "../revenuecat.js";
@@ -102,6 +104,7 @@ import type * as tenants_queries from "../tenants/queries.js";
 import type * as tenants_seed from "../tenants/seed.js";
 import type * as users_mutations from "../users/mutations.js";
 import type * as users_queries from "../users/queries.js";
+import type * as wikipedia_import from "../wikipedia/import.js";
 import type * as youtube_enrich from "../youtube/enrich.js";
 import type * as youtube_helpers from "../youtube/helpers.js";
 
@@ -112,6 +115,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "articles/import": typeof articles_import;
   "bookmarks/model": typeof bookmarks_model;
   "bookmarks/mutations": typeof bookmarks_mutations;
   "bookmarks/queries": typeof bookmarks_queries;
@@ -198,6 +202,7 @@ declare const fullApi: ApiFromModules<{
   "playbackProgress/mutations": typeof playbackProgress_mutations;
   "playbackProgress/queries": typeof playbackProgress_queries;
   "playbackProgress/resume": typeof playbackProgress_resume;
+  "podcasts/import": typeof podcasts_import;
   "readingHistory/mutations": typeof readingHistory_mutations;
   "readingHistory/queries": typeof readingHistory_queries;
   revenuecat: typeof revenuecat;
@@ -206,6 +211,7 @@ declare const fullApi: ApiFromModules<{
   "tenants/seed": typeof tenants_seed;
   "users/mutations": typeof users_mutations;
   "users/queries": typeof users_queries;
+  "wikipedia/import": typeof wikipedia_import;
   "youtube/enrich": typeof youtube_enrich;
   "youtube/helpers": typeof youtube_helpers;
 }>;

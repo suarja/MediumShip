@@ -106,6 +106,18 @@ cms-build:
 cms-convex:
     npx convex dev --once
 
+# ─── Landing web (apps/www) ──────────────────────────────────────────────────
+
+# Start the white-label landing + Knowly demo site in dev mode. Own tab.
+[group('www')]
+www:
+    npm run dev --prefix apps/www
+
+# Build the landing production bundle.
+[group('www')]
+www-build:
+    npm run build --prefix apps/www
+
 # ─── Quality ─────────────────────────────────────────────────────────────────
 
 # Run the Jest test suite.

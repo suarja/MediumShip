@@ -27,6 +27,7 @@ type ThemeContextValue = {
   appIconUrl?: string;
   brandLogoUrl?: string;
   communityUrl?: string;
+  onboardingCollectionSlug?: string;
   theme: AppTheme;
   themeConfig: ThemeConfig;
   tenantSlug: string;
@@ -43,6 +44,7 @@ const fallbackValue: ThemeContextValue = {
   appIconUrl: defaultTenant.appIconUrl,
   brandLogoUrl: defaultTenant.brandLogoUrl,
   communityUrl: defaultTenant.communityUrl,
+  onboardingCollectionSlug: defaultTenant.onboardingCollectionSlug,
   theme: resolveTheme(defaultThemeConfig),
   themeConfig: defaultThemeConfig,
   tenantSlug: defaultTenant.slug,
@@ -90,6 +92,8 @@ export function AppThemeProvider({ children }: PropsWithChildren) {
       appIconUrl: tenant?.appIconUrl ?? defaultTenant.appIconUrl,
       brandLogoUrl: tenant?.brandLogoUrl ?? defaultTenant.brandLogoUrl,
       communityUrl: tenant?.communityUrl ?? defaultTenant.communityUrl,
+      onboardingCollectionSlug:
+        tenant?.onboardingCollectionSlug ?? defaultTenant.onboardingCollectionSlug,
       theme: resolveTheme(themeConfig),
       themeConfig,
       tenantSlug: tenant?.slug ?? defaultTenant.slug,

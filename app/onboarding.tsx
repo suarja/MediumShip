@@ -32,8 +32,8 @@ import { useAppTheme } from "../src/features/theme/theme-provider";
 
 const STEP_COUNT = 3;
 const ONBOARDING_VIEWER = { isAuthenticated: false, isPro: false };
-/** CMS-curated collection of thesis reads surfaced on the manifesto screen. */
-const ONBOARDING_COLLECTION_SLUG = "pourquoi-ce-fil";
+/** Fallback when a tenant has not configured its own onboarding collection. */
+const DEFAULT_ONBOARDING_COLLECTION_SLUG = "pourquoi-ce-fil";
 
 export default function OnboardingScreen() {
   const { t } = useTranslation("onboarding");
@@ -194,15 +194,15 @@ export default function OnboardingScreen() {
 function ManifestoStep() {
   const { t } = useTranslation("onboarding");
   const { t: tHome } = useTranslation("home");
-  const { theme, tenantSlug } = useAppTheme();
+  const { theme, tenantSlug, onboardingCollectionSlug } = useAppTheme();
   const { isTablet, scaleFont, scaleSpace } = useResponsive();
   const { width } = useWindowDimensions();
 
-  // Prefer the curated "Pourquoi ce fil" collection; fall back to the general
-  // feed only when it is missing/empty so the carousel is never blank.
+  // Prefer the tenant's configured onboarding collection; fall back to the
+  // general feed only when it is missing/empty so the carousel is never blank.
   const curated = useQuery(api.collections.queries.getCollectionContentsBySlug, {
     tenantSlug,
-    slug: ONBOARDING_COLLECTION_SLUG,
+    slug: onboardingCollectionSlug ?? DEFAULT_ONBOARDING_COLLECTION_SLUG,
   }) as ContentDoc[] | undefined;
   const needFeed = curated !== undefined && curated.length === 0;
   const feed = useQuery(

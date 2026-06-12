@@ -18,6 +18,7 @@ export const defaultTenant = {
   brandLogoUrl: undefined,
   appIconUrl: undefined,
   communityUrl: undefined as string | undefined,
+  onboardingCollectionSlug: "pourquoi-ce-fil" as string | undefined,
   enabledModules: [
     ...PUBLIC_CONTENT_MODULES,
     ...OPTIONAL_PUBLIC_MODULES,

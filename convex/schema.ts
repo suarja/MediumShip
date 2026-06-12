@@ -30,6 +30,8 @@ export default defineSchema({
     appIconUrl: v.optional(v.string()),
     /** Tenant-wide community invite (e.g. Discord). Drives the Community screen CTA. */
     communityUrl: v.optional(v.string()),
+    /** Slug of the collection whose items power the onboarding manifesto carousel. */
+    onboardingCollectionSlug: v.optional(v.string()),
     themeConfig: v.optional(
       v.object({
         paletteName: v.string(),

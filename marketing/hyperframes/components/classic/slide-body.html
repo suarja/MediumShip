@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="fr" data-composition-variables='[
+  {"id":"eyebrow","type":"string","label":"Eyebrow","default":"LE PRINCIPE"},
+  {"id":"line1","type":"string","label":"Line 1","default":"Tu publies."},
+  {"id":"line2","type":"string","label":"Line 2 (italic accent)","default":"Ils lisent, &#233;coutent,"},
+  {"id":"line3","type":"string","label":"Line 3 (close)","default":"regardent."},
+  {"id":"brand","type":"string","label":"Brand mark","default":"Knowly · @knowly"}
+]'>
+<head><meta charset="utf-8"><title>slide-body</title></head>
+<body>
+<template id="slide-body-template">
+  <div data-composition-id="slide-body" data-width="1080" data-height="1920">
+    <div class="hf-slide-body">
+      <div class="halo" data-layout-allow-overflow></div>
+      <div class="eyebrow"></div>
+      <h2 class="line line-1"></h2>
+      <h2 class="line line-2"></h2>
+      <h2 class="line line-3"></h2>
+      <div class="brand"></div>
+    </div>
+    <style>
+      [data-composition-id="slide-body"] {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        display: block;
+      }
+      [data-composition-id="slide-body"] .hf-slide-body {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: #F5EFE8;
+        font-family: 'Hanken Grotesk', -apple-system, system-ui, sans-serif;
+        color: #2B211D;
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+      [data-composition-id="slide-body"] .halo {
+        position: absolute;
+        bottom: -300px;
+        left: -200px;
+        width: 1300px;
+        height: 1300px;
+        background: radial-gradient(circle, rgba(200,150,74,0.16) 0%, rgba(200,150,74,0) 65%);
+        pointer-events: none;
+      }
+      [data-composition-id="slide-body"] .eyebrow {
+        position: absolute;
+        top: 380px;
+        left: 100px;
+        right: 100px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 32px;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #7A665C;
+      }
+      [data-composition-id="slide-body"] .line {
+        position: absolute;
+        left: 100px;
+        right: 100px;
+        margin: 0;
+        font-family: 'Newsreader', Georgia, serif;
+        font-size: 140px;
+        font-weight: 600;
+        line-height: 1;
+        letter-spacing: -0.02em;
+        max-width: 880px;
+      }
+      [data-composition-id="slide-body"] .line-1 { top: 720px; color: #2B211D; }
+      [data-composition-id="slide-body"] .line-2 { top: 900px; color: #B14F2E; font-weight: 500; font-style: italic; }
+      [data-composition-id="slide-body"] .line-3 { top: 1080px; color: #2B211D; }
+      [data-composition-id="slide-body"] .brand {
+        position: absolute;
+        bottom: 100px;
+        left: 100px;
+        right: 100px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 28px;
+        color: #7A665C;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script>
+      (function () {
+        const root = document.querySelector('[data-composition-id="slide-body"]');
+        const compId = root.getAttribute('data-composition-id');
+        let vars = {};
+        try {
+          if (typeof __hyperframes !== "undefined" && __hyperframes && __hyperframes.getVariables) {
+            vars = __hyperframes.getVariables() || {};
+          } else if (window.__hyperframes && window.__hyperframes.getVariables) {
+            vars = window.__hyperframes.getVariables() || {};
+          }
+        } catch (e) {}
+
+        const eyebrow = vars.eyebrow || "LE PRINCIPE";
+        const line1 = vars.line1 || "Tu publies.";
+        const line2 = vars.line2 || "Ils lisent, écoutent,";
+        const line3 = vars.line3 || "regardent.";
+
+        root.querySelector('.eyebrow').textContent = eyebrow;
+        root.querySelector('.line-1').textContent = line1;
+        root.querySelector('.line-2').textContent = line2;
+        root.querySelector('.line-3').textContent = line3;
+        root.querySelector('.brand').textContent = vars.brand || "Knowly · @knowly";
+
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+        tl.from(`[data-composition-id="${compId}"] .halo`, { opacity: 0, scale: 0.85, duration: 0.8, ease: 'power2.out' }, 0);
+        tl.from(`[data-composition-id="${compId}"] .eyebrow`, { y: -20, opacity: 0, duration: 0.5, ease: 'power2.out' }, 0.1);
+        tl.from(`[data-composition-id="${compId}"] .line-1`, { y: 50, opacity: 0, duration: 0.6, ease: 'power3.out' }, 0.2);
+        tl.from(`[data-composition-id="${compId}"] .line-2`, { y: 50, opacity: 0, duration: 0.6, ease: 'expo.out' }, 0.4);
+        tl.from(`[data-composition-id="${compId}"] .line-3`, { y: 50, opacity: 0, duration: 0.6, ease: 'power3.out' }, 0.6);
+        tl.from(`[data-composition-id="${compId}"] .brand`, { opacity: 0, duration: 0.4, ease: 'power1.out' }, 0.85);
+        tl.to({}, { duration: 1.2 }, 1.3); // no-op tween: build.mjs stretches this to the slide duration
+        window.__timelines[compId] = tl;
+      })();
+    </script>
+  </div>
+</template>
+</body>
+</html>

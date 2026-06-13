@@ -1,0 +1,17 @@
+{
+  "name": "@knowly/marketing-hyperframes",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Knowly marketing carousels + vertical video pipeline (HyperFrames). See README.md.",
+  "scripts": {
+    "preview": "hyperframes preview",
+    "lint": "hyperframes lint && hyperframes validate",
+    "inspect": "hyperframes inspect",
+    "build": "bash scripts/build.sh",
+    "render": "bash scripts/render.sh",
+    "manifest": "node scripts/manifest.mjs"
+  },
+  "devDependencies": {
+    "hyperframes": "^0.5.5"
+  }
+}

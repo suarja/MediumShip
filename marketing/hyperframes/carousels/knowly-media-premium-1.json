@@ -1,0 +1,73 @@
+{
+  "slug": "knowly-media-premium-1",
+  "title": "Ton média premium",
+  "pillar": "Média propriétaire multi-format",
+  "language": "fr",
+  "template": "classic",
+  "width": 1080,
+  "height": 1920,
+  "slides": [
+    {
+      "id": "s1",
+      "type": "slide-hook",
+      "duration": 3.5,
+      "vars": {
+        "eyebrow": "Articles. Podcasts. Vidéos.",
+        "hook": "Un seul média.",
+        "subline": "Le tien.",
+        "brand": "Knowly · @knowly"
+      }
+    },
+    {
+      "id": "s2",
+      "type": "slide-stat",
+      "duration": 5.0,
+      "vars": {
+        "captionTop": "Ton audience te suit déjà.",
+        "number": "100%",
+        "unit": "à toi",
+        "captionBottom": "Pas d'algorithme entre vous.",
+        "subline": "Tes membres, ta relation directe."
+      }
+    },
+    {
+      "id": "s3",
+      "type": "slide-body",
+      "duration": 3.5,
+      "vars": {
+        "eyebrow": "TROIS FORMATS",
+        "line1": "Lire.",
+        "line2": "Écouter.",
+        "line3": "Regarder.",
+        "brand": "Knowly · @knowly"
+      }
+    },
+    {
+      "id": "s4",
+      "type": "slide-screenshot",
+      "duration": 4.0,
+      "vars": {
+        "caption": "Lis. Écoute. Regarde.",
+        "handle": "@knowly",
+        "mockKicker": "ARTICLE · 8 MIN",
+        "mockTitle": "Construire un média qui t'appartient",
+        "mockMeta": "Camille Roy · Aujourd'hui",
+        "kpiLabel": "Premium",
+        "kpiValue": "Hors-ligne",
+        "screenshotSrc": ""
+      }
+    },
+    {
+      "id": "s5",
+      "type": "slide-cta",
+      "duration": 3.0,
+      "vars": {
+        "tagline1": "Ton média.",
+        "tagline2": "Rien qu'à toi.",
+        "cta": "Découvre Knowly →",
+        "handle": "@knowly · knowly.app",
+        "footnote": "Articles · Podcasts · Vidéos · Premium"
+      }
+    }
+  ]
+}

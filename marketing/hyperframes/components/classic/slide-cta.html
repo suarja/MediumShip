@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="fr" data-composition-variables='[
+  {"id":"tagline1","type":"string","label":"Tagline 1","default":"Ton m&#233;dia."},
+  {"id":"tagline2","type":"string","label":"Tagline 2 (italic accent)","default":"Premium, poss&#233;d&#233;."},
+  {"id":"cta","type":"string","label":"CTA","default":"D&#233;couvre Knowly &#8594;"},
+  {"id":"handle","type":"string","label":"Handle","default":"@knowly · knowly.app"},
+  {"id":"footnote","type":"string","label":"Footnote","default":"Articles · Podcasts · Vid&#233;os · Acc&#232;s premium"}
+]'>
+<head><meta charset="utf-8"><title>slide-cta</title></head>
+<body>
+<template id="slide-cta-template">
+  <div data-composition-id="slide-cta" data-width="1080" data-height="1920">
+    <div class="hf-slide-cta">
+      <div class="halo" data-layout-allow-overflow></div>
+      <div class="logo">
+        <svg class="logo-mark" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M50 4 C 54.5 31 69 45.5 96 50 C 69 54.5 54.5 69 50 96 C 45.5 69 31 54.5 4 50 C 31 45.5 45.5 31 50 4 Z"/>
+        </svg>
+        <span class="logo-name">Knowly</span>
+      </div>
+      <div class="tagline tag-1"></div>
+      <div class="tagline tag-2"></div>
+      <div class="cta-row">
+        <div class="cta-button"></div>
+      </div>
+      <div class="handle"></div>
+      <div class="footnote"></div>
+    </div>
+    <style>
+      [data-composition-id="slide-cta"] {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        display: block;
+      }
+      [data-composition-id="slide-cta"] .hf-slide-cta {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: #F5EFE8;
+        font-family: 'Hanken Grotesk', -apple-system, system-ui, sans-serif;
+        color: #2B211D;
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+      [data-composition-id="slide-cta"] .halo {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 1400px;
+        height: 1400px;
+        background: radial-gradient(circle, rgba(177,79,46,0.14) 0%, rgba(177,79,46,0) 60%);
+        pointer-events: none;
+      }
+      [data-composition-id="slide-cta"] .logo {
+        position: absolute;
+        top: 280px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 22px;
+        font-size: 64px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      [data-composition-id="slide-cta"] .logo-mark {
+        width: 60px;
+        height: 60px;
+        fill: #B14F2E;
+        filter: drop-shadow(0 8px 18px rgba(177,79,46,0.30));
+      }
+      [data-composition-id="slide-cta"] .logo-name {
+        font-family: 'Newsreader', Georgia, serif;
+        font-style: italic;
+        font-weight: 600;
+        color: #2B211D;
+      }
+      [data-composition-id="slide-cta"] .tagline {
+        position: absolute;
+        left: 100px;
+        right: 100px;
+        text-align: center;
+        font-family: 'Newsreader', Georgia, serif;
+        font-weight: 600;
+        line-height: 1;
+        letter-spacing: -0.02em;
+        white-space: nowrap;
+      }
+      [data-composition-id="slide-cta"] .tag-1 {
+        top: 560px;
+        font-size: 150px;
+        color: #2B211D;
+      }
+      [data-composition-id="slide-cta"] .tag-2 {
+        top: 750px;
+        font-size: 110px;
+        font-weight: 500;
+        color: #B14F2E;
+        font-style: italic;
+      }
+      [data-composition-id="slide-cta"] .cta-row {
+        position: absolute;
+        top: 1000px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+      }
+      [data-composition-id="slide-cta"] .cta-button {
+        background: #B14F2E;
+        color: #FFF8F4;
+        font-size: 44px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        padding: 36px 64px;
+        border-radius: 999px;
+        box-shadow: 0 24px 60px -12px rgba(177,79,46,0.45), inset 0 1px 0 rgba(255,255,255,0.22);
+      }
+      [data-composition-id="slide-cta"] .handle {
+        position: absolute;
+        top: 1300px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 44px;
+        font-weight: 500;
+        color: #43332B;
+        letter-spacing: 0.01em;
+      }
+      [data-composition-id="slide-cta"] .footnote {
+        position: absolute;
+        bottom: 140px;
+        left: 100px;
+        right: 100px;
+        text-align: center;
+        font-size: 28px;
+        font-weight: 500;
+        color: #7A665C;
+        letter-spacing: 0.03em;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script>
+      (function () {
+        const root = document.querySelector('[data-composition-id="slide-cta"]');
+        const compId = root.getAttribute('data-composition-id');
+        let vars = {};
+        try {
+          if (typeof __hyperframes !== "undefined" && __hyperframes && __hyperframes.getVariables) {
+            vars = __hyperframes.getVariables() || {};
+          } else if (window.__hyperframes && window.__hyperframes.getVariables) {
+            vars = window.__hyperframes.getVariables() || {};
+          }
+        } catch (e) {}
+
+        root.querySelector('.tag-1').textContent = vars.tagline1 || "Ton média.";
+        root.querySelector('.tag-2').textContent = vars.tagline2 || "Premium, possédé.";
+        root.querySelector('.cta-button').textContent = vars.cta || "Découvre Knowly →";
+        root.querySelector('.handle').textContent = vars.handle || "@knowly · knowly.app";
+        root.querySelector('.footnote').textContent = vars.footnote || "Articles · Podcasts · Vidéos · Accès premium";
+
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+        tl.from(`[data-composition-id="${compId}"] .halo`, { opacity: 0, scale: 0.85, duration: 0.9, ease: 'power2.out' }, 0);
+        tl.from(`[data-composition-id="${compId}"] .logo`, { y: -30, opacity: 0, duration: 0.6, ease: 'power3.out' }, 0.1);
+        tl.from(`[data-composition-id="${compId}"] .tag-1`, { y: 50, opacity: 0, duration: 0.6, ease: 'power3.out' }, 0.2);
+        tl.from(`[data-composition-id="${compId}"] .tag-2`, { y: 50, opacity: 0, duration: 0.6, ease: 'expo.out' }, 0.35);
+        tl.from(`[data-composition-id="${compId}"] .cta-button`, { y: 30, opacity: 0, scale: 0.94, duration: 0.5, ease: 'back.out(1.6)' }, 0.55);
+        tl.from(`[data-composition-id="${compId}"] .handle`, { y: 20, opacity: 0, duration: 0.5, ease: 'power2.out' }, 0.7);
+        tl.from(`[data-composition-id="${compId}"] .footnote`, { opacity: 0, duration: 0.5, ease: 'power1.out' }, 0.85);
+        tl.to({}, { duration: 1.1 }, 1.4); // no-op tween: build.mjs stretches this to the slide duration
+        window.__timelines[compId] = tl;
+      })();
+    </script>
+  </div>
+</template>
+</body>
+</html>

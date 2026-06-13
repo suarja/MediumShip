@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="fr" data-composition-variables='[
+  {"id":"caption","type":"string","label":"Caption","default":"Lis, &#233;coute, regarde. Hors-ligne."},
+  {"id":"handle","type":"string","label":"Handle","default":"@knowly"},
+  {"id":"mockKicker","type":"string","label":"Mock kicker","default":"ARTICLE · 8 MIN"},
+  {"id":"mockTitle","type":"string","label":"Mock title","default":"Construire un m&#233;dia que personne ne peut t&#39;enlever"},
+  {"id":"mockMeta","type":"string","label":"Mock meta","default":"Camille Roy · Aujourd&#39;hui"},
+  {"id":"kpiLabel","type":"string","label":"KPI label","default":"Premium"},
+  {"id":"kpiValue","type":"string","label":"KPI value","default":"Hors-ligne"},
+  {"id":"screenshotSrc","type":"string","label":"Screenshot path (swap mock for real PNG)","default":""}
+]'>
+<head><meta charset="utf-8"><title>slide-screenshot</title></head>
+<body>
+<template id="slide-screenshot-template">
+  <div data-composition-id="slide-screenshot" data-width="1080" data-height="1920">
+    <div class="hf-slide-screenshot">
+      <div class="halo" data-layout-allow-overflow></div>
+      <div class="caption"></div>
+      <div class="phone">
+        <div class="phone-bezel">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <img class="device-img" alt="" />
+            <div class="device-mock">
+              <div class="mock-statusbar">
+                <span class="mock-time">14:42</span>
+                <span class="mock-icons">●●● ●●● 100%</span>
+              </div>
+              <div class="mock-kicker"></div>
+              <div class="mock-cover"></div>
+              <div class="mock-title"></div>
+              <div class="mock-meta"></div>
+              <div class="mock-cta">Lire l'article</div>
+              <div class="mock-trust">Lecture · Écoute · Hors-ligne premium</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="kpi-pill">
+        <span class="kpi-pill-label"></span>
+        <span class="kpi-pill-value"></span>
+      </div>
+    </div>
+    <style>
+      [data-composition-id="slide-screenshot"] {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        display: block;
+      }
+      [data-composition-id="slide-screenshot"] .hf-slide-screenshot {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: #F5EFE8;
+        font-family: 'Hanken Grotesk', -apple-system, system-ui, sans-serif;
+        color: #2B211D;
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+      [data-composition-id="slide-screenshot"] .halo {
+        position: absolute;
+        top: -200px;
+        right: -200px;
+        width: 1400px;
+        height: 1400px;
+        background: radial-gradient(circle, rgba(177,79,46,0.12) 0%, rgba(177,79,46,0) 65%);
+        pointer-events: none;
+      }
+      [data-composition-id="slide-screenshot"] .caption {
+        position: absolute;
+        top: 180px;
+        left: 100px;
+        right: 100px;
+        font-family: 'Newsreader', Georgia, serif;
+        font-size: 96px;
+        font-weight: 600;
+        line-height: 1;
+        letter-spacing: -0.02em;
+        max-width: 880px;
+        color: #2B211D;
+      }
+      [data-composition-id="slide-screenshot"] .phone {
+        position: absolute;
+        top: 420px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 620px;
+        height: 1280px;
+      }
+      [data-composition-id="slide-screenshot"] .phone-bezel {
+        position: absolute;
+        inset: 0;
+        background: #2B211D;
+        border-radius: 84px;
+        padding: 16px;
+        box-sizing: border-box;
+        box-shadow: 0 50px 120px -20px rgba(43,33,29,0.30), 0 0 0 2px rgba(43,33,29,0.08);
+      }
+      [data-composition-id="slide-screenshot"] .phone-screen {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: #FFFDFC;
+        border-radius: 70px;
+        overflow: hidden;
+      }
+      [data-composition-id="slide-screenshot"] .phone-notch {
+        position: absolute;
+        top: 28px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 180px;
+        height: 36px;
+        background: #2B211D;
+        border-radius: 22px;
+        z-index: 3;
+      }
+      [data-composition-id="slide-screenshot"] .device-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: none;
+      }
+      [data-composition-id="slide-screenshot"] .device-mock {
+        position: absolute;
+        inset: 0;
+        padding: 96px 50px 50px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+        font-family: inherit;
+      }
+      [data-composition-id="slide-screenshot"] .mock-statusbar {
+        position: absolute;
+        top: 30px;
+        left: 50px;
+        right: 50px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 22px;
+        font-weight: 700;
+        color: #2B211D;
+      }
+      [data-composition-id="slide-screenshot"] .mock-icons { letter-spacing: 2px; opacity: 0.55; }
+      [data-composition-id="slide-screenshot"] .mock-kicker {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 24px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: #B14F2E;
+      }
+      [data-composition-id="slide-screenshot"] .mock-cover {
+        width: 100%;
+        height: 300px;
+        border-radius: 24px;
+        background: linear-gradient(135deg, #B14F2E 0%, #C8964A 100%);
+        position: relative;
+        overflow: hidden;
+      }
+      [data-composition-id="slide-screenshot"] .mock-cover::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 30% 25%, rgba(255,255,255,0.28) 0%, transparent 60%);
+      }
+      [data-composition-id="slide-screenshot"] .mock-title {
+        font-family: 'Newsreader', Georgia, serif;
+        font-size: 52px;
+        font-weight: 600;
+        line-height: 1.08;
+        letter-spacing: -0.02em;
+        color: #2B211D;
+      }
+      [data-composition-id="slide-screenshot"] .mock-meta {
+        font-size: 28px;
+        font-weight: 500;
+        color: #7A665C;
+        letter-spacing: 0.01em;
+      }
+      [data-composition-id="slide-screenshot"] .mock-cta {
+        margin-top: 8px;
+        height: 92px;
+        background: #B14F2E;
+        border-radius: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+        font-weight: 700;
+        color: #FFF8F4;
+        letter-spacing: 0.01em;
+        box-shadow: 0 16px 40px -8px rgba(177,79,46,0.45);
+      }
+      [data-composition-id="slide-screenshot"] .mock-trust {
+        font-size: 20px;
+        color: #7A665C;
+        text-align: center;
+        letter-spacing: 0.02em;
+      }
+      [data-composition-id="slide-screenshot"] .kpi-pill {
+        position: absolute;
+        bottom: 240px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: #F2DED3;
+        border: 1px solid rgba(177,79,46,0.40);
+        padding: 18px 32px;
+        border-radius: 999px;
+        z-index: 5;
+      }
+      [data-composition-id="slide-screenshot"] .kpi-pill-label {
+        font-size: 24px;
+        color: #7A665C;
+        font-weight: 600;
+      }
+      [data-composition-id="slide-screenshot"] .kpi-pill-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #B14F2E;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <script>
+      (function () {
+        const root = document.querySelector('[data-composition-id="slide-screenshot"]');
+        const compId = root.getAttribute('data-composition-id');
+        let vars = {};
+        try {
+          if (typeof __hyperframes !== "undefined" && __hyperframes && __hyperframes.getVariables) {
+            vars = __hyperframes.getVariables() || {};
+          } else if (window.__hyperframes && window.__hyperframes.getVariables) {
+            vars = window.__hyperframes.getVariables() || {};
+          }
+        } catch (e) {}
+
+        const caption = vars.caption || "Lis, écoute, regarde. Hors-ligne.";
+        const handle = vars.handle || "@knowly";
+        const mockKicker = vars.mockKicker || "ARTICLE · 8 MIN";
+        const mockTitle = vars.mockTitle || "Construire un média que personne ne peut t'enlever";
+        const mockMeta = vars.mockMeta || "Camille Roy · Aujourd'hui";
+        const kpiLabel = vars.kpiLabel || "Premium";
+        const kpiValue = vars.kpiValue || "Hors-ligne";
+        const screenshotSrc = vars.screenshotSrc || "";
+
+        root.querySelector('.caption').textContent = caption;
+        root.querySelector('.mock-kicker').textContent = mockKicker;
+        root.querySelector('.mock-title').textContent = mockTitle;
+        root.querySelector('.mock-meta').textContent = mockMeta;
+        root.querySelector('.kpi-pill-label').textContent = kpiLabel;
+        root.querySelector('.kpi-pill-value').textContent = kpiValue;
+
+        if (typeof screenshotSrc === 'string' && screenshotSrc.length > 0) {
+          const img = root.querySelector('.device-img');
+          const mock = root.querySelector('.device-mock');
+          img.setAttribute('src', screenshotSrc);
+          img.style.display = 'block';
+          mock.style.display = 'none';
+        }
+
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+        tl.from(`[data-composition-id="${compId}"] .halo`, { opacity: 0, scale: 0.9, duration: 0.7, ease: 'power2.out' }, 0);
+        tl.from(`[data-composition-id="${compId}"] .caption`, { y: -20, opacity: 0, duration: 0.5, ease: 'power2.out' }, 0.1);
+        tl.from(`[data-composition-id="${compId}"] .phone`, { y: 80, opacity: 0, duration: 0.7, ease: 'power3.out' }, 0.2);
+        tl.from(`[data-composition-id="${compId}"] .kpi-pill`, { y: 30, opacity: 0, scale: 0.92, duration: 0.5, ease: 'expo.out' }, 0.55);
+        tl.to({}, { duration: 1.4 }, 1.1); // no-op tween: build.mjs stretches this to the slide duration
+        window.__timelines[compId] = tl;
+      })();
+    </script>
+  </div>
+</template>
+</body>
+</html>

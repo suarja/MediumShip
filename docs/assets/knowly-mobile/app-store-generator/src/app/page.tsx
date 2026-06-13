@@ -717,6 +717,22 @@ export default function ScreenshotsPage() {
     );
   }
 
+  /* Headless full-size render mode: /?full=<id>&loc=<locale> renders one slide
+   * at exactly 1320×2868 pinned top-left with no UI — screenshot it at an Apple
+   * size to produce a real App Store PNG without clicking Export. */
+  if (typeof window !== "undefined") {
+    const params = new URLSearchParams(window.location.search);
+    const fullId = params.get("full") as SlideId | null;
+    const fullLoc = (params.get("loc") as Locale | null) ?? locale;
+    if (fullId && (SLIDE_IDS as readonly string[]).includes(fullId)) {
+      return (
+        <div style={{ position: "fixed", left: 0, top: 0, width: W, height: H }}>
+          <SlideFrame id={fullId} locale={fullLoc} />
+        </div>
+      );
+    }
+  }
+
   const size = IPHONE_SIZES[sizeIdx];
   const btn = (active: boolean): CSSProperties => ({
     padding: "8px 14px",

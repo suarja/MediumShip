@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+:root {
+  --bg-page: #efe9e1;
+  --font-display-stack: var(--font-display), Georgia, serif;
+  --font-ui-stack: var(--font-ui), -apple-system, system-ui, sans-serif;
+  --font-mono-stack: var(--font-mono), ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-page);
+  color: #2B211D;
+  font-family: var(--font-ui-stack);
+  -webkit-font-smoothing: antialiased;
+}
